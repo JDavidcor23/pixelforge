@@ -389,7 +389,7 @@ export const useSpriteEditorStore = create<SpriteEditorStore>((set, get) => ({
     set((state) => {
       if (!state.selection || !state.selection.floatingPixels) return {}
 
-      const { rect, floatingPixels, originalArea } = state.selection
+      const { rect, floatingPixels, originalArea, rotation, scaleX, scaleY } = state.selection
       const activeLayerId = state.activeLayerId
 
       const newLayers = state.layers.map((layer) => {
@@ -414,13 +414,11 @@ export const useSpriteEditorStore = create<SpriteEditorStore>((set, get) => ({
           }
         }
 
-        const { rotation = 0, scaleX = 1, scaleY = 1 } = state.selection
-
         const bakedPixels = transformPixels(
           floatingPixels,
-          rotation,
-          scaleX,
-          scaleY,
+          rotation || 0,
+          scaleX || 1,
+          scaleY || 1,
           state.canvasWidth,
           state.canvasHeight,
           rect.x,

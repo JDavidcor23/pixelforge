@@ -17,7 +17,7 @@ export const LayerPanel = () => {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent hover:scrollbar-thumb-white/20">
         {reversedLayers.map((layer) => (
           <LayerItem
             key={layer.id}

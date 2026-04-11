@@ -42,7 +42,7 @@ export const TimelineBar = () => {
 
       <div className="mx-4 h-8 w-px bg-white/10" />
 
-      <div className="flex flex-1 items-center gap-2 overflow-x-auto">
+      <div className="flex flex-1 items-center gap-2 overflow-x-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent hover:scrollbar-thumb-white/20">
         {timeline.frames.map((frame, index) => (
           <FrameThumbnail
             key={frame.id}
