@@ -83,6 +83,7 @@ export interface SpriteEditorState {
   readonly selection: SelectionState | null
   readonly palette: RgbaColor[]
   readonly showGrid: boolean
+  readonly clipboard: PixelBuffer | null
 }
 
 export interface SpriteEditorActions {
@@ -119,6 +120,10 @@ export interface SpriteEditorActions {
   saveColor: (color: RgbaColor) => void
   removeColor: (color: RgbaColor) => void
   setShowGrid: (show: boolean) => void
+  copySelection: () => void
+  cutSelection: () => void
+  pasteClipboard: () => void
+  deleteSelection: () => void
 }
 
 export type SpriteEditorStore = SpriteEditorState & SpriteEditorActions

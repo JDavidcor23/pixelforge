@@ -114,3 +114,11 @@ export const useRemoveColor = () => useSpriteEditorStore((s) => s.removeColor)
 export const useShowGrid = () => useSpriteEditorStore((s) => s.showGrid)
 export const useSetShowGrid = () => useSpriteEditorStore((s) => s.setShowGrid)
 
+// ── Clipboard Actions ────────────────────────────────────────────────
+
+export const useClipboard = () => useSpriteEditorStore((s) => s.clipboard)
+export const useCopySelection = () => useSpriteEditorStore((s) => s.copySelection)
+export const useCutSelection = () => useSpriteEditorStore((s) => s.cutSelection)
+export const usePasteClipboard = () => useSpriteEditorStore((s) => s.pasteClipboard)
+export const useDeleteSelection = () => useSpriteEditorStore((s) => s.deleteSelection)
+

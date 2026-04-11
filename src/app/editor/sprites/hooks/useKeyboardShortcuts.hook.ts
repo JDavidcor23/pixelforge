@@ -13,6 +13,10 @@ import {
   useSelection,
   useSetSelectionTransform,
   useSetViewportOffset,
+  useCopySelection,
+  useCutSelection,
+  usePasteClipboard,
+  useDeleteSelection,
 } from './useSpriteEditorStore.hook'
 
 const PAN_STEP = 20
@@ -27,6 +31,10 @@ export const useKeyboardShortcuts = () => {
   const selection = useSelection()
   const setSelectionTransform = useSetSelectionTransform()
   const setViewportOffset = useSetViewportOffset()
+  const copySelection = useCopySelection()
+  const cutSelection = useCutSelection()
+  const pasteClipboard = usePasteClipboard()
+  const deleteSelection = useDeleteSelection()
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -60,7 +68,32 @@ export const useKeyboardShortcuts = () => {
         return
       }
 
+      if (isCtrl && key === 'c') {
+        e.preventDefault()
+        copySelection()
+        return
+      }
+
+      if (isCtrl && key === 'x') {
+        e.preventDefault()
+        cutSelection()
+        return
+      }
+
+      if (isCtrl && key === 'v') {
+        e.preventDefault()
+        pasteClipboard()
+        return
+      }
+
       if (isCtrl || isShift) return
+
+      // Handle Delete / Backspace
+      if (key === 'delete' || key === 'backspace') {
+        e.preventDefault()
+        deleteSelection()
+        return
+      }
 
       // Handle Arrow Keys
       if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) {
@@ -131,6 +164,10 @@ export const useKeyboardShortcuts = () => {
     activeTool,
     selection,
     setSelectionTransform,
+    copySelection,
+    cutSelection,
+    pasteClipboard,
+    deleteSelection,
   ])
 }
 
