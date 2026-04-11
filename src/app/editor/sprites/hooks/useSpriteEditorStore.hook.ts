@@ -109,3 +109,8 @@ export const usePalette = () => useSpriteEditorStore((s) => s.palette)
 export const useSaveColor = () => useSpriteEditorStore((s) => s.saveColor)
 export const useRemoveColor = () => useSpriteEditorStore((s) => s.removeColor)
 
+// ── View Preferences ─────────────────────────────────────────────────
+
+export const useShowGrid = () => useSpriteEditorStore((s) => s.showGrid)
+export const useSetShowGrid = () => useSpriteEditorStore((s) => s.setShowGrid)
+

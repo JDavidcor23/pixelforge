@@ -1,7 +1,7 @@
 'use client'
 
 import { Layer, Rect, Line, Group } from 'react-konva'
-import { SPRITE_EDITOR_CANVAS, SPRITE_EDITOR_COLORS } from '@/app/editor/constants'
+import { SPRITE_EDITOR_COLORS } from '@/app/editor/constants'
 import type { ViewportState } from '@/app/editor/types'
 
 interface GridBackgroundProps {
@@ -20,8 +20,8 @@ function getDrawOffset(
   canvasHeight: number
 ) {
   const { zoom, offsetX, offsetY } = viewport
-  const startX = Math.round(canvasWidth / 2 - (gridWidth * zoom) / 2) + offsetX
-  const startY = Math.round(canvasHeight / 2 - (gridHeight * zoom) / 2) + offsetY
+  const startX = Math.round(canvasWidth / 2 - (gridWidth * zoom) / 2 + offsetX)
+  const startY = Math.round(canvasHeight / 2 - (gridHeight * zoom) / 2 + offsetY)
   return { startX, startY }
 }
 
@@ -53,8 +53,8 @@ export const GridBackground = ({
           key={`checker-${x}-${y}`}
           x={x * checkerSize}
           y={y * checkerSize}
-          width={checkerSize}
-          height={checkerSize}
+          width={checkerSize + 0.5}
+          height={checkerSize + 0.5}
           fill={
             isEven
               ? SPRITE_EDITOR_COLORS.TRANSPARENT_CHECKER_A
@@ -64,31 +64,6 @@ export const GridBackground = ({
         />
       )
     }
-  }
-
-  // Generate grid lines
-  const gridLines = []
-  for (let x = 0; x <= gridWidth; x++) {
-    gridLines.push(
-      <Line
-        key={`vline-${x}`}
-        points={[x * zoom, 0, x * zoom, gridHeight * zoom]}
-        stroke={SPRITE_EDITOR_CANVAS.GRID_LINE_COLOR}
-        strokeWidth={SPRITE_EDITOR_CANVAS.GRID_LINE_WIDTH}
-        listening={false}
-      />
-    )
-  }
-  for (let y = 0; y <= gridHeight; y++) {
-    gridLines.push(
-      <Line
-        key={`hline-${y}`}
-        points={[0, y * zoom, gridWidth * zoom, y * zoom]}
-        stroke={SPRITE_EDITOR_CANVAS.GRID_LINE_COLOR}
-        strokeWidth={SPRITE_EDITOR_CANVAS.GRID_LINE_WIDTH}
-        listening={false}
-      />
-    )
   }
 
   return (
@@ -103,7 +78,6 @@ export const GridBackground = ({
       />
       <Group x={startX} y={startY} listening={false}>
         {checkers}
-        {gridLines}
       </Group>
     </Layer>
   )

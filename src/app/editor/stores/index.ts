@@ -81,6 +81,7 @@ export const useSpriteEditorStore = create<SpriteEditorStore>()(
       cursorPixel: null,
       selection: null,
       palette: [],
+      showGrid: true,
 
       // ... rest of actions ...
 
@@ -464,6 +465,8 @@ export const useSpriteEditorStore = create<SpriteEditorStore>()(
     set((state) => ({
       palette: state.palette.filter((pc) => !colorsEqual(pc, color)),
     })),
+
+  setShowGrid: (show) => set({ showGrid: show }),
     }),
     {
       name: 'sprite-editor-palette',
@@ -471,6 +474,7 @@ export const useSpriteEditorStore = create<SpriteEditorStore>()(
         palette: state.palette,
         primaryColor: state.primaryColor,
         secondaryColor: state.secondaryColor,
+        showGrid: state.showGrid,
       }),
     }
   )

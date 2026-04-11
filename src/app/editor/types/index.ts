@@ -82,6 +82,7 @@ export interface SpriteEditorState {
   readonly cursorPixel: PixelCoord | null
   readonly selection: SelectionState | null
   readonly palette: RgbaColor[]
+  readonly showGrid: boolean
 }
 
 export interface SpriteEditorActions {
@@ -117,6 +118,7 @@ export interface SpriteEditorActions {
   commitTransformation: () => void
   saveColor: (color: RgbaColor) => void
   removeColor: (color: RgbaColor) => void
+  setShowGrid: (show: boolean) => void
 }
 
 export type SpriteEditorStore = SpriteEditorState & SpriteEditorActions

@@ -9,6 +9,8 @@ import {
   usePrimaryColor,
   useSecondaryColor,
   useSetActiveTool,
+  useShowGrid,
+  useSetShowGrid,
 } from '@/app/editor/sprites/hooks/useSpriteEditorStore.hook'
 
 export const useBottomToolbar = () => {
@@ -16,6 +18,9 @@ export const useBottomToolbar = () => {
   const primaryColor = usePrimaryColor()
   const secondaryColor = useSecondaryColor()
   const setActiveTool = useSetActiveTool()
+
+  const showGrid = useShowGrid()
+  const setShowGrid = useSetShowGrid()
 
   const tools = SPRITE_EDITOR_TOOLS
 
@@ -26,5 +31,9 @@ export const useBottomToolbar = () => {
     [setActiveTool]
   )
 
-  return { tools, activeTool, primaryColor, secondaryColor, handleSelectTool }
+  const toggleGrid = useCallback(() => {
+    setShowGrid(!showGrid)
+  }, [showGrid, setShowGrid])
+
+  return { tools, activeTool, primaryColor, secondaryColor, handleSelectTool, showGrid, toggleGrid }
 }

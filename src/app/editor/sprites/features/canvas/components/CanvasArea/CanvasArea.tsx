@@ -7,6 +7,7 @@ import { useCanvasInteraction } from '../../hooks/useCanvasInteraction.hook'
 import { useCanvasZoom } from '../../hooks/useCanvasZoom.hook'
 import { useKeyboardShortcuts } from '@/app/editor/sprites/hooks/useKeyboardShortcuts.hook'
 import { GridBackground } from '@/app/editor/sprites/features/canvas/components/CanvasArea/konva/GridBackground'
+import { GridOverlay } from '@/app/editor/sprites/features/canvas/components/CanvasArea/konva/GridOverlay'
 import { SpriteLayers } from '@/app/editor/sprites/features/canvas/components/CanvasArea/konva/SpriteLayers'
 import { SelectionOverlay } from '@/app/editor/sprites/features/canvas/components/CanvasArea/konva/SelectionOverlay'
 
@@ -16,6 +17,7 @@ import {
   useCanvasDimensions,
   useSelection,
   useActiveLayerId,
+  useShowGrid,
 } from '@/app/editor/sprites/hooks/useSpriteEditorStore.hook'
 
 export const CanvasArea = () => {
@@ -27,6 +29,7 @@ export const CanvasArea = () => {
   const canvasDimensions = useCanvasDimensions()
   const selection = useSelection()
   const activeLayerId = useActiveLayerId()
+  const showGrid = useShowGrid()
 
   const { handlePointerDown, handlePointerMove, handlePointerUp, handlePointerLeave } = useCanvasInteraction()
   const { handleWheel } = useCanvasZoom()
@@ -87,6 +90,16 @@ export const CanvasArea = () => {
             activeLayerId={ activeLayerId }
             selection={ selection }
           />
+
+          { showGrid && (
+            <GridOverlay
+              viewport={ viewport }
+              gridWidth={ canvasDimensions.width }
+              gridHeight={ canvasDimensions.height }
+              canvasElWidth={ size.width }
+              canvasElHeight={ size.height }
+            />
+          ) }
 
           { selection && (
             <SelectionOverlay

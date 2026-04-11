@@ -25,8 +25,8 @@ function getDrawOffset(
   canvasHeight: number
 ) {
   const { zoom, offsetX, offsetY } = viewport
-  const startX = Math.round(canvasWidth / 2 - (gridWidth * zoom) / 2) + offsetX
-  const startY = Math.round(canvasHeight / 2 - (gridHeight * zoom) / 2) + offsetY
+  const startX = Math.round(canvasWidth / 2 - (gridWidth * zoom) / 2 + offsetX)
+  const startY = Math.round(canvasHeight / 2 - (gridHeight * zoom) / 2 + offsetY)
   return { startX, startY }
 }
 
@@ -68,11 +68,12 @@ export const SelectionOverlay = ({
         rects.push(
           <Rect
             key={`floating-${x}-${y}`}
-            x={x * zoom}
-            y={y * zoom}
-            width={zoom}
-            height={zoom}
+            x={Math.round(x * zoom)}
+            y={Math.round(y * zoom)}
+            width={zoom + 0.5}
+            height={zoom + 0.5}
             fill={rgbaToString(color)}
+            perfectDrawEnabled={false}
           />
         )
       }
