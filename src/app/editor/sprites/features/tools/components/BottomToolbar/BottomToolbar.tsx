@@ -1,6 +1,6 @@
 'use client'
 
-import { Grid3x3, ChevronDown, GripVertical } from 'lucide-react'
+import { Grid3x3, ChevronDown, GripVertical, Layers } from 'lucide-react'
 import { ToolButton } from '../ToolButton/ToolButton'
 import { ColorSwatch } from '../ColorSwatch/ColorSwatch'
 import { useBottomToolbar } from '@/app/editor/sprites/features/tools/components/BottomToolbar/useBottomToolbar.hook'
@@ -14,6 +14,8 @@ export const BottomToolbar = () => {
     handleSelectTool, 
     showGrid, 
     toggleGrid, 
+    onionSkinEnabled,
+    toggleOnionSkin,
     toggleToolbar,
     toolbarPosition,
     isDragging,
@@ -65,6 +67,19 @@ export const BottomToolbar = () => {
         }`}
       >
         <Grid3x3 size={18} />
+      </button>
+
+      <button
+        type="button"
+        onClick={toggleOnionSkin}
+        title={`Onion Skin: ${onionSkinEnabled ? 'ENABLED' : 'DISABLED'} (dim non-active layers)`}
+        className={`relative rounded-lg p-2 transition-all ${
+          onionSkinEnabled
+            ? 'bg-[#00f5ff] text-[#1a1a2e] shadow-[0_0_10px_#00f5ff]'
+            : 'text-[#8888aa] hover:text-white'
+        }`}
+      >
+        <Layers size={18} />
       </button>
       <div className="mx-2 h-6 w-px bg-white/10" />
       <ColorSwatch primaryColor={primaryColor} secondaryColor={secondaryColor} />

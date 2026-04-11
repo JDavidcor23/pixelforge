@@ -62,14 +62,23 @@ function renderLayers(
   layers: Layer[],
   viewport: ViewportState,
   startX: number,
-  startY: number
+  startY: number,
+  activeLayerId: string,
+  onionSkinEnabled: boolean
 ): void {
   const { zoom } = viewport
+  const ONION_SKIN_OPACITY_FACTOR = 0.1
 
   for (const layer of layers) {
     if (!layer.visible) continue
 
-    ctx.globalAlpha = layer.opacity / 100
+    let effectiveOpacity = layer.opacity / 100
+
+    if (onionSkinEnabled && layer.id !== activeLayerId) {
+      effectiveOpacity *= ONION_SKIN_OPACITY_FACTOR
+    }
+
+    ctx.globalAlpha = effectiveOpacity
     const pixels = layer.pixels
 
     for (let y = 0; y < pixels.length; y++) {
@@ -172,7 +181,9 @@ export function renderPixelGrid(
   gridHeight: number,
   canvasElWidth: number,
   canvasElHeight: number,
-  selection: SelectionState | null
+  selection: SelectionState | null,
+  activeLayerId: string,
+  onionSkinEnabled: boolean
 ): void {
   ctx.clearRect(0, 0, canvasElWidth, canvasElHeight)
 
@@ -182,7 +193,7 @@ export function renderPixelGrid(
   const { startX, startY } = getDrawOffset(viewport, gridWidth, gridHeight, canvasElWidth, canvasElHeight)
 
   renderCheckerboard(ctx, viewport, gridWidth, gridHeight, startX, startY)
-  renderLayers(ctx, layers, viewport, startX, startY)
+  renderLayers(ctx, layers, viewport, startX, startY, activeLayerId, onionSkinEnabled)
   renderGridLines(ctx, viewport, gridWidth, gridHeight, startX, startY)
 
   if (selection) {

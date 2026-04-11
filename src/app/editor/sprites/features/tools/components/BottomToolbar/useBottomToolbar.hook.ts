@@ -12,8 +12,10 @@ import {
   useShowGrid,
   useSetShowGrid,
   useToggleToolbar,
-  useUIState,
   useSetToolbarPosition,
+  useOnionSkinEnabled,
+  useToggleOnionSkin,
+  useUIState,
 } from '@/app/editor/sprites/hooks/useSpriteEditorStore.hook'
 
 export const useBottomToolbar = () => {
@@ -26,6 +28,9 @@ export const useBottomToolbar = () => {
 
   const showGrid = useShowGrid()
   const setShowGrid = useSetShowGrid()
+
+  const onionSkinEnabled = useOnionSkinEnabled()
+  const toggleOnionSkin = useToggleOnionSkin()
 
   const tools = SPRITE_EDITOR_TOOLS
 
@@ -95,6 +100,8 @@ export const useBottomToolbar = () => {
     handleSelectTool, 
     showGrid, 
     toggleGrid, 
+    onionSkinEnabled,
+    toggleOnionSkin,
     toggleToolbar,
     toolbarPosition: ui.toolbarPosition,
     isDragging,

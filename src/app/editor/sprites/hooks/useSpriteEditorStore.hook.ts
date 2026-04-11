@@ -112,7 +112,9 @@ export const useRemoveColor = () => useSpriteEditorStore((s) => s.removeColor)
 // ── View Preferences ─────────────────────────────────────────────────
 
 export const useShowGrid = () => useSpriteEditorStore((s) => s.showGrid)
+export const useOnionSkinEnabled = () => useSpriteEditorStore((s) => s.onionSkinEnabled)
 export const useSetShowGrid = () => useSpriteEditorStore((s) => s.setShowGrid)
+export const useToggleOnionSkin = () => useSpriteEditorStore((s) => s.toggleOnionSkin)
 
 // ── Clipboard Actions ────────────────────────────────────────────────
 

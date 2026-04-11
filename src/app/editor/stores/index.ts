@@ -83,6 +83,7 @@ export const useSpriteEditorStore = create<SpriteEditorStore>()(
       selection: null,
       palette: [],
       showGrid: true,
+      onionSkinEnabled: true,
       clipboard: null,
       ui: {
         leftSidebarOpen: true,
@@ -483,6 +484,7 @@ export const useSpriteEditorStore = create<SpriteEditorStore>()(
     })),
 
   setShowGrid: (show) => set({ showGrid: show }),
+  toggleOnionSkin: () => set((state) => ({ onionSkinEnabled: !state.onionSkinEnabled })),
 
   // ── Clipboard Actions ──────────────────────────────────────────────
 
@@ -666,6 +668,7 @@ export const useSpriteEditorStore = create<SpriteEditorStore>()(
         primaryColor: state.primaryColor,
         secondaryColor: state.secondaryColor,
         showGrid: state.showGrid,
+        onionSkinEnabled: state.onionSkinEnabled,
         ui: state.ui,
       }),
     }

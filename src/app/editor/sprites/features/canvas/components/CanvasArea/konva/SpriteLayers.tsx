@@ -13,6 +13,7 @@ interface SpriteLayersProps {
   readonly canvasElHeight: number
   readonly activeLayerId: string
   readonly selection: SelectionState | null
+  readonly onionSkinEnabled: boolean
 }
 
 function getDrawOffset(
@@ -37,6 +38,7 @@ export const SpriteLayers = ({
   canvasElHeight,
   activeLayerId,
   selection,
+  onionSkinEnabled,
 }: SpriteLayersProps) => {
   const { startX, startY } = getDrawOffset(
     viewport,
@@ -92,8 +94,13 @@ export const SpriteLayers = ({
             }
           }
 
+          let effectiveOpacity = layer.opacity / 100
+          if (onionSkinEnabled && layer.id !== activeLayerId) {
+            effectiveOpacity *= 0.3
+          }
+
           return (
-            <Group key={layer.id} opacity={layer.opacity / 100} listening={false}>
+            <Group key={layer.id} opacity={effectiveOpacity} listening={false}>
               {rects}
             </Group>
           )

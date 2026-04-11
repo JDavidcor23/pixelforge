@@ -17,7 +17,8 @@ import {
   useCutSelection,
   usePasteClipboard,
   useDeleteSelection,
-  useToggleZenMode,
+   useToggleZenMode,
+  useToggleOnionSkin,
 } from './useSpriteEditorStore.hook'
 
 const PAN_STEP = 20
@@ -37,6 +38,7 @@ export const useKeyboardShortcuts = () => {
   const pasteClipboard = usePasteClipboard()
   const deleteSelection = useDeleteSelection()
   const toggleZenMode = useToggleZenMode()
+  const toggleOnionSkin = useToggleOnionSkin()
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -156,6 +158,10 @@ export const useKeyboardShortcuts = () => {
           break
         case SPRITE_EDITOR_KEYBOARD.TRANSFORM:
           setActiveTool('transform')
+          break
+        case 'o':
+          e.preventDefault()
+          toggleOnionSkin()
           break
       }
     }

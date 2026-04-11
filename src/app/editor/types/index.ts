@@ -83,6 +83,7 @@ export interface SpriteEditorState {
   readonly selection: SelectionState | null
   readonly palette: RgbaColor[]
   readonly showGrid: boolean
+  readonly onionSkinEnabled: boolean
   readonly clipboard: PixelBuffer | null
   readonly ui: {
     readonly leftSidebarOpen: boolean
@@ -127,6 +128,7 @@ export interface SpriteEditorActions {
   saveColor: (color: RgbaColor) => void
   removeColor: (color: RgbaColor) => void
   setShowGrid: (show: boolean) => void
+  toggleOnionSkin: () => void
   copySelection: () => void
   cutSelection: () => void
   pasteClipboard: () => void

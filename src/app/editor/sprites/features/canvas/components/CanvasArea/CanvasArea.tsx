@@ -18,6 +18,7 @@ import {
   useSelection,
   useActiveLayerId,
   useShowGrid,
+  useOnionSkinEnabled,
 } from '@/app/editor/sprites/hooks/useSpriteEditorStore.hook'
 
 export const CanvasArea = () => {
@@ -30,6 +31,7 @@ export const CanvasArea = () => {
   const selection = useSelection()
   const activeLayerId = useActiveLayerId()
   const showGrid = useShowGrid()
+  const onionSkinEnabled = useOnionSkinEnabled()
 
   const { handlePointerDown, handlePointerMove, handlePointerUp, handlePointerLeave } = useCanvasInteraction()
   const { handleWheel } = useCanvasZoom()
@@ -89,6 +91,7 @@ export const CanvasArea = () => {
             canvasElHeight={ size.height }
             activeLayerId={ activeLayerId }
             selection={ selection }
+            onionSkinEnabled={ onionSkinEnabled }
           />
 
           { showGrid && (
