@@ -5,6 +5,30 @@ import { useSpriteEditorStore } from '@/app/editor/stores'
 // ── State Selectors ─────────────────────────────────────────────────
 
 export const useLayers = () => useSpriteEditorStore((s) => s.layers)
+// Selectors strictly for UI components to avoid re-rendering on pixel updates
+export const useActiveLayerOpacity = () =>
+  useSpriteEditorStore(
+    (s) => s.layers.find((l) => l.id === s.activeLayerId)?.opacity ?? 100
+  )
+export const useLayersMetadata = () => {
+  // We stringify the metadata to perform a deep equality check on primitives
+  const metadataStr = useSpriteEditorStore((s) =>
+    JSON.stringify(
+      s.layers.map((l) => ({
+        id: l.id,
+        name: l.name,
+        visible: l.visible,
+        locked: l.locked,
+      }))
+    )
+  )
+  return JSON.parse(metadataStr) as {
+    id: string
+    name: string
+    visible: boolean
+    locked: boolean
+  }[]
+}
 export const useActiveLayerId = () => useSpriteEditorStore((s) => s.activeLayerId)
 export const useActiveTool = () => useSpriteEditorStore((s) => s.activeTool)
 export const usePrimaryColor = () => useSpriteEditorStore((s) => s.primaryColor)
@@ -78,4 +102,10 @@ export const useFloatSelection = () => useSpriteEditorStore((s) => s.floatSelect
 export const useSetSelectionTransform = () => useSpriteEditorStore((s) => s.setSelectionTransform)
 export const useCommitTransformation = () =>
   useSpriteEditorStore((s) => s.commitTransformation)
+
+// ── Palette Actions ──────────────────────────────────────────────────
+
+export const usePalette = () => useSpriteEditorStore((s) => s.palette)
+export const useSaveColor = () => useSpriteEditorStore((s) => s.saveColor)
+export const useRemoveColor = () => useSpriteEditorStore((s) => s.removeColor)
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { colord } from 'colord'
+import { useSaveColor } from '@/app/editor/sprites/hooks/useSpriteEditorStore.hook'
 
 interface UseColorInputsParams {
   readonly color: string
@@ -40,10 +41,26 @@ export const useColorInputs = ({ color, onChange }: UseColorInputsParams) => {
     a: Math.round(currentRgba.a * 255)
   }
 
+  const saveColor = useSaveColor()
+
+  const handleSave = () => {
+    const c = colord(hexInput)
+    if (c.isValid()) {
+      const rgba = c.toRgb()
+      saveColor({
+        r: rgba.r,
+        g: rgba.g,
+        b: rgba.b,
+        a: Math.round(rgba.a * 255),
+      })
+    }
+  }
+
   return {
     hexInput,
     currentRgba: displayRgba,
     handleHexChange,
     handleRgbaChange,
+    handleSave,
   }
 }

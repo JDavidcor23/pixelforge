@@ -11,13 +11,13 @@ import {
   useActiveLayerId,
   useViewport,
   useCanvasDimensions,
-  useLayers,
   useSetPixel,
   useFloodFill,
   useSetPrimaryColor,
   useSetCursorPixel,
   usePushHistory,
 } from '@/app/editor/sprites/hooks/useSpriteEditorStore.hook'
+import { useSpriteEditorStore } from '@/app/editor/stores'
 
 import { useCanvasPanning } from './useCanvasPanning.hook'
 import { useCanvasSelection } from './useCanvasSelection.hook'
@@ -62,7 +62,6 @@ export const useCanvasInteraction = () => {
   const activeLayerId = useActiveLayerId()
   const viewport = useViewport()
   const canvasDimensions = useCanvasDimensions()
-  const layers = useLayers()
 
   const setPixel = useSetPixel()
   const floodFill = useFloodFill()
@@ -111,6 +110,7 @@ export const useCanvasInteraction = () => {
           floodFill(activeLayerId, coord.x, coord.y, primaryColor)
           break
         case 'eyedropper': {
+          const { layers } = useSpriteEditorStore.getState()
           const activeLayer = layers.find((l) => l.id === activeLayerId)
           if (activeLayer) {
             const pixelColor = getPixel(activeLayer.pixels, coord.x, coord.y)
@@ -120,7 +120,7 @@ export const useCanvasInteraction = () => {
         }
       }
     },
-    [activeTool, activeLayerId, primaryColor, layers, setPixel, floodFill, setPrimaryColor]
+    [activeTool, activeLayerId, primaryColor, setPixel, floodFill, setPrimaryColor]
   )
 
   const handlePointerDown = useCallback(

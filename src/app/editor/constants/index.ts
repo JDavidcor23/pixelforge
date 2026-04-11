@@ -21,6 +21,7 @@ export const SPRITE_EDITOR_COLORS = {
   BORDER: 'rgba(255,255,255,0.1)',
   TRANSPARENT_CHECKER_A: '#2a2a3e',
   TRANSPARENT_CHECKER_B: '#1e1e30',
+  MAX_PALETTE_COLORS: 32,
 } as const
 
 export const SPRITE_EDITOR_TOOLS: readonly ToolDefinition[] = [

@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import { Plus } from 'lucide-react'
 import { useColorInputs } from './useColorInputs.hook'
 
 interface ColorInputsProps {
@@ -13,10 +13,11 @@ interface ColorInputsProps {
  * Follows a dark-mode "Inspector" aesthetic with neon accents.
  */
 export const ColorInputs: React.FC<ColorInputsProps> = ({ color, onChange }) => {
-  const { hexInput, currentRgba, handleHexChange, handleRgbaChange } = useColorInputs({
-    color,
-    onChange,
-  })
+  const { hexInput, currentRgba, handleHexChange, handleRgbaChange, handleSave } =
+    useColorInputs({
+      color,
+      onChange,
+    })
 
   return (
     <div className="w-full rounded-lg border border-white/10 bg-[#1e222a] p-4 font-mono text-xs text-slate-300 shadow-xl">
@@ -25,15 +26,25 @@ export const ColorInputs: React.FC<ColorInputsProps> = ({ color, onChange }) => 
         <label className="tracking-tighter uppercase text-cyan-400" htmlFor="hex-input">
           Hex
         </label>
-        <div className="relative">
-          <input
-            id="hex-input"
-            type="text"
-            value={hexInput}
-            onChange={(e) => handleHexChange(e.target.value)}
-            className="w-24 rounded border border-white/5 bg-[#0f1115] px-2 py-1 text-right outline-none transition-colors focus:border-cyan-500"
-            spellCheck={false}
-          />
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <input
+              id="hex-input"
+              type="text"
+              value={hexInput}
+              onChange={(e) => handleHexChange(e.target.value)}
+              className="w-24 rounded border border-white/5 bg-[#0f1115] px-2 py-1 text-right outline-none transition-colors focus:border-cyan-500"
+              spellCheck={false}
+            />
+          </div>
+          <button
+            type="button"
+            onClick={handleSave}
+            className="flex h-7 w-7 items-center justify-center rounded bg-cyan-700/30 text-cyan-400 transition-colors hover:bg-cyan-700/50 hover:text-cyan-300 active:bg-cyan-600/50"
+            title="Save to palette"
+          >
+            <Plus size={14} />
+          </button>
         </div>
       </div>
 

@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 
 import type {
   AnimationFrame,
@@ -7,6 +8,7 @@ import type {
 } from '@/app/editor/types'
 import {
   SPRITE_EDITOR_CANVAS,
+  SPRITE_EDITOR_COLORS,
   SPRITE_EDITOR_DEFAULTS,
   SPRITE_EDITOR_HISTORY,
   SPRITE_EDITOR_TIMELINE,
@@ -18,6 +20,7 @@ import {
   createSnapshot,
   cloneLayers,
   transformPixels,
+  colorsEqual,
 } from '@/app/editor/lib'
 
 function createInitialLayer(width: number, height: number): Layer {
@@ -50,31 +53,36 @@ const initialLayer = createInitialLayer(
   SPRITE_EDITOR_CANVAS.DEFAULT_HEIGHT
 )
 
-export const useSpriteEditorStore = create<SpriteEditorStore>((set, get) => ({
-  // ── State ─────────────────────────────────────────────────────────
-  canvasWidth: SPRITE_EDITOR_CANVAS.DEFAULT_WIDTH,
-  canvasHeight: SPRITE_EDITOR_CANVAS.DEFAULT_HEIGHT,
-  layers: [initialLayer],
-  activeLayerId: initialLayer.id,
-  activeTool: 'pencil',
-  primaryColor: { ...SPRITE_EDITOR_DEFAULTS.PRIMARY_COLOR },
-  secondaryColor: { ...SPRITE_EDITOR_DEFAULTS.SECONDARY_COLOR },
-  viewport: {
-    zoom: SPRITE_EDITOR_CANVAS.DEFAULT_ZOOM,
-    offsetX: 0,
-    offsetY: 0,
-  },
-  history: [],
-  historyIndex: -1,
-  timeline: {
-    frames: [createInitialFrame([initialLayer])],
-    currentFrameIndex: 0,
-    isPlaying: false,
-    fps: SPRITE_EDITOR_TIMELINE.DEFAULT_FPS,
-  },
-  leftSidebarTab: 'layers',
-  cursorPixel: null,
-  selection: null,
+export const useSpriteEditorStore = create<SpriteEditorStore>()(
+  persist(
+    (set, get) => ({
+      // ── State ─────────────────────────────────────────────────────────
+      canvasWidth: SPRITE_EDITOR_CANVAS.DEFAULT_WIDTH,
+      canvasHeight: SPRITE_EDITOR_CANVAS.DEFAULT_HEIGHT,
+      layers: [initialLayer],
+      activeLayerId: initialLayer.id,
+      activeTool: 'pencil',
+      primaryColor: { ...SPRITE_EDITOR_DEFAULTS.PRIMARY_COLOR },
+      secondaryColor: { ...SPRITE_EDITOR_DEFAULTS.SECONDARY_COLOR },
+      viewport: {
+        zoom: SPRITE_EDITOR_CANVAS.DEFAULT_ZOOM,
+        offsetX: 0,
+        offsetY: 0,
+      },
+      history: [],
+      historyIndex: -1,
+      timeline: {
+        frames: [createInitialFrame([initialLayer])],
+        currentFrameIndex: 0,
+        isPlaying: false,
+        fps: SPRITE_EDITOR_TIMELINE.DEFAULT_FPS,
+      },
+      leftSidebarTab: 'layers',
+      cursorPixel: null,
+      selection: null,
+      palette: [],
+
+      // ... rest of actions ...
 
   // ── Pixel Actions ─────────────────────────────────────────────────
 
@@ -442,6 +450,29 @@ export const useSpriteEditorStore = create<SpriteEditorStore>((set, get) => ({
         selection: null,
       }
     }),
-}))
 
+  saveColor: (color) =>
+    set((state) => {
+      const alreadyExists = state.palette.some((pc) => colorsEqual(pc, color))
+      if (alreadyExists || state.palette.length >= SPRITE_EDITOR_COLORS.MAX_PALETTE_COLORS) {
+        return state
+      }
+      return { palette: [...state.palette, color] }
+    }),
+
+  removeColor: (color) =>
+    set((state) => ({
+      palette: state.palette.filter((pc) => !colorsEqual(pc, color)),
+    })),
+    }),
+    {
+      name: 'sprite-editor-palette',
+      partialize: (state) => ({
+        palette: state.palette,
+        primaryColor: state.primaryColor,
+        secondaryColor: state.secondaryColor,
+      }),
+    }
+  )
+)
 

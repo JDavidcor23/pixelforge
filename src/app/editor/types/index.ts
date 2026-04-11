@@ -81,6 +81,7 @@ export interface SpriteEditorState {
   readonly leftSidebarTab: LeftSidebarTab
   readonly cursorPixel: PixelCoord | null
   readonly selection: SelectionState | null
+  readonly palette: RgbaColor[]
 }
 
 export interface SpriteEditorActions {
@@ -114,6 +115,8 @@ export interface SpriteEditorActions {
   floatSelection: () => void
   setSelectionTransform: (transform: { x: number; y: number; rotation: number; scaleX: number; scaleY: number }) => void
   commitTransformation: () => void
+  saveColor: (color: RgbaColor) => void
+  removeColor: (color: RgbaColor) => void
 }
 
 export type SpriteEditorStore = SpriteEditorState & SpriteEditorActions

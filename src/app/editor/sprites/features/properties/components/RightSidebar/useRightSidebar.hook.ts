@@ -4,9 +4,8 @@ import { useState, useCallback, useMemo } from 'react'
 import { colord } from 'colord'
 
 import {
-  useCursorPixel,
   useActiveLayerId,
-  useLayers,
+  useActiveLayerOpacity,
   useSetLayerOpacity,
   usePrimaryColor,
   useSecondaryColor,
@@ -16,11 +15,24 @@ import {
 import type { RgbaColor } from '@/app/editor/types'
 
 export const useRightSidebar = () => {
-  const cursorPixel = useCursorPixel()
   const activeLayerId = useActiveLayerId()
-  const layers = useLayers()
+  const activeLayerOpacity = useActiveLayerOpacity()
   const setLayerOpacity = useSetLayerOpacity()
 
+  const handleOpacityChange = useCallback(
+    (value: number) => {
+      setLayerOpacity(activeLayerId, value)
+    },
+    [activeLayerId, setLayerOpacity]
+  )
+
+  return {
+    activeLayerOpacity,
+    handleOpacityChange,
+  }
+}
+
+export const useColorSection = () => {
   const primaryColor = usePrimaryColor()
   const secondaryColor = useSecondaryColor()
   const setPrimaryColor = useSetPrimaryColor()
@@ -29,9 +41,6 @@ export const useRightSidebar = () => {
   const [activeColorType, setActiveColorType] = useState<'primary' | 'secondary'>(
     'primary'
   )
-
-  const activeLayer = layers.find((l) => l.id === activeLayerId)
-  const activeLayerOpacity = activeLayer?.opacity ?? 100
 
   // Helpers to convert RgbaColor to Hex for ColorInputs
   const rgbaToHex = (color: RgbaColor) => {
@@ -59,13 +68,6 @@ export const useRightSidebar = () => {
 
   const activeColorHex = activeColorType === 'primary' ? primaryHex : secondaryHex
 
-  const handleOpacityChange = useCallback(
-    (value: number) => {
-      setLayerOpacity(activeLayerId, value)
-    },
-    [activeLayerId, setLayerOpacity]
-  )
-
   const handleColorChange = useCallback(
     (newHex: string) => {
       const rgba = hexToRgba(newHex)
@@ -83,13 +85,10 @@ export const useRightSidebar = () => {
   }, [])
 
   return {
-    cursorPixel,
-    activeLayerOpacity,
     primaryHex,
     secondaryHex,
     activeColorHex,
     activeColorType,
-    handleOpacityChange,
     handleColorChange,
     handleToggleActiveColor,
   }

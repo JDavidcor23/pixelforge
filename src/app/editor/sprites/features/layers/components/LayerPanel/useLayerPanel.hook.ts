@@ -3,7 +3,7 @@
 import { useCallback } from 'react'
 
 import {
-  useLayers,
+  useLayersMetadata,
   useActiveLayerId,
   useAddLayer,
   useToggleLayerVisibility,
@@ -12,14 +12,14 @@ import {
 } from '@/app/editor/sprites/hooks/useSpriteEditorStore.hook'
 
 export const useLayerPanel = () => {
-  const layers = useLayers()
+  const layersMetadata = useLayersMetadata()
   const activeLayerId = useActiveLayerId()
   const addLayer = useAddLayer()
   const toggleLayerVisibility = useToggleLayerVisibility()
   const toggleLayerLock = useToggleLayerLock()
   const setActiveLayer = useSetActiveLayer()
 
-  const reversedLayers = [...layers].reverse()
+  const reversedLayers = [...layersMetadata].reverse()
 
   const handleAddLayer = useCallback(() => {
     addLayer()
