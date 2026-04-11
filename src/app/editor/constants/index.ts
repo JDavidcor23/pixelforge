@@ -28,6 +28,8 @@ export const SPRITE_EDITOR_TOOLS: readonly ToolDefinition[] = [
   { type: 'eraser', label: 'Eraser', shortcut: 'E', iconName: 'Eraser' },
   { type: 'bucket', label: 'Paint Bucket', shortcut: 'G', iconName: 'PaintBucket' },
   { type: 'eyedropper', label: 'Eyedropper', shortcut: 'I', iconName: 'Pipette' },
+  { type: 'select', label: 'Select', shortcut: 'M', iconName: 'SquareDashed' },
+  { type: 'transform', label: 'Transform', shortcut: 'V', iconName: 'Move' },
 ] as const
 
 export const SPRITE_EDITOR_DEFAULTS = {
@@ -65,6 +67,8 @@ export const SPRITE_EDITOR_KEYBOARD = {
   ERASER: 'e',
   BUCKET: 'g',
   EYEDROPPER: 'i',
+  SELECT: 'm',
+  TRANSFORM: 'v',
   ZOOM_IN: 'ctrl+=',
   ZOOM_OUT: 'ctrl+-',
 } as const

@@ -1,4 +1,4 @@
-import type { Layer, PixelCoord, ViewportState } from '@/app/editor/types'
+import type { Layer, PixelCoord, ViewportState, SelectionState } from '@/app/editor/types'
 import { SPRITE_EDITOR_CANVAS, SPRITE_EDITOR_COLORS } from '@/app/editor/constants'
 import { rgbaToString } from './color-utils'
 
@@ -114,6 +114,56 @@ function renderGridLines(
   }
 }
 
+
+function renderSelectionOverlay(
+  ctx: CanvasRenderingContext2D,
+  selection: SelectionState,
+  viewport: ViewportState,
+  startX: number,
+  startY: number
+): void {
+  const { zoom } = viewport
+  const { rect } = selection
+
+  const x = startX + rect.x * zoom
+  const y = startY + rect.y * zoom
+  const w = rect.width * zoom
+  const h = rect.height * zoom
+
+  ctx.save()
+
+  // 1. Draw dashed border (marching ants)
+  ctx.strokeStyle = SPRITE_EDITOR_COLORS.ACCENT
+  ctx.lineWidth = 1.5
+  ctx.setLineDash([5, 3])
+  ctx.strokeRect(x, y, w, h)
+
+  // 2. Draw handles
+  const handleSize = 6
+  ctx.fillStyle = SPRITE_EDITOR_COLORS.ACCENT
+  ctx.setLineDash([])
+
+  // Corners
+  ctx.fillRect(x - handleSize / 2, y - handleSize / 2, handleSize, handleSize) // Top-left
+  ctx.fillRect(x + w - handleSize / 2, y - handleSize / 2, handleSize, handleSize) // Top-right
+  ctx.fillRect(x - handleSize / 2, y + h - handleSize / 2, handleSize, handleSize) // Bottom-left
+  ctx.fillRect(x + w - handleSize / 2, y + h - handleSize / 2, handleSize, handleSize) // Bottom-right
+
+  // 3. Draw floating pixels
+  if (selection.floatingPixels) {
+    for (let py = 0; py < selection.floatingPixels.length; py++) {
+      for (let px = 0; px < selection.floatingPixels[py].length; px++) {
+        const color = selection.floatingPixels[py][px]
+        if (color.a === 0) continue
+        ctx.fillStyle = rgbaToString(color)
+        ctx.fillRect(x + px * zoom, y + py * zoom, zoom, zoom)
+      }
+    }
+  }
+
+  ctx.restore()
+}
+
 export function renderPixelGrid(
   ctx: CanvasRenderingContext2D,
   layers: Layer[],
@@ -121,7 +171,8 @@ export function renderPixelGrid(
   gridWidth: number,
   gridHeight: number,
   canvasElWidth: number,
-  canvasElHeight: number
+  canvasElHeight: number,
+  selection: SelectionState | null
 ): void {
   ctx.clearRect(0, 0, canvasElWidth, canvasElHeight)
 
@@ -133,5 +184,9 @@ export function renderPixelGrid(
   renderCheckerboard(ctx, viewport, gridWidth, gridHeight, startX, startY)
   renderLayers(ctx, layers, viewport, startX, startY)
   renderGridLines(ctx, viewport, gridWidth, gridHeight, startX, startY)
+
+  if (selection) {
+    renderSelectionOverlay(ctx, selection, viewport, startX, startY)
+  }
 }
 

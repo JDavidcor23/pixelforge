@@ -10,10 +10,13 @@
   },
   "dependencies": {
     "colord": "^2.9.3",
+    "konva": "^10.2.5",
     "lucide-react": "^1.8.0",
     "next": "16.2.3",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "react-konva": "^19.2.3",
+    "use-image": "^1.1.4",
     "zustand": "^5.0.12"
   },
   "devDependencies": {

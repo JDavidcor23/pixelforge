@@ -8,12 +8,14 @@ import {
   useLayers,
   useViewport,
   useCanvasDimensions,
+  useSelection,
 } from './useSpriteEditorStore.hook'
 
 export const useCanvasRenderer = (canvasRef: RefObject<HTMLCanvasElement | null>) => {
   const layers = useLayers()
   const viewport = useViewport()
   const canvasDimensions = useCanvasDimensions()
+  const selection = useSelection()
 
   const [parentSize, setParentSize] = useState({ width: 0, height: 0 })
 
@@ -55,9 +57,10 @@ export const useCanvasRenderer = (canvasRef: RefObject<HTMLCanvasElement | null>
       canvasDimensions.width,
       canvasDimensions.height,
       parentSize.width,
-      parentSize.height
+      parentSize.height,
+      selection
     )
-  }, [layers, viewport, canvasDimensions, parentSize, canvasRef])
+  }, [layers, viewport, canvasDimensions, parentSize, canvasRef, selection])
 
   useEffect(() => {
     const frameId = requestAnimationFrame(render)

@@ -9,7 +9,13 @@ import {
   useRedo,
   useSetZoom,
   useViewport,
+  useActiveTool,
+  useSelection,
+  useSetSelectionTransform,
+  useSetViewportOffset,
 } from './useSpriteEditorStore.hook'
+
+const PAN_STEP = 20
 
 export const useKeyboardShortcuts = () => {
   const setActiveTool = useSetActiveTool()
@@ -17,6 +23,10 @@ export const useKeyboardShortcuts = () => {
   const redo = useRedo()
   const setZoom = useSetZoom()
   const viewport = useViewport()
+  const activeTool = useActiveTool()
+  const selection = useSelection()
+  const setSelectionTransform = useSetSelectionTransform()
+  const setViewportOffset = useSetViewportOffset()
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -52,6 +62,41 @@ export const useKeyboardShortcuts = () => {
 
       if (isCtrl || isShift) return
 
+      // Handle Arrow Keys
+      if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) {
+        e.preventDefault()
+
+        // 1. Nudge Selection if transforming
+        if (activeTool === 'transform' && selection && selection.floatingPixels) {
+          let dx = 0
+          let dy = 0
+          if (key === 'arrowup') dy = -1
+          if (key === 'arrowdown') dy = 1
+          if (key === 'arrowleft') dx = -1
+          if (key === 'arrowright') dx = 1
+
+          setSelectionTransform({
+            x: selection.rect.x + dx,
+            y: selection.rect.y + dy,
+            rotation: selection.rotation,
+            scaleX: selection.scaleX,
+            scaleY: selection.scaleY,
+          })
+          return
+        }
+
+        // 2. Pan Viewport otherwise
+        let dx = 0
+        let dy = 0
+        if (key === 'arrowup') dy = PAN_STEP
+        if (key === 'arrowdown') dy = -PAN_STEP
+        if (key === 'arrowleft') dx = PAN_STEP
+        if (key === 'arrowright') dx = -PAN_STEP
+
+        setViewportOffset(viewport.offsetX + dx, viewport.offsetY + dy)
+        return
+      }
+
       switch (key) {
         case SPRITE_EDITOR_KEYBOARD.PENCIL:
           setActiveTool('pencil')
@@ -65,11 +110,27 @@ export const useKeyboardShortcuts = () => {
         case SPRITE_EDITOR_KEYBOARD.EYEDROPPER:
           setActiveTool('eyedropper')
           break
+        case SPRITE_EDITOR_KEYBOARD.SELECT:
+          setActiveTool('select')
+          break
+        case SPRITE_EDITOR_KEYBOARD.TRANSFORM:
+          setActiveTool('transform')
+          break
       }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [setActiveTool, undo, redo, setZoom, viewport.zoom])
+  }, [
+    setActiveTool,
+    undo,
+    redo,
+    setZoom,
+    viewport,
+    setViewportOffset,
+    activeTool,
+    selection,
+    setSelectionTransform,
+  ])
 }
 

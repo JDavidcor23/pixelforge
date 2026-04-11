@@ -11,10 +11,10 @@ export const useCanvasZoom = () => {
   const setViewportOffset = useSetViewportOffset()
 
   const handleWheel = useCallback(
-    (e: React.WheelEvent<HTMLCanvasElement>) => {
-      e.preventDefault()
+    (e: any) => {
+      e.evt.preventDefault()
 
-      const zoomDelta = e.deltaY < 0 ? SPRITE_EDITOR_VIEWPORT.ZOOM_STEP : -SPRITE_EDITOR_VIEWPORT.ZOOM_STEP
+      const zoomDelta = e.evt.deltaY < 0 ? SPRITE_EDITOR_VIEWPORT.ZOOM_STEP : -SPRITE_EDITOR_VIEWPORT.ZOOM_STEP
       const newZoom = Math.min(
         SPRITE_EDITOR_CANVAS.MAX_ZOOM,
         Math.max(SPRITE_EDITOR_CANVAS.MIN_ZOOM, viewport.zoom + zoomDelta)
@@ -22,13 +22,18 @@ export const useCanvasZoom = () => {
 
       if (newZoom === viewport.zoom) return
 
-      const rect = e.currentTarget.getBoundingClientRect()
-      const cursorX = e.clientX - rect.left
-      const cursorY = e.clientY - rect.top
+      const stage = e.target.getStage()
+      if (!stage) return
+      
+      const pointerPosition = stage.getPointerPosition()
+      if (!pointerPosition) return
+
+      const cursorX = pointerPosition.x
+      const cursorY = pointerPosition.y
 
       const scale = newZoom / viewport.zoom
-      const canvasWidth = rect.width
-      const canvasHeight = rect.height
+      const canvasWidth = stage.width()
+      const canvasHeight = stage.height()
 
       const newOffsetX = cursorX - (canvasWidth / 2) + ((canvasWidth / 2) + viewport.offsetX - cursorX) * scale
       const newOffsetY = cursorY - (canvasHeight / 2) + ((canvasHeight / 2) + viewport.offsetY - cursorY) * scale

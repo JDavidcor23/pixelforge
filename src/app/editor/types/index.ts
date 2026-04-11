@@ -21,7 +21,16 @@ export interface Layer {
   readonly pixels: PixelBuffer
 }
 
-export type ToolType = 'pencil' | 'eraser' | 'bucket' | 'eyedropper'
+export type ToolType = 'pencil' | 'eraser' | 'bucket' | 'eyedropper' | 'select' | 'transform'
+
+export interface SelectionState {
+  readonly rect: { x: number; y: number; width: number; height: number }
+  readonly rotation: number
+  readonly scaleX: number
+  readonly scaleY: number
+  readonly floatingPixels: PixelBuffer | null
+  readonly originalArea: { x: number; y: number; width: number; height: number } | null
+}
 
 export interface ToolDefinition {
   readonly type: ToolType
@@ -71,6 +80,7 @@ export interface SpriteEditorState {
   readonly timeline: Timeline
   readonly leftSidebarTab: LeftSidebarTab
   readonly cursorPixel: PixelCoord | null
+  readonly selection: SelectionState | null
 }
 
 export interface SpriteEditorActions {
@@ -100,6 +110,10 @@ export interface SpriteEditorActions {
   setFps: (fps: number) => void
   togglePlayback: () => void
   setLeftSidebarTab: (tab: LeftSidebarTab) => void
+  setSelection: (selection: SelectionState | null) => void
+  floatSelection: () => void
+  setSelectionTransform: (transform: { x: number; y: number; rotation: number; scaleX: number; scaleY: number }) => void
+  commitTransformation: () => void
 }
 
 export type SpriteEditorStore = SpriteEditorState & SpriteEditorActions

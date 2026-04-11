@@ -17,6 +17,7 @@ import {
   floodFill as floodFillBuffer,
   createSnapshot,
   cloneLayers,
+  transformPixels,
 } from '@/app/editor/lib'
 
 function createInitialLayer(width: number, height: number): Layer {
@@ -73,6 +74,7 @@ export const useSpriteEditorStore = create<SpriteEditorStore>((set, get) => ({
   },
   leftSidebarTab: 'layers',
   cursorPixel: null,
+  selection: null,
 
   // ── Pixel Actions ─────────────────────────────────────────────────
 
@@ -184,7 +186,18 @@ export const useSpriteEditorStore = create<SpriteEditorStore>((set, get) => ({
 
   // ── Tool Actions ──────────────────────────────────────────────────
 
-  setActiveTool: (tool) => set({ activeTool: tool }),
+  setActiveTool: (tool) => {
+    const state = get()
+    if (state.activeTool === 'transform' && tool !== 'transform' && state.selection) {
+      state.commitTransformation()
+    }
+    if (tool === 'transform' && state.selection && !state.selection.floatingPixels) {
+      // Defer floating to ensure state sets the tool first if needed, 
+      // but we can just do it sequentially.
+      setTimeout(() => state.floatSelection(), 0)
+    }
+    set({ activeTool: tool })
+  },
   setPrimaryColor: (color) => set({ primaryColor: color }),
   setSecondaryColor: (color) => set({ secondaryColor: color }),
   setCursorPixel: (coord) => set({ cursorPixel: coord }),
@@ -319,6 +332,118 @@ export const useSpriteEditorStore = create<SpriteEditorStore>((set, get) => ({
   // ── Sidebar Actions ───────────────────────────────────────────────
 
   setLeftSidebarTab: (tab) => set({ leftSidebarTab: tab }),
+
+  setSelection: (selection) => set({ selection }),
+
+  floatSelection: () =>
+    set((state) => {
+      if (!state.selection || state.selection.floatingPixels) return {}
+      
+      const { rect } = state.selection
+      const activeLayer = state.layers.find((l) => l.id === state.activeLayerId)
+      if (!activeLayer) return {}
+
+      const captured: any[][] = []
+      for (let y = 0; y < rect.height; y++) {
+        captured[y] = []
+        for (let x = 0; x < rect.width; x++) {
+          const pxY = rect.y + y
+          const pxX = rect.x + x
+          if (
+            pxY >= 0 &&
+            pxY < state.canvasHeight &&
+            pxX >= 0 &&
+            pxX < state.canvasWidth
+          ) {
+            captured[y][x] = activeLayer.pixels[pxY][pxX]
+          } else {
+            captured[y][x] = { r: 0, g: 0, b: 0, a: 0 }
+          }
+        }
+      }
+
+      return {
+        selection: {
+          ...state.selection,
+          floatingPixels: captured,
+          originalArea: { ...rect },
+        },
+      }
+    }),
+
+  setSelectionTransform: ({ x, y, rotation, scaleX, scaleY }) =>
+    set((state) => {
+      if (!state.selection) return state
+      return {
+        selection: {
+          ...state.selection,
+          rect: { ...state.selection.rect, x, y },
+          rotation,
+          scaleX,
+          scaleY,
+        },
+      }
+    }),
+
+  commitTransformation: () =>
+    set((state) => {
+      if (!state.selection || !state.selection.floatingPixels) return {}
+
+      const { rect, floatingPixels, originalArea } = state.selection
+      const activeLayerId = state.activeLayerId
+
+      const newLayers = state.layers.map((layer) => {
+        if (layer.id !== activeLayerId) return layer
+
+        const buffer = layer.pixels.map((row) => [...row])
+
+        if (originalArea) {
+          for (let y = 0; y < originalArea.height; y++) {
+            for (let x = 0; x < originalArea.width; x++) {
+              const pixelY = Math.floor(originalArea.y + y)
+              const pixelX = Math.floor(originalArea.x + x)
+              if (
+                pixelY >= 0 &&
+                pixelY < state.canvasHeight &&
+                pixelX >= 0 &&
+                pixelX < state.canvasWidth
+              ) {
+                buffer[pixelY][pixelX] = { r: 0, g: 0, b: 0, a: 0 }
+              }
+            }
+          }
+        }
+
+        const { rotation = 0, scaleX = 1, scaleY = 1 } = state.selection
+
+        const bakedPixels = transformPixels(
+          floatingPixels,
+          rotation,
+          scaleX,
+          scaleY,
+          state.canvasWidth,
+          state.canvasHeight,
+          rect.x,
+          rect.y
+        )
+
+        for (let y = 0; y < state.canvasHeight; y++) {
+          for (let x = 0; x < state.canvasWidth; x++) {
+            const color = bakedPixels[y][x]
+            if (color.a > 0) {
+              buffer[y][x] = color
+            }
+          }
+        }
+
+        return { ...layer, pixels: buffer }
+      })
+
+      return {
+        layers: newLayers,
+        selection: null,
+      }
+    }),
 }))
 
 

@@ -15,6 +15,7 @@ export const useTimeline = () => useSpriteEditorStore((s) => s.timeline)
 export const useLeftSidebarTab = () => useSpriteEditorStore((s) => s.leftSidebarTab)
 export const useHistoryIndex = () => useSpriteEditorStore((s) => s.historyIndex)
 export const useHistoryLength = () => useSpriteEditorStore((s) => s.history.length)
+export const useSelection = () => useSpriteEditorStore((s) => s.selection)
 
 export const useCanvasDimensions = () =>
   useSpriteEditorStore(
@@ -71,4 +72,10 @@ export const useTogglePlayback = () => useSpriteEditorStore((s) => s.togglePlayb
 
 export const useSetLeftSidebarTab = () =>
   useSpriteEditorStore((s) => s.setLeftSidebarTab)
+
+export const useSetSelection = () => useSpriteEditorStore((s) => s.setSelection)
+export const useFloatSelection = () => useSpriteEditorStore((s) => s.floatSelection)
+export const useSetSelectionTransform = () => useSpriteEditorStore((s) => s.setSelectionTransform)
+export const useCommitTransformation = () =>
+  useSpriteEditorStore((s) => s.commitTransformation)
 

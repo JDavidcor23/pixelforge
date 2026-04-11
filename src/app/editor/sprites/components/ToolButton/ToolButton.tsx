@@ -1,4 +1,4 @@
-import { Pencil, Eraser, PaintBucket, Pipette } from 'lucide-react'
+import { Pencil, Eraser, PaintBucket, Pipette, Move, SquareDashed } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 import type { ToolDefinition } from '@/app/editor/types'
@@ -14,6 +14,8 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Eraser,
   PaintBucket,
   Pipette,
+  Move,
+  SquareDashed,
 }
 
 export const ToolButton = ({ tool, isActive, onSelect }: ToolButtonProps) => {
