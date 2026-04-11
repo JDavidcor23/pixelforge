@@ -1,7 +1,7 @@
 'use client'
 
 import type { LeftSidebarTab } from '@/app/editor/types'
-import { LayerPanel } from '../LayerPanel/LayerPanel'
+import { LayerPanel } from '../../features/layers'
 import { useLeftSidebar } from './useLeftSidebar.hook'
 
 const TABS: readonly { readonly id: LeftSidebarTab; readonly label: string }[] = [

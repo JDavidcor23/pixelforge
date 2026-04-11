@@ -1,9 +1,8 @@
 import { LeftSidebar } from '../LeftSidebar/LeftSidebar'
-import { CanvasArea } from '../CanvasArea/CanvasArea'
-import { CanvasOverlay } from '../CanvasOverlay/CanvasOverlay'
-import { BottomToolbar } from '../BottomToolbar/BottomToolbar'
-import { RightSidebar } from '../RightSidebar/RightSidebar'
-import { TimelineBar } from '../TimelineBar/TimelineBar'
+import { CanvasArea, CanvasOverlay } from '../../features/canvas'
+import { BottomToolbar } from '../../features/tools'
+import { RightSidebar } from '../../features/properties'
+import { TimelineBar } from '../../features/timeline'
 
 export const SpriteEditorLayout = () => {
   return (
