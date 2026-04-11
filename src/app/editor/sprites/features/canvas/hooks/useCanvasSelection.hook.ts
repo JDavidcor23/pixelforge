@@ -1,11 +1,14 @@
 'use client'
 
 import { useRef, useCallback, MutableRefObject } from 'react'
+
+import { useSetSelection, useSetActiveTool } from '@/app/editor/sprites/hooks/useSpriteEditorStore.hook'
+import { useSpriteEditorStore } from '@/app/editor/stores'
 import type { PixelCoord } from '@/app/editor/types'
-import { useSetSelection } from '@/app/editor/sprites/hooks/useSpriteEditorStore.hook'
 
 export const useCanvasSelection = (interactionMode: MutableRefObject<'IDLE' | 'SELECTING' | 'MOVING' | 'RESIZING' | 'PANNING'>) => {
   const setSelection = useSetSelection()
+  const setActiveTool = useSetActiveTool()
   const selectionStart = useRef<PixelCoord | null>(null)
 
   const startSelection = useCallback((coord: PixelCoord) => {
@@ -39,8 +42,21 @@ export const useCanvasSelection = (interactionMode: MutableRefObject<'IDLE' | 'S
   }, [setSelection, interactionMode])
 
   const endSelection = useCallback(() => {
+    if (interactionMode.current === 'SELECTING') {
+      const { selection } = useSpriteEditorStore.getState()
+      
+      if (selection) {
+        const { width, height } = selection.rect
+        // Only switch to transform if it's more than a single pixel click
+        if (width > 1 || height > 1) {
+          setActiveTool('transform')
+        } else {
+          setSelection(null)
+        }
+      }
+    }
     interactionMode.current = 'IDLE'
-  }, [interactionMode])
+  }, [interactionMode, setActiveTool, setSelection])
 
   return { startSelection, doSelection, endSelection }
 }

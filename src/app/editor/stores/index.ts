@@ -197,12 +197,19 @@ export const useSpriteEditorStore = create<SpriteEditorStore>()(
 
   setActiveTool: (tool) => {
     const state = get()
+    
+    // If we're leaving transform tool, commit the changes
     if (state.activeTool === 'transform' && tool !== 'transform' && state.selection) {
       state.commitTransformation()
     }
+    
+    // If we're leaving select tool and NOT going to transform, clear selection
+    if (state.activeTool === 'select' && tool !== 'select' && tool !== 'transform') {
+      set({ selection: null })
+    }
+
     if (tool === 'transform' && state.selection && !state.selection.floatingPixels) {
-      // Defer floating to ensure state sets the tool first if needed, 
-      // but we can just do it sequentially.
+      // Defer floating to ensure state sets the tool first if needed
       setTimeout(() => state.floatSelection(), 0)
     }
     set({ activeTool: tool })
