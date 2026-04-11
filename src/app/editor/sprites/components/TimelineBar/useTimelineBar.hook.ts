@@ -6,7 +6,6 @@ import { SPRITE_EDITOR_TIMELINE } from '@/app/editor/constants'
 import {
   useTimeline,
   useAddFrame,
-  useRemoveFrame,
   useSetCurrentFrame,
   useSetFps,
   useTogglePlayback,
@@ -15,7 +14,6 @@ import {
 export const useTimelineBar = () => {
   const timeline = useTimeline()
   const addFrame = useAddFrame()
-  const removeFrame = useRemoveFrame()
   const setCurrentFrame = useSetCurrentFrame()
   const setFps = useSetFps()
   const togglePlayback = useTogglePlayback()
