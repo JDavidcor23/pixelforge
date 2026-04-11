@@ -17,6 +17,7 @@ import {
   useCutSelection,
   usePasteClipboard,
   useDeleteSelection,
+  useToggleZenMode,
 } from './useSpriteEditorStore.hook'
 
 const PAN_STEP = 20
@@ -35,12 +36,19 @@ export const useKeyboardShortcuts = () => {
   const cutSelection = useCutSelection()
   const pasteClipboard = usePasteClipboard()
   const deleteSelection = useDeleteSelection()
+  const toggleZenMode = useToggleZenMode()
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const key = e.key.toLowerCase()
       const isCtrl = e.ctrlKey || e.metaKey
       const isShift = e.shiftKey
+
+      if (key === 'tab') {
+        e.preventDefault()
+        toggleZenMode()
+        return
+      }
 
       if (isCtrl && isShift && key === 'z') {
         e.preventDefault()
@@ -168,6 +176,7 @@ export const useKeyboardShortcuts = () => {
     cutSelection,
     pasteClipboard,
     deleteSelection,
+    toggleZenMode,
   ])
 }
 

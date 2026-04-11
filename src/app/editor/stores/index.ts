@@ -4,6 +4,7 @@ import { persist } from 'zustand/middleware'
 import type {
   AnimationFrame,
   Layer,
+  PixelBuffer,
   SpriteEditorStore,
 } from '@/app/editor/types'
 import {
@@ -83,6 +84,13 @@ export const useSpriteEditorStore = create<SpriteEditorStore>()(
       palette: [],
       showGrid: true,
       clipboard: null,
+      ui: {
+        leftSidebarOpen: true,
+        rightSidebarOpen: true,
+        timelineOpen: true,
+        toolbarOpen: true,
+        toolbarPosition: null, // Si es null, usa el default center-bottom
+      },
 
       // ... rest of actions ...
 
@@ -360,7 +368,7 @@ export const useSpriteEditorStore = create<SpriteEditorStore>()(
       const activeLayer = state.layers.find((l) => l.id === state.activeLayerId)
       if (!activeLayer) return {}
 
-      const captured: any[][] = []
+      const captured: PixelBuffer = []
       for (let y = 0; y < rect.height; y++) {
         captured[y] = []
         for (let x = 0; x < rect.width; x++) {
@@ -486,7 +494,7 @@ export const useSpriteEditorStore = create<SpriteEditorStore>()(
       const activeLayer = state.layers.find((l) => l.id === state.activeLayerId)
       if (!activeLayer) return {}
 
-      const captured: any[][] = []
+      const captured: PixelBuffer = []
       for (let y = 0; y < rect.height; y++) {
         captured[y] = []
         for (let x = 0; x < rect.width; x++) {
@@ -602,6 +610,54 @@ export const useSpriteEditorStore = create<SpriteEditorStore>()(
         selection: null,
       }
     }),
+
+  // ── UI Actions ────────────────────────────────────────────────────
+
+  toggleLeftSidebar: () =>
+    set((state) => ({
+      ui: { ...state.ui, leftSidebarOpen: !state.ui.leftSidebarOpen },
+    })),
+
+  toggleRightSidebar: () =>
+    set((state) => ({
+      ui: { ...state.ui, rightSidebarOpen: !state.ui.rightSidebarOpen },
+    })),
+
+  toggleTimeline: () =>
+    set((state) => ({
+      ui: { ...state.ui, timelineOpen: !state.ui.timelineOpen },
+    })),
+
+  toggleToolbar: () =>
+    set((state) => ({
+      ui: { ...state.ui, toolbarOpen: !state.ui.toolbarOpen },
+    })),
+
+  toggleZenMode: () =>
+    set((state) => {
+      const anyOpen =
+        state.ui.leftSidebarOpen ||
+        state.ui.rightSidebarOpen ||
+        state.ui.timelineOpen ||
+        state.ui.toolbarOpen
+
+      const newState = !anyOpen
+
+      return {
+        ui: {
+          ...state.ui,
+          leftSidebarOpen: newState,
+          rightSidebarOpen: newState,
+          timelineOpen: newState,
+          toolbarOpen: newState,
+        },
+      }
+    }),
+
+  setToolbarPosition: (position) =>
+    set((state) => ({
+      ui: { ...state.ui, toolbarPosition: position },
+    })),
     }),
     {
       name: 'sprite-editor-palette',
@@ -610,6 +666,7 @@ export const useSpriteEditorStore = create<SpriteEditorStore>()(
         primaryColor: state.primaryColor,
         secondaryColor: state.secondaryColor,
         showGrid: state.showGrid,
+        ui: state.ui,
       }),
     }
   )

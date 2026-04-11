@@ -122,3 +122,13 @@ export const useCutSelection = () => useSpriteEditorStore((s) => s.cutSelection)
 export const usePasteClipboard = () => useSpriteEditorStore((s) => s.pasteClipboard)
 export const useDeleteSelection = () => useSpriteEditorStore((s) => s.deleteSelection)
 
+// ── UI Selectors & Actions ───────────────────────────────────────────
+
+export const useUIState = () => useSpriteEditorStore((s) => s.ui)
+export const useToggleLeftSidebar = () => useSpriteEditorStore((s) => s.toggleLeftSidebar)
+export const useToggleRightSidebar = () => useSpriteEditorStore((s) => s.toggleRightSidebar)
+export const useToggleTimeline = () => useSpriteEditorStore((s) => s.toggleTimeline)
+export const useToggleToolbar = () => useSpriteEditorStore((s) => s.toggleToolbar)
+export const useToggleZenMode = () => useSpriteEditorStore((s) => s.toggleZenMode)
+export const useSetToolbarPosition = () => useSpriteEditorStore((s) => s.setToolbarPosition)
+

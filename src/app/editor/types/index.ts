@@ -84,6 +84,13 @@ export interface SpriteEditorState {
   readonly palette: RgbaColor[]
   readonly showGrid: boolean
   readonly clipboard: PixelBuffer | null
+  readonly ui: {
+    readonly leftSidebarOpen: boolean
+    readonly rightSidebarOpen: boolean
+    readonly timelineOpen: boolean
+    readonly toolbarOpen: boolean
+    readonly toolbarPosition: { readonly x: number; readonly y: number } | null
+  }
 }
 
 export interface SpriteEditorActions {
@@ -124,6 +131,12 @@ export interface SpriteEditorActions {
   cutSelection: () => void
   pasteClipboard: () => void
   deleteSelection: () => void
+  toggleLeftSidebar: () => void
+  toggleRightSidebar: () => void
+  toggleTimeline: () => void
+  toggleToolbar: () => void
+  toggleZenMode: () => void
+  setToolbarPosition: (position: { x: number; y: number } | null) => void
 }
 
 export type SpriteEditorStore = SpriteEditorState & SpriteEditorActions
