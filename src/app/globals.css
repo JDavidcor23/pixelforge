@@ -10,6 +10,10 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  --color-accent: #00f5ff;
+  --color-active-bg: #1a1a2e;
+  --color-muted: #8888aa;
 }
 
 body {
