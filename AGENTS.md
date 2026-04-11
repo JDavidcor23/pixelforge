@@ -68,6 +68,7 @@ Use for: creating or refactoring any Zustand store.
 
 ## Core rules (summary)
 
+- **Canvas: Use Infinite Canvas pattern.** The `<canvas>` must track its parent container size (100%) using `ResizeObserver`. All drawing logic must use centered offsets instead of CSS centering to allow stable zooming.
 - **Component = JSX only.** All logic goes in `use*.hook.ts`
 - **No inline styles.** Tailwind classes only (exception: dynamic canvas values)
 - **No `any`.** All types defined in `src/types/`

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useCallback } from 'react'
+import { useEffect, useCallback, useState } from 'react'
 import type { RefObject } from 'react'
 
 import { renderPixelGrid } from '@/app/editor/lib'
@@ -15,12 +15,35 @@ export const useCanvasRenderer = (canvasRef: RefObject<HTMLCanvasElement | null>
   const viewport = useViewport()
   const canvasDimensions = useCanvasDimensions()
 
-  const canvasElementWidth = canvasDimensions.width * viewport.zoom
-  const canvasElementHeight = canvasDimensions.height * viewport.zoom
+  const [parentSize, setParentSize] = useState({ width: 0, height: 0 })
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas || !canvas.parentElement) return
+
+    const parent = canvas.parentElement
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0]
+      if (entry) {
+        setParentSize({
+          width: Math.floor(entry.contentRect.width),
+          height: Math.floor(entry.contentRect.height),
+        })
+      }
+    })
+
+    observer.observe(parent)
+    setParentSize({
+      width: Math.floor(parent.clientWidth),
+      height: Math.floor(parent.clientHeight),
+    })
+
+    return () => observer.disconnect()
+  }, [canvasRef])
 
   const render = useCallback(() => {
     const canvas = canvasRef.current
-    if (!canvas) return
+    if (!canvas || parentSize.width === 0 || parentSize.height === 0) return
 
     const ctx = canvas.getContext('2d')
     if (!ctx) return
@@ -31,16 +54,16 @@ export const useCanvasRenderer = (canvasRef: RefObject<HTMLCanvasElement | null>
       viewport,
       canvasDimensions.width,
       canvasDimensions.height,
-      canvasElementWidth,
-      canvasElementHeight
+      parentSize.width,
+      parentSize.height
     )
-  }, [layers, viewport, canvasDimensions, canvasElementWidth, canvasElementHeight, canvasRef])
+  }, [layers, viewport, canvasDimensions, parentSize, canvasRef])
 
   useEffect(() => {
     const frameId = requestAnimationFrame(render)
     return () => cancelAnimationFrame(frameId)
   }, [render])
 
-  return { canvasElementWidth, canvasElementHeight }
+  return { canvasElementWidth: parentSize.width, canvasElementHeight: parentSize.height }
 }
 

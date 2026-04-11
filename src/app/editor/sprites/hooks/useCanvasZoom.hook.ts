@@ -27,8 +27,11 @@ export const useCanvasZoom = () => {
       const cursorY = e.clientY - rect.top
 
       const scale = newZoom / viewport.zoom
-      const newOffsetX = cursorX - (cursorX - viewport.offsetX) * scale
-      const newOffsetY = cursorY - (cursorY - viewport.offsetY) * scale
+      const canvasWidth = rect.width
+      const canvasHeight = rect.height
+
+      const newOffsetX = cursorX - (canvasWidth / 2) + ((canvasWidth / 2) + viewport.offsetX - cursorX) * scale
+      const newOffsetY = cursorY - (canvasHeight / 2) + ((canvasHeight / 2) + viewport.offsetY - cursorY) * scale
 
       setZoom(newZoom)
       setViewportOffset(newOffsetX, newOffsetY)

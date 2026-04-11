@@ -15,13 +15,13 @@ export const CanvasArea = () => {
   } = useCanvasArea()
 
   return (
-    <div className="flex h-full w-full items-center justify-center overflow-hidden">
+    <div className="h-full w-full overflow-hidden bg-transparent">
       <canvas
         ref={canvasRef}
         width={canvasElementWidth}
         height={canvasElementHeight}
-        style={{ width: canvasElementWidth, height: canvasElementHeight }}
-        className="cursor-crosshair"
+        style={{ width: '100%', height: '100%', touchAction: 'none' }}
+        className="cursor-crosshair block"
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}

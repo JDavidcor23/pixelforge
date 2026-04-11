@@ -43,6 +43,7 @@ Pre-digested rules per skill. Delegators copy matching blocks into sub-agent pro
 - Import order: React/external → components → hooks → services → constants/types
 - No `console.log` — only `console.error` in catch blocks
 - Before generating UI, use frontend-design plugin. After finishing, invoke cleancode-agent
+- **Canvas Rule**: Always use the "Infinite Canvas" pattern for editors (100% parent size + `ResizeObserver`). Implement drawing logic with central-offset coordinates (in `canvas-renderer.ts`) to handle zoom/pan correctly.
 
 ### cleancode-agent
 - Read all files → apply full checklist → fix directly → run `npm run build` → report

@@ -80,7 +80,9 @@ export const useCanvasInteraction = () => {
         screenY,
         viewport,
         canvasDimensions.width,
-        canvasDimensions.height
+        canvasDimensions.height,
+        rect.width,
+        rect.height
       )
     },
     [viewport, canvasDimensions]
