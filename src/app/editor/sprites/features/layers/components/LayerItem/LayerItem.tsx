@@ -1,4 +1,4 @@
-import { Edit2, ArrowUp, ArrowDown, GripVertical, MoreVertical } from 'lucide-react'
+import { Edit2, ArrowUp, ArrowDown, GripVertical, MoreVertical, Trash2 } from 'lucide-react'
 import { useLayerItem } from './useLayerItem.hook'
 
 interface LayerItemProps {
@@ -15,6 +15,8 @@ interface LayerItemProps {
   readonly onSelect: (id: string) => void
   readonly onRename: (id: string, name: string) => void
   readonly onReorder: (from: number, to: number) => void
+  readonly onRemove: (id: string) => void
+  readonly canDelete: boolean
 }
 
 export const LayerItem = ({
@@ -31,6 +33,8 @@ export const LayerItem = ({
   onSelect,
   onRename,
   onReorder,
+  onRemove,
+  canDelete,
 }: LayerItemProps) => {
   const {
     isEditing,
@@ -184,6 +188,22 @@ export const LayerItem = ({
               >
                 <ArrowDown size={12} />
                 Move Down
+              </button>
+
+              <div className="my-1 border-t border-white/5" />
+              
+              <button
+                type="button"
+                disabled={!canDelete}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  if (canDelete) onRemove(id)
+                  setIsMenuOpen(false)
+                }}
+                className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-[#ff4d4d] hover:bg-red-500/10 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+              >
+                <Trash2 size={12} />
+                Delete Layer
               </button>
             </div>
           )}

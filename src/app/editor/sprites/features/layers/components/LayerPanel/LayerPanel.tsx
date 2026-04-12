@@ -15,6 +15,7 @@ export const LayerPanel = () => {
     handleSelectLayer,
     handleUpdateLayerName,
     handleReorder,
+    handleRemoveLayer,
   } = useLayerPanel()
 
   return (
@@ -36,6 +37,8 @@ export const LayerPanel = () => {
             onSelect={handleSelectLayer}
             onRename={handleUpdateLayerName}
             onReorder={handleReorder}
+            onRemove={handleRemoveLayer}
+            canDelete={reversedLayers.length > 1}
           />
         ))}
       </div>

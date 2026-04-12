@@ -111,7 +111,7 @@ export const SpriteEditorLayout = () => {
         {ui.timelineOpen && (
           <button
             onClick={toggleTimeline}
-            className="absolute -top-3 left-1/2 z-[60] flex h-6 w-12 -translate-x-1/2 items-center justify-center rounded-t-lg border border-b-0 border-white/10 bg-[#1a1a2e] text-[#8888aa] transition-colors hover:bg-[#252540] hover:text-[#00f5ff]"
+            className="absolute -top-6 left-1/2 z-[60] flex h-6 w-12 -translate-x-1/2 items-center justify-center rounded-t-lg border border-b-0 border-white/10 bg-[#0f1115] text-[#8888aa] transition-colors hover:bg-[#1a1a2e] hover:text-[#00f5ff]"
             title="Collapse Timeline"
           >
             <ChevronDown size={14} />

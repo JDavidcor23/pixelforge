@@ -48,12 +48,19 @@ export const SpriteLayers = ({
     canvasElHeight
   )
   const { zoom } = viewport
+  const activeLayerIndex = layers.findIndex(l => l.id === activeLayerId)
 
   return (
     <KonvaLayer listening={false}>
       <Group x={startX} y={startY} listening={false}>
-        {layers.map((layer) => {
+        {layers.map((layer, index) => {
           if (!layer.visible) return null
+
+          if (onionSkinEnabled) {
+            if (index !== activeLayerIndex && index !== activeLayerIndex - 1) {
+              return null
+            }
+          }
 
           const pixels = layer.pixels
           const rects = []
