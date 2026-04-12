@@ -13,7 +13,7 @@ interface ColorInputsProps {
  * Follows a dark-mode "Inspector" aesthetic with neon accents.
  */
 export const ColorInputs: React.FC<ColorInputsProps> = ({ color, onChange }) => {
-  const { hexInput, currentRgba, handleHexChange, handleRgbaChange, handleSave } =
+  const { hexInput, currentRgba, handleHexChange, handleRgbaChange, handleSave, handleHexFocus, handleHexBlur } =
     useColorInputs({
       color,
       onChange,
@@ -33,6 +33,8 @@ export const ColorInputs: React.FC<ColorInputsProps> = ({ color, onChange }) => 
               type="text"
               value={hexInput}
               onChange={(e) => handleHexChange(e.target.value)}
+              onFocus={handleHexFocus}
+              onBlur={handleHexBlur}
               className="w-24 rounded border border-white/5 bg-[#0f1115] px-2 py-1 text-right outline-none transition-colors focus:border-cyan-500"
               spellCheck={false}
             />

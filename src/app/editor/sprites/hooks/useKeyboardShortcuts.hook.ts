@@ -42,6 +42,16 @@ export const useKeyboardShortcuts = () => {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't intercept shortcuts if the user is typing in an input field
+      const target = e.target as HTMLElement
+      if (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.isContentEditable
+      ) {
+        return
+      }
+
       const key = e.key.toLowerCase()
       const isCtrl = e.ctrlKey || e.metaKey
       const isShift = e.shiftKey
