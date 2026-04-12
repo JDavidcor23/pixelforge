@@ -2,6 +2,6 @@ export { createEmptyBuffer, cloneBuffer, getPixel, setPixelInBuffer, colorsEqual
 export { floodFill } from './flood-fill'
 export { renderPixelGrid, screenToPixel } from './canvas-renderer'
 export { rgbaToHex, hexToRgba, rgbaToString } from './color-utils'
-export { createSnapshot, cloneLayers } from './history'
+export { createSnapshot, cloneLayers, cloneFrames } from './history'
 export { transformPixels } from './pixel-transform'
 

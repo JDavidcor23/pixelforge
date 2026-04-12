@@ -1,4 +1,4 @@
-import type { HistoryEntry, Layer } from '@/app/editor/types'
+import type { AnimationFrame, HistoryEntry, Layer } from '@/app/editor/types'
 import { cloneBuffer } from './pixel-buffer'
 
 export function cloneLayers(layers: Layer[]): Layer[] {
@@ -8,15 +8,30 @@ export function cloneLayers(layers: Layer[]): Layer[] {
   }))
 }
 
+export function cloneFrames(frames: AnimationFrame[]): AnimationFrame[] {
+  return frames.map((frame) => {
+    const layerSnapshots: Record<string, AnimationFrame['layerSnapshots'][string]> = {}
+    for (const [id, buffer] of Object.entries(frame.layerSnapshots)) {
+      layerSnapshots[id] = cloneBuffer(buffer)
+    }
+    return { ...frame, layerSnapshots }
+  })
+}
+
 export function createSnapshot(
   layers: Layer[],
   activeLayerId: string,
-  description: string
+  description: string,
+  frames: AnimationFrame[],
+  currentFrameIndex: number
 ): HistoryEntry {
   return {
     layers: cloneLayers(layers),
     activeLayerId,
     description,
+    frames: cloneFrames(frames),
+    currentFrameIndex,
   }
 }
+
 

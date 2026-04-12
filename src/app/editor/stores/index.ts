@@ -20,6 +20,7 @@ import {
   floodFill as floodFillBuffer,
   createSnapshot,
   cloneLayers,
+  cloneFrames,
   transformPixels,
   colorsEqual,
 } from '@/app/editor/lib'
@@ -77,6 +78,8 @@ export const useSpriteEditorStore = create<SpriteEditorStore>()(
         currentFrameIndex: 0,
         isPlaying: false,
         fps: SPRITE_EDITOR_TIMELINE.DEFAULT_FPS,
+        loop: true,
+        selectedFrameIndices: [0],
       },
       leftSidebarTab: 'layers',
       cursorPixel: null,
@@ -85,6 +88,7 @@ export const useSpriteEditorStore = create<SpriteEditorStore>()(
       showGrid: true,
       onionSkinEnabled: true,
       clipboard: null,
+      frameClipboard: null,
       ui: {
         leftSidebarOpen: true,
         rightSidebarOpen: true,
@@ -254,9 +258,18 @@ export const useSpriteEditorStore = create<SpriteEditorStore>()(
 
   // ── History Actions ───────────────────────────────────────────────
 
-  pushHistory: (description) =>
+  pushHistory: (description) => {
+    // 1. Flush current drawing to the frame snapshot BEFORE capturing history
+    get().saveCurrentFrameSnapshot()
+
     set((state) => {
-      const entry = createSnapshot(state.layers, state.activeLayerId, description)
+      const entry = createSnapshot(
+        state.layers,
+        state.activeLayerId,
+        description,
+        state.timeline.frames,
+        state.timeline.currentFrameIndex
+      )
       const truncated = state.history.slice(0, state.historyIndex + 1)
       const newHistory = [...truncated, entry]
 
@@ -268,7 +281,8 @@ export const useSpriteEditorStore = create<SpriteEditorStore>()(
         history: newHistory,
         historyIndex: newHistory.length - 1,
       }
-    }),
+    })
+  },
 
   undo: () =>
     set((state) => {
@@ -281,6 +295,12 @@ export const useSpriteEditorStore = create<SpriteEditorStore>()(
         historyIndex: newIndex,
         layers: cloneLayers(entry.layers),
         activeLayerId: entry.activeLayerId,
+        timeline: {
+          ...state.timeline,
+          frames: cloneFrames(entry.frames),
+          currentFrameIndex: entry.currentFrameIndex,
+          selectedFrameIndices: [entry.currentFrameIndex],
+        },
       }
     }),
 
@@ -295,55 +315,138 @@ export const useSpriteEditorStore = create<SpriteEditorStore>()(
         historyIndex: newIndex,
         layers: cloneLayers(entry.layers),
         activeLayerId: entry.activeLayerId,
+        timeline: {
+          ...state.timeline,
+          frames: cloneFrames(entry.frames),
+          currentFrameIndex: entry.currentFrameIndex,
+          selectedFrameIndices: [entry.currentFrameIndex],
+        },
       }
     }),
 
   // ── Timeline Actions ──────────────────────────────────────────────
 
-  addFrame: () =>
+  saveCurrentFrameSnapshot: () => {
+    const state = get()
+    const { frames, currentFrameIndex } = state.timeline
+    const frame = frames[currentFrameIndex]
+    if (!frame) return
+
+    const layerSnapshots: Record<string, Layer['pixels']> = {}
+    for (const layer of state.layers) {
+      layerSnapshots[layer.id] = layer.pixels
+    }
+
+    const updatedFrames = frames.map((f, i) =>
+      i === currentFrameIndex ? { ...f, layerSnapshots } : f
+    )
+
+    set((s) => ({ timeline: { ...s.timeline, frames: updatedFrames } }))
+  },
+
+  restoreFrameSnapshot: (index) => {
+    const state = get()
+    const frame = state.timeline.frames[index]
+    if (!frame) return
+
+    const newLayers = state.layers.map((layer) => {
+      const snapshot = frame.layerSnapshots[layer.id]
+      return snapshot ? { ...layer, pixels: snapshot } : layer
+    })
+
+    set({ layers: newLayers })
+  },
+
+  addFrame: () => {
+    // 1. Save current frame before creating the new one
+    get().saveCurrentFrameSnapshot()
+
     set((state) => {
-      const layerSnapshots: Record<string, Layer['pixels']> = {}
+      // New frame starts with empty buffers — onion skin shows the previous frame
+      const emptySnapshots: Record<string, Layer['pixels']> = {}
       for (const layer of state.layers) {
-        layerSnapshots[layer.id] = layer.pixels
+        emptySnapshots[layer.id] = createEmptyBuffer(state.canvasWidth, state.canvasHeight)
       }
 
       const newFrame: AnimationFrame = {
         id: crypto.randomUUID(),
-        layerSnapshots,
+        layerSnapshots: emptySnapshots,
         durationMs: Math.round(1000 / state.timeline.fps),
       }
 
-      return {
-        timeline: {
-          ...state.timeline,
-          frames: [...state.timeline.frames, newFrame],
-        },
-      }
-    }),
-
-  removeFrame: (index) =>
-    set((state) => {
-      if (state.timeline.frames.length <= 1) return state
-
-      const newFrames = state.timeline.frames.filter((_, i) => i !== index)
-      const newCurrentIndex = Math.min(
-        state.timeline.currentFrameIndex,
-        newFrames.length - 1
-      )
+      const newFrames = [...state.timeline.frames, newFrame]
 
       return {
         timeline: {
           ...state.timeline,
           frames: newFrames,
-          currentFrameIndex: newCurrentIndex,
+          currentFrameIndex: newFrames.length - 1,
         },
       }
-    }),
+    })
 
-  setCurrentFrame: (index) =>
-    set((state) => ({
-      timeline: { ...state.timeline, currentFrameIndex: index },
-    })),
+    // Restore the new (empty) frame so the canvas clears
+    get().restoreFrameSnapshot(get().timeline.currentFrameIndex)
+  },
+
+  removeFrame: (index) => {
+    const state = get()
+    if (state.timeline.frames.length <= 1) return
+
+    // Save current before deleting
+    state.saveCurrentFrameSnapshot()
+
+    set((s) => {
+      const newFrames = s.timeline.frames.filter((_, i) => i !== index)
+      const newCurrentIndex = Math.min(
+        s.timeline.currentFrameIndex > index
+          ? s.timeline.currentFrameIndex - 1
+          : s.timeline.currentFrameIndex,
+        newFrames.length - 1
+      )
+
+      // Remap selected indices: remove deleted, shift those above it
+      const newSelected = s.timeline.selectedFrameIndices
+        .filter((i) => i !== index)
+        .map((i) => (i > index ? i - 1 : i))
+
+      return {
+        timeline: {
+          ...s.timeline,
+          frames: newFrames,
+          currentFrameIndex: newCurrentIndex,
+          selectedFrameIndices: newSelected.length > 0 ? newSelected : [newCurrentIndex],
+        },
+      }
+    })
+
+    // Restore the frame we land on
+    get().restoreFrameSnapshot(get().timeline.currentFrameIndex)
+  },
+
+  setCurrentFrame: (index) => {
+    const state = get()
+
+    // 1. Commit any active floating selection
+    if (state.selection?.floatingPixels) {
+      state.commitTransformation()
+    }
+
+    // 2. Save outgoing frame
+    state.saveCurrentFrameSnapshot()
+
+    // 3. Update index + reset selection to this single frame
+    set((s) => ({
+      timeline: {
+        ...s.timeline,
+        currentFrameIndex: index,
+        selectedFrameIndices: [index],
+      },
+    }))
+
+    // 4. Restore incoming frame
+    get().restoreFrameSnapshot(index)
+  },
 
   setFps: (fps) =>
     set((state) => ({
@@ -356,10 +459,143 @@ export const useSpriteEditorStore = create<SpriteEditorStore>()(
       },
     })),
 
-  togglePlayback: () =>
+  togglePlayback: () => {
+    const state = get()
+    // Save current frame before starting playback
+    if (!state.timeline.isPlaying) {
+      state.saveCurrentFrameSnapshot()
+    }
+    set((s) => ({
+      timeline: { ...s.timeline, isPlaying: !s.timeline.isPlaying },
+    }))
+  },
+
+  toggleLoop: () =>
     set((state) => ({
-      timeline: { ...state.timeline, isPlaying: !state.timeline.isPlaying },
+      timeline: { ...state.timeline, loop: !state.timeline.loop },
     })),
+
+  goToPreviousFrame: () => {
+    const state = get()
+    const { currentFrameIndex, frames, loop } = state.timeline
+    const total = frames.length
+    if (total <= 1) return
+
+    const nextIndex = loop
+      ? (currentFrameIndex - 1 + total) % total
+      : Math.max(0, currentFrameIndex - 1)
+
+    if (nextIndex !== currentFrameIndex) {
+      state.setCurrentFrame(nextIndex)
+    }
+  },
+
+  goToNextFrame: () => {
+    const state = get()
+    const { currentFrameIndex, frames, loop } = state.timeline
+    const total = frames.length
+    if (total <= 1) return
+
+    const nextIndex = loop
+      ? (currentFrameIndex + 1) % total
+      : Math.min(total - 1, currentFrameIndex + 1)
+
+    if (nextIndex !== currentFrameIndex) {
+      state.setCurrentFrame(nextIndex)
+    }
+  },
+
+  setFrameSelection: (indices) =>
+    set((state) => ({
+      timeline: { ...state.timeline, selectedFrameIndices: indices },
+    })),
+
+  copySelectedFrames: () => {
+    const state = get()
+    const { frames, selectedFrameIndices } = state.timeline
+
+    // Save current snapshot so selection includes latest edits
+    state.saveCurrentFrameSnapshot()
+
+    const copied = get()
+      .timeline.frames.filter((_, i) => selectedFrameIndices.includes(i))
+      .map((frame) => ({ ...frame }))
+
+    if (copied.length > 0) {
+      set({ frameClipboard: copied })
+    }
+  },
+
+  pasteFrames: () => {
+    const state = get()
+    if (!state.frameClipboard || state.frameClipboard.length === 0) return
+
+    // Save current before inserting
+    state.saveCurrentFrameSnapshot()
+
+    const insertAfter = state.timeline.currentFrameIndex
+
+    // Give each pasted frame a fresh UUID so they are independent copies
+    const newFrames = state.frameClipboard.map((frame) => ({
+      ...frame,
+      id: crypto.randomUUID(),
+    }))
+
+    set((s) => {
+      const frames = [...s.timeline.frames]
+      frames.splice(insertAfter + 1, 0, ...newFrames)
+
+      const firstPastedIndex = insertAfter + 1
+      const pastedIndices = newFrames.map((_, i) => firstPastedIndex + i)
+
+      return {
+        timeline: {
+          ...s.timeline,
+          frames,
+          currentFrameIndex: firstPastedIndex,
+          selectedFrameIndices: pastedIndices,
+        },
+      }
+    })
+
+    // Restore the first pasted frame
+    get().restoreFrameSnapshot(get().timeline.currentFrameIndex)
+  },
+
+  pasteFramesAtEnd: () => {
+    const state = get()
+    if (!state.frameClipboard || state.frameClipboard.length === 0) return
+
+    // Save current before inserting
+    state.saveCurrentFrameSnapshot()
+
+    const insertAt = state.timeline.frames.length // Always at the end
+
+    const newFrames = state.frameClipboard.map((frame) => ({
+      ...frame,
+      id: crypto.randomUUID(),
+    }))
+
+    set((s) => {
+      const frames = [...s.timeline.frames]
+      frames.splice(insertAt, 0, ...newFrames)
+
+      const firstPastedIndex = insertAt
+      const pastedIndices = newFrames.map((_, i) => firstPastedIndex + i)
+
+      return {
+        timeline: {
+          ...s.timeline,
+          frames,
+          currentFrameIndex: firstPastedIndex,
+          selectedFrameIndices: pastedIndices,
+        },
+      }
+    })
+
+    // Restore the first pasted frame
+    get().restoreFrameSnapshot(get().timeline.currentFrameIndex)
+  },
 
   // ── Sidebar Actions ───────────────────────────────────────────────
 

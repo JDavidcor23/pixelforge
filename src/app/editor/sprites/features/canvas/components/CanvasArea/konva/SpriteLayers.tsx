@@ -14,6 +14,7 @@ interface SpriteLayersProps {
   readonly activeLayerId: string
   readonly selection: SelectionState | null
   readonly onionSkinEnabled: boolean
+  readonly previousFrameLayers: Layer[] | null
 }
 
 function getDrawOffset(
@@ -39,6 +40,7 @@ export const SpriteLayers = ({
   activeLayerId,
   selection,
   onionSkinEnabled,
+  previousFrameLayers,
 }: SpriteLayersProps) => {
   const { startX, startY } = getDrawOffset(
     viewport,
@@ -48,19 +50,46 @@ export const SpriteLayers = ({
     canvasElHeight
   )
   const { zoom } = viewport
-  const activeLayerIndex = layers.findIndex(l => l.id === activeLayerId)
 
   return (
     <KonvaLayer listening={false}>
       <Group x={startX} y={startY} listening={false}>
-        {layers.map((layer, index) => {
-          if (!layer.visible) return null
 
-          if (onionSkinEnabled) {
-            if (index !== activeLayerIndex && index !== activeLayerIndex - 1) {
-              return null
+        {/* Onion skin: previous frame rendered dimmed */}
+        {onionSkinEnabled && previousFrameLayers && previousFrameLayers.map((layer) => {
+          if (!layer.visible) return null
+          const pixels = layer.pixels
+          const rects = []
+
+          for (let y = 0; y < pixels.length; y++) {
+            for (let x = 0; x < pixels[y].length; x++) {
+              const color = pixels[y][x]
+              if (color.a === 0) continue
+              rects.push(
+                <Rect
+                  key={`onion-${layer.id}-${x}-${y}`}
+                  x={Math.round(x * zoom)}
+                  y={Math.round(y * zoom)}
+                  width={zoom + 0.5}
+                  height={zoom + 0.5}
+                  fill={rgbaToString(color)}
+                  listening={false}
+                  perfectDrawEnabled={false}
+                />
+              )
             }
           }
+
+          return (
+            <Group key={`onion-${layer.id}`} opacity={0.3} listening={false}>
+              {rects}
+            </Group>
+          )
+        })}
+
+        {/* Current frame layers */}
+        {layers.map((layer) => {
+          if (!layer.visible) return null
 
           const pixels = layer.pixels
           const rects = []
@@ -101,10 +130,7 @@ export const SpriteLayers = ({
             }
           }
 
-          let effectiveOpacity = layer.opacity / 100
-          if (onionSkinEnabled && layer.id !== activeLayerId) {
-            effectiveOpacity *= 0.3
-          }
+          const effectiveOpacity = layer.opacity / 100
 
           return (
             <Group key={layer.id} opacity={effectiveOpacity} listening={false}>

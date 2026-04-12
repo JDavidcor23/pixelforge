@@ -92,6 +92,14 @@ export const useRemoveFrame = () => useSpriteEditorStore((s) => s.removeFrame)
 export const useSetCurrentFrame = () => useSpriteEditorStore((s) => s.setCurrentFrame)
 export const useSetFps = () => useSpriteEditorStore((s) => s.setFps)
 export const useTogglePlayback = () => useSpriteEditorStore((s) => s.togglePlayback)
+export const useToggleLoop = () => useSpriteEditorStore((s) => s.toggleLoop)
+export const useGoToPreviousFrame = () => useSpriteEditorStore((s) => s.goToPreviousFrame)
+export const useGoToNextFrame = () => useSpriteEditorStore((s) => s.goToNextFrame)
+export const useSetFrameSelection = () => useSpriteEditorStore((s) => s.setFrameSelection)
+export const useCopySelectedFrames = () => useSpriteEditorStore((s) => s.copySelectedFrames)
+export const usePasteFrames = () => useSpriteEditorStore((s) => s.pasteFrames)
+export const usePasteFramesAtEnd = () => useSpriteEditorStore((s) => s.pasteFramesAtEnd)
+export const useFrameClipboard = () => useSpriteEditorStore((s) => s.frameClipboard)
 
 // ── Sidebar Actions ─────────────────────────────────────────────────
 

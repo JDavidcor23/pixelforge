@@ -19,6 +19,7 @@ import {
   useActiveLayerId,
   useShowGrid,
   useOnionSkinEnabled,
+  useTimeline,
 } from '@/app/editor/sprites/hooks/useSpriteEditorStore.hook'
 
 export const CanvasArea = () => {
@@ -32,6 +33,20 @@ export const CanvasArea = () => {
   const activeLayerId = useActiveLayerId()
   const showGrid = useShowGrid()
   const onionSkinEnabled = useOnionSkinEnabled()
+  const timeline = useTimeline()
+
+  // Build previous-frame layers for onion skin
+  const previousFrameLayers = (() => {
+    if (!onionSkinEnabled) return null
+    const prevIndex = timeline.currentFrameIndex - 1
+    if (prevIndex < 0) return null
+    const prevFrame = timeline.frames[prevIndex]
+    if (!prevFrame) return null
+    return layers.map((layer) => ({
+      ...layer,
+      pixels: prevFrame.layerSnapshots[layer.id] ?? layer.pixels,
+    }))
+  })()
 
   const { handlePointerDown, handlePointerMove, handlePointerUp, handlePointerLeave } = useCanvasInteraction()
   const { handleWheel } = useCanvasZoom()
@@ -92,6 +107,7 @@ export const CanvasArea = () => {
             activeLayerId={ activeLayerId }
             selection={ selection }
             onionSkinEnabled={ onionSkinEnabled }
+            previousFrameLayers={ previousFrameLayers }
           />
 
           { showGrid && (

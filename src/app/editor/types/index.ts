@@ -50,12 +50,16 @@ export interface Timeline {
   readonly currentFrameIndex: number
   readonly isPlaying: boolean
   readonly fps: number
+  readonly loop: boolean
+  readonly selectedFrameIndices: number[]
 }
 
 export interface HistoryEntry {
   readonly layers: Layer[]
   readonly activeLayerId: string
   readonly description: string
+  readonly frames: AnimationFrame[]
+  readonly currentFrameIndex: number
 }
 
 export interface ViewportState {
@@ -85,6 +89,7 @@ export interface SpriteEditorState {
   readonly showGrid: boolean
   readonly onionSkinEnabled: boolean
   readonly clipboard: PixelBuffer | null
+  readonly frameClipboard: AnimationFrame[] | null
   readonly ui: {
     readonly leftSidebarOpen: boolean
     readonly rightSidebarOpen: boolean
@@ -117,9 +122,18 @@ export interface SpriteEditorActions {
   redo: () => void
   addFrame: () => void
   removeFrame: (index: number) => void
+  saveCurrentFrameSnapshot: () => void
+  restoreFrameSnapshot: (index: number) => void
   setCurrentFrame: (index: number) => void
   setFps: (fps: number) => void
   togglePlayback: () => void
+  toggleLoop: () => void
+  goToPreviousFrame: () => void
+  goToNextFrame: () => void
+  setFrameSelection: (indices: number[]) => void
+  copySelectedFrames: () => void
+  pasteFrames: () => void
+  pasteFramesAtEnd: () => void
   setLeftSidebarTab: (tab: LeftSidebarTab) => void
   setSelection: (selection: SelectionState | null) => void
   floatSelection: () => void
