@@ -19,12 +19,13 @@ export const BottomToolbar = () => {
     toggleToolbar,
     toolbarPosition,
     isDragging,
-    handleDragStart
+    handleDragStart,
+    toolbarRef
   } = useBottomToolbar()
 
   const positionStyle: React.CSSProperties = toolbarPosition 
     ? {
-        position: 'fixed',
+        position: 'absolute',
         left: `${toolbarPosition.x}px`,
         top: `${toolbarPosition.y}px`,
         transform: 'translate(-50%, -50%)',
@@ -39,9 +40,10 @@ export const BottomToolbar = () => {
 
   return (
     <div 
+      ref={toolbarRef}
       onMouseDown={handleDragStart}
       style={positionStyle}
-      className={`absolute z-[100] flex items-center gap-1 rounded-full border border-white/10 bg-[#1a1a2e]/90 px-3 py-2 backdrop-blur pointer-events-auto select-none transition-shadow ${isDragging ? 'cursor-grabbing shadow-2xl ring-2 ring-[#00f5ff]/20' : 'cursor-grab hover:shadow-xl'}`}
+      className={`absolute z-40 flex items-center gap-1 rounded-full border border-white/10 bg-[#1a1a2e]/90 px-3 py-2 backdrop-blur pointer-events-auto select-none transition-shadow ${isDragging ? 'cursor-grabbing shadow-2xl ring-2 ring-[#00f5ff]/20' : 'cursor-grab hover:shadow-xl'}`}
     >
       <div className="mr-1 text-[#8888aa]/50">
         <GripVertical size={16} />
