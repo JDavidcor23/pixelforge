@@ -133,6 +133,7 @@ export interface SpriteEditorActions {
   cutSelection: () => void
   pasteClipboard: () => void
   deleteSelection: () => void
+  updateLayerName: (id: string, name: string) => void
   toggleLeftSidebar: () => void
   toggleRightSidebar: () => void
   toggleTimeline: () => void

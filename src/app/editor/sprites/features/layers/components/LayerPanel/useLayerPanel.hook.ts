@@ -9,6 +9,8 @@ import {
   useToggleLayerVisibility,
   useToggleLayerLock,
   useSetActiveLayer,
+  useUpdateLayerName,
+  useReorderLayers,
 } from '@/app/editor/sprites/hooks/useSpriteEditorStore.hook'
 
 export const useLayerPanel = () => {
@@ -17,9 +19,28 @@ export const useLayerPanel = () => {
   const addLayer = useAddLayer()
   const toggleLayerVisibility = useToggleLayerVisibility()
   const toggleLayerLock = useToggleLayerLock()
+  const updateLayerName = useUpdateLayerName()
+  const reorderLayers = useReorderLayers()
   const setActiveLayer = useSetActiveLayer()
 
   const reversedLayers = [...layersMetadata].reverse()
+  const handleUpdateLayerName = useCallback(
+    (id: string, name: string) => {
+      updateLayerName(id, name)
+    },
+    [updateLayerName]
+  )
+
+  const handleReorder = useCallback(
+    (fromUiIndex: number, toUiIndex: number) => {
+      const total = layersMetadata.length
+      // Mapping top-down UI index to bottom-up Store index
+      const fromStore = total - 1 - fromUiIndex
+      const toStore = total - 1 - toUiIndex
+      reorderLayers(fromStore, toStore)
+    },
+    [layersMetadata.length, reorderLayers]
+  )
 
   const handleAddLayer = useCallback(() => {
     addLayer()
@@ -53,5 +74,7 @@ export const useLayerPanel = () => {
     handleToggleVisibility,
     handleToggleLock,
     handleSelectLayer,
+    handleUpdateLayerName,
+    handleReorder,
   }
 }

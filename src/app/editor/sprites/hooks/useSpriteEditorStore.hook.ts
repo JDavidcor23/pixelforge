@@ -63,6 +63,7 @@ export const useToggleLayerLock = () => useSpriteEditorStore((s) => s.toggleLaye
 export const useSetLayerOpacity = () => useSpriteEditorStore((s) => s.setLayerOpacity)
 export const useReorderLayers = () => useSpriteEditorStore((s) => s.reorderLayers)
 export const useSetActiveLayer = () => useSpriteEditorStore((s) => s.setActiveLayer)
+export const useUpdateLayerName = () => useSpriteEditorStore((s) => s.updateLayerName)
 
 // ── Tool Actions ────────────────────────────────────────────────────
 

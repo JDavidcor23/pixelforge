@@ -13,15 +13,20 @@ export const LayerPanel = () => {
     handleToggleVisibility,
     handleToggleLock,
     handleSelectLayer,
+    handleUpdateLayerName,
+    handleReorder,
   } = useLayerPanel()
 
   return (
     <div className="flex h-full flex-col">
       <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent hover:scrollbar-thumb-white/20">
-        {reversedLayers.map((layer) => (
+        {reversedLayers.map((layer, index) => (
           <LayerItem
             key={layer.id}
             id={layer.id}
+            index={index}
+            isFirst={index === 0}
+            isLast={index === reversedLayers.length - 1}
             name={layer.name}
             visible={layer.visible}
             locked={layer.locked}
@@ -29,6 +34,8 @@ export const LayerPanel = () => {
             onToggleVisibility={handleToggleVisibility}
             onToggleLock={handleToggleLock}
             onSelect={handleSelectLayer}
+            onRename={handleUpdateLayerName}
+            onReorder={handleReorder}
           />
         ))}
       </div>

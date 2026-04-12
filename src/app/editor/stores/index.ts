@@ -202,6 +202,12 @@ export const useSpriteEditorStore = create<SpriteEditorStore>()(
     }),
 
   setActiveLayer: (id) => set({ activeLayerId: id }),
+  updateLayerName: (id, name) =>
+    set((state) => ({
+      layers: state.layers.map((layer) =>
+        layer.id === id ? { ...layer, name } : layer
+      ),
+    })),
 
   // ── Tool Actions ──────────────────────────────────────────────────
 
