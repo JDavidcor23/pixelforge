@@ -108,6 +108,10 @@ export const useCutSelection = () => useSpriteEditorStore((s) => s.cutSelection)
 export const usePasteClipboard = () => useSpriteEditorStore((s) => s.pasteClipboard)
 export const useDeleteSelection = () => useSpriteEditorStore((s) => s.deleteSelection)
 
+// ── AI Copilot Actions ───────────────────────────────────────────────────────
+
+export const useOverwriteWithPfm = () => useSpriteEditorStore((s) => s.overwriteWithPfm)
+
 // ── UI State & Actions ───────────────────────────────────────────────────────
 
 export const useLeftSidebarTab = () => useEditorUIStore((s) => s.leftSidebarTab)

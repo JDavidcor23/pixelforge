@@ -7,7 +7,7 @@ import { ColorInputs } from '../ColorInputs/ColorInputs'
 import { ColorArea } from '../ColorArea/ColorArea'
 import { ColorPalette } from '../ColorPalette/ColorPalette'
 import { CollapsibleSection } from './CollapsibleSection'
-import { useRightSidebar, useColorSection } from './useRightSidebar.hook'
+import { useRightSidebar, useColorSection, useAiCopilot } from './useRightSidebar.hook'
 import { useExport } from './useExport.hook'
 import { useCursorPixel } from '@/app/editor/sprites/hooks/useSpriteEditorStore.hook'
 
@@ -87,6 +87,34 @@ const ColorSectionInputs = () => {
   )
 }
 
+const AiCopilotSection = () => {
+  const { pfmText, setPfmText, error, handleApply } = useAiCopilot()
+  return (
+    <div className="flex flex-col gap-2">
+      <textarea
+        value={pfmText}
+        onChange={(e) => setPfmText(e.target.value)}
+        rows={10}
+        placeholder={
+          'SIZE: 16x16\nPALETTE:\n  . : transparent\n  X : #FF0000\nGRID:\n  . X . X .\n  ...'
+        }
+        onKeyDown={(e) => e.stopPropagation()}
+        onPaste={(e) => e.stopPropagation()}
+        className="w-full resize-y rounded border border-white/10 bg-[#1a1a2e] p-2 font-mono text-[11px] text-[#ededed] placeholder:text-[#444466] focus:border-[#00f5ff]/40 focus:outline-none focus:ring-1 focus:ring-[#00f5ff]/40"
+      />
+      {error && <p className="text-[10px] text-red-400">{error}</p>}
+      <button
+        type="button"
+        onClick={handleApply}
+        disabled={!pfmText.trim()}
+        className="w-full rounded border border-[#00f5ff]/20 bg-[#00f5ff]/10 py-2 text-xs font-medium text-[#00f5ff] transition-colors hover:bg-[#00f5ff]/20 disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        Apply PFM
+      </button>
+    </div>
+  )
+}
+
 export const RightSidebar = () => {
   const {
     activeLayerOpacity,
@@ -130,9 +158,7 @@ export const RightSidebar = () => {
 
 
       <CollapsibleSection title="AI Copilot" defaultOpen={false} icon={<Sparkles size={16} className="text-[#00f5ff]" />}>
-        <div className="flex items-center gap-2 rounded border border-white/10 bg-[#1a1a2e] p-3">
-          <span className="text-xs text-[#8888aa]">Coming soon</span>
-        </div>
+        <AiCopilotSection />
       </CollapsibleSection>
     </div>
   )

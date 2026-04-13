@@ -158,4 +158,6 @@ export interface CompoundSlice {
   setActiveTool: (tool: ToolType) => void
   // Clipboard orchestration
   pasteClipboard: () => void
+  // AI Copilot orchestration
+  overwriteWithPfm: (pfm: string) => void
 }

@@ -2,7 +2,7 @@ import type { StateCreator } from 'zustand'
 
 import type { AnimationFrame, Layer, SpriteEditorStore } from '@/app/editor/types'
 import { SPRITE_EDITOR_DEFAULTS, SPRITE_EDITOR_HISTORY } from '@/app/editor/constants'
-import { createEmptyBuffer, createSnapshot } from '@/app/editor/lib'
+import { createEmptyBuffer, createSnapshot, parsePfm } from '@/app/editor/lib'
 
 import type { CompoundSlice } from '../types/slices'
 
@@ -291,5 +291,42 @@ export const createCompoundSlice: StateCreator<
       },
       activeTool: 'transform',
     })
+  },
+
+  // ── AI Copilot Orchestration ───────────────────────────────────────────────
+
+  overwriteWithPfm: (pfm) => {
+    const parsed = parsePfm(pfm)
+    get().pushHistory('AI Copilot: Apply PFM')
+
+    const newLayer: Layer = {
+      id: crypto.randomUUID(),
+      name: `${SPRITE_EDITOR_DEFAULTS.LAYER_NAME_PREFIX} 1`,
+      visible: true,
+      locked: false,
+      opacity: 100,
+      pixels: parsed.pixels,
+    }
+
+    const newFrame: AnimationFrame = {
+      id: crypto.randomUUID(),
+      layers: [newLayer],
+      activeLayerId: newLayer.id,
+      durationMs: Math.round(1000 / get().timeline.fps),
+    }
+
+    set((state) => ({
+      canvasWidth: parsed.width,
+      canvasHeight: parsed.height,
+      layers: [newLayer],
+      activeLayerId: newLayer.id,
+      timeline: {
+        ...state.timeline,
+        frames: [newFrame],
+        currentFrameIndex: 0,
+        selectedFrameIndices: [0],
+      },
+      selection: null, // Clear selection if any
+    }))
   },
 })

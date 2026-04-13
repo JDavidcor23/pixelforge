@@ -11,6 +11,7 @@ import {
   useSecondaryColor,
   useSetPrimaryColor,
   useSetSecondaryColor,
+  useOverwriteWithPfm,
 } from '@/app/editor/sprites/hooks/useSpriteEditorStore.hook'
 import type { RgbaColor } from '@/app/editor/types'
 
@@ -92,4 +93,22 @@ export const useColorSection = () => {
     handleColorChange,
     handleToggleActiveColor,
   }
+}
+
+export const useAiCopilot = () => {
+  const overwriteWithPfm = useOverwriteWithPfm()
+  const [pfmText, setPfmText] = useState('')
+  const [error, setError] = useState<string | null>(null)
+
+  const handleApply = useCallback(() => {
+    try {
+      if (!pfmText.trim()) return
+      overwriteWithPfm(pfmText)
+      setError(null)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Invalid PFM format')
+    }
+  }, [pfmText, overwriteWithPfm])
+
+  return { pfmText, setPfmText, error, handleApply }
 }
