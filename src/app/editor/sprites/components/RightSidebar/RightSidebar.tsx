@@ -83,16 +83,6 @@ export const RightSidebar = () => {
         <ColorInputs color={activeColorHex} onChange={handleColorChange} />
       </CollapsibleSection>
 
-      <CollapsibleSection title="Shader">
-        <select
-          disabled
-          className="w-full rounded border border-white/10 bg-[#1a1a2e] px-2 py-1 text-xs text-[#8888aa]"
-        >
-          <option>None</option>
-          <option>Glow</option>
-          <option>Outline</option>
-        </select>
-      </CollapsibleSection>
 
       <CollapsibleSection title="AI Copilot" defaultOpen={false} icon={<Sparkles size={16} className="text-[#00f5ff]" />}>
         <div className="flex items-center gap-2 rounded border border-white/10 bg-[#1a1a2e] p-3">
