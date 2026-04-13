@@ -9,6 +9,8 @@ import {
   useViewport,
   useCanvasDimensions,
   useSelection,
+  useActiveLayerId,
+  useOnionSkinEnabled,
 } from '@/app/editor/sprites/hooks/useSpriteEditorStore.hook'
 
 export const useCanvasRenderer = (canvasRef: RefObject<HTMLCanvasElement | null>) => {
@@ -16,6 +18,8 @@ export const useCanvasRenderer = (canvasRef: RefObject<HTMLCanvasElement | null>
   const viewport = useViewport()
   const canvasDimensions = useCanvasDimensions()
   const selection = useSelection()
+  const activeLayerId = useActiveLayerId()
+  const onionSkinEnabled = useOnionSkinEnabled()
 
   const [parentSize, setParentSize] = useState({ width: 0, height: 0 })
 
@@ -58,9 +62,11 @@ export const useCanvasRenderer = (canvasRef: RefObject<HTMLCanvasElement | null>
       canvasDimensions.height,
       parentSize.width,
       parentSize.height,
-      selection
+      selection,
+      activeLayerId,
+      onionSkinEnabled
     )
-  }, [layers, viewport, canvasDimensions, parentSize, canvasRef, selection])
+  }, [layers, viewport, canvasDimensions, parentSize, canvasRef, selection, activeLayerId, onionSkinEnabled])
 
   useEffect(() => {
     const frameId = requestAnimationFrame(render)
