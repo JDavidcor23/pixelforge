@@ -1,6 +1,6 @@
 'use client'
 
-import { Sparkles, Palette } from 'lucide-react'
+import { Sparkles, Palette, Download } from 'lucide-react'
 
 import { OpacitySlider } from '../OpacitySlider/OpacitySlider'
 import { ColorInputs } from '../ColorInputs/ColorInputs'
@@ -8,6 +8,7 @@ import { ColorArea } from '../ColorArea/ColorArea'
 import { ColorPalette } from '../ColorPalette/ColorPalette'
 import { CollapsibleSection } from './CollapsibleSection'
 import { useRightSidebar, useColorSection } from './useRightSidebar.hook'
+import { useExport } from './useExport.hook'
 import { useCursorPixel } from '@/app/editor/sprites/hooks/useSpriteEditorStore.hook'
 
 const CursorPositionInputs = () => {
@@ -92,6 +93,8 @@ export const RightSidebar = () => {
     handleOpacityChange,
   } = useRightSidebar()
 
+  const { handleExportFrame, handleExportSpriteSheet } = useExport()
+
   return (
     <div className="flex h-full flex-col gap-6 overflow-y-auto border-l border-white/10 bg-[#0f1115] p-4 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent hover:scrollbar-thumb-white/20">
       <CollapsibleSection title="Position">
@@ -104,6 +107,25 @@ export const RightSidebar = () => {
 
       <CollapsibleSection title="Color" icon={<Palette size={14} />}>
         <ColorSectionInputs />
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Export" icon={<Download size={14} />}>
+        <div className="flex flex-col gap-2">
+          <button
+            onClick={handleExportFrame}
+            className="flex w-full items-center justify-center gap-2 rounded border border-white/10 bg-[#1a1a2e] py-2 text-xs font-medium text-[#ededed] transition-colors hover:bg-[#252540]"
+          >
+            <Download size={12} />
+            Export Current Frame
+          </button>
+          <button
+            onClick={handleExportSpriteSheet}
+            className="flex w-full items-center justify-center gap-2 rounded border border-[#00f5ff]/20 bg-[#00f5ff]/10 py-2 text-xs font-medium text-[#00f5ff] transition-colors hover:bg-[#00f5ff]/20"
+          >
+            <Download size={12} />
+            Export Sprite Sheet
+          </button>
+        </div>
       </CollapsibleSection>
 
 
