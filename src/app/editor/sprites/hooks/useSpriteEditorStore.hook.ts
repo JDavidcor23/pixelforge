@@ -1,17 +1,17 @@
 import { useShallow } from 'zustand/react/shallow'
 
 import { useSpriteEditorStore } from '@/app/editor/stores'
+import { useEditorUIStore } from '@/app/editor/stores/ui.store'
+import { useEditorPrefsStore } from '@/app/editor/stores/prefs.store'
 
-// ── State Selectors ─────────────────────────────────────────────────
+// ── Core State Selectors ────────────────────────────────────────────────────
 
 export const useLayers = () => useSpriteEditorStore((s) => s.layers)
-// Selectors strictly for UI components to avoid re-rendering on pixel updates
 export const useActiveLayerOpacity = () =>
   useSpriteEditorStore(
     (s) => s.layers.find((l) => l.id === s.activeLayerId)?.opacity ?? 100
   )
 export const useLayersMetadata = () => {
-  // We stringify the metadata to perform a deep equality check on primitives
   const metadataStr = useSpriteEditorStore((s) =>
     JSON.stringify(
       s.layers.map((l) => ({
@@ -33,27 +33,24 @@ export const useActiveLayerId = () => useSpriteEditorStore((s) => s.activeLayerI
 export const useActiveTool = () => useSpriteEditorStore((s) => s.activeTool)
 export const usePrimaryColor = () => useSpriteEditorStore((s) => s.primaryColor)
 export const useSecondaryColor = () => useSpriteEditorStore((s) => s.secondaryColor)
-export const useViewport = () => useSpriteEditorStore((s) => s.viewport)
 export const useCursorPixel = () => useSpriteEditorStore((s) => s.cursorPixel)
 export const useTimeline = () => useSpriteEditorStore((s) => s.timeline)
-export const useLeftSidebarTab = () => useSpriteEditorStore((s) => s.leftSidebarTab)
 export const useHistoryIndex = () => useSpriteEditorStore((s) => s.historyIndex)
 export const useHistoryLength = () => useSpriteEditorStore((s) => s.history.length)
 export const useSelection = () => useSpriteEditorStore((s) => s.selection)
-
 export const useCanvasDimensions = () =>
   useSpriteEditorStore(
     useShallow((s) => ({ width: s.canvasWidth, height: s.canvasHeight }))
   )
 
-// ── Pixel Actions ───────────────────────────────────────────────────
+// ── Pixel Actions ────────────────────────────────────────────────────────────
 
 export const useSetPixel = () => useSpriteEditorStore((s) => s.setPixel)
 export const useSetPixelBatch = () => useSpriteEditorStore((s) => s.setPixelBatch)
 export const useFloodFill = () => useSpriteEditorStore((s) => s.floodFill)
 export const useClearLayer = () => useSpriteEditorStore((s) => s.clearLayer)
 
-// ── Layer Actions ───────────────────────────────────────────────────
+// ── Layer Actions ────────────────────────────────────────────────────────────
 
 export const useAddLayer = () => useSpriteEditorStore((s) => s.addLayer)
 export const useRemoveLayer = () => useSpriteEditorStore((s) => s.removeLayer)
@@ -65,27 +62,20 @@ export const useReorderLayers = () => useSpriteEditorStore((s) => s.reorderLayer
 export const useSetActiveLayer = () => useSpriteEditorStore((s) => s.setActiveLayer)
 export const useUpdateLayerName = () => useSpriteEditorStore((s) => s.updateLayerName)
 
-// ── Tool Actions ────────────────────────────────────────────────────
+// ── Tool Actions ─────────────────────────────────────────────────────────────
 
 export const useSetActiveTool = () => useSpriteEditorStore((s) => s.setActiveTool)
 export const useSetPrimaryColor = () => useSpriteEditorStore((s) => s.setPrimaryColor)
-export const useSetSecondaryColor = () =>
-  useSpriteEditorStore((s) => s.setSecondaryColor)
+export const useSetSecondaryColor = () => useSpriteEditorStore((s) => s.setSecondaryColor)
 export const useSetCursorPixel = () => useSpriteEditorStore((s) => s.setCursorPixel)
 
-// ── Viewport Actions ────────────────────────────────────────────────
-
-export const useSetZoom = () => useSpriteEditorStore((s) => s.setZoom)
-export const useSetViewportOffset = () =>
-  useSpriteEditorStore((s) => s.setViewportOffset)
-
-// ── History Actions ─────────────────────────────────────────────────
+// ── History Actions ──────────────────────────────────────────────────────────
 
 export const usePushHistory = () => useSpriteEditorStore((s) => s.pushHistory)
 export const useUndo = () => useSpriteEditorStore((s) => s.undo)
 export const useRedo = () => useSpriteEditorStore((s) => s.redo)
 
-// ── Timeline Actions ────────────────────────────────────────────────
+// ── Timeline Actions ─────────────────────────────────────────────────────────
 
 export const useAddFrame = () => useSpriteEditorStore((s) => s.addFrame)
 export const useRemoveFrame = () => useSpriteEditorStore((s) => s.removeFrame)
@@ -101,31 +91,16 @@ export const usePasteFrames = () => useSpriteEditorStore((s) => s.pasteFrames)
 export const usePasteFramesAtEnd = () => useSpriteEditorStore((s) => s.pasteFramesAtEnd)
 export const useFrameClipboard = () => useSpriteEditorStore((s) => s.frameClipboard)
 
-// ── Sidebar Actions ─────────────────────────────────────────────────
-
-export const useSetLeftSidebarTab = () =>
-  useSpriteEditorStore((s) => s.setLeftSidebarTab)
+// ── Selection Actions ────────────────────────────────────────────────────────
 
 export const useSetSelection = () => useSpriteEditorStore((s) => s.setSelection)
 export const useFloatSelection = () => useSpriteEditorStore((s) => s.floatSelection)
-export const useSetSelectionTransform = () => useSpriteEditorStore((s) => s.setSelectionTransform)
+export const useSetSelectionTransform = () =>
+  useSpriteEditorStore((s) => s.setSelectionTransform)
 export const useCommitTransformation = () =>
   useSpriteEditorStore((s) => s.commitTransformation)
 
-// ── Palette Actions ──────────────────────────────────────────────────
-
-export const usePalette = () => useSpriteEditorStore((s) => s.palette)
-export const useSaveColor = () => useSpriteEditorStore((s) => s.saveColor)
-export const useRemoveColor = () => useSpriteEditorStore((s) => s.removeColor)
-
-// ── View Preferences ─────────────────────────────────────────────────
-
-export const useShowGrid = () => useSpriteEditorStore((s) => s.showGrid)
-export const useOnionSkinEnabled = () => useSpriteEditorStore((s) => s.onionSkinEnabled)
-export const useSetShowGrid = () => useSpriteEditorStore((s) => s.setShowGrid)
-export const useToggleOnionSkin = () => useSpriteEditorStore((s) => s.toggleOnionSkin)
-
-// ── Clipboard Actions ────────────────────────────────────────────────
+// ── Clipboard Actions ────────────────────────────────────────────────────────
 
 export const useClipboard = () => useSpriteEditorStore((s) => s.clipboard)
 export const useCopySelection = () => useSpriteEditorStore((s) => s.copySelection)
@@ -133,13 +108,29 @@ export const useCutSelection = () => useSpriteEditorStore((s) => s.cutSelection)
 export const usePasteClipboard = () => useSpriteEditorStore((s) => s.pasteClipboard)
 export const useDeleteSelection = () => useSpriteEditorStore((s) => s.deleteSelection)
 
-// ── UI Selectors & Actions ───────────────────────────────────────────
+// ── UI State & Actions ───────────────────────────────────────────────────────
 
-export const useUIState = () => useSpriteEditorStore((s) => s.ui)
-export const useToggleLeftSidebar = () => useSpriteEditorStore((s) => s.toggleLeftSidebar)
-export const useToggleRightSidebar = () => useSpriteEditorStore((s) => s.toggleRightSidebar)
-export const useToggleTimeline = () => useSpriteEditorStore((s) => s.toggleTimeline)
-export const useToggleToolbar = () => useSpriteEditorStore((s) => s.toggleToolbar)
-export const useToggleZenMode = () => useSpriteEditorStore((s) => s.toggleZenMode)
-export const useSetToolbarPosition = () => useSpriteEditorStore((s) => s.setToolbarPosition)
+export const useLeftSidebarTab = () => useEditorUIStore((s) => s.leftSidebarTab)
+export const useUIState = () => useEditorUIStore((s) => s.ui)
+export const useSetLeftSidebarTab = () => useEditorUIStore((s) => s.setLeftSidebarTab)
+export const useToggleLeftSidebar = () => useEditorUIStore((s) => s.toggleLeftSidebar)
+export const useToggleRightSidebar = () => useEditorUIStore((s) => s.toggleRightSidebar)
+export const useToggleTimeline = () => useEditorUIStore((s) => s.toggleTimeline)
+export const useToggleToolbar = () => useEditorUIStore((s) => s.toggleToolbar)
+export const useToggleZenMode = () => useEditorUIStore((s) => s.toggleZenMode)
+export const useSetToolbarPosition = () => useEditorUIStore((s) => s.setToolbarPosition)
 
+// ── Prefs State & Actions ────────────────────────────────────────────────────
+
+export const useViewport = () => useEditorPrefsStore((s) => s.viewport)
+export const useSetZoom = () => useEditorPrefsStore((s) => s.setZoom)
+export const useSetViewportOffset = () => useEditorPrefsStore((s) => s.setViewportOffset)
+
+export const usePalette = () => useEditorPrefsStore((s) => s.palette)
+export const useSaveColor = () => useEditorPrefsStore((s) => s.saveColor)
+export const useRemoveColor = () => useEditorPrefsStore((s) => s.removeColor)
+
+export const useShowGrid = () => useEditorPrefsStore((s) => s.showGrid)
+export const useOnionSkinEnabled = () => useEditorPrefsStore((s) => s.onionSkinEnabled)
+export const useSetShowGrid = () => useEditorPrefsStore((s) => s.setShowGrid)
+export const useToggleOnionSkin = () => useEditorPrefsStore((s) => s.toggleOnionSkin)
