@@ -9,13 +9,10 @@ export function cloneLayers(layers: Layer[]): Layer[] {
 }
 
 export function cloneFrames(frames: AnimationFrame[]): AnimationFrame[] {
-  return frames.map((frame) => {
-    const layerSnapshots: Record<string, AnimationFrame['layerSnapshots'][string]> = {}
-    for (const [id, buffer] of Object.entries(frame.layerSnapshots)) {
-      layerSnapshots[id] = cloneBuffer(buffer)
-    }
-    return { ...frame, layerSnapshots }
-  })
+  return frames.map((frame) => ({
+    ...frame,
+    layers: cloneLayers(frame.layers),
+  }))
 }
 
 export function createSnapshot(

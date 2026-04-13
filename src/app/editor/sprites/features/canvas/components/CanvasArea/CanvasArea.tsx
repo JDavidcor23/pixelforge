@@ -42,10 +42,7 @@ export const CanvasArea = () => {
     if (prevIndex < 0) return null
     const prevFrame = timeline.frames[prevIndex]
     if (!prevFrame) return null
-    return layers.map((layer) => ({
-      ...layer,
-      pixels: prevFrame.layerSnapshots[layer.id] ?? layer.pixels,
-    }))
+    return prevFrame.layers
   })()
 
   const { handlePointerDown, handlePointerMove, handlePointerUp, handlePointerLeave } = useCanvasInteraction()

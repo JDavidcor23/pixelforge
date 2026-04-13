@@ -41,7 +41,8 @@ export interface ToolDefinition {
 
 export interface AnimationFrame {
   readonly id: string
-  readonly layerSnapshots: Record<string, PixelBuffer>
+  readonly layers: Layer[]
+  readonly activeLayerId: string
   readonly durationMs: number
 }
 

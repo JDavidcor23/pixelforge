@@ -36,16 +36,11 @@ function createInitialLayer(width: number, height: number): Layer {
   }
 }
 
-function createInitialFrame(layers: Layer[]): AnimationFrame {
-  const layerSnapshots: Record<string, Layer['pixels']> = {}
-
-  for (const layer of layers) {
-    layerSnapshots[layer.id] = layer.pixels
-  }
-
+function createInitialFrame(layers: Layer[], activeLayerId: string): AnimationFrame {
   return {
     id: crypto.randomUUID(),
-    layerSnapshots,
+    layers,
+    activeLayerId,
     durationMs: SPRITE_EDITOR_TIMELINE.DEFAULT_FRAME_DURATION_MS,
   }
 }
@@ -74,7 +69,7 @@ export const useSpriteEditorStore = create<SpriteEditorStore>()(
       history: [],
       historyIndex: -1,
       timeline: {
-        frames: [createInitialFrame([initialLayer])],
+        frames: [createInitialFrame([initialLayer], initialLayer.id)],
         currentFrameIndex: 0,
         isPlaying: false,
         fps: SPRITE_EDITOR_TIMELINE.DEFAULT_FPS,
@@ -332,13 +327,10 @@ export const useSpriteEditorStore = create<SpriteEditorStore>()(
     const frame = frames[currentFrameIndex]
     if (!frame) return
 
-    const layerSnapshots: Record<string, Layer['pixels']> = {}
-    for (const layer of state.layers) {
-      layerSnapshots[layer.id] = layer.pixels
-    }
-
     const updatedFrames = frames.map((f, i) =>
-      i === currentFrameIndex ? { ...f, layerSnapshots } : f
+      i === currentFrameIndex
+        ? { ...f, layers: cloneLayers(state.layers), activeLayerId: state.activeLayerId }
+        : f
     )
 
     set((s) => ({ timeline: { ...s.timeline, frames: updatedFrames } }))
@@ -349,12 +341,10 @@ export const useSpriteEditorStore = create<SpriteEditorStore>()(
     const frame = state.timeline.frames[index]
     if (!frame) return
 
-    const newLayers = state.layers.map((layer) => {
-      const snapshot = frame.layerSnapshots[layer.id]
-      return snapshot ? { ...layer, pixels: snapshot } : layer
+    set({
+      layers: cloneLayers(frame.layers),
+      activeLayerId: frame.activeLayerId,
     })
-
-    set({ layers: newLayers })
   },
 
   addFrame: () => {
@@ -362,15 +352,20 @@ export const useSpriteEditorStore = create<SpriteEditorStore>()(
     get().saveCurrentFrameSnapshot()
 
     set((state) => {
-      // New frame starts with empty buffers — onion skin shows the previous frame
-      const emptySnapshots: Record<string, Layer['pixels']> = {}
-      for (const layer of state.layers) {
-        emptySnapshots[layer.id] = createEmptyBuffer(state.canvasWidth, state.canvasHeight)
+      // Each new frame gets its own fresh single layer — independent from other frames
+      const newLayer: Layer = {
+        id: crypto.randomUUID(),
+        name: `${SPRITE_EDITOR_DEFAULTS.LAYER_NAME_PREFIX} 1`,
+        visible: true,
+        locked: false,
+        opacity: 100,
+        pixels: createEmptyBuffer(state.canvasWidth, state.canvasHeight),
       }
 
       const newFrame: AnimationFrame = {
         id: crypto.randomUUID(),
-        layerSnapshots: emptySnapshots,
+        layers: [newLayer],
+        activeLayerId: newLayer.id,
         durationMs: Math.round(1000 / state.timeline.fps),
       }
 
@@ -385,16 +380,20 @@ export const useSpriteEditorStore = create<SpriteEditorStore>()(
       }
     })
 
-    // Restore the new (empty) frame so the canvas clears
+    // 2. Restore the new (empty) frame so the canvas clears and layers panel updates
     get().restoreFrameSnapshot(get().timeline.currentFrameIndex)
+
+    // 3. Push history AFTER the frame exists so undo only removes the frame,
+    //    not the drawing done before it
+    get().pushHistory('Add Frame')
   },
 
   removeFrame: (index) => {
     const state = get()
     if (state.timeline.frames.length <= 1) return
 
-    // Save current before deleting
-    state.saveCurrentFrameSnapshot()
+    // 1. Push history BEFORE deleting so undo can restore the frame
+    get().pushHistory('Remove Frame')
 
     set((s) => {
       const newFrames = s.timeline.frames.filter((_, i) => i !== index)
@@ -420,7 +419,7 @@ export const useSpriteEditorStore = create<SpriteEditorStore>()(
       }
     })
 
-    // Restore the frame we land on
+    // 2. Restore the frame we land on
     get().restoreFrameSnapshot(get().timeline.currentFrameIndex)
   },
 
