@@ -1,3 +1,4 @@
+import { Palette, Bot, Boxes, Library, Music, Rocket } from 'lucide-react'
 import type { FeatureCardProps, PipelineStepProps, NavLink, FooterLink } from '../types'
 
 export const LANDING_NAV = {
@@ -20,10 +21,6 @@ export const LANDING_HERO = {
   CTA_SECONDARY: 'Watch Demo',
 } as const
 
-export const LANDING_HERO_GRID = {
-  PIXEL_COUNT: 64,
-} as const
-
 export const LANDING_HERO_LABELS = {
   LEFT: ['Sprite Editor', 'AI Generation', 'Scene Builder'] as readonly string[],
   RIGHT: ['Asset Library', 'Sound Manager', 'One-Click Deploy'] as readonly string[],
@@ -38,37 +35,37 @@ export const LANDING_FEATURES = {
 
 export const LANDING_FEATURE_CARDS: readonly FeatureCardProps[] = [
   {
-    icon: '🎨',
+    icon: <Palette className="w-full h-full" />,
     title: 'SPRITE EDITOR',
     description:
       'Draw, animate, and export sprites with a full-featured pixel art canvas powered by Konva.js.',
   },
   {
-    icon: '🤖',
+    icon: <Bot className="w-full h-full" />,
     title: 'AI GENERATION',
     description:
       'Generate sprites and assets using Claude and Gemini AI models. Describe what you need, get production-ready art.',
   },
   {
-    icon: '🏗️',
+    icon: <Boxes className="w-full h-full" />,
     title: 'SCENE BUILDER',
     description:
       'Drag-and-drop your assets into game scenes. Set collisions, layers, and camera behavior visually.',
   },
   {
-    icon: '📦',
+    icon: <Library className="w-full h-full" />,
     title: 'ASSET LIBRARY',
     description:
       'Organize all your sprites, tilesets, and animations in one searchable, taggable library.',
   },
   {
-    icon: '🔊',
+    icon: <Music className="w-full h-full" />,
     title: 'SOUND MANAGER',
     description:
       'Import, preview, and assign sound effects and music tracks to game events.',
   },
   {
-    icon: '🚀',
+    icon: <Rocket className="w-full h-full" />,
     title: 'ONE-CLICK DEPLOY',
     description:
       'Publish your game directly to Vercel with a single click. Share a live URL instantly.',

@@ -1,5 +1,7 @@
+import type { ReactNode } from 'react'
+
 export interface FeatureCardProps {
-  readonly icon: string
+  readonly icon: ReactNode
   readonly title: string
   readonly description: string
 }
