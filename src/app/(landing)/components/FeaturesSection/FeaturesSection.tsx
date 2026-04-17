@@ -21,9 +21,11 @@ export const FeaturesSection = () =>
           { LANDING_FEATURE_CARDS.map( ( feature ) => (
             <FeatureCard
               key={ feature.title }
+              moduleId={ feature.moduleId }
               icon={ feature.icon }
               title={ feature.title }
               description={ feature.description }
+              tags={ feature.tags }
             />
           ) ) }
         </div>

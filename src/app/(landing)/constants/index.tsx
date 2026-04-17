@@ -35,40 +35,52 @@ export const LANDING_FEATURES = {
 
 export const LANDING_FEATURE_CARDS: readonly FeatureCardProps[] = [
   {
+    moduleId: 'MOD_01',
     icon: <Palette className="w-full h-full" />,
-    title: 'SPRITE EDITOR',
+    title: 'SPRITE STUDIO',
     description:
-      'Draw, animate, and export sprites with a full-featured pixel art canvas powered by Konva.js.',
+      'Pixel-perfect manipulation with multi-layer compositing and automatic atlas generation.',
+    tags: ['ATLAS EXPORT', 'SKINNING'],
   },
   {
+    moduleId: 'MOD_02',
+    icon: <Boxes className="w-full h-full" />,
+    title: 'SCENE BUILDER',
+    description:
+      'Visual level design with dynamic tilemapping and physics-aware placement tools.',
+    tags: ['RAY-CAST UI', 'TILE-MAP'],
+  },
+  {
+    moduleId: 'MOD_03',
     icon: <Bot className="w-full h-full" />,
     title: 'AI GENERATION',
     description:
       'Generate sprites and assets using Claude and Gemini AI models. Describe what you need, get production-ready art.',
+    tags: ['LORA-ADAPTERS', 'ASSET-GEN'],
   },
   {
-    icon: <Boxes className="w-full h-full" />,
-    title: 'SCENE BUILDER',
-    description:
-      'Drag-and-drop your assets into game scenes. Set collisions, layers, and camera behavior visually.',
-  },
-  {
+    moduleId: 'MOD_04',
     icon: <Library className="w-full h-full" />,
     title: 'ASSET LIBRARY',
     description:
       'Organize all your sprites, tilesets, and animations in one searchable, taggable library.',
+    tags: ['SMART TAGS', 'COLLECTIONS'],
   },
   {
+    moduleId: 'MOD_05',
     icon: <Music className="w-full h-full" />,
     title: 'SOUND MANAGER',
     description:
       'Import, preview, and assign sound effects and music tracks to game events.',
+    tags: ['SFX BROWSER', 'MIXER'],
   },
   {
+    moduleId: 'MOD_06',
     icon: <Rocket className="w-full h-full" />,
     title: 'ONE-CLICK DEPLOY',
     description:
       'Publish your game directly to Vercel with a single click. Share a live URL instantly.',
+    tags: ['VERCEL API', 'LIVE-LINK'],
   },
 ] as const
 
@@ -82,19 +94,19 @@ export const LANDING_PIPELINE_STEPS: readonly PipelineStepProps[] = [
     stepNumber: '01',
     title: 'CREATE SPRITES',
     description:
-      'Start with the pixel editor or let AI generate your game assets. Build sprite sheets, animations, and tilesets.',
+      'Import raw assets or use our AI prompt system to generate pixel-art layers. Fine-tune every bit in the Sprite Studio editor.',
   },
   {
     stepNumber: '02',
-    title: 'BUILD SCENES',
+    title: 'BUILD SCENE',
     description:
-      'Arrange your assets into game levels. Add physics, collisions, and interactive elements with the visual scene builder.',
+      'Drag and drop assets onto the gridded canvas. Attach collision boxes, light sources, and script behaviors using visual logic nodes.',
   },
   {
     stepNumber: '03',
-    title: 'DEPLOY & SHARE',
+    title: 'PUBLISH',
     description:
-      'Hit publish and your game goes live on Vercel. Get a shareable URL in seconds, not hours.',
+      'Instantly compile to optimized WASM and host on the global edge. Reach your audience on any browser-equipped device.',
   },
 ] as const
 

@@ -4,6 +4,8 @@ export interface FeatureCardProps {
   readonly icon: ReactNode
   readonly title: string
   readonly description: string
+  readonly moduleId?: string
+  readonly tags?: readonly string[]
 }
 
 export interface PipelineStepProps {
