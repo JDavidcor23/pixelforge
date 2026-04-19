@@ -11,7 +11,7 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 
-  --color-accent: #00f5ff;
+  --color-accent: #00fbfb;
   --color-active-bg: #1a1a2e;
   --color-muted: #8888aa;
 }
@@ -27,7 +27,7 @@ body {
   --scrollbar-bg: #0f1115;
   --scrollbar-thumb: rgba(255, 255, 255, 0.15);
   --scrollbar-thumb-hover: rgba(255, 255, 255, 0.25);
-  --scrollbar-accent: #00f5ff;
+  --scrollbar-accent: #00fbfb;
 }
 
 /* Global scrollbar style for all scrollable elements */
@@ -69,5 +69,21 @@ body {
   }
   .scrollbar-none::-webkit-scrollbar {
     display: none;
+  }
+
+  /* Premium Designer Utilities */
+  .bg-grid {
+    background-size: 40px 40px;
+    background-image: 
+      linear-gradient(to right, rgba(0, 251, 251, 0.07) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(0, 251, 251, 0.07) 1px, transparent 1px);
+  }
+
+  .bg-grid-fade {
+    mask-image: radial-gradient(circle at center, black, transparent 80%);
+  }
+
+  .text-shadow-accent {
+    text-shadow: 0 0 20px rgba(0, 251, 251, 0.3);
   }
 }
