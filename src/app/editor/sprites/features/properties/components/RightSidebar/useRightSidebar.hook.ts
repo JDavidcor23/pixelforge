@@ -13,7 +13,9 @@ import {
   useSetSecondaryColor,
   useOverwriteWithPixels,
   useSpriteEditorStore,
-  useCanvasDimensions
+  useCanvasDimensions,
+  usePixelLabApiKey,
+  useSetPixelLabApiKey
 } from '@/app/editor/sprites/hooks/useSpriteEditorStore.hook'
 import type { RgbaColor } from '@/app/editor/types'
 
@@ -110,6 +112,8 @@ export const useColorSection = () => {
 export const usePixelLabCopilot = () => {
   const overwriteWithPixels = useOverwriteWithPixels()
   const { width: canvasWidth, height: canvasHeight } = useCanvasDimensions()
+  const apiKey = usePixelLabApiKey()
+  const setApiKey = useSetPixelLabApiKey()
 
   const [prompt, setPrompt] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -187,8 +191,8 @@ export const usePixelLabCopilot = () => {
         '@/app/editor/lib/pixellab-utils'
       )
       
-      // Request using the user-selected size
-      const base64 = await generateSpriteWithPixelLab(prompt, genSize, genSize)
+      // Request using the user-selected size and the API key from store
+      const base64 = await generateSpriteWithPixelLab(prompt, genSize, genSize, apiKey)
 
       // Add to history with metadata
       addToHistory({ prompt, base64, width: genSize, height: genSize })
@@ -199,7 +203,7 @@ export const usePixelLabCopilot = () => {
     } finally {
       setIsLoading(false)
     }
-  }, [prompt, genSize, addToHistory])
+  }, [prompt, genSize, addToHistory, apiKey])
 
   const downloadImage = useCallback((gen: AIGeneration) => {
     const link = document.createElement('a')
@@ -240,7 +244,9 @@ export const usePixelLabCopilot = () => {
     genSize,
     setGenSize,
     downloadImage,
-    downloadSource
+    downloadSource,
+    apiKey,
+    setApiKey
   }
 }
 

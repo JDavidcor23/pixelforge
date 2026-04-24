@@ -1,36 +1,76 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PixelForge 🚀
 
-## Getting Started
+PixelForge is a professional, browser-based 2D game builder designed for rapid prototyping and high-performance pixel art creation. Build, animate, and publish worlds directly from your browser with AI-assisted workflows.
 
-First, run the development server:
+![PixelForge Presentation](./src/assets/presentation.png)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## ✨ Key Features
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **🎨 Sprite Studio**: Pixel-perfect manipulation with multi-layer compositing and GPU-accelerated rendering.
+- **🤖 AI Copilot**: Generate production-ready pixel art using PixelLab AI, Claude, and Gemini.
+- **🏗️ Scene Builder**: Visual level design with dynamic tilemapping and physics-aware placement.
+- **📦 Asset Library**: Centralized, taggable management for all your game assets.
+- **⚡ One-Click Deploy**: Instant deployment to Vercel with automatic optimization.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🛠️ Technology Stack
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Framework**: [Next.js 14](https://nextjs.org/) (App Router)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **State Management**: [Zustand](https://zustand-demo.pmnd.rs/)
+- **Canvas Rendering**: [Konva.js](https://konvajs.org/)
+- **Backend/Auth**: [Supabase](https://supabase.com/)
+- **AI Integration**: PixelLab API, Google Gemini, Anthropic Claude
 
-## Learn More
+## 📸 Screenshots
 
-To learn more about Next.js, take a look at the following resources:
+| AI Sprite Generation | Professional Editor |
+|----------------------|---------------------|
+| ![AI Generation](./src/assets/editor-ia.png) | ![Editor](./src/assets/editor.jpeg) |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🚀 Getting Started
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Prerequisites
 
-## Deploy on Vercel
+- Node.js 18+ 
+- npm / pnpm / bun
+- A Supabase project
+- PixelLab API Key (Optional, for AI features)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Installation
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/your-username/pixel-forge.git
+   cd pixel-forge
+   ```
+
+2. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+
+3. **Environment Setup**:
+   Create a `.env.local` file in the root directory:
+   ```env
+   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   PIXELLAB_API_KEY=your_optional_server_key
+   ```
+
+4. **Run the development server**:
+   ```bash
+   npm run dev
+   ```
+
+## 📖 Documentation
+
+Detailed guides for specific features:
+- [PixelLab AI Setup](./src/app/(landing)/docs/pixellab/page.tsx) - How to configure your AI generation keys.
+
+## 🛡️ Security
+
+PixelForge prioritizes user privacy. **All sensitive API keys (like PixelLab) are stored exclusively in your browser's `localStorage`.** We never store your personal integration keys on our servers.
+
+## 📄 License
+
+This project is licensed under the MIT License.

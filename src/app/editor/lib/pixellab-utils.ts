@@ -64,11 +64,16 @@ export async function base64ToPixels(
 /**
  * Calls our backend API proxy to generate an image from PixelLab.
  */
-export async function generateSpriteWithPixelLab(prompt: string, width: number, height: number): Promise<string> {
+export async function generateSpriteWithPixelLab(
+  prompt: string, 
+  width: number, 
+  height: number,
+  apiKey?: string | null
+): Promise<string> {
   const response = await fetch('/api/ai/pixellab', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ prompt, width, height }),
+    body: JSON.stringify({ prompt, width, height, apiKey }),
   })
 
   if (!response.ok) {

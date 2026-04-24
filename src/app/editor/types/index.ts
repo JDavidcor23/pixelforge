@@ -176,6 +176,7 @@ export interface EditorPrefsState {
   readonly palette: RgbaColor[]
   readonly showGrid: boolean
   readonly onionSkinEnabled: boolean
+  readonly pixellabApiKey: string | null
 }
 
 export interface EditorPrefsActions {
@@ -185,6 +186,7 @@ export interface EditorPrefsActions {
   removeColor: (color: RgbaColor) => void
   setShowGrid: (show: boolean) => void
   toggleOnionSkin: () => void
+  setPixelLabApiKey: (key: string | null) => void
 }
 
 export type EditorPrefsStore = EditorPrefsState & EditorPrefsActions

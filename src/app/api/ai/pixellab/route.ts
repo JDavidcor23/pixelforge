@@ -2,17 +2,17 @@ import { NextResponse } from 'next/server'
 
 export async function POST(req: Request) {
   try {
-    const { prompt, width = 64, height = 64 } = await req.json()
+    const { prompt, width = 64, height = 64, apiKey: clientApiKey } = await req.json()
+    
+    const apiKey = clientApiKey || process.env.PIXELLAB_API_KEY
 
-    if (!prompt) {
-      return NextResponse.json({ error: 'Prompt is required' }, { status: 400 })
-    }
-
-    const apiKey = process.env.PIXELLAB_API_KEY
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'Missing PIXELLAB_API_KEY in environment variables' },
-        { status: 500 }
+        { 
+          error: 'Missing PixelLab API Key. Please configure it in your settings or environment.',
+          code: 'MISSING_API_KEY'
+        },
+        { status: 401 }
       )
     }
 

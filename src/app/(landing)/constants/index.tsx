@@ -9,7 +9,6 @@ export const LANDING_NAV = {
 export const LANDING_NAV_LINKS: readonly NavLink[] = [
   { label: 'Features', href: '#features' },
   { label: 'Pipeline', href: '#pipeline' },
-  { label: 'Pricing', href: '#pricing' },
 ] as const
 
 export const LANDING_HERO = {
