@@ -9,7 +9,7 @@ import { ColorInputs } from '../ColorInputs/ColorInputs'
 import { ColorArea } from '../ColorArea/ColorArea'
 import { ColorPalette } from '../ColorPalette/ColorPalette'
 import { CollapsibleSection } from './CollapsibleSection'
-import { useRightSidebar, useColorSection, usePixelLabCopilot, useDemoSprite, type AIGeneration } from './useRightSidebar.hook'
+import { useRightSidebar, useColorSection, usePixelLabCopilot, type AIGeneration } from './useRightSidebar.hook'
 import { useExport } from './useExport.hook'
 import { useCursorPixel } from '@/app/editor/sprites/hooks/useSpriteEditorStore.hook'
 
@@ -172,7 +172,6 @@ const PixelLabCopilotSection = () => {
     apiKey,
     setApiKey
   } = usePixelLabCopilot()
-  const { handleInject, isLoading: isInjecting } = useDemoSprite()
   const [isConfigOpen, setIsConfigOpen] = useState(false)
   
   const isMissingKey = !apiKey && error?.includes('Missing PixelLab API Key')
@@ -300,15 +299,6 @@ const PixelLabCopilotSection = () => {
           onDownloadSource={downloadSource}
         />
         
-        <div className="mt-2 border-t border-white/5 pt-2">
-          <button
-            type="button"
-            onClick={handleInject}
-            className="w-full rounded border border-white/10 bg-[#1a1a2e] py-1 text-[10px] text-[#8888aa] transition-colors hover:bg-white/5"
-          >
-            {isInjecting ? 'Injecting...' : 'Test: Inject Demo Sprite'}
-          </button>
-        </div>
       </div>
     </div>
   )

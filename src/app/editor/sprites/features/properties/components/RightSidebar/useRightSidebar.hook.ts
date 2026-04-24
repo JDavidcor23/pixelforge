@@ -250,25 +250,4 @@ export const usePixelLabCopilot = () => {
   }
 }
 
-export const useDemoSprite = () => {
-  const overwriteWithPixels = useOverwriteWithPixels()
-  const canvasWidth = useSpriteEditorStore((s) => s.canvasWidth)
-  const canvasHeight = useSpriteEditorStore((s) => s.canvasHeight)
-  const [isLoading, setIsLoading] = useState(false)
 
-  const handleInject = useCallback(async () => {
-    try {
-      setIsLoading(true)
-      const { PIXELLAB_DEMO_BASE64 } = await import('@/app/editor/constants/DEMO_SPRITE')
-      const { base64ToPixels } = await import('@/app/editor/lib/pixellab-utils')
-      const pixels = await base64ToPixels(PIXELLAB_DEMO_BASE64, canvasWidth, canvasHeight)
-      overwriteWithPixels(pixels)
-    } catch (e) {
-      console.error('Demo injection failed', e)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [overwriteWithPixels, canvasWidth, canvasHeight])
-
-  return { handleInject, isLoading }
-}
