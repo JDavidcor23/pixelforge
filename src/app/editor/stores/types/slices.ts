@@ -159,5 +159,6 @@ export interface CompoundSlice {
   // Clipboard orchestration
   pasteClipboard: () => void
   // AI Copilot orchestration
-  overwriteWithPfm: (pfm: string) => void
+
+  overwriteWithPixels: (pixels: RgbaColor[][]) => void
 }

@@ -138,6 +138,8 @@ export interface SpriteEditorActions {
   cutSelection: () => void
   pasteClipboard: () => void
   deleteSelection: () => void
+
+  overwriteWithPixels: (pixels: PixelBuffer) => void
 }
 
 export type SpriteEditorStore = SpriteEditorState & SpriteEditorActions

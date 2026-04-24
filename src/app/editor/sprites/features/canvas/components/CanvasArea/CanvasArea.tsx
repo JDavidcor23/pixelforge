@@ -70,7 +70,7 @@ export const CanvasArea = () => {
   }, [] )
 
   return (
-    <div ref={ containerRef } className="h-full w-full overflow-hidden bg-transparent">
+    <div ref={ containerRef } className="h-full w-full overflow-hidden bg-transparent" style={{ imageRendering: 'pixelated' }}>
       { size.width > 0 && size.height > 0 && (
         <Stage
           width={ size.width }
@@ -84,7 +84,7 @@ export const CanvasArea = () => {
           onMouseLeave={ handlePointerLeave }
           onWheel={ handleWheel }
           className="cursor-crosshair block"
-          style={ { touchAction: 'none' } }
+          style={ { touchAction: 'none', imageRendering: 'pixelated' } }
         >
           <GridBackground
             viewport={ viewport }

@@ -1,5 +1,9 @@
 import { useShallow } from 'zustand/react/shallow'
 
+export { useSpriteEditorStore } from '@/app/editor/stores'
+export { useEditorUIStore } from '@/app/editor/stores/ui.store'
+export { useEditorPrefsStore } from '@/app/editor/stores/prefs.store'
+
 import { useSpriteEditorStore } from '@/app/editor/stores'
 import { useEditorUIStore } from '@/app/editor/stores/ui.store'
 import { useEditorPrefsStore } from '@/app/editor/stores/prefs.store'
@@ -108,9 +112,10 @@ export const useCutSelection = () => useSpriteEditorStore((s) => s.cutSelection)
 export const usePasteClipboard = () => useSpriteEditorStore((s) => s.pasteClipboard)
 export const useDeleteSelection = () => useSpriteEditorStore((s) => s.deleteSelection)
 
-// ── AI Copilot Actions ───────────────────────────────────────────────────────
+// ── AI Copilot Orchestration ───────────────────────────────────────────────
 
-export const useOverwriteWithPfm = () => useSpriteEditorStore((s) => s.overwriteWithPfm)
+
+export const useOverwriteWithPixels = () => useSpriteEditorStore((s) => s.overwriteWithPixels)
 
 // ── UI State & Actions ───────────────────────────────────────────────────────
 

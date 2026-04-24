@@ -2,7 +2,7 @@ import type { StateCreator } from 'zustand'
 
 import type { AnimationFrame, Layer, SpriteEditorStore } from '@/app/editor/types'
 import { SPRITE_EDITOR_DEFAULTS, SPRITE_EDITOR_HISTORY } from '@/app/editor/constants'
-import { createEmptyBuffer, createSnapshot, parsePfm } from '@/app/editor/lib'
+import { createEmptyBuffer, createSnapshot } from '@/app/editor/lib'
 
 import type { CompoundSlice } from '../types/slices'
 
@@ -295,9 +295,9 @@ export const createCompoundSlice: StateCreator<
 
   // ── AI Copilot Orchestration ───────────────────────────────────────────────
 
-  overwriteWithPfm: (pfm) => {
-    const parsed = parsePfm(pfm)
-    get().pushHistory('AI Copilot: Apply PFM')
+
+  overwriteWithPixels: (pixels) => {
+    get().pushHistory('AI Copilot: Apply PixelLab Image')
 
     const newLayer: Layer = {
       id: crypto.randomUUID(),
@@ -305,7 +305,7 @@ export const createCompoundSlice: StateCreator<
       visible: true,
       locked: false,
       opacity: 100,
-      pixels: parsed.pixels,
+      pixels,
     }
 
     const newFrame: AnimationFrame = {
@@ -316,8 +316,8 @@ export const createCompoundSlice: StateCreator<
     }
 
     set((state) => ({
-      canvasWidth: parsed.width,
-      canvasHeight: parsed.height,
+      canvasWidth: pixels[0].length,
+      canvasHeight: pixels.length,
       layers: [newLayer],
       activeLayerId: newLayer.id,
       timeline: {
@@ -326,7 +326,7 @@ export const createCompoundSlice: StateCreator<
         currentFrameIndex: 0,
         selectedFrameIndices: [0],
       },
-      selection: null, // Clear selection if any
+      selection: null,
     }))
   },
 })

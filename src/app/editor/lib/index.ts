@@ -5,6 +5,5 @@ export { rgbaToHex, hexToRgba, rgbaToString } from './color-utils'
 export { createSnapshot, cloneLayers, cloneFrames } from './history'
 export { transformPixels } from './pixel-transform'
 export { exportFrameAsPng, exportSpriteSheetAsPng } from './export-utils'
-export { parsePfm } from './pfm'
-export type { PfmParseResult } from './pfm'
+
 

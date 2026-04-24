@@ -1,8 +1,8 @@
 import type { RgbaColor, ToolDefinition } from '@/app/editor/types'
 
 export const SPRITE_EDITOR_CANVAS = {
-  DEFAULT_WIDTH: 16,
-  DEFAULT_HEIGHT: 16,
+  DEFAULT_WIDTH: 32,
+  DEFAULT_HEIGHT: 32,
   MIN_ZOOM: 1,
   MAX_ZOOM: 40,
   DEFAULT_ZOOM: 16,

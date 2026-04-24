@@ -1,11 +1,10 @@
 'use client'
 
-import { useRef, useEffect } from 'react'
-import { Layer, Group, Rect, Transformer } from 'react-konva'
+import { useRef, useEffect, useMemo } from 'react'
+import { Layer, Group, Rect, Transformer, Image } from 'react-konva'
 import Konva from 'konva'
 
-import type { ViewportState, SelectionState } from '@/app/editor/types'
-import { rgbaToString } from '@/app/editor/lib'
+import type { ViewportState, SelectionState, RgbaColor } from '@/app/editor/types'
 import { useSpriteEditorStore } from '@/app/editor/stores'
 
 interface SelectionOverlayProps {
@@ -28,6 +27,34 @@ function getDrawOffset(
   const startX = Math.round(canvasWidth / 2 - (gridWidth * zoom) / 2 + offsetX)
   const startY = Math.round(canvasHeight / 2 - (gridHeight * zoom) / 2 + offsetY)
   return { startX, startY }
+}
+
+function renderPixelsToCanvas(pixels: RgbaColor[][]): HTMLCanvasElement | null {
+  const height = pixels.length
+  if (height === 0) return null
+  const width = pixels[0]?.length || 0
+  if (width === 0) return null
+
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return null
+  ctx.imageSmoothingEnabled = false
+
+  const imageData = ctx.createImageData(width, height)
+  let i = 0
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const color = pixels[y][x]
+      imageData.data[i++] = color.r
+      imageData.data[i++] = color.g
+      imageData.data[i++] = color.b
+      imageData.data[i++] = color.a
+    }
+  }
+  ctx.putImageData(imageData, 0, 0)
+  return canvas
 }
 
 export const SelectionOverlay = ({
@@ -58,33 +85,16 @@ export const SelectionOverlay = ({
     }
   }, [selection.floatingPixels])
 
-  const rects = []
-  if (selection.floatingPixels) {
-    for (let y = 0; y < selection.floatingPixels.length; y++) {
-      for (let x = 0; x < selection.floatingPixels[y].length; x++) {
-        const color = selection.floatingPixels[y][x]
-        if (color.a === 0) continue
-
-        rects.push(
-          <Rect
-            key={`floating-${x}-${y}`}
-            x={Math.round(x * zoom)}
-            y={Math.round(y * zoom)}
-            width={zoom + 0.5}
-            height={zoom + 0.5}
-            fill={rgbaToString(color)}
-            perfectDrawEnabled={false}
-          />
-        )
-      }
-    }
-  }
+  const floatingCanvas = useMemo(() => {
+    if (!selection.floatingPixels) return null
+    return renderPixelsToCanvas(selection.floatingPixels)
+  }, [selection.floatingPixels])
 
   const baseX = startX + selection.rect.x * zoom
   const baseY = startY + selection.rect.y * zoom
 
   return (
-    <Layer>
+    <Layer imageSmoothingEnabled={false}>
       <Group
         ref={groupRef}
         x={baseX}
@@ -151,7 +161,17 @@ export const SelectionOverlay = ({
           height={selection.rect.height * zoom}
           fill="transparent"
         />
-        {rects}
+        {floatingCanvas && (
+          <Image
+            image={floatingCanvas}
+            x={0}
+            y={0}
+            width={selection.rect.width * zoom}
+            height={selection.rect.height * zoom}
+            listening={false}
+            imageSmoothingEnabled={false}
+          />
+        )}
       </Group>
 
       {selection.floatingPixels && (

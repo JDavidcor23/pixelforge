@@ -1,8 +1,8 @@
 'use client'
 
-import { Layer as KonvaLayer, Group, Rect } from 'react-konva'
-import type { Layer, ViewportState, SelectionState } from '@/app/editor/types'
-import { rgbaToString } from '@/app/editor/lib'
+import { useMemo } from 'react'
+import { Layer as KonvaLayer, Group, Image } from 'react-konva'
+import type { Layer, ViewportState, SelectionState, RgbaColor } from '@/app/editor/types'
 
 interface SpriteLayersProps {
   readonly layers: Layer[]
@@ -30,6 +30,111 @@ function getDrawOffset(
   return { startX, startY }
 }
 
+function renderPixelsToCanvas(
+  pixels: RgbaColor[][],
+  selection?: SelectionState | null,
+  activeLayerId?: string,
+  layerId?: string
+): HTMLCanvasElement | null {
+  const height = pixels.length
+  if (height === 0) return null
+  const width = pixels[0]?.length || 0
+  if (width === 0) return null
+
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return null
+  ctx.imageSmoothingEnabled = false
+
+  const imageData = ctx.createImageData(width, height)
+  let i = 0
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const color = pixels[y][x]
+      
+      let skip = false
+      if (
+        selection?.floatingPixels &&
+        selection.originalArea &&
+        layerId === activeLayerId
+      ) {
+        const { originalArea } = selection
+        if (
+          x >= originalArea.x &&
+          x < originalArea.x + originalArea.width &&
+          y >= originalArea.y &&
+          y < originalArea.y + originalArea.height
+        ) {
+          skip = true
+        }
+      }
+
+      imageData.data[i++] = color.r
+      imageData.data[i++] = color.g
+      imageData.data[i++] = color.b
+      imageData.data[i++] = skip ? 0 : color.a
+    }
+  }
+  ctx.putImageData(imageData, 0, 0)
+  return canvas
+}
+
+const SpriteLayerImage = ({
+  layer,
+  zoom,
+  selection,
+  activeLayerId,
+}: {
+  layer: Layer
+  zoom: number
+  selection?: SelectionState | null
+  activeLayerId?: string
+}) => {
+  const canvas = useMemo(() => {
+    return renderPixelsToCanvas(layer.pixels, selection, activeLayerId, layer.id)
+  }, [layer.pixels, selection, activeLayerId, layer.id])
+
+  if (!canvas) return null
+
+  const effectiveOpacity = layer.opacity / 100
+
+  return (
+    <Image
+      image={canvas}
+      x={0}
+      y={0}
+      width={canvas.width * zoom}
+      height={canvas.height * zoom}
+      opacity={effectiveOpacity}
+      listening={false}
+      imageSmoothingEnabled={false}
+    />
+  )
+}
+
+const OnionLayerImage = ({ layer, zoom }: { layer: Layer; zoom: number }) => {
+  const canvas = useMemo(() => {
+    return renderPixelsToCanvas(layer.pixels)
+  }, [layer.pixels])
+
+  if (!canvas) return null
+
+  return (
+    <Image
+      image={canvas}
+      x={0}
+      y={0}
+      width={canvas.width * zoom}
+      height={canvas.height * zoom}
+      opacity={0.3}
+      listening={false}
+      imageSmoothingEnabled={false}
+    />
+  )
+}
+
 export const SpriteLayers = ({
   layers,
   viewport,
@@ -52,90 +157,27 @@ export const SpriteLayers = ({
   const { zoom } = viewport
 
   return (
-    <KonvaLayer listening={false}>
+    <KonvaLayer listening={false} imageSmoothingEnabled={false}>
       <Group x={startX} y={startY} listening={false}>
-
         {/* Onion skin: previous frame rendered dimmed */}
-        {onionSkinEnabled && previousFrameLayers && previousFrameLayers.map((layer) => {
-          if (!layer.visible) return null
-          const pixels = layer.pixels
-          const rects = []
-
-          for (let y = 0; y < pixels.length; y++) {
-            for (let x = 0; x < pixels[y].length; x++) {
-              const color = pixels[y][x]
-              if (color.a === 0) continue
-              rects.push(
-                <Rect
-                  key={`onion-${layer.id}-${x}-${y}`}
-                  x={Math.round(x * zoom)}
-                  y={Math.round(y * zoom)}
-                  width={zoom + 0.5}
-                  height={zoom + 0.5}
-                  fill={rgbaToString(color)}
-                  listening={false}
-                  perfectDrawEnabled={false}
-                />
-              )
-            }
-          }
-
-          return (
-            <Group key={`onion-${layer.id}`} opacity={0.3} listening={false}>
-              {rects}
-            </Group>
-          )
-        })}
+        {onionSkinEnabled &&
+          previousFrameLayers &&
+          previousFrameLayers.map((layer) => {
+            if (!layer.visible) return null
+            return <OnionLayerImage key={`onion-${layer.id}`} layer={layer} zoom={zoom} />
+          })}
 
         {/* Current frame layers */}
         {layers.map((layer) => {
           if (!layer.visible) return null
-
-          const pixels = layer.pixels
-          const rects = []
-
-          for (let y = 0; y < pixels.length; y++) {
-            for (let x = 0; x < pixels[y].length; x++) {
-              const color = pixels[y][x]
-              if (color.a === 0) continue
-
-              if (
-                selection?.floatingPixels &&
-                selection.originalArea &&
-                layer.id === activeLayerId
-              ) {
-                const { originalArea } = selection
-                if (
-                  x >= originalArea.x &&
-                  x < originalArea.x + originalArea.width &&
-                  y >= originalArea.y &&
-                  y < originalArea.y + originalArea.height
-                ) {
-                  continue
-                }
-              }
-
-              rects.push(
-                <Rect
-                  key={`${layer.id}-${x}-${y}`}
-                  x={Math.round(x * zoom)}
-                  y={Math.round(y * zoom)}
-                  width={zoom + 0.5}
-                  height={zoom + 0.5}
-                  fill={rgbaToString(color)}
-                  listening={false}
-                  perfectDrawEnabled={false}
-                />
-              )
-            }
-          }
-
-          const effectiveOpacity = layer.opacity / 100
-
           return (
-            <Group key={layer.id} opacity={effectiveOpacity} listening={false}>
-              {rects}
-            </Group>
+            <SpriteLayerImage
+              key={layer.id}
+              layer={layer}
+              zoom={zoom}
+              selection={selection}
+              activeLayerId={activeLayerId}
+            />
           )
         })}
       </Group>
