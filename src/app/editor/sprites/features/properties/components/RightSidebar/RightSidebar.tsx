@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Sparkles, Palette, Download, Code, FileJson, Key, Settings2, ExternalLink } from 'lucide-react'
+import { Sparkles, Palette, Download, Code, FileJson, Key, Settings2, ExternalLink, Check } from 'lucide-react'
 import Link from 'next/link'
 
 import { OpacitySlider } from '../OpacitySlider/OpacitySlider'
@@ -170,7 +170,9 @@ const PixelLabCopilotSection = () => {
     downloadImage,
     downloadSource,
     apiKey,
-    setApiKey
+    tempApiKey,
+    setTempApiKey,
+    handleSaveApiKey
   } = usePixelLabCopilot()
   const [isConfigOpen, setIsConfigOpen] = useState(false)
   
@@ -208,15 +210,33 @@ const PixelLabCopilotSection = () => {
               How to get a key? <ExternalLink size={10} />
             </Link>
           </div>
-          <div className="relative">
-            <Key className="absolute left-2 top-1/2 -translate-y-1/2 text-[#444466]" size={12} />
-            <input
-              type="password"
-              value={apiKey || ''}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder="Paste your API key here..."
-              className="w-full rounded border border-white/10 bg-[#0a0a0f] py-1.5 pl-8 pr-2 text-xs text-[#ededed] placeholder:text-[#333344] focus:border-purple-500/50 focus:outline-none"
-            />
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Key className="absolute left-2 top-1/2 -translate-y-1/2 text-[#444466]" size={12} />
+              <input
+                type="password"
+                value={tempApiKey}
+                onChange={(e) => setTempApiKey(e.target.value)}
+                onKeyDown={(e) => {
+                  e.stopPropagation()
+                  if (e.key === 'Enter') handleSaveApiKey()
+                }}
+                onPaste={(e) => e.stopPropagation()}
+                placeholder="Paste your API key here..."
+                className="w-full rounded border border-white/10 bg-[#0a0a0f] py-1.5 pl-8 pr-2 text-xs text-[#ededed] placeholder:text-[#333344] focus:border-purple-500/50 focus:outline-none"
+              />
+            </div>
+            <button
+              onClick={handleSaveApiKey}
+              disabled={tempApiKey === (apiKey || '')}
+              className={`flex items-center justify-center rounded px-3 transition-all ${
+                tempApiKey === (apiKey || '') && apiKey
+                  ? 'bg-green-500/20 text-green-400 border border-green-500/20'
+                  : 'bg-purple-500/20 text-purple-400 border border-purple-500/20 hover:bg-purple-500/30'
+              } disabled:opacity-50 disabled:cursor-default`}
+            >
+              {tempApiKey === (apiKey || '') && apiKey ? <Check size={14} /> : <span className="text-[10px] font-bold">SAVE</span>}
+            </button>
           </div>
           <p className="mt-2 text-[9px] text-[#444466] leading-tight text-center">
             Your key is saved locally in your browser. <br/>

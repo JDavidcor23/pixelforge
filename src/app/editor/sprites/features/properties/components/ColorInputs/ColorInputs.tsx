@@ -35,6 +35,8 @@ export const ColorInputs: React.FC<ColorInputsProps> = ({ color, onChange }) => 
               onChange={(e) => handleHexChange(e.target.value)}
               onFocus={handleHexFocus}
               onBlur={handleHexBlur}
+              onKeyDown={(e) => e.stopPropagation()}
+              onPaste={(e) => e.stopPropagation()}
               className="w-24 rounded border border-white/5 bg-[#0f1115] px-2 py-1 text-right outline-none transition-colors focus:border-cyan-500"
               spellCheck={false}
             />
@@ -67,6 +69,8 @@ export const ColorInputs: React.FC<ColorInputsProps> = ({ color, onChange }) => 
               min={0}
               max={255}
               onChange={(e) => handleRgbaChange(channel, e.target.value)}
+              onKeyDown={(e) => e.stopPropagation()}
+              onPaste={(e) => e.stopPropagation()}
               className={`rounded border border-white/5 bg-[#0f1115] px-1 py-1 text-center outline-none transition-colors ${
                 channel === 'a' ? 'focus:border-orange-400' : 'focus:border-pink-500'
               } [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}

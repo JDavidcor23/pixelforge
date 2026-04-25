@@ -115,8 +115,18 @@ export const usePixelLabCopilot = () => {
   const apiKey = usePixelLabApiKey()
   const setApiKey = useSetPixelLabApiKey()
 
+  const [tempApiKey, setTempApiKey] = useState(apiKey || '')
   const [prompt, setPrompt] = useState('')
   const [error, setError] = useState<string | null>(null)
+
+  // Sync temp key with store on mount or if store changes elsewhere
+  useEffect(() => {
+    setTempApiKey(apiKey || '')
+  }, [apiKey])
+
+  const handleSaveApiKey = useCallback(() => {
+    setApiKey(tempApiKey.trim() || null)
+  }, [tempApiKey, setApiKey])
   const [isLoading, setIsLoading] = useState(false)
   const [genSize, setGenSize] = useState(32)
   const [generations, setGenerations] = useState<AIGeneration[]>([])
@@ -246,7 +256,9 @@ export const usePixelLabCopilot = () => {
     downloadImage,
     downloadSource,
     apiKey,
-    setApiKey
+    tempApiKey,
+    setTempApiKey,
+    handleSaveApiKey
   }
 }
 

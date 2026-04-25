@@ -101,6 +101,16 @@ export const useTimelineBar = () => {
   // ── Keyboard: Ctrl+C / Ctrl+V for frames ──────────────────────────
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't intercept shortcuts if the user is typing in an input field
+      const target = e.target as HTMLElement
+      if (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.isContentEditable
+      ) {
+        return
+      }
+
       if (!(e.ctrlKey || e.metaKey)) return
       if (pixelSelectionRef.current !== null) return // pixel clipboard has priority
 
