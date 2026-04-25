@@ -6,6 +6,11 @@ import { createEmptyBuffer, createSnapshot } from '@/app/editor/lib'
 
 import type { CompoundSlice } from '../types/slices'
 
+/**
+ * createCompoundSlice orchestrates high-level actions that span multiple state domains.
+ * It handles history management, complex timeline operations, tool switching logic,
+ * and integration with external features like the AI Copilot.
+ */
 export const createCompoundSlice: StateCreator<
   SpriteEditorStore,
   [['zustand/persist', unknown]],
@@ -14,6 +19,11 @@ export const createCompoundSlice: StateCreator<
 > = (set, get) => ({
   // ── History Orchestration ──────────────────────────────────────────────────
 
+  /**
+   * Pushes a new snapshot of the entire editor state to the history stack.
+   * Handles history truncation and maximum capacity limits.
+   * @param description A human-readable description of the action for the history UI.
+   */
   pushHistory: (description) => {
     get().saveCurrentFrameSnapshot()
 
@@ -41,6 +51,10 @@ export const createCompoundSlice: StateCreator<
 
   // ── Timeline Orchestration ─────────────────────────────────────────────────
 
+  /**
+   * Creates a new animation frame by initializing a blank layer stack.
+   * Automatically saves the current frame state before switching.
+   */
   addFrame: () => {
     get().saveCurrentFrameSnapshot()
 
@@ -76,6 +90,10 @@ export const createCompoundSlice: StateCreator<
     get().pushHistory('Add Frame')
   },
 
+  /**
+   * Removes an animation frame at the specified index.
+   * Updates history and ensures the editor remains on a valid frame.
+   */
   removeFrame: (index) => {
     const state = get()
     if (state.timeline.frames.length <= 1) return
@@ -108,6 +126,10 @@ export const createCompoundSlice: StateCreator<
     get().restoreFrameSnapshot(get().timeline.currentFrameIndex)
   },
 
+  /**
+   * Switches the active animation frame.
+   * Automatically commits any pending transformations before frame switching.
+   */
   setCurrentFrame: (index) => {
     const state = get()
 
@@ -128,6 +150,9 @@ export const createCompoundSlice: StateCreator<
     get().restoreFrameSnapshot(index)
   },
 
+  /**
+   * Toggles the playback of the animation in the editor preview.
+   */
   togglePlayback: () => {
     const state = get()
     if (!state.timeline.isPlaying) {
@@ -138,6 +163,10 @@ export const createCompoundSlice: StateCreator<
     }))
   },
 
+  /**
+   * Moves the editor to the previous frame in the timeline.
+   * Respects the looping setting.
+   */
   goToPreviousFrame: () => {
     const state = get()
     const { currentFrameIndex, frames, loop } = state.timeline
@@ -153,6 +182,10 @@ export const createCompoundSlice: StateCreator<
     }
   },
 
+  /**
+   * Moves the editor to the next frame in the timeline.
+   * Respects the looping setting.
+   */
   goToNextFrame: () => {
     const state = get()
     const { currentFrameIndex, frames, loop } = state.timeline
@@ -168,6 +201,9 @@ export const createCompoundSlice: StateCreator<
     }
   },
 
+  /**
+   * Copies the currently selected frames into the frame clipboard.
+   */
   copySelectedFrames: () => {
     const state = get()
     const { selectedFrameIndices } = state.timeline
@@ -183,6 +219,9 @@ export const createCompoundSlice: StateCreator<
     }
   },
 
+  /**
+   * Pastes frames from the frame clipboard after the current frame.
+   */
   pasteFrames: () => {
     const state = get()
     if (!state.frameClipboard || state.frameClipboard.length === 0) return
@@ -215,6 +254,9 @@ export const createCompoundSlice: StateCreator<
     get().restoreFrameSnapshot(get().timeline.currentFrameIndex)
   },
 
+  /**
+   * Pastes frames from the frame clipboard at the end of the timeline.
+   */
   pasteFramesAtEnd: () => {
     const state = get()
     if (!state.frameClipboard || state.frameClipboard.length === 0) return
@@ -249,6 +291,10 @@ export const createCompoundSlice: StateCreator<
 
   // ── Tool Orchestration ─────────────────────────────────────────────────────
 
+  /**
+   * Switches the active tool and manages transition logic.
+   * Handles automatic transformation commitments and selection clearing.
+   */
   setActiveTool: (tool) => {
     const state = get()
 
@@ -269,6 +315,10 @@ export const createCompoundSlice: StateCreator<
 
   // ── Clipboard Orchestration ────────────────────────────────────────────────
 
+  /**
+   * Pastes pixel data from the clipboard onto the canvas.
+   * Automatically switches to the transform tool for placement.
+   */
   pasteClipboard: () => {
     const state = get()
     if (!state.clipboard) return
@@ -295,7 +345,11 @@ export const createCompoundSlice: StateCreator<
 
   // ── AI Copilot Orchestration ───────────────────────────────────────────────
 
-
+  /**
+   * Replaces the entire sprite with a new pixel buffer.
+   * Primarily used when applying AI-generated sprites.
+   * Resizes the canvas to match the new content.
+   */
   overwriteWithPixels: (pixels) => {
     get().pushHistory('AI Copilot: Apply PixelLab Image')
 
