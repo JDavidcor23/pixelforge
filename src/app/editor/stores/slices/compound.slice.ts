@@ -2,7 +2,7 @@ import type { StateCreator } from 'zustand'
 
 import type { AnimationFrame, Layer, SpriteEditorStore } from '@/app/editor/types'
 import { SPRITE_EDITOR_DEFAULTS, SPRITE_EDITOR_HISTORY } from '@/app/editor/constants'
-import { createEmptyBuffer, createSnapshot } from '@/app/editor/lib'
+import { createEmptyBuffer, createSnapshot, cloneLayers } from '@/app/editor/lib'
 
 import type { CompoundSlice } from '../types/slices'
 
@@ -383,4 +383,50 @@ export const createCompoundSlice: StateCreator<
       selection: null,
     }))
   },
+
+  /**
+   * Imports an AI-generated animation as multiple timeline frames.
+   * Each PixelBuffer becomes a single-layer frame in the timeline.
+   * Replaces the current timeline entirely.
+   */
+  importAnimationFrames: (pixelFrames, frameDurationMs) => {
+    if (pixelFrames.length === 0) return
+
+    get().pushHistory('AI Copilot: Import Animation')
+
+    const newFrames: AnimationFrame[] = pixelFrames.map((pixels) => {
+      const layer: Layer = {
+        id: crypto.randomUUID(),
+        name: `${SPRITE_EDITOR_DEFAULTS.LAYER_NAME_PREFIX} 1`,
+        visible: true,
+        locked: false,
+        opacity: 100,
+        pixels,
+      }
+
+      return {
+        id: crypto.randomUUID(),
+        layers: [layer],
+        activeLayerId: layer.id,
+        durationMs: frameDurationMs,
+      }
+    })
+
+    const firstFrame = newFrames[0]
+
+    set((state) => ({
+      canvasWidth: pixelFrames[0][0].length,
+      canvasHeight: pixelFrames[0].length,
+      layers: cloneLayers(firstFrame.layers),
+      activeLayerId: firstFrame.activeLayerId,
+      timeline: {
+        ...state.timeline,
+        frames: newFrames,
+        currentFrameIndex: 0,
+        selectedFrameIndices: [0],
+      },
+      selection: null,
+    }))
+  },
 })
+

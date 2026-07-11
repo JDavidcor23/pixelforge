@@ -15,9 +15,11 @@ import {
   useSpriteEditorStore,
   useCanvasDimensions,
   usePixelLabApiKey,
-  useSetPixelLabApiKey
+  useSetPixelLabApiKey,
+  useImportAnimationFrames,
 } from '@/app/editor/sprites/hooks/useSpriteEditorStore.hook'
-import type { RgbaColor } from '@/app/editor/types'
+import type { RgbaColor, AnimationAction, AnimationDirection } from '@/app/editor/types'
+import { PIXELLAB_ANIMATION } from '@/app/editor/constants'
 
 export interface AIGeneration {
   id: string
@@ -262,4 +264,83 @@ export const usePixelLabCopilot = () => {
   }
 }
 
+export const useAnimationGenerator = () => {
+  const importAnimationFrames = useImportAnimationFrames()
+  const { width: canvasWidth, height: canvasHeight } = useCanvasDimensions()
+  const layers = useSpriteEditorStore((s) => s.layers)
+  const apiKey = usePixelLabApiKey()
 
+  const [description, setDescription] = useState('')
+  const [action, setAction] = useState<AnimationAction>(
+    PIXELLAB_ANIMATION.DEFAULT_ACTION as AnimationAction
+  )
+  const [direction, setDirection] = useState<AnimationDirection>(
+    PIXELLAB_ANIMATION.DEFAULT_DIRECTION as AnimationDirection
+  )
+  const [nFrames, setNFrames] = useState<number>(PIXELLAB_ANIMATION.DEFAULT_N_FRAMES)
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [animError, setAnimError] = useState<string | null>(null)
+  const [previewRef, setPreviewRef] = useState<string | null>(null)
+
+  const handlePreviewReference = useCallback(async () => {
+    const { layersToBase64 } = await import('@/app/editor/lib/export-utils')
+    const ref = layersToBase64(64, 64, layers)
+    setPreviewRef(ref)
+  }, [layers])
+
+  const handleGenerateAnimation = useCallback(async () => {
+    try {
+      if (!description.trim()) return
+      setIsGenerating(true)
+      setAnimError(null)
+
+      const { layersToBase64 } = await import('@/app/editor/lib/export-utils')
+      const { generateAnimationWithPixelLab, base64ToPixels } = await import('@/app/editor/lib/pixellab-utils')
+      
+      const base64 = layersToBase64(64, 64, layers)
+
+      if (!base64) {
+        setAnimError('Failed to export current frame.')
+        return
+      }
+
+      const response = await generateAnimationWithPixelLab({
+        description,
+        action,
+        direction,
+        view: 'side',
+        image_size: { width: 64, height: 64 },
+        reference_image: { type: 'base64', base64 },
+        n_frames: nFrames,
+        apiKey,
+      } as any)
+
+      const pixelFrames = await Promise.all(
+        response.images.map((image: any) => base64ToPixels(image.base64, 64, 64))
+      )
+
+      importAnimationFrames(pixelFrames, PIXELLAB_ANIMATION.DEFAULT_FRAME_DURATION_MS)
+    } catch (e) {
+      setAnimError(e instanceof Error ? e.message : 'Animation generation failed')
+    } finally {
+      setIsGenerating(false)
+    }
+  }, [description, action, direction, nFrames, layers, apiKey, importAnimationFrames])
+
+  return {
+    description,
+    setDescription,
+    action,
+    setAction,
+    direction,
+    setDirection,
+    nFrames,
+    setNFrames,
+    isGenerating,
+    animError,
+    handleGenerateAnimation,
+    previewRef,
+    handlePreviewReference,
+    apiKey,
+  }
+}

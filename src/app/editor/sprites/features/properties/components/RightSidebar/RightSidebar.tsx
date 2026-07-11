@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Sparkles, Palette, Download, Code, FileJson, Key, Settings2, ExternalLink, Check } from 'lucide-react'
+import { Sparkles, Palette, Download, Code, FileJson, Key, Settings2, ExternalLink, Check, Film } from 'lucide-react'
 import Link from 'next/link'
 
 import { OpacitySlider } from '../OpacitySlider/OpacitySlider'
@@ -9,7 +9,7 @@ import { ColorInputs } from '../ColorInputs/ColorInputs'
 import { ColorArea } from '../ColorArea/ColorArea'
 import { ColorPalette } from '../ColorPalette/ColorPalette'
 import { CollapsibleSection } from './CollapsibleSection'
-import { useRightSidebar, useColorSection, usePixelLabCopilot, type AIGeneration } from './useRightSidebar.hook'
+import { useRightSidebar, useColorSection, usePixelLabCopilot, useAnimationGenerator, type AIGeneration } from './useRightSidebar.hook'
 import { useExport } from './useExport.hook'
 import { useCursorPixel } from '@/app/editor/sprites/hooks/useSpriteEditorStore.hook'
 
@@ -324,6 +324,139 @@ const PixelLabCopilotSection = () => {
   )
 }
 
+const AnimationGeneratorSection = () => {
+  const {
+    description,
+    setDescription,
+    action,
+    setAction,
+    direction,
+    setDirection,
+    nFrames,
+    setNFrames,
+    isGenerating,
+    animError,
+    handleGenerateAnimation,
+    previewRef,
+    handlePreviewReference,
+    apiKey,
+  } = useAnimationGenerator()
+
+  return (
+    <div className={`flex flex-col gap-3 ${!apiKey ? 'opacity-20 pointer-events-none grayscale' : ''}`}>
+      <div className="flex items-center justify-between border-b border-white/5 pb-2">
+        <div className="flex items-center gap-2">
+          <Film size={14} className="text-cyan-400" />
+          <span className="text-[10px] uppercase tracking-wider text-[#8888aa]">Animate Sprite</span>
+        </div>
+        <button
+          onClick={handlePreviewReference}
+          className="text-[9px] font-bold text-cyan-400/60 hover:text-cyan-400 uppercase tracking-tighter"
+        >
+          Test Upscale
+        </button>
+      </div>
+
+      {previewRef && (
+        <div className="flex flex-col items-center gap-2 rounded border border-white/5 bg-black/20 p-2">
+          <span className="text-[9px] text-[#555577] uppercase font-bold tracking-widest">AI Input Preview (64x64)</span>
+          <img 
+            src={previewRef} 
+            alt="Reference Preview" 
+            className="h-16 w-16 image-pixelated border border-white/10 shadow-lg"
+          />
+        </div>
+      )}
+
+      <textarea
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+        rows={2}
+        placeholder="videogame enemy character..."
+        onKeyDown={(e) => e.stopPropagation()}
+        onPaste={(e) => e.stopPropagation()}
+        className="w-full resize-y rounded border border-white/10 bg-[#1a1a2e] p-2 font-mono text-[11px] text-[#ededed] placeholder:text-[#444466] focus:border-cyan-500/40 focus:outline-none focus:ring-1 focus:ring-cyan-500/40"
+      />
+
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <label className="mb-1 block text-[10px] text-[#8888aa]">Action</label>
+          <select
+            value={action}
+            onChange={(e) => setAction(e.target.value as typeof action)}
+            className="w-full rounded border border-white/10 bg-[#1a1a2e] px-2 py-1.5 text-xs text-[#ededed] focus:outline-none"
+          >
+            {['idle', 'walk', 'run', 'attack', 'jump'].map((a) => (
+              <option key={a} value={a}>
+                {a.charAt(0).toUpperCase() + a.slice(1)}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="mb-1 block text-[10px] text-[#8888aa]">Direction</label>
+          <select
+            value={direction}
+            onChange={(e) => setDirection(e.target.value as typeof direction)}
+            className="w-full rounded border border-white/10 bg-[#1a1a2e] px-2 py-1.5 text-xs text-[#ededed] focus:outline-none"
+          >
+            {['north', 'north-east', 'east', 'south-east', 'south', 'south-west', 'west', 'north-west'].map((d) => (
+              <option key={d} value={d}>
+                {d.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label className="mb-1 block text-[10px] text-[#8888aa]">Frames</label>
+        <div className="flex gap-1">
+          {[3, 4, 6, 8].map((n) => (
+            <button
+              key={n}
+              type="button"
+              onClick={() => setNFrames(n)}
+              className={`flex-1 rounded border py-1 text-[11px] font-medium transition-all ${
+                nFrames === n
+                  ? 'border-cyan-500/40 bg-cyan-500/10 text-cyan-400'
+                  : 'border-white/10 bg-[#1a1a2e] text-[#8888aa] hover:border-white/20'
+              }`}
+            >
+              {n}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {animError && (
+        <div className="rounded border border-red-500/20 bg-red-500/5 p-2">
+          <p className="text-[10px] text-red-400">{animError}</p>
+        </div>
+      )}
+
+      <button
+        type="button"
+        onClick={handleGenerateAnimation}
+        disabled={!description.trim() || isGenerating || !apiKey}
+        className="flex w-full items-center justify-center gap-2 rounded border border-cyan-500/20 bg-gradient-to-r from-cyan-500/10 to-purple-500/10 py-2.5 text-xs font-medium text-cyan-400 transition-all hover:from-cyan-500/20 hover:to-purple-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        {isGenerating ? (
+          <>
+            <div className="h-3 w-3 animate-spin rounded-full border-2 border-cyan-400 border-t-transparent" />
+            Generating...
+          </>
+        ) : (
+          <>
+            <Film size={14} />
+            Generate Animation
+          </>
+        )}
+      </button>
+    </div>
+  )
+}
+
 export const RightSidebar = () => {
   const {
     activeLayerOpacity,
@@ -367,6 +500,10 @@ export const RightSidebar = () => {
 
       <CollapsibleSection title="AI Copilot" defaultOpen={true} icon={<Sparkles size={16} className="text-purple-400" />}>
         <PixelLabCopilotSection />
+      </CollapsibleSection>
+
+      <CollapsibleSection title="AI Animation" defaultOpen={false} icon={<Film size={16} className="text-cyan-400" />}>
+        <AnimationGeneratorSection />
       </CollapsibleSection>
 
 

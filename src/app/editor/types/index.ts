@@ -71,6 +71,35 @@ export interface ViewportState {
 
 export type LeftSidebarTab = 'layers' | 'assets' | 'code'
 
+// ── PixelLab Animation Types ────────────────────────────────────────────────
+
+export type AnimationAction = 'idle' | 'walk' | 'run' | 'attack' | 'jump'
+
+export type AnimationDirection =
+  | 'north'
+  | 'north-east'
+  | 'east'
+  | 'south-east'
+  | 'south'
+  | 'south-west'
+  | 'west'
+  | 'north-west'
+
+export interface AnimateWithTextRequest {
+  readonly description: string
+  readonly action: AnimationAction
+  readonly view: 'side'
+  readonly direction: AnimationDirection
+  readonly image_size: { readonly width: number; readonly height: number }
+  readonly reference_image: { readonly type: 'base64'; readonly base64: string }
+  readonly n_frames?: number
+}
+
+export interface PixelLabAnimationResponse {
+  readonly images: ReadonlyArray<{ readonly type: 'base64'; readonly base64: string }>
+  readonly usage: { readonly type: 'credits'; readonly credits: number }
+}
+
 // ── Core Editor Store ────────────────────────────────────────────────────────
 
 export interface SpriteEditorState {
@@ -140,6 +169,7 @@ export interface SpriteEditorActions {
   deleteSelection: () => void
 
   overwriteWithPixels: (pixels: PixelBuffer) => void
+  importAnimationFrames: (frames: PixelBuffer[], frameDurationMs: number) => void
 }
 
 export type SpriteEditorStore = SpriteEditorState & SpriteEditorActions

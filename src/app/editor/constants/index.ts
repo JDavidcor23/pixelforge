@@ -74,3 +74,24 @@ export const SPRITE_EDITOR_KEYBOARD = {
   ZOOM_OUT: 'ctrl+-',
 } as const
 
+export const PIXELLAB_ANIMATION = {
+  DEFAULT_N_FRAMES: 4,
+  DEFAULT_ACTION: 'walk',
+  DEFAULT_DIRECTION: 'south',
+  DEFAULT_VIEW: 'side',
+  DEFAULT_FRAME_DURATION_MS: 120,
+  ACTIONS: ['idle', 'walk', 'run', 'attack', 'jump'],
+  DIRECTIONS: [
+    'north',
+    'north-east',
+    'east',
+    'south-east',
+    'south',
+    'south-west',
+    'west',
+    'north-west',
+  ],
+  FRAME_OPTIONS: [3, 4, 6, 8],
+} as const
+
+

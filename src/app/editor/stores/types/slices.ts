@@ -161,4 +161,5 @@ export interface CompoundSlice {
   // AI Copilot orchestration
 
   overwriteWithPixels: (pixels: RgbaColor[][]) => void
+  importAnimationFrames: (frames: PixelBuffer[], frameDurationMs: number) => void
 }

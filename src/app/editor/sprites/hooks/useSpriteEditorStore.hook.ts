@@ -355,6 +355,11 @@ export const useDeleteSelection = () => useSpriteEditorStore((s) => s.deleteSele
 export const useOverwriteWithPixels = () => useSpriteEditorStore((s) => s.overwriteWithPixels)
 
 /**
+ * Action to import multiple AI-generated frames as a timeline animation.
+ */
+export const useImportAnimationFrames = () => useSpriteEditorStore((s) => s.importAnimationFrames)
+
+/**
  * ── UI State & Actions ───────────────────────────────────────────────────────
  */
 

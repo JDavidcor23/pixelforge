@@ -1,86 +1,79 @@
-import type { RgbaColor } from '@/app/editor/types'
+/**
+ * Client-side utility for interacting with the PixelLab animation API proxy.
+ */
 
 /**
- * THE TRANSFORMER: Converts a base64 encoded image to a 2D array of RgbaColor pixels.
- * This is the bridge between AI-generated images and our editable pixel grid.
+ * Sends a request to the backend proxy to generate an animation using PixelLab's animate-with-text.
+ * @param params The animation parameters (description, action, direction, etc.)
  */
-export async function base64ToPixels(
-  base64Str: string, 
-  targetWidth: number, 
-  targetHeight: number
-): Promise<RgbaColor[][]> {
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    img.crossOrigin = 'anonymous'
-    
-    img.onload = () => {
-      const canvas = document.createElement('canvas')
-      canvas.width = targetWidth
-      canvas.height = targetHeight
-      const ctx = canvas.getContext('2d', { willReadFrequently: true })
-      
-      if (!ctx) {
-        reject(new Error('Transformer Error: Failed to get 2d context'))
-        return
-      }
-
-      // NO-SMOOTHING is critical for pixel art fidelity
-      ctx.imageSmoothingEnabled = false
-      
-      // Draw the AI image onto our target-sized grid
-      ctx.drawImage(img, 0, 0, targetWidth, targetHeight)
-      
-      const imageData = ctx.getImageData(0, 0, targetWidth, targetHeight)
-      const { data } = imageData
-      
-      const pixels: RgbaColor[][] = []
-      for (let y = 0; y < targetHeight; y++) {
-        const row: RgbaColor[] = []
-        for (let x = 0; x < targetWidth; x++) {
-          const idx = (y * targetWidth + x) * 4
-          
-          // Sample RGBA values
-          row.push({
-            r: data[idx],
-            g: data[idx + 1],
-            b: data[idx + 2],
-            a: data[idx + 3],
-          })
-        }
-        pixels.push(row)
-      }
-      
-      resolve(pixels)
-    }
-
-    img.onerror = () => reject(new Error('Transformer Error: Could not load base64 source'))
-    
-    // Sanitize and ensure proper prefix
-    const sanitized = base64Str.replace(/\s/g, '')
-    img.src = sanitized.startsWith('data:') ? sanitized : `data:image/png;base64,${sanitized}`
-  })
-}
-
-/**
- * Calls our backend API proxy to generate an image from PixelLab.
- */
-export async function generateSpriteWithPixelLab(
-  prompt: string, 
-  width: number, 
-  height: number,
-  apiKey?: string | null
-): Promise<string> {
-  const response = await fetch('/api/ai/pixellab', {
+export async function generateAnimationWithPixelLab(
+  params: any
+): Promise<{ images: Array<{ type: string; base64: string }>; usage: { type: string; credits: number } }> {
+  const response = await fetch('/api/ai/pixellab/animate-with-text', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ prompt, width, height, apiKey }),
+    body: JSON.stringify(params),
   })
 
   if (!response.ok) {
     const error = await response.json()
-    throw new Error(error.error || error.message || 'Failed to generate sprite with PixelLab')
+    throw new Error(error.error || error.message || 'Failed to generate animation with PixelLab')
   }
 
-  const data = await response.json()
-  return data.base64 // Should be the base64 data URI
+  return response.json()
+}
+
+/**
+ * Converts an AI-generated Base64 PNG image into a PixelBuffer.
+ * Uses a hidden canvas to decode the image and read pixel data.
+ */
+export async function base64ToPixels(
+  base64: string,
+  width: number,
+  height: number
+): Promise<any[][]> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    // Ensure base64 has correct prefix
+    img.src = base64.startsWith('data:') ? base64 : `data:image/png;base64,${base64}`
+    img.crossOrigin = 'anonymous'
+
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext('2d', { willReadFrequently: true })
+
+      if (!ctx) {
+        reject(new Error('Could not create 2D context'))
+        return
+      }
+
+      // Draw image at target resolution
+      ctx.imageSmoothingEnabled = false
+      ctx.drawImage(img, 0, 0, width, height)
+
+      const imageData = ctx.getImageData(0, 0, width, height)
+      const data = imageData.data
+      const pixels: any[][] = []
+
+      for (let y = 0; y < height; y++) {
+        const row: any[] = []
+        for (let x = 0; x < width; x++) {
+          const i = (y * width + x) * 4
+          row.push({
+            r: data[i],
+            g: data[i + 1],
+            b: data[i + 2],
+            a: data[i + 3] / 255,
+          })
+        }
+        pixels.push(row)
+      }
+
+      resolve(pixels)
+    }
+
+    img.onerror = () => reject(new Error('Failed to load image from base64'))
+  })
 }

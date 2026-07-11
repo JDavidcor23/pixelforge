@@ -27,14 +27,26 @@ function renderLayersToCanvas(
 
     ctx.globalAlpha = layer.opacity / 100
     const pixels = layer.pixels
+    
+    // Calculamos la escala basada en el tamaño del buffer vs el tamaño objetivo
+    const sourceHeight = pixels.length
+    const sourceWidth = pixels[0]?.length || 1
+    const scaleX = width / sourceWidth
+    const scaleY = height / sourceHeight
 
-    for (let y = 0; y < pixels.length; y++) {
-      for (let x = 0; x < pixels[y].length; x++) {
+    for (let y = 0; y < sourceHeight; y++) {
+      for (let x = 0; x < sourceWidth; x++) {
         const color = pixels[y][x]
         if (color.a === 0) continue
 
         ctx.fillStyle = rgbaToString(color)
-        ctx.fillRect(offsetX + x, offsetY + y, 1, 1)
+        // Dibujamos el píxel escalado
+        ctx.fillRect(
+          offsetX + (x * scaleX), 
+          offsetY + (y * scaleY), 
+          scaleX, 
+          scaleY
+        )
       }
     }
 
@@ -85,4 +97,24 @@ export function exportSpriteSheetAsPng(
   }
 
   downloadCanvasAsPng(canvas, filename)
+}
+
+/**
+ * Renders visible layers to an offscreen canvas and returns a base64 data URL.
+ * Used to export the current frame as a reference_image for AI animation generation.
+ */
+export function layersToBase64(
+  width: number,
+  height: number,
+  layers: Layer[]
+): string {
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return ''
+
+  renderLayersToCanvas(ctx, layers, width, height)
+  return canvas.toDataURL('image/png')
 }

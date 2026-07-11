@@ -4,6 +4,6 @@ export { renderPixelGrid, screenToPixel } from './canvas-renderer'
 export { rgbaToHex, hexToRgba, rgbaToString } from './color-utils'
 export { createSnapshot, cloneLayers, cloneFrames } from './history'
 export { transformPixels } from './pixel-transform'
-export { exportFrameAsPng, exportSpriteSheetAsPng } from './export-utils'
+export { exportFrameAsPng, exportSpriteSheetAsPng, layersToBase64 } from './export-utils'
 
 
