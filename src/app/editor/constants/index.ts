@@ -94,4 +94,17 @@ export const PIXELLAB_ANIMATION = {
   FRAME_OPTIONS: [3, 4, 6, 8],
 } as const
 
+export const AI_OUTPUT_ENV = 'AI_OUTPUT_DIR' // dir Codex writes images to, e.g. ~/.codex/generated_images
+export const CODEX_GENERATE_ROUTE = '/api/ai/codex-generate'
+export const CODEX_TIMEOUT_MS = 180000 // codex exec is an agent loop; allow generous time
+export const CODEX_BASE_PROMPT =
+  'Generate a 64x64 pixel art sprite, limited palette of max 16 colors, no anti-aliasing, ' +
+  'transparent background, full body centered, retro 16-bit style. Subject: '
+export const QUANTIZE_DEFAULTS = {
+  COLORS: 16,
+  ITERATIONS: 12,
+  SATURATION_WEIGHT: 6, // weight = 1 + SATURATION_WEIGHT * saturation
+  ALPHA_THRESHOLD: 0.5,
+} as const
+
 
