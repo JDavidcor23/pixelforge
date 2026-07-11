@@ -24,6 +24,44 @@ export async function generateAnimationWithPixelLab(
 }
 
 /**
+ * Decodes a Base64 PNG at its native resolution into a PixelBuffer.
+ * Use this when the caller wants to downscale with its own algorithm
+ * instead of the canvas resampling done by base64ToPixels.
+ */
+export async function base64ToNativePixels(base64: string): Promise<any[][]> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.src = base64.startsWith('data:') ? base64 : `data:image/png;base64,${base64}`
+    img.crossOrigin = 'anonymous'
+
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      canvas.width = img.naturalWidth
+      canvas.height = img.naturalHeight
+      const ctx = canvas.getContext('2d', { willReadFrequently: true })
+      if (!ctx) {
+        reject(new Error('Could not create 2D context'))
+        return
+      }
+      ctx.drawImage(img, 0, 0)
+      const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data
+      const pixels: any[][] = []
+      for (let y = 0; y < canvas.height; y++) {
+        const row: any[] = []
+        for (let x = 0; x < canvas.width; x++) {
+          const i = (y * canvas.width + x) * 4
+          row.push({ r: data[i], g: data[i + 1], b: data[i + 2], a: data[i + 3] })
+        }
+        pixels.push(row)
+      }
+      resolve(pixels)
+    }
+
+    img.onerror = () => reject(new Error('Failed to load image from base64'))
+  })
+}
+
+/**
  * Converts an AI-generated Base64 PNG image into a PixelBuffer.
  * Uses a hidden canvas to decode the image and read pixel data.
  */
