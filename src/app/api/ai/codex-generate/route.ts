@@ -7,6 +7,23 @@ import { AI_OUTPUT_ENV, CODEX_BASE_PROMPT, CODEX_TIMEOUT_MS } from '@/app/editor
 
 const run = promisify(execFile)
 
+/**
+ * On Windows the global `codex` is an npm .cmd shim, which execFile cannot
+ * spawn without a shell (and a shell would expose the prompt to injection).
+ * Resolve the shim's real target (node + codex.js) and spawn that directly.
+ */
+async function resolveCodexCommand(): Promise<{ cmd: string; baseArgs: string[] }> {
+  if (process.platform !== 'win32') return { cmd: 'codex', baseArgs: [] }
+  const { stdout } = await run('where.exe', ['codex'])
+  const shim = stdout.split(/\r?\n/).find((line) => line.trim().length > 0)
+  if (!shim) throw new Error('codex CLI not found on PATH')
+  const codexJs = path.join(
+    path.dirname(shim.trim()),
+    'node_modules', '@openai', 'codex', 'bin', 'codex.js',
+  )
+  return { cmd: process.execPath, baseArgs: [codexJs] }
+}
+
 async function newestPngAfter(dir: string, since: number): Promise<string | null> {
   let best: { file: string; mtime: number } | null = null
   const entries = await fs.readdir(dir, { withFileTypes: true })
@@ -39,12 +56,16 @@ export async function POST(req: Request) {
     const since = Date.now()
     // DEV-ONLY: runs Codex as an autonomous agent (exec mode is non-interactive)
     // with a permissive sandbox on the local machine. Never deploy this route.
-    await run(
-      'codex',
-      ['exec', '--sandbox', 'danger-full-access', '--skip-git-repo-check',
+    const { cmd, baseArgs } = await resolveCodexCommand()
+    const codexRun = run(
+      cmd,
+      [...baseArgs, 'exec', '--sandbox', 'danger-full-access', '--skip-git-repo-check',
        `${CODEX_BASE_PROMPT}${prompt}`],
       { timeout: CODEX_TIMEOUT_MS, maxBuffer: 10 * 1024 * 1024 },
     )
+    // codex exec blocks reading piped stdin until EOF; close it so it starts.
+    codexRun.child.stdin?.end()
+    await codexRun
     const file = await newestPngAfter(outputDir, since)
     if (!file) {
       return NextResponse.json({ error: 'Codex did not produce a PNG.' }, { status: 502 })
