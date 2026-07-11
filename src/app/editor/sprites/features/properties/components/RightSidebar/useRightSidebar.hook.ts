@@ -18,6 +18,7 @@ import {
   useSetPixelLabApiKey,
   useImportAnimationFrames,
 } from '@/app/editor/sprites/hooks/useSpriteEditorStore.hook'
+import { generateSpriteWithCodex, decodeToPixels } from '@/app/editor/lib/codex-utils'
 import type { RgbaColor, AnimationAction, AnimationDirection } from '@/app/editor/types'
 import { PIXELLAB_ANIMATION } from '@/app/editor/constants'
 
@@ -113,7 +114,6 @@ export const useColorSection = () => {
 
 export const usePixelLabCopilot = () => {
   const overwriteWithPixels = useOverwriteWithPixels()
-  const { width: canvasWidth, height: canvasHeight } = useCanvasDimensions()
   const apiKey = usePixelLabApiKey()
   const setApiKey = useSetPixelLabApiKey()
 
@@ -131,6 +131,7 @@ export const usePixelLabCopilot = () => {
   }, [tempApiKey, setApiKey])
   const [isLoading, setIsLoading] = useState(false)
   const [genSize, setGenSize] = useState(32)
+  const [quantizeEnabled, setQuantizeEnabled] = useState(true)
   const [generations, setGenerations] = useState<AIGeneration[]>([])
 
   // Load history from localStorage on mount
@@ -177,13 +178,12 @@ export const usePixelLabCopilot = () => {
       try {
         setIsLoading(true)
         setError(null)
-        
-        const { base64ToPixels } = await import('@/app/editor/lib/pixellab-utils')
-        
-        // THE TRANSFORMER: Works on the generation's native dimensions.
-        // overwriteWithPixels will automatically re-size the canvas in the store
+
+        // Codex returns high-res images (e.g. 1254x1254). decodeToPixels
+        // downscales to the user-selected grid size and optionally quantizes
+        // the palette. overwriteWithPixels re-sizes the canvas in the store
         // based on the pixel array length.
-        const pixels = await base64ToPixels(gen.base64, gen.width, gen.height)
+        const pixels = await decodeToPixels(gen.base64, genSize, quantizeEnabled)
         overwriteWithPixels(pixels)
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Failed to re-apply generation')
@@ -191,7 +191,7 @@ export const usePixelLabCopilot = () => {
         setIsLoading(false)
       }
     },
-    [overwriteWithPixels]
+    [overwriteWithPixels, genSize, quantizeEnabled]
   )
 
   const handleApply = useCallback(async () => {
@@ -199,23 +199,20 @@ export const usePixelLabCopilot = () => {
       if (!prompt.trim()) return
       setIsLoading(true)
       setError(null)
-      const { generateSpriteWithPixelLab } = await import(
-        '@/app/editor/lib/pixellab-utils'
-      )
-      
-      // Request using the user-selected size and the API key from store
-      const base64 = await generateSpriteWithPixelLab(prompt, genSize, genSize, apiKey)
 
-      // Add to history with metadata
-      addToHistory({ prompt, base64, width: genSize, height: genSize })
-      
+      // Codex agent loop — returns a high-res image with its native dimensions
+      const { base64, width, height } = await generateSpriteWithCodex(prompt)
+
+      // Store the native resolution; downscaling happens on selection
+      addToHistory({ prompt, base64, width, height })
+
       setPrompt('') // Clear prompt after generation
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Generation failed')
     } finally {
       setIsLoading(false)
     }
-  }, [prompt, genSize, addToHistory, apiKey])
+  }, [prompt, addToHistory])
 
   const downloadImage = useCallback((gen: AIGeneration) => {
     const link = document.createElement('a')
@@ -255,6 +252,8 @@ export const usePixelLabCopilot = () => {
     handleSelectGeneration,
     genSize,
     setGenSize,
+    quantizeEnabled,
+    setQuantizeEnabled,
     downloadImage,
     downloadSource,
     apiKey,

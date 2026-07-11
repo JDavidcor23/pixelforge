@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Sparkles, Palette, Download, Code, FileJson, Key, Settings2, ExternalLink, Check, Film } from 'lucide-react'
+import { Sparkles, Palette, Download, FileJson, Key, Settings2, ExternalLink, Check, Film } from 'lucide-react'
 import Link from 'next/link'
 
 import { OpacitySlider } from '../OpacitySlider/OpacitySlider'
@@ -12,6 +12,7 @@ import { CollapsibleSection } from './CollapsibleSection'
 import { useRightSidebar, useColorSection, usePixelLabCopilot, useAnimationGenerator, type AIGeneration } from './useRightSidebar.hook'
 import { useExport } from './useExport.hook'
 import { useCursorPixel } from '@/app/editor/sprites/hooks/useSpriteEditorStore.hook'
+import { QUANTIZE_DEFAULTS } from '@/app/editor/constants'
 
 const CursorPositionInputs = () => {
   const cursorPixel = useCursorPixel()
@@ -167,6 +168,8 @@ const PixelLabCopilotSection = () => {
     handleSelectGeneration,
     genSize,
     setGenSize,
+    quantizeEnabled,
+    setQuantizeEnabled,
     downloadImage,
     downloadSource,
     apiKey,
@@ -175,23 +178,21 @@ const PixelLabCopilotSection = () => {
     handleSaveApiKey
   } = usePixelLabCopilot()
   const [isConfigOpen, setIsConfigOpen] = useState(false)
-  
-  const isMissingKey = !apiKey && error?.includes('Missing PixelLab API Key')
 
   return (
     <div className="flex flex-col gap-3">
       {/* Configuration Header/Toggle */}
       <div className="flex items-center justify-between border-b border-white/5 pb-2">
         <div className="flex items-center gap-2">
-          <div className={`h-1.5 w-1.5 rounded-full ${apiKey ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`} />
+          <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
           <span className="text-[10px] uppercase tracking-wider text-[#8888aa]">
-            {apiKey ? 'PixelLab Connected' : 'Setup Required'}
+            Codex Ready
           </span>
         </div>
-        <button 
+        <button
           onClick={() => setIsConfigOpen(!isConfigOpen)}
           className={`rounded p-1 transition-colors ${isConfigOpen ? 'bg-purple-500/20 text-purple-400' : 'text-[#444466] hover:text-[#8888aa]'}`}
-          title="PixelLab Settings"
+          title="PixelLab Settings (used by AI Animation)"
         >
           <Settings2 size={14} />
         </button>
@@ -245,17 +246,7 @@ const PixelLabCopilotSection = () => {
         </div>
       )}
 
-      {!apiKey && !isConfigOpen && (
-        <button
-          onClick={() => setIsConfigOpen(true)}
-          className="flex items-center justify-center gap-2 rounded-lg border border-yellow-500/20 bg-yellow-500/5 py-3 text-xs font-medium text-yellow-500/80 transition-all hover:bg-yellow-500/10"
-        >
-          <Key size={14} />
-          Configure PixelLab to start
-        </button>
-      )}
-
-      <div className={`flex flex-col gap-2 ${(!apiKey && !isConfigOpen) ? 'opacity-20 pointer-events-none grayscale' : ''}`}>
+      <div className="flex flex-col gap-2">
         <div className="relative">
           <textarea
             value={prompt}
@@ -276,14 +267,6 @@ const PixelLabCopilotSection = () => {
         {error && (
           <div className="flex flex-col gap-1 rounded border border-red-500/20 bg-red-500/5 p-2">
             <p className="text-[10px] text-red-400">{error}</p>
-            {isMissingKey && (
-              <button 
-                onClick={() => setIsConfigOpen(true)}
-                className="text-left text-[9px] font-bold text-red-300 underline underline-offset-2"
-              >
-                Set API key now
-              </button>
-            )}
           </div>
         )}
         
@@ -304,15 +287,42 @@ const PixelLabCopilotSection = () => {
             <button
               type="button"
               onClick={handleApply}
-              disabled={!prompt.trim() || isLoading || !apiKey}
+              disabled={!prompt.trim() || isLoading}
               className="w-full rounded border border-purple-500/20 bg-purple-500/10 py-2 text-xs font-medium text-purple-400 transition-colors hover:bg-purple-500/20 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              {isLoading ? 'Generating...' : 'Generate'}
+              {isLoading ? 'Generating…' : 'Generate'}
             </button>
           </div>
         </div>
 
-        <PixelLabHistory 
+        <button
+          type="button"
+          role="switch"
+          aria-checked={quantizeEnabled}
+          onClick={() => setQuantizeEnabled(!quantizeEnabled)}
+          className="flex items-center justify-between rounded border border-white/10 bg-[#1a1a2e] px-2 py-1.5 transition-colors hover:border-white/20"
+        >
+          <span className="text-[10px] text-[#8888aa]">Clean palette ({QUANTIZE_DEFAULTS.COLORS} colors)</span>
+          <span
+            className={`relative h-3.5 w-6 rounded-full transition-colors ${
+              quantizeEnabled ? 'bg-purple-500/60' : 'bg-white/10'
+            }`}
+          >
+            <span
+              className={`absolute top-0.5 h-2.5 w-2.5 rounded-full bg-white transition-all ${
+                quantizeEnabled ? 'left-3' : 'left-0.5'
+              }`}
+            />
+          </span>
+        </button>
+
+        {isLoading && (
+          <p className="text-center text-[9px] text-[#8888aa]">
+            Codex is drawing your sprite — this can take a few minutes.
+          </p>
+        )}
+
+        <PixelLabHistory
           generations={generations} 
           onSelect={handleSelectGeneration}
           onDownload={downloadImage}
