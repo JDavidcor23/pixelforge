@@ -104,7 +104,7 @@ export const QUANTIZE_DEFAULTS = {
   COLORS: 16,
   ITERATIONS: 12,
   SATURATION_WEIGHT: 6, // weight = 1 + SATURATION_WEIGHT * saturation
-  ALPHA_THRESHOLD: 0.5,
+  ALPHA_THRESHOLD: 128, // 0..255 alpha scale (project-wide RgbaColor convention)
 } as const
 
 

@@ -65,7 +65,7 @@ export async function base64ToPixels(
             r: data[i],
             g: data[i + 1],
             b: data[i + 2],
-            a: data[i + 3] / 255,
+            a: data[i + 3],
           })
         }
         pixels.push(row)

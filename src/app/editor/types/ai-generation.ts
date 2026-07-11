@@ -2,7 +2,7 @@ export interface QuantizeOptions {
   readonly colors: number
   readonly weightBySaturation: boolean
   readonly iterations: number
-  readonly alphaThreshold: number // 0..1; below this a pixel stays transparent
+  readonly alphaThreshold: number // 0..255; below this a pixel stays transparent
 }
 
 export interface CodexGenerationResult {
