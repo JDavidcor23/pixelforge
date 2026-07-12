@@ -12,7 +12,7 @@ import { CollapsibleSection } from './CollapsibleSection'
 import { useRightSidebar, useColorSection, usePixelLabCopilot, useAnimationGenerator, type AIGeneration } from './useRightSidebar.hook'
 import { useExport } from './useExport.hook'
 import { useCursorPixel } from '@/app/editor/sprites/hooks/useSpriteEditorStore.hook'
-import { QUANTIZE_DEFAULTS } from '@/app/editor/constants'
+import { QUANTIZE_DEFAULTS, AI_SPRITE_SIZES } from '@/app/editor/constants'
 
 const CursorPositionInputs = () => {
   const cursorPixel = useCursorPixel()
@@ -278,7 +278,7 @@ const PixelLabCopilotSection = () => {
               onChange={(e) => setGenSize(Number(e.target.value))}
               className="w-full rounded border border-white/10 bg-[#1a1a2e] px-2 py-2 text-xs text-[#ededed] focus:outline-none"
             >
-              {[32, 64, 128].map(size => (
+              {AI_SPRITE_SIZES.map(size => (
                 <option key={size} value={size}>{size}x{size}</option>
               ))}
             </select>

@@ -100,6 +100,8 @@ export const CODEX_TIMEOUT_MS = 360000 // codex exec is an agent loop; spike mea
 export const CODEX_BASE_PROMPT =
   'Generate a 64x64 pixel art sprite, limited palette of max 16 colors, no anti-aliasing, ' +
   'transparent background, full body centered, retro 16-bit style. Subject: '
+export const AI_SPRITE_SIZES = [64, 128] as const
+export const AI_SPRITE_DEFAULT_SIZE: number = AI_SPRITE_SIZES[0]
 export const QUANTIZE_DEFAULTS = {
   COLORS: 16,
   ITERATIONS: 12,

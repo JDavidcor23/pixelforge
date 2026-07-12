@@ -20,7 +20,7 @@ import {
 } from '@/app/editor/sprites/hooks/useSpriteEditorStore.hook'
 import { generateSpriteWithCodex, decodeToPixels } from '@/app/editor/lib/codex-utils'
 import type { RgbaColor, AnimationAction, AnimationDirection } from '@/app/editor/types'
-import { PIXELLAB_ANIMATION } from '@/app/editor/constants'
+import { PIXELLAB_ANIMATION, AI_SPRITE_DEFAULT_SIZE } from '@/app/editor/constants'
 
 export interface AIGeneration {
   id: string
@@ -130,7 +130,7 @@ export const usePixelLabCopilot = () => {
     setApiKey(tempApiKey.trim() || null)
   }, [tempApiKey, setApiKey])
   const [isLoading, setIsLoading] = useState(false)
-  const [genSize, setGenSize] = useState(32)
+  const [genSize, setGenSize] = useState<number>(AI_SPRITE_DEFAULT_SIZE)
   const [quantizeEnabled, setQuantizeEnabled] = useState(true)
   const [generations, setGenerations] = useState<AIGeneration[]>([])
 
