@@ -160,6 +160,11 @@ export interface CompoundSlice {
   pasteClipboard: () => void
   // AI Copilot orchestration
 
-  overwriteWithPixels: (pixels: RgbaColor[][]) => void
+  // Native-resolution base64 of the last AI-generated sprite applied to the
+  // canvas. Used as the animation reference instead of a small canvas render
+  // so Codex gets full detail, not an already-downscaled/quantized copy.
+  lastAIReferenceBase64: string | null
+  setLastAIReferenceBase64: (base64: string | null) => void
+  overwriteWithPixels: (pixels: RgbaColor[][], referenceBase64?: string) => void
   importAnimationFrames: (frames: PixelBuffer[], frameDurationMs: number) => void
 }

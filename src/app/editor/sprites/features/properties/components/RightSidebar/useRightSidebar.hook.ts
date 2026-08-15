@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useMemo, useEffect } from 'react'
+import { useState, useCallback, useMemo, useEffect, useRef, type Dispatch, type SetStateAction } from 'react'
 import { colord } from 'colord'
 
 import {
@@ -13,14 +13,36 @@ import {
   useSetSecondaryColor,
   useOverwriteWithPixels,
   useSpriteEditorStore,
-  useCanvasDimensions,
   usePixelLabApiKey,
   useSetPixelLabApiKey,
   useImportAnimationFrames,
+  useLastAIReferenceBase64,
 } from '@/app/editor/sprites/hooks/useSpriteEditorStore.hook'
-import { generateSpriteWithCodex, decodeToPixels } from '@/app/editor/lib/codex-utils'
-import type { RgbaColor, AnimationAction, AnimationDirection } from '@/app/editor/types'
-import { PIXELLAB_ANIMATION, AI_SPRITE_DEFAULT_SIZE } from '@/app/editor/constants'
+import { generateSpriteWithCodex, decodeToPixels, decodeSheetToFrames } from '@/app/editor/lib/codex-utils'
+import {
+  parseAnimationHistory,
+  persistAnimationHistory,
+} from '@/app/editor/lib/animation-history'
+import type {
+  RgbaColor,
+  AnimationAction,
+  AnimationDirection,
+  AIAnimation,
+} from '@/app/editor/types'
+import {
+  PIXELLAB_ANIMATION,
+  AI_SPRITE_DEFAULT_SIZE,
+  ANIMATION_SHEET_PROMPT,
+  ANIMATION_HISTORY_STORAGE_KEY,
+  ANIMATION_HISTORY_LIMIT,
+  ANIMATION_PIPELINE_VERSION,
+  CODEX_NO_PNG_ERROR,
+  SPRITE_IMPORT_DEFAULT_FRAMES,
+  SPRITE_IMPORT_MIN_FRAMES,
+  SPRITE_IMPORT_MAX_FRAMES,
+} from '@/app/editor/constants'
+
+export type { AIAnimation } from '@/app/editor/types'
 
 export interface AIGeneration {
   id: string
@@ -112,6 +134,112 @@ export const useColorSection = () => {
 }
 
 
+export interface UseSpriteImportReturn {
+  frameCount: number
+  setFrameCount: (value: number) => void
+  size: number
+  setSize: Dispatch<SetStateAction<number>>
+  isSheet: boolean
+  isImporting: boolean
+  error: string | null
+  fileInputRef: React.RefObject<HTMLInputElement | null>
+  handleOpenFilePicker: () => void
+  handleFileSelected: (event: React.ChangeEvent<HTMLInputElement>) => Promise<void>
+}
+
+/**
+ * Manual sprite import. Engine-style: the user DECLARES how many frames the
+ * uploaded PNG holds and the pipeline obeys — we never auto-detect frames.
+ * Quantization is always disabled because the image is already hand-edited;
+ * re-quantizing would destroy the user's palette.
+ */
+export const useSpriteImport = (): UseSpriteImportReturn => {
+  const overwriteWithPixels = useOverwriteWithPixels()
+  const importAnimationFrames = useImportAnimationFrames()
+
+  const [frameCount, setFrameCountState] = useState<number>(SPRITE_IMPORT_DEFAULT_FRAMES)
+  const [size, setSize] = useState<number>(AI_SPRITE_DEFAULT_SIZE)
+  const [isImporting, setIsImporting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const setFrameCount = useCallback((value: number) => {
+    if (Number.isNaN(value)) {
+      setFrameCountState(SPRITE_IMPORT_MIN_FRAMES)
+      return
+    }
+    const clamped = Math.min(
+      SPRITE_IMPORT_MAX_FRAMES,
+      Math.max(SPRITE_IMPORT_MIN_FRAMES, Math.floor(value))
+    )
+    setFrameCountState(clamped)
+  }, [])
+
+  const handleOpenFilePicker = useCallback(() => {
+    fileInputRef.current?.click()
+  }, [])
+
+  const readFileAsDataUrl = useCallback(
+    (file: File): Promise<string> =>
+      new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(reader.result as string)
+        reader.onerror = () => reject(new Error('No se pudo leer el archivo.'))
+        reader.readAsDataURL(file)
+      }),
+    []
+  )
+
+  const handleFileSelected = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const input = event.target
+      const file = input.files?.[0]
+      if (!file) return
+
+      try {
+        setIsImporting(true)
+        setError(null)
+
+        const dataUrl = await readFileAsDataUrl(file)
+
+        if (frameCount <= SPRITE_IMPORT_MIN_FRAMES) {
+          // Single sprite — quantize=false keeps the user's hand-cleaned palette.
+          const pixels = await decodeToPixels(dataUrl, size, false)
+          overwriteWithPixels(pixels, dataUrl)
+        } else {
+          // Multi-frame sheet — the user declares the frame count; no auto-detect.
+          const frames = await decodeSheetToFrames(dataUrl, frameCount, size, false)
+          importAnimationFrames(frames, PIXELLAB_ANIMATION.DEFAULT_FRAME_DURATION_MS)
+        }
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'No se pudo importar el sprite.')
+      } finally {
+        setIsImporting(false)
+        // Reset so selecting the same file again re-triggers the change event.
+        input.value = ''
+      }
+    },
+    [frameCount, size, overwriteWithPixels, importAnimationFrames, readFileAsDataUrl]
+  )
+
+  // Single rule for "does this PNG hold an animation sheet?" — kept here so the
+  // JSX never re-derives the frame threshold and the two can't drift apart.
+  const isSheet = frameCount > SPRITE_IMPORT_MIN_FRAMES
+
+  return {
+    frameCount,
+    setFrameCount,
+    size,
+    setSize,
+    isSheet,
+    isImporting,
+    error,
+    fileInputRef,
+    handleOpenFilePicker,
+    handleFileSelected,
+  }
+}
+
 export const usePixelLabCopilot = () => {
   const overwriteWithPixels = useOverwriteWithPixels()
   const apiKey = usePixelLabApiKey()
@@ -131,7 +259,6 @@ export const usePixelLabCopilot = () => {
   }, [tempApiKey, setApiKey])
   const [isLoading, setIsLoading] = useState(false)
   const [genSize, setGenSize] = useState<number>(AI_SPRITE_DEFAULT_SIZE)
-  const [quantizeEnabled, setQuantizeEnabled] = useState(true)
   const [generations, setGenerations] = useState<AIGeneration[]>([])
 
   // Load history from localStorage on mount
@@ -180,18 +307,19 @@ export const usePixelLabCopilot = () => {
         setError(null)
 
         // Codex returns high-res images (e.g. 1254x1254). decodeToPixels
-        // downscales to the user-selected grid size and optionally quantizes
-        // the palette. overwriteWithPixels re-sizes the canvas in the store
-        // based on the pixel array length.
-        const pixels = await decodeToPixels(gen.base64, genSize, quantizeEnabled)
-        overwriteWithPixels(pixels)
+        // downscales to the user-selected grid size and quantizes the
+        // palette. Quantization always runs — product decision, not a
+        // user-toggleable option. overwriteWithPixels re-sizes the canvas
+        // in the store based on the pixel array length.
+        const pixels = await decodeToPixels(gen.base64, genSize, true)
+        overwriteWithPixels(pixels, gen.base64)
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Failed to re-apply generation')
       } finally {
         setIsLoading(false)
       }
     },
-    [overwriteWithPixels, genSize, quantizeEnabled]
+    [overwriteWithPixels, genSize]
   )
 
   const handleApply = useCallback(async () => {
@@ -252,8 +380,6 @@ export const usePixelLabCopilot = () => {
     handleSelectGeneration,
     genSize,
     setGenSize,
-    quantizeEnabled,
-    setQuantizeEnabled,
     downloadImage,
     downloadSource,
     apiKey,
@@ -263,13 +389,29 @@ export const usePixelLabCopilot = () => {
   }
 }
 
-export const useAnimationGenerator = () => {
-  const importAnimationFrames = useImportAnimationFrames()
-  const { width: canvasWidth, height: canvasHeight } = useCanvasDimensions()
-  const layers = useSpriteEditorStore((s) => s.layers)
-  const apiKey = usePixelLabApiKey()
+export interface UseAnimationGeneratorReturn {
+  action: AnimationAction
+  setAction: Dispatch<SetStateAction<AnimationAction>>
+  direction: AnimationDirection
+  setDirection: Dispatch<SetStateAction<AnimationDirection>>
+  nFrames: number
+  setNFrames: Dispatch<SetStateAction<number>>
+  isGenerating: boolean
+  animError: string | null
+  handleGenerateAnimation: () => Promise<void>
+  previewRef: string | null
+  handlePreviewReference: () => Promise<void>
+  animations: AIAnimation[]
+  handleSelectAnimation: (anim: AIAnimation) => Promise<void>
+  downloadAnimationSheet: (anim: AIAnimation) => void
+  sheetsAvailableForDownload: Set<string>
+}
 
-  const [description, setDescription] = useState('')
+export const useAnimationGenerator = (): UseAnimationGeneratorReturn => {
+  const importAnimationFrames = useImportAnimationFrames()
+  const layers = useSpriteEditorStore((s) => s.layers)
+  const lastAIReferenceBase64 = useLastAIReferenceBase64()
+
   const [action, setAction] = useState<AnimationAction>(
     PIXELLAB_ANIMATION.DEFAULT_ACTION as AnimationAction
   )
@@ -280,55 +422,146 @@ export const useAnimationGenerator = () => {
   const [isGenerating, setIsGenerating] = useState(false)
   const [animError, setAnimError] = useState<string | null>(null)
   const [previewRef, setPreviewRef] = useState<string | null>(null)
+  const [animations, setAnimations] = useState<AIAnimation[]>([])
+  const [isAnimationHistoryHydrated, setIsAnimationHistoryHydrated] = useState(false)
+
+  // Raw Codex sheet, kept in-memory only (never localStorage — a multi-frame
+  // sheet's base64 can run several MB and would blow the shared localStorage
+  // quota used by pixellab_history + animation history). Available only for
+  // animations generated in the current session; lost on reload.
+  const sheetCacheRef = useRef<Map<string, string>>(new Map())
+  const [sheetsAvailableForDownload, setSheetsAvailableForDownload] = useState<Set<string>>(new Set())
+
+  // Load animation history from localStorage on mount
+  useEffect(() => {
+    try {
+      const result = parseAnimationHistory(
+        localStorage.getItem(ANIMATION_HISTORY_STORAGE_KEY),
+      )
+      setAnimations(result.animations)
+      if (result.requiresRewrite) {
+        persistAnimationHistory(localStorage, result.animations)
+      }
+    } catch (e) {
+      console.error('Failed to load animation history', e)
+    } finally {
+      setIsAnimationHistoryHydrated(true)
+    }
+  }, [])
+
+  // Persist animation history to localStorage when it changes
+  useEffect(() => {
+    if (!isAnimationHistoryHydrated) return
+
+    try {
+      persistAnimationHistory(localStorage, animations)
+    } catch (e) {
+      console.error('Failed to persist animation history', e)
+    }
+  }, [animations, isAnimationHistoryHydrated])
 
   const handlePreviewReference = useCallback(async () => {
+    if (lastAIReferenceBase64) {
+      setPreviewRef(lastAIReferenceBase64)
+      return
+    }
     const { layersToBase64 } = await import('@/app/editor/lib/export-utils')
-    const ref = layersToBase64(64, 64, layers)
+    const ref = layersToBase64(AI_SPRITE_DEFAULT_SIZE, AI_SPRITE_DEFAULT_SIZE, layers)
     setPreviewRef(ref)
-  }, [layers])
+  }, [layers, lastAIReferenceBase64])
 
   const handleGenerateAnimation = useCallback(async () => {
     try {
-      if (!description.trim()) return
       setIsGenerating(true)
       setAnimError(null)
 
-      const { layersToBase64 } = await import('@/app/editor/lib/export-utils')
-      const { generateAnimationWithPixelLab, base64ToPixels } = await import('@/app/editor/lib/pixellab-utils')
-      
-      const base64 = layersToBase64(64, 64, layers)
+      const { layersToBase64, pixelBufferToDataUri } = await import('@/app/editor/lib/export-utils')
+      // Prefer the native-resolution AI generation over a re-render of the
+      // (already downscaled/quantized) canvas — Codex gets full detail to
+      // anchor the animation to, instead of a lossier copy of itself.
+      const referenceBase64 =
+        lastAIReferenceBase64 ?? layersToBase64(AI_SPRITE_DEFAULT_SIZE, AI_SPRITE_DEFAULT_SIZE, layers)
 
-      if (!base64) {
-        setAnimError('Failed to export current frame.')
+      if (!referenceBase64) {
+        setAnimError('No se pudo exportar el frame actual como referencia.')
         return
       }
 
-      const response = await generateAnimationWithPixelLab({
-        description,
-        action,
-        direction,
-        view: 'side',
-        image_size: { width: 64, height: 64 },
-        reference_image: { type: 'base64', base64 },
-        n_frames: nFrames,
-        apiKey,
-      } as any)
-
-      const pixelFrames = await Promise.all(
-        response.images.map((image: any) => base64ToPixels(image.base64, 64, 64))
+      const prompt = ANIMATION_SHEET_PROMPT(action, direction, nFrames)
+      // prependBase=false: the single-sprite base prompt ("64x64 sprite, full body
+      // centered") contradicts a multi-frame sheet. ANIMATION_SHEET_PROMPT is
+      // self-contained (palette, no-AA, transparent bg, retro style).
+      // Keep the generated palette intact for animation frames. Nearest-neighbour
+      // normalization preserves the small facial/costume details that per-frame
+      // 16-colour quantization was collapsing.
+      const { base64 } = await generateSpriteWithCodex(prompt, referenceBase64, false)
+      const frames = await decodeSheetToFrames(
+        base64,
+        nFrames,
+        AI_SPRITE_DEFAULT_SIZE,
+        false,
+        referenceBase64,
       )
 
-      importAnimationFrames(pixelFrames, PIXELLAB_ANIMATION.DEFAULT_FRAME_DURATION_MS)
+      importAnimationFrames(frames, PIXELLAB_ANIMATION.DEFAULT_FRAME_DURATION_MS)
+
+      // Store history as already-cropped, small PNG data-URIs (64x64 each),
+      // never the raw ~1MB sheet — keeps localStorage light and thumbnails clean.
+      const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slice(1)
+      const newAnimation: AIAnimation = {
+        pipelineVersion: ANIMATION_PIPELINE_VERSION,
+        id: crypto.randomUUID(),
+        label: `${capitalize(action)} · ${capitalize(direction)}`,
+        frames: frames.map((frame) => pixelBufferToDataUri(frame)),
+        frameDurationMs: PIXELLAB_ANIMATION.DEFAULT_FRAME_DURATION_MS,
+        timestamp: Date.now(),
+      }
+      setAnimations((prev) => [newAnimation, ...prev].slice(0, ANIMATION_HISTORY_LIMIT))
+      sheetCacheRef.current.set(newAnimation.id, base64)
+      setSheetsAvailableForDownload((prev) => new Set(prev).add(newAnimation.id))
     } catch (e) {
-      setAnimError(e instanceof Error ? e.message : 'Animation generation failed')
+      const message = e instanceof Error ? e.message : ''
+      setAnimError(
+        message.includes(CODEX_NO_PNG_ERROR)
+          ? 'La generación fue bloqueada o no produjo imagen, reintentá o cambiá el prompt.'
+          : message || 'La generación de la animación falló.'
+      )
     } finally {
       setIsGenerating(false)
     }
-  }, [description, action, direction, nFrames, layers, apiKey, importAnimationFrames])
+  }, [action, direction, nFrames, layers, lastAIReferenceBase64, importAnimationFrames])
+
+  const handleSelectAnimation = useCallback(
+    async (anim: AIAnimation) => {
+      try {
+        setIsGenerating(true)
+        setAnimError(null)
+
+        const decodedFrames = await Promise.all(
+          anim.frames.map((dataUri) => decodeToPixels(dataUri, AI_SPRITE_DEFAULT_SIZE, false))
+        )
+        importAnimationFrames(decodedFrames, anim.frameDurationMs)
+      } catch (e) {
+        setAnimError(e instanceof Error ? e.message : 'No se pudo cargar la animación guardada.')
+      } finally {
+        setIsGenerating(false)
+      }
+    },
+    [importAnimationFrames]
+  )
+
+  const downloadAnimationSheet = useCallback((anim: AIAnimation) => {
+    const sheet = sheetCacheRef.current.get(anim.id)
+    if (!sheet) return
+    const link = document.createElement('a')
+    link.href = sheet
+    link.download = `codex-animation-${anim.label.replace(/\s+/g, '-').toLowerCase()}-${anim.timestamp}.png`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }, [])
 
   return {
-    description,
-    setDescription,
     action,
     setAction,
     direction,
@@ -340,6 +573,9 @@ export const useAnimationGenerator = () => {
     handleGenerateAnimation,
     previewRef,
     handlePreviewReference,
-    apiKey,
+    animations,
+    handleSelectAnimation,
+    downloadAnimationSheet,
+    sheetsAvailableForDownload,
   }
 }

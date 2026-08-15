@@ -77,15 +77,9 @@ export type LeftSidebarTab = 'layers' | 'assets' | 'code'
 
 export type AnimationAction = 'idle' | 'walk' | 'run' | 'attack' | 'jump'
 
-export type AnimationDirection =
-  | 'north'
-  | 'north-east'
-  | 'east'
-  | 'south-east'
-  | 'south'
-  | 'south-west'
-  | 'west'
-  | 'north-west'
+// Side-view sprites only walk left or right. Compass directions were dropped
+// (top-down framing) — revisit if a top-down view is added later.
+export type AnimationDirection = 'left' | 'right'
 
 export interface AnimateWithTextRequest {
   readonly description: string
@@ -119,6 +113,7 @@ export interface SpriteEditorState {
   readonly frameClipboard: AnimationFrame[] | null
   readonly selection: SelectionState | null
   readonly clipboard: PixelBuffer | null
+  readonly lastAIReferenceBase64: string | null
 }
 
 export interface SpriteEditorActions {
@@ -170,8 +165,9 @@ export interface SpriteEditorActions {
   pasteClipboard: () => void
   deleteSelection: () => void
 
-  overwriteWithPixels: (pixels: PixelBuffer) => void
+  overwriteWithPixels: (pixels: PixelBuffer, referenceBase64?: string) => void
   importAnimationFrames: (frames: PixelBuffer[], frameDurationMs: number) => void
+  setLastAIReferenceBase64: (base64: string | null) => void
 }
 
 export type SpriteEditorStore = SpriteEditorState & SpriteEditorActions

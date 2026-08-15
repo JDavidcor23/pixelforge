@@ -1,4 +1,4 @@
-import type { Layer, AnimationFrame } from '@/app/editor/types'
+import type { Layer, AnimationFrame, PixelBuffer } from '@/app/editor/types'
 import { rgbaToString } from './color-utils'
 
 /**
@@ -116,5 +116,38 @@ export function layersToBase64(
   if (!ctx) return ''
 
   renderLayersToCanvas(ctx, layers, width, height)
+  return canvas.toDataURL('image/png')
+}
+
+/**
+ * Renders a raw PixelBuffer (already-cropped animation frame) to a small PNG
+ * data-URI. Used to store animation history frames compactly in
+ * localStorage — a decoded 64x64 PNG is a few KB, versus the ~1MB raw
+ * sprite sheet Codex returns, which would blow the localStorage quota.
+ */
+export function pixelBufferToDataUri(buffer: PixelBuffer): string {
+  const height = buffer.length
+  const width = buffer[0]?.length ?? 0
+  if (width === 0 || height === 0) return ''
+
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return ''
+
+  const imageData = ctx.createImageData(width, height)
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const { r, g, b, a } = buffer[y][x]
+      const i = (y * width + x) * 4
+      imageData.data[i] = r
+      imageData.data[i + 1] = g
+      imageData.data[i + 2] = b
+      imageData.data[i + 3] = a
+    }
+  }
+  ctx.putImageData(imageData, 0, 0)
   return canvas.toDataURL('image/png')
 }

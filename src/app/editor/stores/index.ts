@@ -32,9 +32,27 @@ export const useSpriteEditorStore = create<SpriteEditorStore>()(
     {
       name: 'sprite-editor-core',
       partialize: (state) => ({
+        canvasWidth: state.canvasWidth,
+        canvasHeight: state.canvasHeight,
+        layers: state.layers,
+        activeLayerId: state.activeLayerId,
+        timeline: state.timeline,
         primaryColor: state.primaryColor,
         secondaryColor: state.secondaryColor,
       }),
+      merge: (persistedState, currentState) => {
+        const persisted = persistedState as Partial<SpriteEditorStore> | undefined
+
+        return {
+          ...currentState,
+          ...persisted,
+          timeline: {
+            ...currentState.timeline,
+            ...persisted?.timeline,
+            isPlaying: false,
+          },
+        }
+      },
     }
   )
 )

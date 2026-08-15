@@ -11,3 +11,18 @@ export interface CodexGenerationResult {
   readonly height: number // native PNG height
   readonly sourcePath: string
 }
+
+export interface CodexGenerateRequestBody {
+  readonly prompt: string
+  readonly referenceBase64?: string
+  readonly prependBase?: boolean
+}
+
+export interface AIAnimation {
+  readonly pipelineVersion: number
+  readonly id: string
+  readonly label: string
+  readonly frames: readonly string[]
+  readonly frameDurationMs: number
+  readonly timestamp: number
+}

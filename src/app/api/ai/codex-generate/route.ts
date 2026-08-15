@@ -2,10 +2,23 @@ import { NextResponse } from 'next/server'
 import { execFile } from 'child_process'
 import { promisify } from 'util'
 import { promises as fs } from 'fs'
+import os from 'os'
 import path from 'path'
-import { AI_OUTPUT_ENV, CODEX_BASE_PROMPT, CODEX_TIMEOUT_MS } from '@/app/editor/constants'
+import { AI_OUTPUT_ENV, CODEX_BASE_PROMPT, CODEX_IMAGE_MODEL, CODEX_MAX_BUFFER_BYTES, CODEX_NO_PNG_ERROR, CODEX_TIMEOUT_MS } from '@/app/editor/constants'
+import type { CodexGenerateRequestBody } from '@/app/editor/types'
 
 const run = promisify(execFile)
+
+/** Decode a data-URI (or bare base64) PNG to a temp file Codex can attach via -i. */
+async function writeReferenceImage(referenceBase64: string, since: number): Promise<string> {
+  const comma = referenceBase64.indexOf(',')
+  const raw = referenceBase64.startsWith('data:') && comma !== -1
+    ? referenceBase64.slice(comma + 1)
+    : referenceBase64
+  const file = path.join(os.tmpdir(), `codex-ref-${since}.png`)
+  await fs.writeFile(file, Buffer.from(raw, 'base64'))
+  return file
+}
 
 /**
  * On Windows the global `codex` is an npm .cmd shim, which execFile cannot
@@ -44,8 +57,9 @@ async function newestPngAfter(dir: string, since: number): Promise<string | null
 }
 
 export async function POST(req: Request) {
+  let referenceFile: string | null = null
   try {
-    const { prompt } = await req.json()
+    const { prompt, referenceBase64, prependBase = true } = (await req.json()) as CodexGenerateRequestBody
     if (!prompt || !prompt.trim()) {
       return NextResponse.json({ error: 'Prompt is required' }, { status: 400 })
     }
@@ -54,21 +68,28 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: `Set ${AI_OUTPUT_ENV} to your Codex image output dir.` }, { status: 400 })
     }
     const since = Date.now()
+    // -i attaches the base sprite so Codex anchors the generation to it instead
+    // of inventing a new character. Codex reads a file path, not base64.
+    if (referenceBase64) referenceFile = await writeReferenceImage(referenceBase64, since)
+    const imageArgs = referenceFile ? ['-i', referenceFile] : []
     // DEV-ONLY: runs Codex as an autonomous agent (exec mode is non-interactive)
     // with a permissive sandbox on the local machine. Never deploy this route.
+    // `-i` is variadic (<FILE>...); the `--` terminator stops it from swallowing
+    // the prompt as an extra image path.
     const { cmd, baseArgs } = await resolveCodexCommand()
     const codexRun = run(
       cmd,
       [...baseArgs, 'exec', '--sandbox', 'danger-full-access', '--skip-git-repo-check',
-       `${CODEX_BASE_PROMPT}${prompt}`],
-      { timeout: CODEX_TIMEOUT_MS, maxBuffer: 10 * 1024 * 1024 },
+       '-m', CODEX_IMAGE_MODEL,
+       ...imageArgs, '--', prependBase ? `${CODEX_BASE_PROMPT}${prompt}` : prompt],
+      { timeout: CODEX_TIMEOUT_MS, maxBuffer: CODEX_MAX_BUFFER_BYTES },
     )
     // codex exec blocks reading piped stdin until EOF; close it so it starts.
     codexRun.child.stdin?.end()
     await codexRun
     const file = await newestPngAfter(outputDir, since)
     if (!file) {
-      return NextResponse.json({ error: 'Codex did not produce a PNG.' }, { status: 502 })
+      return NextResponse.json({ error: CODEX_NO_PNG_ERROR }, { status: 502 })
     }
     const buf = await fs.readFile(file)
     return NextResponse.json({
@@ -81,5 +102,7 @@ export async function POST(req: Request) {
     const message = error instanceof Error ? error.message : 'Internal Server Error'
     console.error('codex-generate error:', message)
     return NextResponse.json({ error: message }, { status: 500 })
+  } finally {
+    if (referenceFile) await fs.unlink(referenceFile).catch(() => {})
   }
 }

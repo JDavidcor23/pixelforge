@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Sparkles, Palette, Download, FileJson, Key, Settings2, ExternalLink, Check, Film } from 'lucide-react'
+import { Sparkles, Palette, Download, FileJson, Key, Settings2, ExternalLink, Check, Film, Upload } from 'lucide-react'
 import Link from 'next/link'
 
 import { OpacitySlider } from '../OpacitySlider/OpacitySlider'
@@ -9,10 +9,24 @@ import { ColorInputs } from '../ColorInputs/ColorInputs'
 import { ColorArea } from '../ColorArea/ColorArea'
 import { ColorPalette } from '../ColorPalette/ColorPalette'
 import { CollapsibleSection } from './CollapsibleSection'
-import { useRightSidebar, useColorSection, usePixelLabCopilot, useAnimationGenerator, type AIGeneration } from './useRightSidebar.hook'
+import {
+  useRightSidebar,
+  useColorSection,
+  usePixelLabCopilot,
+  useAnimationGenerator,
+  useSpriteImport,
+  type AIGeneration,
+  type AIAnimation,
+} from './useRightSidebar.hook'
 import { useExport } from './useExport.hook'
 import { useCursorPixel } from '@/app/editor/sprites/hooks/useSpriteEditorStore.hook'
-import { QUANTIZE_DEFAULTS, AI_SPRITE_SIZES } from '@/app/editor/constants'
+import {
+  AI_SPRITE_SIZES,
+  PIXELLAB_ANIMATION,
+  SPRITE_IMPORT_ACCEPT,
+  SPRITE_IMPORT_MIN_FRAMES,
+  SPRITE_IMPORT_MAX_FRAMES,
+} from '@/app/editor/constants'
 
 const CursorPositionInputs = () => {
   const cursorPixel = useCursorPixel()
@@ -157,6 +171,150 @@ const PixelLabHistory = ({
   )
 }
 
+const RecentAnimations = ({
+  animations,
+  onSelect,
+  onDownload,
+  sheetsAvailableForDownload,
+}: {
+  animations: AIAnimation[]
+  onSelect: (anim: AIAnimation) => void
+  onDownload: (anim: AIAnimation) => void
+  sheetsAvailableForDownload: Set<string>
+}) => {
+  if (animations.length === 0) return null
+
+  return (
+    <div className="mt-4">
+      <div className="mb-2 text-[10px] uppercase tracking-wider text-[#8888aa]">Recent Animations</div>
+      <div className="grid grid-cols-2 gap-2">
+        {animations.map((anim) => {
+          const hasOriginal = sheetsAvailableForDownload.has(anim.id)
+          return (
+            <div
+              key={anim.id}
+              className="group relative flex flex-col gap-1 overflow-hidden rounded border border-white/5 bg-[#1a1a2e] p-1.5 transition-all hover:border-cyan-500/40"
+            >
+              <div className="aspect-square relative w-full overflow-hidden rounded bg-black/20">
+                {/* eslint-disable-next-line @next/next/no-img-element -- matches PixelLabHistory's sibling pattern above */}
+                <img
+                  src={anim.frames[0]}
+                  alt={anim.label}
+                  className="h-full w-full object-contain image-pixelated cursor-pointer"
+                  onClick={() => onSelect(anim)}
+                />
+
+                <div className="absolute right-1 top-1 opacity-0 transition-opacity group-hover:opacity-100">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); if (hasOriginal) onDownload(anim) }}
+                    disabled={!hasOriginal}
+                    className="rounded bg-black/60 p-1 text-white hover:bg-cyan-600 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-black/60"
+                    title={hasOriginal ? 'Download original sheet' : 'Original sheet only available for animations generated this session'}
+                  >
+                    <Download size={12} />
+                  </button>
+                </div>
+              </div>
+              <span className="truncate text-[9px] text-[#8888aa] group-hover:text-cyan-300">
+                {anim.label}
+              </span>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+const ImportSpriteSection = () => {
+  const {
+    frameCount,
+    setFrameCount,
+    size,
+    setSize,
+    isSheet,
+    isImporting,
+    error,
+    fileInputRef,
+    handleOpenFilePicker,
+    handleFileSelected,
+  } = useSpriteImport()
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center gap-2 border-b border-white/5 pb-2">
+        <Upload size={14} className="text-emerald-400" />
+        <span className="text-[10px] uppercase tracking-wider text-[#8888aa]">Upload PNG</span>
+      </div>
+
+      <p className="text-[10px] text-[#8888aa]">
+        Subí una imagen PNG (por ejemplo un sprite que descargaste y editaste a mano). Vos declarás cuántos
+        frames tiene y a qué resolución entra — el editor obedece, no adivina.
+      </p>
+
+      <div className="flex gap-2">
+        <div className="flex-1">
+          <label className="mb-1 block text-[10px] text-[#8888aa]">Frames</label>
+          <input
+            type="number"
+            min={SPRITE_IMPORT_MIN_FRAMES}
+            max={SPRITE_IMPORT_MAX_FRAMES}
+            value={frameCount}
+            onChange={(e) => setFrameCount(Number(e.target.value))}
+            onKeyDown={(e) => e.stopPropagation()}
+            className="w-full rounded border border-white/10 bg-[#1a1a2e] px-2 py-2 text-xs text-[#ededed] focus:outline-none"
+          />
+        </div>
+        <div className="flex-1">
+          <label className="mb-1 block text-[10px] text-[#8888aa]">Resolution</label>
+          <select
+            value={size}
+            onChange={(e) => setSize(Number(e.target.value))}
+            className="w-full rounded border border-white/10 bg-[#1a1a2e] px-2 py-2 text-xs text-[#ededed] focus:outline-none"
+          >
+            {AI_SPRITE_SIZES.map((s) => (
+              <option key={s} value={s}>{s}x{s}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {error && (
+        <div className="rounded border border-red-500/20 bg-red-500/5 p-2">
+          <p className="text-[10px] text-red-400">{error}</p>
+        </div>
+      )}
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept={SPRITE_IMPORT_ACCEPT}
+        onChange={handleFileSelected}
+        className="hidden"
+      />
+
+      <button
+        type="button"
+        onClick={handleOpenFilePicker}
+        disabled={isImporting}
+        className="flex w-full items-center justify-center gap-2 rounded border border-emerald-500/20 bg-emerald-500/10 py-2.5 text-xs font-medium text-emerald-400 transition-colors hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        {isImporting ? (
+          <>
+            <div className="h-3 w-3 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent" />
+            Importing…
+          </>
+        ) : (
+          <>
+            <Upload size={14} />
+            {isSheet ? 'Import Sheet' : 'Import Sprite'}
+          </>
+        )}
+      </button>
+    </div>
+  )
+}
+
 const PixelLabCopilotSection = () => {
   const { 
     prompt, 
@@ -168,8 +326,6 @@ const PixelLabCopilotSection = () => {
     handleSelectGeneration,
     genSize,
     setGenSize,
-    quantizeEnabled,
-    setQuantizeEnabled,
     downloadImage,
     downloadSource,
     apiKey,
@@ -295,27 +451,6 @@ const PixelLabCopilotSection = () => {
           </div>
         </div>
 
-        <button
-          type="button"
-          role="switch"
-          aria-checked={quantizeEnabled}
-          onClick={() => setQuantizeEnabled(!quantizeEnabled)}
-          className="flex items-center justify-between rounded border border-white/10 bg-[#1a1a2e] px-2 py-1.5 transition-colors hover:border-white/20"
-        >
-          <span className="text-[10px] text-[#8888aa]">Clean palette ({QUANTIZE_DEFAULTS.COLORS} colors)</span>
-          <span
-            className={`relative h-3.5 w-6 rounded-full transition-colors ${
-              quantizeEnabled ? 'bg-purple-500/60' : 'bg-white/10'
-            }`}
-          >
-            <span
-              className={`absolute top-0.5 h-2.5 w-2.5 rounded-full bg-white transition-all ${
-                quantizeEnabled ? 'left-3' : 'left-0.5'
-              }`}
-            />
-          </span>
-        </button>
-
         {isLoading && (
           <p className="text-center text-[9px] text-[#8888aa]">
             Codex is drawing your sprite — this can take a few minutes.
@@ -336,8 +471,6 @@ const PixelLabCopilotSection = () => {
 
 const AnimationGeneratorSection = () => {
   const {
-    description,
-    setDescription,
     action,
     setAction,
     direction,
@@ -349,11 +482,14 @@ const AnimationGeneratorSection = () => {
     handleGenerateAnimation,
     previewRef,
     handlePreviewReference,
-    apiKey,
+    animations,
+    handleSelectAnimation,
+    downloadAnimationSheet,
+    sheetsAvailableForDownload,
   } = useAnimationGenerator()
 
   return (
-    <div className={`flex flex-col gap-3 ${!apiKey ? 'opacity-20 pointer-events-none grayscale' : ''}`}>
+    <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between border-b border-white/5 pb-2">
         <div className="flex items-center gap-2">
           <Film size={14} className="text-cyan-400" />
@@ -370,23 +506,17 @@ const AnimationGeneratorSection = () => {
       {previewRef && (
         <div className="flex flex-col items-center gap-2 rounded border border-white/5 bg-black/20 p-2">
           <span className="text-[9px] text-[#555577] uppercase font-bold tracking-widest">AI Input Preview (64x64)</span>
-          <img 
-            src={previewRef} 
-            alt="Reference Preview" 
+          <img
+            src={previewRef}
+            alt="Reference Preview"
             className="h-16 w-16 image-pixelated border border-white/10 shadow-lg"
           />
         </div>
       )}
 
-      <textarea
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        rows={2}
-        placeholder="videogame enemy character..."
-        onKeyDown={(e) => e.stopPropagation()}
-        onPaste={(e) => e.stopPropagation()}
-        className="w-full resize-y rounded border border-white/10 bg-[#1a1a2e] p-2 font-mono text-[11px] text-[#ededed] placeholder:text-[#444466] focus:border-cyan-500/40 focus:outline-none focus:ring-1 focus:ring-cyan-500/40"
-      />
+      <p className="text-[10px] text-[#8888aa]">
+        Codex usa el frame actual como referencia exacta del personaje y genera una hoja con los frames elegidos.
+      </p>
 
       <div className="grid grid-cols-2 gap-2">
         <div>
@@ -396,7 +526,7 @@ const AnimationGeneratorSection = () => {
             onChange={(e) => setAction(e.target.value as typeof action)}
             className="w-full rounded border border-white/10 bg-[#1a1a2e] px-2 py-1.5 text-xs text-[#ededed] focus:outline-none"
           >
-            {['idle', 'walk', 'run', 'attack', 'jump'].map((a) => (
+            {PIXELLAB_ANIMATION.ACTIONS.map((a) => (
               <option key={a} value={a}>
                 {a.charAt(0).toUpperCase() + a.slice(1)}
               </option>
@@ -410,7 +540,7 @@ const AnimationGeneratorSection = () => {
             onChange={(e) => setDirection(e.target.value as typeof direction)}
             className="w-full rounded border border-white/10 bg-[#1a1a2e] px-2 py-1.5 text-xs text-[#ededed] focus:outline-none"
           >
-            {['north', 'north-east', 'east', 'south-east', 'south', 'south-west', 'west', 'north-west'].map((d) => (
+            {PIXELLAB_ANIMATION.DIRECTIONS.map((d) => (
               <option key={d} value={d}>
                 {d.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
               </option>
@@ -422,7 +552,7 @@ const AnimationGeneratorSection = () => {
       <div>
         <label className="mb-1 block text-[10px] text-[#8888aa]">Frames</label>
         <div className="flex gap-1">
-          {[3, 4, 6, 8].map((n) => (
+          {PIXELLAB_ANIMATION.FRAME_OPTIONS.map((n) => (
             <button
               key={n}
               type="button"
@@ -448,7 +578,7 @@ const AnimationGeneratorSection = () => {
       <button
         type="button"
         onClick={handleGenerateAnimation}
-        disabled={!description.trim() || isGenerating || !apiKey}
+        disabled={isGenerating}
         className="flex w-full items-center justify-center gap-2 rounded border border-cyan-500/20 bg-gradient-to-r from-cyan-500/10 to-purple-500/10 py-2.5 text-xs font-medium text-cyan-400 transition-all hover:from-cyan-500/20 hover:to-purple-500/20 disabled:cursor-not-allowed disabled:opacity-40"
       >
         {isGenerating ? (
@@ -463,6 +593,13 @@ const AnimationGeneratorSection = () => {
           </>
         )}
       </button>
+
+      <RecentAnimations
+        animations={animations}
+        onSelect={handleSelectAnimation}
+        onDownload={downloadAnimationSheet}
+        sheetsAvailableForDownload={sheetsAvailableForDownload}
+      />
     </div>
   )
 }
@@ -506,6 +643,10 @@ export const RightSidebar = () => {
             Export Sprite Sheet
           </button>
         </div>
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Import Sprite" defaultOpen={false} icon={<Upload size={16} className="text-emerald-400" />}>
+        <ImportSpriteSection />
       </CollapsibleSection>
 
       <CollapsibleSection title="AI Copilot" defaultOpen={true} icon={<Sparkles size={16} className="text-purple-400" />}>

@@ -17,6 +17,9 @@ export const createCompoundSlice: StateCreator<
   [],
   CompoundSlice
 > = (set, get) => ({
+  lastAIReferenceBase64: null,
+  setLastAIReferenceBase64: (base64) => set({ lastAIReferenceBase64: base64 }),
+
   // ── History Orchestration ──────────────────────────────────────────────────
 
   /**
@@ -350,7 +353,7 @@ export const createCompoundSlice: StateCreator<
    * Primarily used when applying AI-generated sprites.
    * Resizes the canvas to match the new content.
    */
-  overwriteWithPixels: (pixels) => {
+  overwriteWithPixels: (pixels, referenceBase64) => {
     get().pushHistory('AI Copilot: Apply PixelLab Image')
 
     const newLayer: Layer = {
@@ -381,6 +384,7 @@ export const createCompoundSlice: StateCreator<
         selectedFrameIndices: [0],
       },
       selection: null,
+      lastAIReferenceBase64: referenceBase64 ?? state.lastAIReferenceBase64,
     }))
   },
 

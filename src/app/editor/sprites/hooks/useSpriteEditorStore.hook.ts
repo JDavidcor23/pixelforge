@@ -360,6 +360,12 @@ export const useOverwriteWithPixels = () => useSpriteEditorStore((s) => s.overwr
 export const useImportAnimationFrames = () => useSpriteEditorStore((s) => s.importAnimationFrames)
 
 /**
+ * Returns the native-resolution base64 of the last AI-generated sprite
+ * applied to the canvas, if any.
+ */
+export const useLastAIReferenceBase64 = () => useSpriteEditorStore((s) => s.lastAIReferenceBase64)
+
+/**
  * ── UI State & Actions ───────────────────────────────────────────────────────
  */
 
