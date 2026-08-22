@@ -469,11 +469,13 @@ export const useSetShowGrid = () => useEditorPrefsStore((s) => s.setShowGrid)
 export const useToggleOnionSkin = () => useEditorPrefsStore((s) => s.toggleOnionSkin)
 
 /**
- * Returns the PixelLab API key stored in preferences.
+ * Returns the user's own Retro Diffusion API key (BYOK). Null means the server
+ * falls back to its own API_RETRO_DIFFUSION key.
  */
-export const usePixelLabApiKey = () => useEditorPrefsStore((s) => s.pixellabApiKey)
+export const useRetroDiffusionApiKey = () => useEditorPrefsStore((s) => s.retroDiffusionApiKey)
 
 /**
- * Action to update the PixelLab API key in preferences.
+ * Action to update the Retro Diffusion API key in preferences.
  */
-export const useSetPixelLabApiKey = () => useEditorPrefsStore((s) => s.setPixelLabApiKey)
+export const useSetRetroDiffusionApiKey = () =>
+  useEditorPrefsStore((s) => s.setRetroDiffusionApiKey)

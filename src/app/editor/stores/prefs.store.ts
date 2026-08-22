@@ -23,7 +23,7 @@ export const useEditorPrefsStore = create<EditorPrefsStore>()(
         palette: state.palette,
         showGrid: state.showGrid,
         onionSkinEnabled: state.onionSkinEnabled,
-        pixellabApiKey: state.pixellabApiKey,
+        retroDiffusionApiKey: state.retroDiffusionApiKey,
       }),
     }
   )

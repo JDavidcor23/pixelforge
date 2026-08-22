@@ -2,8 +2,9 @@ import type { StateCreator } from 'zustand'
 import type { EditorPrefsStore } from '../../types'
 
 export interface IntegrationsSlice {
-  pixellabApiKey: string | null
-  setPixelLabApiKey: (key: string | null) => void
+  /** BYOK: when set, generations bill this user's own Retro Diffusion balance. */
+  retroDiffusionApiKey: string | null
+  setRetroDiffusionApiKey: (key: string | null) => void
 }
 
 export const createIntegrationsSlice: StateCreator<
@@ -12,6 +13,6 @@ export const createIntegrationsSlice: StateCreator<
   [],
   IntegrationsSlice
 > = (set) => ({
-  pixellabApiKey: null,
-  setPixelLabApiKey: (key) => set({ pixellabApiKey: key }),
+  retroDiffusionApiKey: null,
+  setRetroDiffusionApiKey: (key) => set({ retroDiffusionApiKey: key }),
 })

@@ -354,7 +354,7 @@ export const createCompoundSlice: StateCreator<
    * Resizes the canvas to match the new content.
    */
   overwriteWithPixels: (pixels, referenceBase64) => {
-    get().pushHistory('AI Copilot: Apply PixelLab Image')
+    get().pushHistory('AI Copilot: Apply Generated Image')
 
     const newLayer: Layer = {
       id: crypto.randomUUID(),

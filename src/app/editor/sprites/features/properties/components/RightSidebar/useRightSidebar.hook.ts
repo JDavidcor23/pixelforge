@@ -13,12 +13,18 @@ import {
   useSetSecondaryColor,
   useOverwriteWithPixels,
   useSpriteEditorStore,
-  usePixelLabApiKey,
-  useSetPixelLabApiKey,
   useImportAnimationFrames,
   useLastAIReferenceBase64,
+  useRetroDiffusionApiKey,
+  useSetRetroDiffusionApiKey,
 } from '@/app/editor/sprites/hooks/useSpriteEditorStore.hook'
-import { generateSpriteWithCodex, decodeToPixels, decodeSheetToFrames } from '@/app/editor/lib/codex-utils'
+import { decodeToPixels, decodeSheetToFrames } from '@/app/editor/lib/sprite-pipeline'
+import {
+  generateSpriteWithRetroDiffusion,
+  generateAnimationWithRetroDiffusion,
+  decodeGeneratedSprite,
+  sliceAnimationSheet,
+} from '@/app/editor/lib/retro-diffusion-utils'
 import {
   parseAnimationHistory,
   persistAnimationHistory,
@@ -30,13 +36,13 @@ import type {
   AIAnimation,
 } from '@/app/editor/types'
 import {
-  PIXELLAB_ANIMATION,
+  SPRITE_ANIMATION,
   AI_SPRITE_DEFAULT_SIZE,
-  ANIMATION_SHEET_PROMPT,
   ANIMATION_HISTORY_STORAGE_KEY,
+  GENERATION_HISTORY_STORAGE_KEY,
   ANIMATION_HISTORY_LIMIT,
   ANIMATION_PIPELINE_VERSION,
-  CODEX_NO_PNG_ERROR,
+  RETRO_DIFFUSION_DEFAULT_STYLE,
   SPRITE_IMPORT_DEFAULT_FRAMES,
   SPRITE_IMPORT_MIN_FRAMES,
   SPRITE_IMPORT_MAX_FRAMES,
@@ -209,7 +215,7 @@ export const useSpriteImport = (): UseSpriteImportReturn => {
         } else {
           // Multi-frame sheet — the user declares the frame count; no auto-detect.
           const frames = await decodeSheetToFrames(dataUrl, frameCount, size, false)
-          importAnimationFrames(frames, PIXELLAB_ANIMATION.DEFAULT_FRAME_DURATION_MS)
+          importAnimationFrames(frames, SPRITE_ANIMATION.DEFAULT_FRAME_DURATION_MS)
         }
       } catch (e) {
         setError(e instanceof Error ? e.message : 'No se pudo importar el sprite.')
@@ -240,10 +246,12 @@ export const useSpriteImport = (): UseSpriteImportReturn => {
   }
 }
 
-export const usePixelLabCopilot = () => {
+export const useSpriteCopilot = () => {
   const overwriteWithPixels = useOverwriteWithPixels()
-  const apiKey = usePixelLabApiKey()
-  const setApiKey = useSetPixelLabApiKey()
+  // BYOK: this is the user's own Retro Diffusion token. Left empty, the server
+  // falls back to API_RETRO_DIFFUSION.
+  const apiKey = useRetroDiffusionApiKey()
+  const setApiKey = useSetRetroDiffusionApiKey()
 
   const [tempApiKey, setTempApiKey] = useState(apiKey || '')
   const [prompt, setPrompt] = useState('')
@@ -260,10 +268,14 @@ export const usePixelLabCopilot = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [genSize, setGenSize] = useState<number>(AI_SPRITE_DEFAULT_SIZE)
   const [generations, setGenerations] = useState<AIGeneration[]>([])
+  // Surfaced so a BYOK user can see what each generation cost them and how much
+  // balance is left, instead of discovering it on the Retro Diffusion dashboard.
+  const [lastCostUsd, setLastCostUsd] = useState<number | null>(null)
+  const [remainingBalanceUsd, setRemainingBalanceUsd] = useState<number | null>(null)
 
   // Load history from localStorage on mount
   useEffect(() => {
-    const saved = localStorage.getItem('pixellab_history')
+    const saved = localStorage.getItem(GENERATION_HISTORY_STORAGE_KEY)
     if (saved) {
       try {
         setGenerations(JSON.parse(saved))
@@ -276,7 +288,7 @@ export const usePixelLabCopilot = () => {
   // Persist history to localStorage when it changes
   useEffect(() => {
     if (generations.length > 0) {
-      localStorage.setItem('pixellab_history', JSON.stringify(generations))
+      localStorage.setItem(GENERATION_HISTORY_STORAGE_KEY, JSON.stringify(generations))
     }
   }, [generations])
 
@@ -306,12 +318,11 @@ export const usePixelLabCopilot = () => {
         setIsLoading(true)
         setError(null)
 
-        // Codex returns high-res images (e.g. 1254x1254). decodeToPixels
-        // downscales to the user-selected grid size and quantizes the
-        // palette. Quantization always runs — product decision, not a
-        // user-toggleable option. overwriteWithPixels re-sizes the canvas
-        // in the store based on the pixel array length.
-        const pixels = await decodeToPixels(gen.base64, genSize, true)
+        // Retro Diffusion generations already come back at the grid size with
+        // real alpha, so decodeGeneratedSprite uses them verbatim. Legacy Codex
+        // history entries (high-res, opaque background) still fall through to
+        // the chroma-key + downscale + quantize path inside it.
+        const pixels = await decodeGeneratedSprite(gen.base64, genSize)
         overwriteWithPixels(pixels, gen.base64)
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Failed to re-apply generation')
@@ -328,11 +339,21 @@ export const usePixelLabCopilot = () => {
       setIsLoading(true)
       setError(null)
 
-      // Codex agent loop — returns a high-res image with its native dimensions
-      const { base64, width, height } = await generateSpriteWithCodex(prompt)
+      // Retro Diffusion is given the grid size directly and answers with a true
+      // RGBA PNG at exactly that resolution, so nothing has to be keyed,
+      // downscaled or quantized afterwards.
+      const { base64, width, height, costUsd, remainingBalanceUsd: balance } =
+        await generateSpriteWithRetroDiffusion({
+          prompt,
+          width: genSize,
+          height: genSize,
+          style: RETRO_DIFFUSION_DEFAULT_STYLE,
+          apiKey: apiKey ?? undefined,
+        })
 
-      // Store the native resolution; downscaling happens on selection
       addToHistory({ prompt, base64, width, height })
+      setLastCostUsd(costUsd)
+      setRemainingBalanceUsd(balance)
 
       setPrompt('') // Clear prompt after generation
     } catch (e) {
@@ -340,12 +361,12 @@ export const usePixelLabCopilot = () => {
     } finally {
       setIsLoading(false)
     }
-  }, [prompt, addToHistory])
+  }, [prompt, addToHistory, genSize, apiKey])
 
   const downloadImage = useCallback((gen: AIGeneration) => {
     const link = document.createElement('a')
     link.href = gen.base64
-    link.download = `pixellab-${gen.prompt.replace(/\s+/g, '-').toLowerCase()}-${Date.now()}.png`
+    link.download = `sprite-${gen.prompt.replace(/\s+/g, '-').toLowerCase()}-${Date.now()}.png`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
@@ -363,7 +384,7 @@ export const usePixelLabCopilot = () => {
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `pixellab-${gen.id}-source.json`
+    link.download = `sprite-${gen.id}-source.json`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
@@ -385,7 +406,9 @@ export const usePixelLabCopilot = () => {
     apiKey,
     tempApiKey,
     setTempApiKey,
-    handleSaveApiKey
+    handleSaveApiKey,
+    lastCostUsd,
+    remainingBalanceUsd
   }
 }
 
@@ -411,24 +434,25 @@ export const useAnimationGenerator = (): UseAnimationGeneratorReturn => {
   const importAnimationFrames = useImportAnimationFrames()
   const layers = useSpriteEditorStore((s) => s.layers)
   const lastAIReferenceBase64 = useLastAIReferenceBase64()
+  const retroDiffusionApiKey = useRetroDiffusionApiKey()
 
   const [action, setAction] = useState<AnimationAction>(
-    PIXELLAB_ANIMATION.DEFAULT_ACTION as AnimationAction
+    SPRITE_ANIMATION.DEFAULT_ACTION as AnimationAction
   )
   const [direction, setDirection] = useState<AnimationDirection>(
-    PIXELLAB_ANIMATION.DEFAULT_DIRECTION as AnimationDirection
+    SPRITE_ANIMATION.DEFAULT_DIRECTION as AnimationDirection
   )
-  const [nFrames, setNFrames] = useState<number>(PIXELLAB_ANIMATION.DEFAULT_N_FRAMES)
+  const [nFrames, setNFrames] = useState<number>(SPRITE_ANIMATION.DEFAULT_N_FRAMES)
   const [isGenerating, setIsGenerating] = useState(false)
   const [animError, setAnimError] = useState<string | null>(null)
   const [previewRef, setPreviewRef] = useState<string | null>(null)
   const [animations, setAnimations] = useState<AIAnimation[]>([])
   const [isAnimationHistoryHydrated, setIsAnimationHistoryHydrated] = useState(false)
 
-  // Raw Codex sheet, kept in-memory only (never localStorage — a multi-frame
-  // sheet's base64 can run several MB and would blow the shared localStorage
-  // quota used by pixellab_history + animation history). Available only for
-  // animations generated in the current session; lost on reload.
+  // Raw animation sheet, kept in-memory only (never localStorage — a multi-frame
+  // sheet's base64 can run several MB and would blow the quota shared with the
+  // generation and animation histories). Available only for animations made in
+  // the current session; lost on reload.
   const sheetCacheRef = useRef<Map<string, string>>(new Map())
   const [sheetsAvailableForDownload, setSheetsAvailableForDownload] = useState<Set<string>>(new Set())
 
@@ -477,7 +501,7 @@ export const useAnimationGenerator = (): UseAnimationGeneratorReturn => {
 
       const { layersToBase64, pixelBufferToDataUri } = await import('@/app/editor/lib/export-utils')
       // Prefer the native-resolution AI generation over a re-render of the
-      // (already downscaled/quantized) canvas — Codex gets full detail to
+      // (already downscaled/quantized) canvas — the model gets full detail to
       // anchor the animation to, instead of a lossier copy of itself.
       const referenceBase64 =
         lastAIReferenceBase64 ?? layersToBase64(AI_SPRITE_DEFAULT_SIZE, AI_SPRITE_DEFAULT_SIZE, layers)
@@ -487,23 +511,26 @@ export const useAnimationGenerator = (): UseAnimationGeneratorReturn => {
         return
       }
 
-      const prompt = ANIMATION_SHEET_PROMPT(action, direction, nFrames)
-      // prependBase=false: the single-sprite base prompt ("64x64 sprite, full body
-      // centered") contradicts a multi-frame sheet. ANIMATION_SHEET_PROMPT is
-      // self-contained (palette, no-AA, transparent bg, retro style).
-      // Keep the generated palette intact for animation frames. Nearest-neighbour
-      // normalization preserves the small facial/costume details that per-frame
-      // 16-colour quantization was collapsing.
-      const { base64 } = await generateSpriteWithCodex(prompt, referenceBase64, false)
-      const frames = await decodeSheetToFrames(
-        base64,
+      // Retro Diffusion takes the reference as a real parameter (input_image),
+      // which is what attaching a file via `codex -i` was trying to approximate,
+      // and answers with an exact grid sheet — so the frames are cut by division
+      // instead of by detecting gaps between poses.
+      const { base64 } = await generateAnimationWithRetroDiffusion(
+        action,
+        direction,
         nFrames,
         AI_SPRITE_DEFAULT_SIZE,
-        false,
         referenceBase64,
+        retroDiffusionApiKey ?? undefined,
       )
+      const frames = await sliceAnimationSheet(base64, AI_SPRITE_DEFAULT_SIZE, nFrames)
 
-      importAnimationFrames(frames, PIXELLAB_ANIMATION.DEFAULT_FRAME_DURATION_MS)
+      if (frames.length === 0) {
+        setAnimError('La hoja de animación llegó vacía o con un tamaño inesperado.')
+        return
+      }
+
+      importAnimationFrames(frames, SPRITE_ANIMATION.DEFAULT_FRAME_DURATION_MS)
 
       // Store history as already-cropped, small PNG data-URIs (64x64 each),
       // never the raw ~1MB sheet — keeps localStorage light and thumbnails clean.
@@ -513,7 +540,7 @@ export const useAnimationGenerator = (): UseAnimationGeneratorReturn => {
         id: crypto.randomUUID(),
         label: `${capitalize(action)} · ${capitalize(direction)}`,
         frames: frames.map((frame) => pixelBufferToDataUri(frame)),
-        frameDurationMs: PIXELLAB_ANIMATION.DEFAULT_FRAME_DURATION_MS,
+        frameDurationMs: SPRITE_ANIMATION.DEFAULT_FRAME_DURATION_MS,
         timestamp: Date.now(),
       }
       setAnimations((prev) => [newAnimation, ...prev].slice(0, ANIMATION_HISTORY_LIMIT))
@@ -521,15 +548,19 @@ export const useAnimationGenerator = (): UseAnimationGeneratorReturn => {
       setSheetsAvailableForDownload((prev) => new Set(prev).add(newAnimation.id))
     } catch (e) {
       const message = e instanceof Error ? e.message : ''
-      setAnimError(
-        message.includes(CODEX_NO_PNG_ERROR)
-          ? 'La generación fue bloqueada o no produjo imagen, reintentá o cambiá el prompt.'
-          : message || 'La generación de la animación falló.'
-      )
+      setAnimError(message || 'La generación de la animación falló.')
     } finally {
       setIsGenerating(false)
     }
-  }, [action, direction, nFrames, layers, lastAIReferenceBase64, importAnimationFrames])
+  }, [
+    action,
+    direction,
+    nFrames,
+    layers,
+    lastAIReferenceBase64,
+    importAnimationFrames,
+    retroDiffusionApiKey,
+  ])
 
   const handleSelectAnimation = useCallback(
     async (anim: AIAnimation) => {
@@ -537,8 +568,10 @@ export const useAnimationGenerator = (): UseAnimationGeneratorReturn => {
         setIsGenerating(true)
         setAnimError(null)
 
+        // Saved frames were already stored at grid size, so this is a verbatim
+        // decode — no keying, no rescale.
         const decodedFrames = await Promise.all(
-          anim.frames.map((dataUri) => decodeToPixels(dataUri, AI_SPRITE_DEFAULT_SIZE, false))
+          anim.frames.map((dataUri) => decodeGeneratedSprite(dataUri, AI_SPRITE_DEFAULT_SIZE))
         )
         importAnimationFrames(decodedFrames, anim.frameDurationMs)
       } catch (e) {
@@ -555,7 +588,7 @@ export const useAnimationGenerator = (): UseAnimationGeneratorReturn => {
     if (!sheet) return
     const link = document.createElement('a')
     link.href = sheet
-    link.download = `codex-animation-${anim.label.replace(/\s+/g, '-').toLowerCase()}-${anim.timestamp}.png`
+    link.download = `animation-${anim.label.replace(/\s+/g, '-').toLowerCase()}-${anim.timestamp}.png`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)

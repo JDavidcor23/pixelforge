@@ -73,28 +73,18 @@ export interface ViewportState {
 
 export type LeftSidebarTab = 'layers' | 'assets' | 'code'
 
-// ── PixelLab Animation Types ────────────────────────────────────────────────
+// ── Animation Types ─────────────────────────────────────────────────────────
 
+/**
+ * Editor-facing actions. `run` has no direct Retro Diffusion style — it maps to
+ * `custom_action` via RETRO_DIFFUSION_ANIMATION_ACTIONS and carries the intent
+ * in the prompt instead.
+ */
 export type AnimationAction = 'idle' | 'walk' | 'run' | 'attack' | 'jump'
 
 // Side-view sprites only walk left or right. Compass directions were dropped
 // (top-down framing) — revisit if a top-down view is added later.
 export type AnimationDirection = 'left' | 'right'
-
-export interface AnimateWithTextRequest {
-  readonly description: string
-  readonly action: AnimationAction
-  readonly view: 'side'
-  readonly direction: AnimationDirection
-  readonly image_size: { readonly width: number; readonly height: number }
-  readonly reference_image: { readonly type: 'base64'; readonly base64: string }
-  readonly n_frames?: number
-}
-
-export interface PixelLabAnimationResponse {
-  readonly images: ReadonlyArray<{ readonly type: 'base64'; readonly base64: string }>
-  readonly usage: { readonly type: 'credits'; readonly credits: number }
-}
 
 // ── Core Editor Store ────────────────────────────────────────────────────────
 
@@ -204,7 +194,8 @@ export interface EditorPrefsState {
   readonly palette: RgbaColor[]
   readonly showGrid: boolean
   readonly onionSkinEnabled: boolean
-  readonly pixellabApiKey: string | null
+  /** BYOK: when set, generations bill this user's own Retro Diffusion balance. */
+  readonly retroDiffusionApiKey: string | null
 }
 
 export interface EditorPrefsActions {
@@ -214,7 +205,7 @@ export interface EditorPrefsActions {
   removeColor: (color: RgbaColor) => void
   setShowGrid: (show: boolean) => void
   toggleOnionSkin: () => void
-  setPixelLabApiKey: (key: string | null) => void
+  setRetroDiffusionApiKey: (key: string | null) => void
 }
 
 export type EditorPrefsStore = EditorPrefsState & EditorPrefsActions

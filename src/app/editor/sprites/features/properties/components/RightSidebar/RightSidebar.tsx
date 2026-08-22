@@ -12,7 +12,7 @@ import { CollapsibleSection } from './CollapsibleSection'
 import {
   useRightSidebar,
   useColorSection,
-  usePixelLabCopilot,
+  useSpriteCopilot,
   useAnimationGenerator,
   useSpriteImport,
   type AIGeneration,
@@ -22,7 +22,7 @@ import { useExport } from './useExport.hook'
 import { useCursorPixel } from '@/app/editor/sprites/hooks/useSpriteEditorStore.hook'
 import {
   AI_SPRITE_SIZES,
-  PIXELLAB_ANIMATION,
+  SPRITE_ANIMATION,
   SPRITE_IMPORT_ACCEPT,
   SPRITE_IMPORT_MIN_FRAMES,
   SPRITE_IMPORT_MAX_FRAMES,
@@ -105,7 +105,7 @@ const ColorSectionInputs = () => {
 }
 
 
-const PixelLabHistory = ({ 
+const GenerationHistory = ({ 
   generations, 
   onSelect,
   onDownload,
@@ -196,7 +196,7 @@ const RecentAnimations = ({
               className="group relative flex flex-col gap-1 overflow-hidden rounded border border-white/5 bg-[#1a1a2e] p-1.5 transition-all hover:border-cyan-500/40"
             >
               <div className="aspect-square relative w-full overflow-hidden rounded bg-black/20">
-                {/* eslint-disable-next-line @next/next/no-img-element -- matches PixelLabHistory's sibling pattern above */}
+                {/* eslint-disable-next-line @next/next/no-img-element -- matches GenerationHistory's sibling pattern above */}
                 <img
                   src={anim.frames[0]}
                   alt={anim.label}
@@ -315,7 +315,7 @@ const ImportSpriteSection = () => {
   )
 }
 
-const PixelLabCopilotSection = () => {
+const SpriteCopilotSection = () => {
   const { 
     prompt, 
     setPrompt, 
@@ -332,7 +332,7 @@ const PixelLabCopilotSection = () => {
     tempApiKey,
     setTempApiKey,
     handleSaveApiKey
-  } = usePixelLabCopilot()
+  } = useSpriteCopilot()
   const [isConfigOpen, setIsConfigOpen] = useState(false)
 
   return (
@@ -342,13 +342,13 @@ const PixelLabCopilotSection = () => {
         <div className="flex items-center gap-2">
           <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
           <span className="text-[10px] uppercase tracking-wider text-[#8888aa]">
-            Codex Ready
+            Retro Diffusion
           </span>
         </div>
         <button
           onClick={() => setIsConfigOpen(!isConfigOpen)}
           className={`rounded p-1 transition-colors ${isConfigOpen ? 'bg-purple-500/20 text-purple-400' : 'text-[#444466] hover:text-[#8888aa]'}`}
-          title="PixelLab Settings (used by AI Animation)"
+          title="Retro Diffusion API key"
         >
           <Settings2 size={14} />
         </button>
@@ -360,7 +360,7 @@ const PixelLabCopilotSection = () => {
           <div className="mb-3 flex items-center justify-between">
             <label className="text-[10px] font-medium text-purple-300/80">API Configuration</label>
             <Link 
-              href="/docs/pixellab" 
+              href="https://www.retrodiffusion.ai/app/guide/api"
               className="flex items-center gap-1 text-[10px] text-[#8888aa] hover:text-[#00f5ff] transition-colors"
               target="_blank"
             >
@@ -453,11 +453,11 @@ const PixelLabCopilotSection = () => {
 
         {isLoading && (
           <p className="text-center text-[9px] text-[#8888aa]">
-            Codex is drawing your sprite — this can take a few minutes.
+            Retro Diffusion is drawing your sprite — a few seconds.
           </p>
         )}
 
-        <PixelLabHistory
+        <GenerationHistory
           generations={generations} 
           onSelect={handleSelectGeneration}
           onDownload={downloadImage}
@@ -515,7 +515,7 @@ const AnimationGeneratorSection = () => {
       )}
 
       <p className="text-[10px] text-[#8888aa]">
-        Codex usa el frame actual como referencia exacta del personaje y genera una hoja con los frames elegidos.
+        Retro Diffusion usa el frame actual como referencia exacta del personaje y genera los frames elegidos.
       </p>
 
       <div className="grid grid-cols-2 gap-2">
@@ -526,7 +526,7 @@ const AnimationGeneratorSection = () => {
             onChange={(e) => setAction(e.target.value as typeof action)}
             className="w-full rounded border border-white/10 bg-[#1a1a2e] px-2 py-1.5 text-xs text-[#ededed] focus:outline-none"
           >
-            {PIXELLAB_ANIMATION.ACTIONS.map((a) => (
+            {SPRITE_ANIMATION.ACTIONS.map((a) => (
               <option key={a} value={a}>
                 {a.charAt(0).toUpperCase() + a.slice(1)}
               </option>
@@ -540,7 +540,7 @@ const AnimationGeneratorSection = () => {
             onChange={(e) => setDirection(e.target.value as typeof direction)}
             className="w-full rounded border border-white/10 bg-[#1a1a2e] px-2 py-1.5 text-xs text-[#ededed] focus:outline-none"
           >
-            {PIXELLAB_ANIMATION.DIRECTIONS.map((d) => (
+            {SPRITE_ANIMATION.DIRECTIONS.map((d) => (
               <option key={d} value={d}>
                 {d.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
               </option>
@@ -552,7 +552,7 @@ const AnimationGeneratorSection = () => {
       <div>
         <label className="mb-1 block text-[10px] text-[#8888aa]">Frames</label>
         <div className="flex gap-1">
-          {PIXELLAB_ANIMATION.FRAME_OPTIONS.map((n) => (
+          {SPRITE_ANIMATION.FRAME_OPTIONS.map((n) => (
             <button
               key={n}
               type="button"
@@ -650,7 +650,7 @@ export const RightSidebar = () => {
       </CollapsibleSection>
 
       <CollapsibleSection title="AI Copilot" defaultOpen={true} icon={<Sparkles size={16} className="text-purple-400" />}>
-        <PixelLabCopilotSection />
+        <SpriteCopilotSection />
       </CollapsibleSection>
 
       <CollapsibleSection title="AI Animation" defaultOpen={false} icon={<Film size={16} className="text-cyan-400" />}>

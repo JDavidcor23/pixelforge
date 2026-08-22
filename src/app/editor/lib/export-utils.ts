@@ -123,7 +123,7 @@ export function layersToBase64(
  * Renders a raw PixelBuffer (already-cropped animation frame) to a small PNG
  * data-URI. Used to store animation history frames compactly in
  * localStorage — a decoded 64x64 PNG is a few KB, versus the ~1MB raw
- * sprite sheet Codex returns, which would blow the localStorage quota.
+ * sprite sheet the model returns, which would blow the localStorage quota.
  */
 export function pixelBufferToDataUri(buffer: PixelBuffer): string {
   const height = buffer.length
