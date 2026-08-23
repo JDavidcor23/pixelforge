@@ -11,8 +11,7 @@ export function useAssetCard(assetId: string) {
     setSelectedAsset(assetId)
   }
 
-  const handlePlay = (e: React.MouseEvent) => {
-    e.stopPropagation()
+  const handlePlay = () => {
     setActiveAsset(assetId)
   }
 
