@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.112.3",
     "colord": "^2.9.3",
     "konva": "^10.2.5",
     "lucide-react": "^1.8.0",
