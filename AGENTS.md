@@ -11,7 +11,8 @@ Browser-based 2D game builder. Users create sprites manually or with AI, build g
 - **Konva.js** (sprite editor canvas)
 - **Phaser.js** (game preview runtime)
 - **Supabase** (auth + storage)
-- **Claude API / Gemini API** (AI sprite generation + code assist)
+- **Retro Diffusion API** (AI sprite + animation generation — the only image engine)
+- **ElevenLabs API** (AI sound effect generation)
 
 ## Project structure
 
@@ -34,12 +35,39 @@ src/
 └── types/                      # TypeScript interfaces
 ```
 
+## Design system
+
+`DESIGN.md` at the repository root is the **source of truth for the visual
+language** ("Synthetic Architect"): color tokens, typography, spacing, radius,
+elevation and component conventions. Read it before writing any UI.
+
+Never hardcode a hex, radius or spacing value into a component. If a token does
+not exist in `DESIGN.md`, that is a design decision — escalate it to
+design-agent, do not improvise.
+
+Note: `DESIGN.md` frontmatter, `DESIGN.md` prose and `src/app/globals.css`
+currently disagree on the palette and font stack. design-agent owns reconciling
+them.
+
 ## Agents
 
 Always delegate to the right agent for each task.
 
-### 🎨 frontend-agent
+Pipeline for anything visual: **design-agent → frontend-agent → cleancode-agent**.
+
+### 🎨 design-agent
+Use for: anything that touches look and feel — new screens, panels, visual
+restyling, theming, spacing, color, typography, motion.
+Runs BEFORE any UI is written. Owns `DESIGN.md` tokens and `src/app/globals.css`.
+Produces a Tailwind implementation spec; does not write hooks, stores or logic.
+After finishing: hands off to frontend-agent.
+```
+.claude/agents/design-agent.md
+```
+
+### 🧱 frontend-agent
 Use for: creating or modifying any component, page or UI feature.
+Implements the spec from design-agent — structure, hooks, services, types.
 After finishing: always invokes cleancode-agent.
 ```
 .claude/agents/frontend-agent.md
@@ -73,6 +101,8 @@ Use for: creating or refactoring any Zustand store.
 - **No inline styles.** Tailwind classes only (exception: dynamic canvas values)
 - **No `any`.** All types defined in `src/types/`
 - **No magic values.** Constants in `src/constants/` with UPPER_SNAKE_CASE
+- **No hardcoded design values.** Colors, spacing, radius and typography come from
+  `DESIGN.md` tokens — never an arbitrary hex or `p-[13px]`
 - **Zustand selectors are always granular:** `state => state.field`
 - **Store consumed only from hooks,** never from JSX directly
 - **Navigation via `next/link` or `useRouter`,** never `window.location`

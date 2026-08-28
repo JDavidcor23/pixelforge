@@ -434,6 +434,11 @@ export const useSetZoom = () => useEditorPrefsStore((s) => s.setZoom)
 export const useSetViewportOffset = () => useEditorPrefsStore((s) => s.setViewportOffset)
 
 /**
+ * Action to recentre the sprite and snap zoom back to the reset level.
+ */
+export const useResetViewport = () => useEditorPrefsStore((s) => s.resetViewport)
+
+/**
  * Returns the user's saved color palette.
  */
 export const usePalette = () => useEditorPrefsStore((s) => s.palette)

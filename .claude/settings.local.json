@@ -3,5 +3,9 @@
     "allow": [
       "mcp__plugin_engram_engram__mem_save"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "context7"
+  ],
+  "enableAllProjectMcpServers": true
 }

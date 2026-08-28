@@ -47,11 +47,13 @@ For performance, high-resolution sprites (128px+) are rendered as native canvas 
 
 ## 🤖 AI Integration Flow
 
-The AI Copilot is a multi-stage pipeline:
-1. **Prompt Processing**: User input is sent to the configured AI (PixelLab, Gemini, or Claude).
-2. **Protocol Conversion**: AI responses are parsed from "PixelForge Markdown" (PFM) or Base64 images.
-3. **Canvas Synchronization**: Generated assets are injected into the Zustand store and automatically synchronized with the Konva renderer.
+Sprite and animation generation is a multi-stage pipeline:
+1. **Prompt Processing**: user input is sent to the `/api/ai/retro-diffusion` route handler, which forwards it to Retro Diffusion with the user's key.
+2. **Response Decoding**: the answer is a true RGBA PNG at the exact requested resolution, decoded straight into the editor's pixel buffer — no background keying, no downscale, no quantization.
+3. **Canvas Synchronization**: generated assets are injected into the Zustand store and automatically synchronized with the Konva renderer.
 4. **Local Persistence**: API keys are stored in `localStorage` for privacy, and never touch the backend.
+
+Animations come back as a single grid spritesheet with exact, evenly spaced cells, so frames are cut by plain division rather than layout detection.
 
 ## 🎞️ Animation Pipeline
 

@@ -31,3 +31,25 @@ Your conversational tone, language rules, and teaching philosophy are defined by
 the active output style (**Gentleman**/**Neutral**), which loads every session.
 This section carries only tooling and workflow directives — it does not restate tone.
 <!-- /gentle-ai:persona -->
+
+## Design System
+
+`DESIGN.md` at the repository root is the **source of truth for the visual
+language** ("Synthetic Architect"): color tokens, typography, spacing, radius,
+elevation and component conventions.
+
+- Any task that touches look and feel — new screens, panels, restyling, theming,
+  spacing, color, typography, motion — goes through **design-agent**
+  (`.claude/agents/design-agent.md`) BEFORE any UI is written.
+- The pipeline is: **design-agent → frontend-agent → cleancode-agent**.
+- Never hardcode a hex, radius or spacing value into a component. If the token
+  does not exist in `DESIGN.md`, that is a design decision, not an improvisation.
+- `DESIGN.md` frontmatter, `DESIGN.md` prose and `src/app/globals.css` currently
+  disagree on the palette and font stack. design-agent owns reconciling them and
+  must report the conflict rather than guess.
+
+## Project Instructions
+
+Project structure, stack and core code rules live in `AGENTS.md` (referenced by
+the root `CLAUDE.md`). `AGENTS.md` is shared with other agent runtimes — keep it
+as the single source of truth for those rules instead of duplicating them here.

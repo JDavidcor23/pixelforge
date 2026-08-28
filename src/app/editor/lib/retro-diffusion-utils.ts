@@ -52,15 +52,14 @@ export async function estimateRetroDiffusionCost(
  *
  * The fast path is the point of this function: Retro Diffusion honours the
  * requested width/height, so the returned image ALREADY IS the pixel grid.
- * Sending it through `decodeToPixels` would run removeBackground (pointless —
- * the PNG has real alpha), then `fitSpriteCentered`, which crops to the content
- * bounding box and scales it up to fill the canvas. A sprite drawn with
- * deliberate headroom would get inflated edge-to-edge — the exact proportion
- * bug the Codex path suffered from. So when the size already matches, the
- * pixels are used verbatim.
+ * Sending it through `decodeToPixels` would run `fitSpriteCentered`, which crops
+ * to the content bounding box and scales it up to fill the canvas — a sprite
+ * drawn with deliberate headroom would come out inflated edge to edge, its
+ * proportions destroyed. So when the size already matches, pixels are used
+ * verbatim.
  *
- * The slow path stays for anything that is NOT already at grid size: user file
- * imports, legacy Codex history entries, and any future oversized source.
+ * The slow path stays for anything NOT already at grid size: user file imports,
+ * oversized history entries, and any future non-grid source.
  */
 export async function decodeGeneratedSprite(base64: string, size: number): Promise<PixelBuffer> {
   const native: PixelBuffer = await base64ToNativePixels(base64)
@@ -99,8 +98,8 @@ export async function generateAnimationWithRetroDiffusion(
  * The grid is derived from the sheet's REAL dimensions divided by the frame size
  * that was requested — 4 frames of 64px come back as a 128x128 sheet, so cols and
  * rows both resolve to 2. Cells are exact and evenly spaced with no gutters, so
- * this is division, not detection: none of the column-projection, valley-splitting
- * or run-repair logic the Codex sheets needed applies.
+ * this is division, not detection: no column projection, valley splitting or run
+ * repair is involved.
  *
  * Frames are read row-major (left to right, top to bottom) and capped at
  * `expectedFrames`, since a grid can hold more cells than were asked for.

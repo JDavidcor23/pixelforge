@@ -318,10 +318,9 @@ export const useSpriteCopilot = () => {
         setIsLoading(true)
         setError(null)
 
-        // Retro Diffusion generations already come back at the grid size with
-        // real alpha, so decodeGeneratedSprite uses them verbatim. Legacy Codex
-        // history entries (high-res, opaque background) still fall through to
-        // the chroma-key + downscale + quantize path inside it.
+        // Generations already come back at the grid size with real alpha, so
+        // decodeGeneratedSprite uses them verbatim. Older oversized history
+        // entries still fall through to its downscale + quantize path.
         const pixels = await decodeGeneratedSprite(gen.base64, genSize)
         overwriteWithPixels(pixels, gen.base64)
       } catch (e) {
@@ -511,10 +510,9 @@ export const useAnimationGenerator = (): UseAnimationGeneratorReturn => {
         return
       }
 
-      // Retro Diffusion takes the reference as a real parameter (input_image),
-      // which is what attaching a file via `codex -i` was trying to approximate,
-      // and answers with an exact grid sheet — so the frames are cut by division
-      // instead of by detecting gaps between poses.
+      // The reference travels as a real API parameter (input_image), and the
+      // answer is an exact grid sheet — so frames are cut by division instead of
+      // by detecting gaps between poses.
       const { base64 } = await generateAnimationWithRetroDiffusion(
         action,
         direction,

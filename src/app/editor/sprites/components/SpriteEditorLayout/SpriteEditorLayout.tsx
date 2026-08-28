@@ -6,13 +6,21 @@ import { CanvasArea, CanvasOverlay } from '../../features/canvas'
 import { BottomToolbar } from '../../features/tools'
 import { RightSidebar } from '../../features/properties'
 import { TimelineBar } from '../../features/timeline'
-import { 
-  useUIState, 
-  useToggleLeftSidebar, 
-  useToggleRightSidebar, 
-  useToggleTimeline, 
-  useToggleToolbar 
+import {
+  useUIState,
+  useToggleLeftSidebar,
+  useToggleRightSidebar,
+  useToggleTimeline,
+  useToggleToolbar,
 } from '../../hooks/useSpriteEditorStore.hook'
+
+const RAIL_WIDTH = '280px'
+const TIMELINE_HEIGHT = '96px'
+const COLLAPSED = '0px'
+
+/** Shared treatment for the floating handles that collapse and expand a rail. */
+const HANDLE_BASE =
+  'absolute z-[60] flex items-center justify-center border border-line-strong bg-hover/90 text-muted backdrop-blur-sm transition-all hover:text-accent'
 
 export const SpriteEditorLayout = () => {
   const ui = useUIState()
@@ -21,37 +29,39 @@ export const SpriteEditorLayout = () => {
   const toggleTimeline = useToggleTimeline()
   const toggleToolbar = useToggleToolbar()
 
-  const leftWidth = ui.leftSidebarOpen ? '280px' : '0px'
-  const rightWidth = ui.rightSidebarOpen ? '280px' : '0px'
-  const timelineHeight = ui.timelineOpen ? '96px' : '0px'
+  const leftWidth = ui.leftSidebarOpen ? RAIL_WIDTH : COLLAPSED
+  const rightWidth = ui.rightSidebarOpen ? RAIL_WIDTH : COLLAPSED
+  const timelineHeight = ui.timelineOpen ? TIMELINE_HEIGHT : COLLAPSED
 
   return (
-    <div 
-      className="grid h-screen w-screen overflow-hidden bg-[#0a0a0f] transition-[grid-template-columns,grid-template-rows] duration-300 ease-in-out"
-      style={{ 
+    <div
+      className="grid h-full w-full overflow-hidden bg-base transition-[grid-template-columns,grid-template-rows] duration-300 ease-in-out"
+      style={{
         gridTemplateColumns: `${leftWidth} 1fr ${rightWidth}`,
-        gridTemplateRows: `1fr ${timelineHeight}`
+        gridTemplateRows: `1fr ${timelineHeight}`,
       }}
     >
       {/* Left Sidebar Wrap */}
-      <div className="relative row-span-1 min-h-0 overflow-hidden border-r border-white/5 bg-[#0f1115]">
-        <div 
-          className="h-full w-[280px] transition-opacity duration-300"
-          style={{ opacity: ui.leftSidebarOpen ? 1 : 0 }}
+      <div className="relative row-span-1 min-h-0 overflow-hidden border-r border-line bg-surface">
+        <div
+          className="h-full transition-opacity duration-300"
+          style={{ width: RAIL_WIDTH, opacity: ui.leftSidebarOpen ? 1 : 0 }}
         >
           <LeftSidebar />
         </div>
       </div>
 
       {/* Main Content Area */}
-      <div className="relative row-span-1 min-h-0 overflow-hidden bg-[#0a0f14]">
+      <div className="relative row-span-1 min-h-0 overflow-hidden bg-base">
         <CanvasArea />
         <CanvasOverlay />
-        
+
         {/* Sidebar Toggles */}
         <button
           onClick={toggleLeft}
-          className={`absolute left-0 top-1/2 z-[60] flex h-12 w-5 -translate-y-1/2 items-center justify-center rounded-r-lg border border-l-0 border-white/10 bg-[#1a1a2e]/90 text-[#8888aa] backdrop-blur-sm transition-all hover:w-6 hover:text-[#00f5ff] ${ui.leftSidebarOpen ? 'opacity-40 hover:opacity-100' : 'opacity-100'}`}
+          className={`${HANDLE_BASE} left-0 top-1/2 h-12 w-5 -translate-y-1/2 rounded-r-lg border-l-0 hover:w-6 ${
+            ui.leftSidebarOpen ? 'opacity-40 hover:opacity-100' : 'opacity-100'
+          }`}
           title={ui.leftSidebarOpen ? 'Collapse Left Sidebar' : 'Expand Left Sidebar'}
         >
           {ui.leftSidebarOpen ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
@@ -59,7 +69,9 @@ export const SpriteEditorLayout = () => {
 
         <button
           onClick={toggleRight}
-          className={`absolute right-0 top-1/2 z-[60] flex h-12 w-5 -translate-y-1/2 items-center justify-center rounded-l-lg border border-r-0 border-white/10 bg-[#1a1a2e]/90 text-[#8888aa] backdrop-blur-sm transition-all hover:w-6 hover:text-[#00f5ff] ${ui.rightSidebarOpen ? 'opacity-40 hover:opacity-100' : 'opacity-100'}`}
+          className={`${HANDLE_BASE} right-0 top-1/2 h-12 w-5 -translate-y-1/2 rounded-l-lg border-r-0 hover:w-6 ${
+            ui.rightSidebarOpen ? 'opacity-40 hover:opacity-100' : 'opacity-100'
+          }`}
           title={ui.rightSidebarOpen ? 'Collapse Right Sidebar' : 'Expand Right Sidebar'}
         >
           {ui.rightSidebarOpen ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
@@ -69,20 +81,20 @@ export const SpriteEditorLayout = () => {
         {!ui.timelineOpen && (
           <button
             onClick={toggleTimeline}
-            className="absolute bottom-0 left-1/2 z-[60] flex h-5 w-12 -translate-x-1/2 items-center justify-center rounded-t-lg border border-b-0 border-white/10 bg-[#1a1a2e]/90 text-[#8888aa] backdrop-blur-sm transition-all hover:h-6 hover:text-[#00f5ff]"
+            className={`${HANDLE_BASE} bottom-0 left-1/2 h-5 w-12 -translate-x-1/2 rounded-t-lg border-b-0 hover:h-6`}
             title="Expand Timeline"
           >
             <ChevronUp size={14} />
           </button>
         )}
-        
+
         {/* Toolbar Wrap */}
         {ui.toolbarOpen ? (
           <BottomToolbar />
         ) : (
           <button
             onClick={toggleToolbar}
-            className="absolute bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-full border border-white/10 bg-[#1a1a2e]/90 p-2 text-[#8888aa] backdrop-blur transition-all hover:text-[#00f5ff]"
+            className={`${HANDLE_BASE} bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-full p-2`}
             title="Expand Tools"
           >
             <ChevronUp size={20} />
@@ -91,27 +103,27 @@ export const SpriteEditorLayout = () => {
       </div>
 
       {/* Right Sidebar Wrap */}
-      <div className="relative row-span-1 min-h-0 overflow-hidden border-l border-white/5 bg-[#0f1115]">
-        <div 
-          className="h-full w-[280px] transition-opacity duration-300"
-          style={{ opacity: ui.rightSidebarOpen ? 1 : 0 }}
+      <div className="relative row-span-1 min-h-0 overflow-hidden border-l border-line bg-surface">
+        <div
+          className="h-full transition-opacity duration-300"
+          style={{ width: RAIL_WIDTH, opacity: ui.rightSidebarOpen ? 1 : 0 }}
         >
           <RightSidebar />
         </div>
       </div>
 
       {/* Timeline Wrap */}
-      <div className="relative col-span-3 border-t border-white/5 bg-[#0f1115]">
-        <div 
-          className="h-[96px] w-full transition-opacity duration-300"
-          style={{ opacity: ui.timelineOpen ? 1 : 0 }}
+      <div className="relative col-span-3 border-t border-line bg-surface">
+        <div
+          className="w-full transition-opacity duration-300"
+          style={{ height: TIMELINE_HEIGHT, opacity: ui.timelineOpen ? 1 : 0 }}
         >
           <TimelineBar />
         </div>
         {ui.timelineOpen && (
           <button
             onClick={toggleTimeline}
-            className="absolute -top-6 left-1/2 z-[60] flex h-6 w-12 -translate-x-1/2 items-center justify-center rounded-t-lg border border-b-0 border-white/10 bg-[#0f1115] text-[#8888aa] transition-colors hover:bg-[#1a1a2e] hover:text-[#00f5ff]"
+            className="absolute -top-6 left-1/2 z-[60] flex h-6 w-12 -translate-x-1/2 items-center justify-center rounded-t-lg border border-b-0 border-line-strong bg-surface text-muted transition-colors hover:bg-hover hover:text-accent"
             title="Collapse Timeline"
           >
             <ChevronDown size={14} />
@@ -121,4 +133,3 @@ export const SpriteEditorLayout = () => {
     </div>
   )
 }
-

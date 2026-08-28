@@ -54,8 +54,8 @@ export const LANDING_FEATURE_CARDS: readonly FeatureCardProps[] = [
     icon: <Bot className="w-full h-full" />,
     title: 'AI GENERATION',
     description:
-      'Generate sprites and assets using Claude and Gemini AI models. Describe what you need, get production-ready art.',
-    tags: ['LORA-ADAPTERS', 'ASSET-GEN'],
+      'Generate sprites and animation cycles with Retro Diffusion. Describe what you need, get production-ready pixel art.',
+    tags: ['SPRITE-GEN', 'ANIM-GEN'],
   },
   {
     moduleId: 'MOD_04',

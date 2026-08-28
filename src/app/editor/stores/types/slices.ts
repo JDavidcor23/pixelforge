@@ -54,6 +54,8 @@ export interface ViewportSlice {
   viewport: ViewportState
   setZoom: (zoom: number) => void
   setViewportOffset: (x: number, y: number) => void
+  /** Recentres the sprite and snaps zoom to SPRITE_EDITOR_CANVAS.RESET_VIEW_ZOOM. */
+  resetViewport: () => void
 }
 
 // ── History Slice (pure state only) ─────────────────────────────────────────

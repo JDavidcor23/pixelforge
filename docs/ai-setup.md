@@ -1,38 +1,52 @@
-# AI Copilot Setup & Usage
+# AI Setup & Usage
 
-PixelForge integrates advanced AI models to accelerate your game development workflow. This guide explains how to configure and use these features.
+PixelForge integrates AI services to accelerate your game development workflow. This guide explains how to configure and use them.
 
 ## 🔑 API Configuration
 
 PixelForge prioritizes your privacy. **All API keys are stored exclusively in your browser's `localStorage`.** They are never sent to our servers.
 
-### PixelLab API
-PixelLab is our primary engine for high-quality pixel art generation.
-1. Get an API key from [PixelLab](https://pixellab.ai/).
-2. Open PixelForge Editor.
-3. In the **Right Sidebar**, click the gear icon ⚙️ in the **AI Copilot** section.
-4. Paste your API key.
+Open the editor and click the gear icon ⚙️ to open the **Settings** panel. Two keys can be configured there:
 
-### Anthropic Claude & Google Gemini
-These models are used for advanced code assistance and complex asset descriptions.
-1. Provide your keys in the settings panel (if enabled in your build).
-2. Use the AI chat to request modifications to your sprites or game logic.
+### Retro Diffusion (sprites & animation)
 
-## 🤖 Using the AI Copilot
+Retro Diffusion is the engine for all pixel art generation — single sprites and animation sheets.
 
-### Sprite Generation
-1. Select the **AI Copilot** section in the right sidebar.
-2. Enter a descriptive prompt (e.g., *"A legendary fire sword, 32x32, 16-bit style"*).
-3. Select your desired resolution (32x32, 64x64, or 128x128).
-4. Click **Generate**.
+1. Get an API key from [Retro Diffusion](https://www.retrodiffusion.ai/).
+2. Paste it into the **Retro Diffusion** field in the Settings panel.
+3. Save. The key is kept in `localStorage` only.
+
+### ElevenLabs (audio)
+
+ElevenLabs powers AI sound effect generation in the audio module.
+
+1. Get an API key from [ElevenLabs](https://elevenlabs.io/).
+2. Paste it into the **ElevenLabs** field in the Settings panel.
+
+## 🤖 Generating Sprites
+
+1. Open the **AI** section in the right sidebar of the sprite editor.
+2. Enter a descriptive prompt (e.g., *"A legendary fire sword, 16-bit style"*).
+3. Pick the generation size.
+4. Click **Generate**. The estimated cost is shown before you spend anything — cost checks are free.
 5. Once generated, you can:
-   - **Click the image**: Apply it directly to your active layer.
-   - **Download PNG**: Save the result to your device.
-   - **Download JSON**: Save the raw pixel data.
+   - **Click the image**: apply it directly to the canvas.
+   - **Download PNG**: save the result to your device.
+   - **Download JSON**: save the raw pixel data.
+
+Generations are cached in `localStorage`, so re-applying a previous result costs nothing.
+
+### Generating Animations
+
+1. Draw or generate the sprite you want to animate — it becomes the **reference frame**.
+2. Choose an action (idle, walk, run, attack, jump) and a direction.
+3. Choose the frame count. Animations are billed **flat**, regardless of frame count, so asking for more frames costs the same.
+4. The response arrives as one grid sheet and is sliced into individual timeline frames automatically.
 
 ### Tips for Better Prompts
-- **Be Specific**: Include colors, styles (e.g., "GameBoy", "NES", "Modern"), and perspective ("Top-down", "Side-scrolling").
-- **Resolution Match**: Ensure your prompt matches the selected resolution for the best results.
+
+- **Be specific**: include colors, styles (e.g., "GameBoy", "NES", "Modern"), and perspective ("Top-down", "Side-scrolling").
+- **Reference fidelity**: for animations, the reference frame drives the palette and proportions — a clean reference gives cleaner frames.
 
 ## 🛡️ Security Note
 

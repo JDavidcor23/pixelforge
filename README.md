@@ -12,9 +12,10 @@ PixelForge is a state-of-the-art, browser-based 2D game builder designed for pro
 - **Pixel-Perfect Tools**: Precision Pencil, Eraser, Flood Fill, and Selection tools designed for high-end pixel art.
 - **Real-time Performance**: Optimized to maintain 60 FPS even with complex multi-layer sprites.
 
-### 🤖 AI Copilot Ecosystem
-- **PixelLab AI Integration**: Generate production-ready pixel art directly from natural language prompts.
-- **Multi-Model Support**: Leverages Anthropic Claude and Google Gemini for sophisticated code assistance and asset generation.
+### 🤖 AI Generation
+- **Retro Diffusion Integration**: Generate production-ready pixel art directly from natural language prompts, returned as true RGBA at the exact grid size.
+- **AI Animation**: Turn any frame into a full animation cycle (idle, walk, run, attack, jump) from a single reference sprite.
+- **Cost Transparency**: Prices are checked for free before any generation is billed.
 - **Smart History**: Track and manage AI-generated assets with local caching and one-click application to the canvas.
 - **Metadata Aware**: AI-generated sprites automatically sync with canvas dimensions and layer metadata.
 
@@ -63,7 +64,7 @@ src/
 - **Node.js**: 18.x or higher
 - **Package Manager**: pnpm (recommended), npm, or bun
 - **Supabase Account**: For authentication and cloud storage
-- **AI Keys**: PixelLab, Gemini, or Claude API keys (Optional)
+- **AI Keys**: Retro Diffusion (sprites/animation) and ElevenLabs (audio) API keys (Optional)
 
 ### Installation
 
@@ -93,7 +94,7 @@ src/
 ## 📖 Feature Documentation
 
 For detailed technical guides on specific modules:
-- [AI Copilot Setup](./docs/ai-setup.md)
+- [AI Setup & Usage](./docs/ai-setup.md)
 - [Architecture Deep Dive](./docs/architecture.md)
 - [Custom Tools Development](./docs/tools-guide.md)
 

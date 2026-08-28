@@ -6,6 +6,7 @@ import type {
   RetroDiffusionStyle,
   RetroDiffusionAnimationAction,
 } from '@/app/editor/types'
+import { COLORS } from '@/constants/COLORS'
 
 export const SPRITE_EDITOR_CANVAS = {
   DEFAULT_WIDTH: 32,
@@ -13,22 +14,37 @@ export const SPRITE_EDITOR_CANVAS = {
   MIN_ZOOM: 1,
   MAX_ZOOM: 40,
   DEFAULT_ZOOM: 16,
-  GRID_LINE_COLOR: '#1a1a2e',
+  /**
+   * Zoom the "center view" action snaps to — 900%, since zoom is a raw
+   * multiplier (see SPRITE_EDITOR_VIEWPORT.PERCENTAGE_MULTIPLIER).
+   * Chosen for live demos: the grid stays legible from a distance while the
+   * whole sprite still fits comfortably in the viewport.
+   */
+  RESET_VIEW_ZOOM: 9,
+  GRID_LINE_COLOR: COLORS.CANVAS.GRID_LINE,
   GRID_LINE_WIDTH: 0.5,
 } as const
 
+/**
+ * Canvas-facing colors. These are aliases onto the global token contract
+ * (`src/constants/COLORS.ts` → `src/app/globals.css`) — the editor does NOT own
+ * a palette of its own. Add nothing here that is not already a token.
+ */
 export const SPRITE_EDITOR_COLORS = {
-  BACKGROUND: '#0f1115',
-  SURFACE: '#1a1a2e',
-  SURFACE_LIGHT: '#252540',
-  ACCENT: '#00f5ff',
-  ACCENT_HOVER: '#00d4db',
-  TEXT_PRIMARY: '#ededed',
-  TEXT_SECONDARY: '#8888aa',
-  BORDER: 'rgba(255,255,255,0.1)',
-  TRANSPARENT_CHECKER_A: '#2a2a3e',
-  TRANSPARENT_CHECKER_B: '#1e1e30',
-  MAX_PALETTE_COLORS: 32,
+  BACKGROUND: COLORS.SURFACE.BASE,
+  SURFACE: COLORS.SURFACE.SURFACE,
+  SURFACE_LIGHT: COLORS.SURFACE.HOVER,
+  ACCENT: COLORS.ACCENT.DEFAULT,
+  ACCENT_HOVER: COLORS.ACCENT.STRONG,
+  TEXT_PRIMARY: COLORS.TEXT.INK,
+  TEXT_SECONDARY: COLORS.TEXT.MUTED,
+  BORDER: COLORS.LINE.STRONG,
+  TRANSPARENT_CHECKER_A: COLORS.CANVAS.CHECKER_A,
+  TRANSPARENT_CHECKER_B: COLORS.CANVAS.CHECKER_B,
+} as const
+
+export const SPRITE_EDITOR_PALETTE = {
+  MAX_COLORS: 32,
 } as const
 
 export const SPRITE_EDITOR_TOOLS: readonly ToolDefinition[] = [
@@ -41,7 +57,8 @@ export const SPRITE_EDITOR_TOOLS: readonly ToolDefinition[] = [
 ] as const
 
 export const SPRITE_EDITOR_DEFAULTS = {
-  PRIMARY_COLOR: { r: 0, g: 245, b: 255, a: 255 } as RgbaColor,
+  /** COLORS.ACCENT.DEFAULT (#00fbfb) expressed as RGBA. */
+  PRIMARY_COLOR: { r: 0, g: 251, b: 251, a: 255 } as RgbaColor,
   SECONDARY_COLOR: { r: 0, g: 0, b: 0, a: 0 } as RgbaColor,
   LAYER_NAME_PREFIX: 'Layer',
 } as const
@@ -79,6 +96,7 @@ export const SPRITE_EDITOR_KEYBOARD = {
   TRANSFORM: 'v',
   ZOOM_IN: 'ctrl+=',
   ZOOM_OUT: 'ctrl+-',
+  RESET_VIEW: 'ctrl+0',
 } as const
 
 export const SPRITE_ANIMATION = {
@@ -123,14 +141,15 @@ export const QUANTIZE_DEFAULTS = {
 export const ALPHA_TRANSPARENT_THRESHOLD = 16
 
 /* ── Retro Diffusion ────────────────────────────────────────────────────────
- * Replaces the Codex CLI generation path. Codex routes through the gpt-image-2
- * tool, which cannot produce alpha at all — hence the random white/green/magenta
- * fills that chroma-key.ts had to guess at — and takes a prompt sentence instead
- * of a size parameter, hence the ~1254px output for a "64x64" request.
+ * The sprite and animation generation engine.
  *
- * Retro Diffusion takes width/height directly and returns a true RGBA PNG at
- * that exact resolution, so this path needs no chroma-key, no downscale and no
- * quantization. Verified live: 64x64 request -> 64x64 PNG, colorType 6 (RGBA).
+ * Two properties shape this whole path: it takes width/height as real
+ * parameters, and it returns a true RGBA PNG at exactly that resolution.
+ * Verified live: a 64x64 request answers with a 64x64 PNG, colorType 6 (RGBA).
+ *
+ * That is why generation needs NO background removal, NO downscale and NO
+ * quantization — the response already is the pixel grid. Do not reintroduce
+ * those steps here; they only apply to images imported from outside the editor.
  */
 export const RETRO_DIFFUSION_ENDPOINT = 'https://api.retrodiffusion.ai/v1/inferences'
 export const RETRO_DIFFUSION_ROUTE = '/api/ai/retro-diffusion'
@@ -166,9 +185,8 @@ export const RETRO_DIFFUSION_ANIMATION_TIMEOUT_MS = 300000
  * intent in the prompt text instead of the style name.
  *
  * Retro Diffusion returns the frames as ONE grid sheet (4 frames of 64px arrive
- * as a single 128x128 PNG, 2x2), with exact even cells and no gutters. That is
- * why the column-valley frame detection this project used for Codex sheets is
- * unnecessary here — the cut is plain division.
+ * as a single 128x128 PNG, 2x2), with exact even cells and no gutters. Slicing
+ * is therefore plain division — no gap or valley detection is needed.
  */
 export const RETRO_DIFFUSION_ANIMATION_STYLE_PREFIX = 'rd_advanced_animation__'
 export const RETRO_DIFFUSION_ANIMATION_ACTIONS: Readonly<
@@ -183,8 +201,8 @@ export const RETRO_DIFFUSION_ANIMATION_ACTIONS: Readonly<
 /** Billed FLAT regardless of frame count (2..16 all verified at the same price). */
 export const RETRO_DIFFUSION_ANIMATION_COST_USD = 0.14
 /**
- * Because the price does not scale with frame count, these lean higher than the
- * old Codex options — more frames cost exactly the same.
+ * Because the price does not scale with frame count, these lean deliberately
+ * high — asking for more frames costs exactly the same.
  */
 export const RETRO_DIFFUSION_ANIMATION_FRAME_OPTIONS = [4, 6, 8, 12, 16] as const
 export const RETRO_DIFFUSION_ANIMATION_DEFAULT_FRAMES = 6

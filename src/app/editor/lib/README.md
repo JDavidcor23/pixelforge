@@ -1,20 +1,56 @@
-# AI Copilot & PixelLab Integration
+# Sprite Generation with Retro Diffusion
 
-El sistema de AI permite generar sprites completos a partir de prompts de texto. 
+The editor generates sprites and animations from text prompts using the
+[Retro Diffusion](https://www.retrodiffusion.ai/) API. It is the only image
+generation engine in the project.
 
-## Flujo de Trabajo
-1. **Prompt**: El usuario escribe una descripción (ej: "A cute slime").
-2. **API Call**: Se llama a `/api/ai/pixellab` con el prompt y la resolución deseada (32x32, 64x64, etc.).
-3. **Generación**: La API de PixelLab genera una imagen PNG y la devuelve en formato **Base64**.
-4. **Conversión**: Usamos `pixellab-utils.ts` para transformar ese Base64 en una matriz de píxeles (RGBA) que el editor puede manipular.
-5. **Aplicación**: El store (`overwriteWithPixels`) limpia el canvas actual y aplica el nuevo sprite, ajustando las dimensiones automáticamente.
+## Sprite Flow
 
-## Utilidades Clave (`pixellab-utils.ts`)
-- `generateSpriteWithPixelLab`: Maneja la comunicación con el backend.
-- `base64ToPixels`: El "mago" que convierte una imagen visual en datos puros para el editor.
+1. **Prompt**: the user writes a description (e.g. "A cute slime").
+2. **API call**: `generateSpriteWithRetroDiffusion` hits the
+   `/api/ai/retro-diffusion` route handler, which forwards the request with the
+   user's API key in the `X-RD-Token` header.
+3. **Response**: Retro Diffusion returns a **true RGBA** PNG in Base64, at the
+   exact width and height that were requested.
+4. **Decoding**: `decodeGeneratedSprite` turns that Base64 into the editor's
+   pixel buffer.
+5. **Apply**: the store (`overwriteWithPixels`) replaces the current canvas and
+   adjusts its dimensions.
 
-## Historial
-Las generaciones se guardan en el `localStorage` del navegador. Esto permite al usuario recuperar sprites generados anteriormente sin gastar créditos de API adicionales.
+## Animation Flow
 
-## Requisitos
-- **API Key**: Se necesita `PIXELLAB_API_KEY` configurada en el entorno para que la generación funcione en producción.
+1. The current frame is exported as the reference image (`input_image`).
+2. `generateAnimationWithRetroDiffusion` requests the animation with
+   `return_spritesheet: true` — a GIF cannot be decomposed on a canvas.
+3. The response is **one grid sheet** (4 frames of 64px arrive as a single
+   128x128 PNG, 2x2), with exact cells and no gutters.
+4. `sliceAnimationSheet` cuts the frames by division: rows and columns come from
+   dividing the sheet's real dimensions by the requested frame size.
+
+## Key Utilities (`retro-diffusion-utils.ts`)
+
+- `generateSpriteWithRetroDiffusion`: generates a single sprite.
+- `estimateRetroDiffusionCost`: queries the price via `check_cost` (free) before
+  spending anything.
+- `decodeGeneratedSprite`: Base64 to pixels. If the PNG already matches the grid
+  size it is used **verbatim**; otherwise it falls through to the import pipeline.
+- `generateAnimationWithRetroDiffusion`: generates the animation sheet.
+- `sliceAnimationSheet`: cuts the sheet into individual frames.
+
+## Why There Is No Background Removal
+
+Retro Diffusion returns a real alpha channel (`remove_bg: true`), so the editor
+never has to guess a background colour to key out. There is no chroma key, no
+halo erosion and no tolerance constants. Do not add them back: the pipeline in
+`sprite-pipeline.ts` exists only for images the user imports from outside, and
+those are imported faithfully.
+
+## History
+
+Generations are cached in the browser's `localStorage`, so a previous sprite can
+be re-applied without paying for generation again.
+
+## Requirements
+
+- **API key**: the user configures their Retro Diffusion key in the settings
+  panel (⚙️). It lives in `localStorage` only, never on the backend.

@@ -13,6 +13,7 @@ import {
   useSelection,
   useSetSelectionTransform,
   useSetViewportOffset,
+  useResetViewport,
   useCopySelection,
   useCutSelection,
   usePasteClipboard,
@@ -33,6 +34,7 @@ export const useKeyboardShortcuts = () => {
   const selection = useSelection()
   const setSelectionTransform = useSetSelectionTransform()
   const setViewportOffset = useSetViewportOffset()
+  const resetViewport = useResetViewport()
   const copySelection = useCopySelection()
   const cutSelection = useCutSelection()
   const pasteClipboard = usePasteClipboard()
@@ -85,6 +87,14 @@ export const useKeyboardShortcuts = () => {
         e.preventDefault()
         const newZoom = Math.max(SPRITE_EDITOR_CANVAS.MIN_ZOOM, viewport.zoom - SPRITE_EDITOR_VIEWPORT.ZOOM_STEP)
         setZoom(newZoom)
+        return
+      }
+
+      // Ctrl+0 is the near-universal "reset view" binding, and it is the real
+      // fix for trackpad panning: no drag needed to get the sprite back.
+      if (isCtrl && key === '0') {
+        e.preventDefault()
+        resetViewport()
         return
       }
 
@@ -185,6 +195,7 @@ export const useKeyboardShortcuts = () => {
     setZoom,
     viewport,
     setViewportOffset,
+    resetViewport,
     activeTool,
     selection,
     setSelectionTransform,
@@ -193,6 +204,7 @@ export const useKeyboardShortcuts = () => {
     pasteClipboard,
     deleteSelection,
     toggleZenMode,
+    toggleOnionSkin,
   ])
 }
 

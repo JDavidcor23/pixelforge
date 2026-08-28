@@ -10,14 +10,12 @@ import { quantizePixels } from './quantize'
  * already returns them at grid size with real alpha, so
  * `decodeGeneratedSprite` uses those verbatim.
  *
- * There is deliberately no background removal in this file. It used to run a
- * flood-fill chroma key to strip the opaque fill that Codex produced (gpt-image-2
- * cannot output alpha at all). Retro Diffusion returns true alpha, so the guessing
- * is gone — and with it the halo erosion, the tolerance constants, and the
- * column-projection frame detection that only existed to survive it.
+ * There is deliberately NO background removal in this file. Generated sprites
+ * arrive with true alpha, so no flood-fill chroma key, halo erosion or colour
+ * tolerance heuristic is needed anywhere in the app — do not add one back.
  *
  * Consequence to be aware of: a user importing a PNG that still has a solid
- * background now keeps that background. It is imported faithfully rather than
+ * background keeps that background. It is imported faithfully rather than
  * guessed at.
  */
 
@@ -105,10 +103,8 @@ export async function decodeToPixels(base64: string, size: number, quantize: boo
  *
  * The user declares the frame count, and sheets are laid out as one horizontal
  * row of equal cells, so the cut is `sheetWidth / frameCount` — plain division.
- * This replaces the old detector that scanned column occupancy for gaps, split
- * suspiciously wide runs at projection valleys and resampled over-generated
- * poses. All ~250 lines of that existed to cope with a sheet drawn by an agent
- * at an unpredictable layout; a declared frame count needs none of it.
+ * No gap scanning, valley splitting or run repair: a declared frame count makes
+ * layout detection unnecessary, and detection was never reliable anyway.
  *
  * Every frame shares one scale factor, so the character does not jitter in size
  * between poses.

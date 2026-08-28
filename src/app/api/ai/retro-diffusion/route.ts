@@ -75,8 +75,8 @@ export async function POST(req: Request) {
         width: requestWidth,
         height: requestHeight,
         num_images: 1,
-        // The whole reason we left Codex: a real alpha channel instead of a
-        // solid fill that chroma-key.ts had to guess at.
+        // Returns a real alpha channel, so the editor never has to guess a
+        // background colour to key out.
         remove_bg: true,
         ...(seed !== undefined ? { seed } : {}),
         ...(inputImageBase64

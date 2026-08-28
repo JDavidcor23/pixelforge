@@ -26,14 +26,12 @@ export const ToolButton = ({ tool, isActive, onSelect }: ToolButtonProps) => {
       type="button"
       onClick={() => onSelect(tool)}
       title={`${tool.label} (${tool.shortcut})`}
-      className={`relative rounded-lg p-2 transition-colors ${
-        isActive
-          ? 'bg-[#00f5ff]/20 text-[#00f5ff]'
-          : 'text-[#8888aa] hover:text-white'
+      className={`relative rounded p-2 transition-colors ${
+        isActive ? 'bg-accent/20 text-accent' : 'text-muted hover:text-ink'
       }`}
     >
       {IconComponent && <IconComponent size={18} />}
-      <span className="absolute -bottom-1 right-0 text-[8px] text-[#8888aa]">
+      <span className="absolute -bottom-1 right-0 font-mono text-[8px] text-subtle">
         {tool.shortcut}
       </span>
     </button>

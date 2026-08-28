@@ -32,4 +32,23 @@ export const createViewportSlice: StateCreator<
     set((state) => ({
       viewport: { ...state.viewport, offsetX: x, offsetY: y },
     })),
+
+  /**
+   * Offset 0,0 IS the centre: every drawing helper computes its origin as
+   * `canvasSize / 2 - gridSize * zoom / 2 + offset`, so zeroing the offset puts
+   * the sprite dead centre regardless of viewport size or grid dimensions.
+   *
+   * Zoom and offset are written in ONE `set` call on purpose — doing it as
+   * setZoom + setViewportOffset would publish an intermediate state where the
+   * new zoom is paired with the old pan, and the canvas would visibly jump
+   * before settling.
+   */
+  resetViewport: () =>
+    set({
+      viewport: {
+        zoom: SPRITE_EDITOR_CANVAS.RESET_VIEW_ZOOM,
+        offsetX: 0,
+        offsetY: 0,
+      },
+    }),
 })

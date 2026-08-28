@@ -43,9 +43,9 @@ export const BottomToolbar = () => {
       ref={toolbarRef}
       onMouseDown={handleDragStart}
       style={positionStyle}
-      className={`absolute z-40 flex items-center gap-1 rounded-full border border-white/10 bg-[#1a1a2e]/90 px-3 py-2 backdrop-blur pointer-events-auto select-none transition-shadow ${isDragging ? 'cursor-grabbing shadow-2xl ring-2 ring-[#00f5ff]/20' : 'cursor-grab hover:shadow-xl'}`}
+      className={`pointer-events-auto absolute z-40 flex select-none items-center gap-1 rounded-full border border-line-strong bg-hover/90 px-3 py-2 backdrop-blur transition-shadow ${isDragging ? 'cursor-grabbing shadow-2xl ring-2 ring-accent/20' : 'cursor-grab hover:shadow-xl'}`}
     >
-      <div className="mr-1 text-[#8888aa]/50">
+      <div className="mr-1 text-subtle">
         <GripVertical size={16} />
       </div>
 
@@ -57,15 +57,13 @@ export const BottomToolbar = () => {
           onSelect={handleSelectTool}
         />
       ))}
-      <div className="mx-2 h-6 w-px bg-white/10" />
+      <div className="mx-2 h-6 w-px bg-line-strong" />
       <button
         type="button"
         onClick={toggleGrid}
         title="Toggle Grid Overlay"
-        className={`relative rounded-lg p-2 transition-colors ${
-          showGrid
-            ? 'bg-[#00f5ff]/20 text-[#00f5ff]'
-            : 'text-[#8888aa] hover:text-white'
+        className={`relative rounded p-2 transition-colors ${
+          showGrid ? 'bg-accent/20 text-accent' : 'text-muted hover:text-ink'
         }`}
       >
         <Grid3x3 size={18} />
@@ -75,22 +73,22 @@ export const BottomToolbar = () => {
         type="button"
         onClick={toggleOnionSkin}
         title={`Onion Skin: ${onionSkinEnabled ? 'ENABLED' : 'DISABLED'} (dim non-active layers)`}
-        className={`relative rounded-lg p-2 transition-all ${
+        className={`relative rounded p-2 transition-all ${
           onionSkinEnabled
-            ? 'bg-[#00f5ff] text-[#1a1a2e] shadow-[0_0_10px_#00f5ff]'
-            : 'text-[#8888aa] hover:text-white'
+            ? 'glow-accent bg-accent text-base'
+            : 'text-muted hover:text-ink'
         }`}
       >
         <Layers size={18} />
       </button>
-      <div className="mx-2 h-6 w-px bg-white/10" />
+      <div className="mx-2 h-6 w-px bg-line-strong" />
       <ColorSwatch primaryColor={primaryColor} secondaryColor={secondaryColor} />
-      <div className="mx-2 h-6 w-px bg-white/10" />
+      <div className="mx-2 h-6 w-px bg-line-strong" />
       <button
         type="button"
         onClick={toggleToolbar}
         title="Hide Toolbar"
-        className="rounded-lg p-2 text-[#8888aa] transition-colors hover:text-white"
+        className="rounded p-2 text-muted transition-colors hover:text-ink"
       >
         <ChevronDown size={18} />
       </button>
