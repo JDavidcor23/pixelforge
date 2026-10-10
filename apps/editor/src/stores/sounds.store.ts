@@ -6,6 +6,7 @@ import { SOUNDS_STORE_KEY } from '@/constants/audio'
 import { createAudioSynthSlice } from './slices/audio-synth.slice'
 import { createAudioLibrarySlice } from './slices/audio-library.slice'
 import { createAudioPlaybackSlice } from './slices/audio-playback.slice'
+import { createAudioUISlice } from './slices/audio-ui.slice'
 
 export const useSoundsStore = create<SoundsStore>()(
   persist(
@@ -13,6 +14,7 @@ export const useSoundsStore = create<SoundsStore>()(
       ...createAudioSynthSlice(...a),
       ...createAudioLibrarySlice(...a),
       ...createAudioPlaybackSlice(...a),
+      ...createAudioUISlice(...a),
     }),
     {
       name: SOUNDS_STORE_KEY,

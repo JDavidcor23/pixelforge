@@ -12,6 +12,9 @@ export function EnvelopeControls() {
   const {
     envelope,
     limits,
+    viewBox,
+    baseline,
+    getStep,
     handleParamChange,
     handleParamCommit,
     formatValue,
@@ -19,33 +22,33 @@ export function EnvelopeControls() {
   } = useEnvelopeControls()
 
   return (
-    <section className="flex flex-col gap-4 rounded-lg bg-gray-800 p-4">
-      <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-400">
+    <section className="flex flex-col gap-4 rounded border border-line bg-surface p-4">
+      <h3 className="text-ui font-semibold text-ink">
         Envelope (ADSR)
       </h3>
 
       {/* ADSR Visual Curve */}
-      <div className="rounded-md bg-gray-900 p-2">
+      <div className="rounded bg-base p-2">
         <svg
-          viewBox="0 0 200 60"
+          viewBox={viewBox}
           className="h-16 w-full"
           aria-label="ADSR envelope visualization"
         >
           <path
             d={generateAdsrPath(envelope)}
             fill="none"
-            stroke="rgb(139, 92, 246)"
+            className="stroke-accent"
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
           {/* Baseline */}
           <line
-            x1="4"
-            y1="56"
-            x2="196"
-            y2="56"
-            stroke="rgb(75, 85, 99)"
+            x1={baseline.x1}
+            y1={baseline.y1}
+            x2={baseline.x2}
+            y2={baseline.y2}
+            className="stroke-line-strong"
             strokeWidth="0.5"
             strokeDasharray="2 2"
           />
@@ -57,15 +60,14 @@ export function EnvelopeControls() {
         {ENVELOPE_PARAMS.map(({ key, label }) => {
           const paramLimits = limits[key]
           const value = envelope[key]
-          const step = key === 'sustain' ? 0.01 : 1
 
           return (
             <div key={key} className="flex flex-col gap-1">
               <div className="flex items-center justify-between">
-                <label htmlFor={`env-${key}`} className="text-xs text-gray-400">
+                <label htmlFor={`env-${key}`} className="text-xs text-muted">
                   {label}
                 </label>
-                <span className="text-xs font-mono text-violet-400">
+                <span className="font-mono text-xs text-accent tabular-nums">
                   {formatValue(key, value)}
                 </span>
               </div>
@@ -74,13 +76,13 @@ export function EnvelopeControls() {
                 type="range"
                 min={paramLimits.min}
                 max={paramLimits.max}
-                step={step}
+                step={getStep(key)}
                 value={value}
                 onChange={(e) => handleParamChange(key, Number(e.target.value))}
-                onMouseUp={(e) => handleParamCommit(key, Number((e.target as HTMLInputElement).value))}
-                onTouchEnd={(e) => handleParamCommit(key, Number((e.target as HTMLInputElement).value))}
+                onMouseUp={(e) => handleParamCommit(key, Number(e.currentTarget.value))}
+                onTouchEnd={(e) => handleParamCommit(key, Number(e.currentTarget.value))}
                 aria-label={`${label} ${formatValue(key, value)}`}
-                className="h-2 w-full cursor-pointer appearance-none rounded-full bg-gray-700 accent-violet-500"
+                className="h-1.5 w-full cursor-pointer accent-accent"
               />
             </div>
           )

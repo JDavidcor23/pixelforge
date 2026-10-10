@@ -1,8 +1,8 @@
 import type { SynthParameters, FilterType } from '@/types/audio'
+import { SUSTAIN_HOLD_MS } from '@/constants/audio'
 
 const ANALYSER_FFT_SIZE = 2048
 const ANALYSER_SMOOTHING = 0.8
-const SUSTAIN_HOLD_MS = 500
 const NOISE_BUFFER_DURATION = 2
 const NOISE_SAMPLE_RATE = 44100
 
@@ -19,7 +19,8 @@ function mapFilterType(type: FilterType): BiquadFilterType {
   return map[type]
 }
 
-function calculateDefaultDuration(params: SynthParameters): number {
+/** Seconds a synth recipe lasts when rendered: attack + decay + hold + release. */
+export function calculateDefaultDuration(params: SynthParameters): number {
   const { attack, decay, release } = params.envelope
   return msToSec(attack + decay + SUSTAIN_HOLD_MS + release)
 }

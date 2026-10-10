@@ -114,3 +114,16 @@ export function pixelBufferToDataUri(buffer: PixelBuffer): string {
   if (!canvas) return ''
   return canvas.toDataURL('image/png')
 }
+
+/**
+ * Triggers a browser download for an arbitrary Blob (e.g. an encoded WAV).
+ */
+export function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.download = filename
+  link.href = url
+  link.click()
+  // Revoke on the next tick: some browsers start the download asynchronously.
+  setTimeout(() => URL.revokeObjectURL(url), 0)
+}

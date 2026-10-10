@@ -58,6 +58,37 @@ export const OSCILLATOR_LIMITS = {
   detune: { min: -100, max: 100 },
 } as const
 
+// ── Synth rendering ──────────────────────────────────────────────────────────
+
+/** How long the sustain level is held when a recipe is rendered or drawn. */
+export const SUSTAIN_HOLD_MS = 500
+
+// ── Advanced synth controls ──────────────────────────────────────────────────
+
+export const SYNTH_CONTROL_STEP = {
+  TIME_MS: 1,
+  LEVEL: 0.01,
+  FREQUENCY_HZ: 1,
+  DETUNE_CENTS: 1,
+  Q: 0.1,
+} as const
+
+/** Preview length played when a slider is released. */
+export const SYNTH_PREVIEW_DURATION_S = {
+  OSCILLATOR: 0.3,
+  ENVELOPE: 0.5,
+} as const
+
+/** ADSR curve drawing area (SVG user units). */
+export const ADSR_VIEW = {
+  WIDTH: 200,
+  HEIGHT: 60,
+  PADDING: 4,
+} as const
+
+export const HZ_PER_KHZ = 1000
+export const PERCENT_SCALE = 100
+
 // ── Master Gain ──────────────────────────────────────────────────────────────
 
 export const MASTER_GAIN_DEFAULT = 0.8

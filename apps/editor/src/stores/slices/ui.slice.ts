@@ -10,7 +10,7 @@ export const createUISlice: StateCreator<
   [],
   UISlice
 > = (set) => ({
-  leftSidebarTab: 'layers',
+  settingsOpen: false,
   ui: {
     leftSidebarOpen: true,
     rightSidebarOpen: true,
@@ -18,8 +18,6 @@ export const createUISlice: StateCreator<
     toolbarOpen: true,
     toolbarPosition: null,
   },
-
-  setLeftSidebarTab: (tab) => set({ leftSidebarTab: tab }),
 
   toggleLeftSidebar: () =>
     set((state) => ({
@@ -66,4 +64,8 @@ export const createUISlice: StateCreator<
     set((state) => ({
       ui: { ...state.ui, toolbarPosition: position },
     })),
+
+  openSettings: () => set({ settingsOpen: true }),
+
+  closeSettings: () => set({ settingsOpen: false }),
 })

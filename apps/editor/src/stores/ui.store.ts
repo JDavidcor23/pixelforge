@@ -14,7 +14,6 @@ export const useEditorUIStore = create<EditorUIStore>()(
       name: 'sprite-editor-ui',
       partialize: (state) => ({
         ui: state.ui,
-        leftSidebarTab: state.leftSidebarTab,
       }),
     }
   )

@@ -32,6 +32,8 @@ export const createAudioSynthSlice: StateCreator<
       synthParams: { ...state.synthParams, [key]: value },
     })),
 
+  loadSynthParams: (params) => set({ synthParams: params }),
+
   setOscillatorParam: (key, value) =>
     set((state) => ({
       synthParams: {

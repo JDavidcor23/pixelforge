@@ -1,7 +1,11 @@
 import type {
   AudioAsset,
   AudioAssetTag,
+  ElevenLabsMode,
   GenerationRecord,
+  NewSoundRequest,
+  NewSoundSection,
+  PendingGeneration,
   PlaybackState,
   SortDirection,
   SortField,
@@ -16,6 +20,8 @@ export interface AudioSynthSlice {
   generatedBuffer: AudioBuffer | null
   isGenerating: boolean
   setSynthParam: <K extends keyof SynthParameters>(key: K, value: SynthParameters[K]) => void
+  /** Replaces the whole recipe at once (e.g. when a synth asset is selected). */
+  loadSynthParams: (params: SynthParameters) => void
   setOscillatorParam: (key: string, value: number | string) => void
   setEnvelopeParam: (key: string, value: number) => void
   setFilterParam: (key: string, value: number | string) => void
@@ -66,6 +72,26 @@ export interface AudioPlaybackSlice {
   resetPlayback: () => void
 }
 
+// ── Audio UI Slice (session only, not persisted) ─────────────────────────────
+
+export interface AudioUISlice {
+  isNewSoundOpen: boolean
+  newSoundSection: NewSoundSection
+  /** Bumped on every open so the popover re-runs focus even if already open. */
+  newSoundOpenCount: number
+  newSoundPrompt: string
+  newSoundMode: ElevenLabsMode
+  pendingGenerations: PendingGeneration[]
+  generationError: string | null
+  openNewSound: (request?: Partial<NewSoundRequest>) => void
+  closeNewSound: () => void
+  setNewSoundPrompt: (prompt: string) => void
+  setNewSoundMode: (mode: ElevenLabsMode) => void
+  addPendingGeneration: (generation: PendingGeneration) => void
+  removePendingGeneration: (id: string) => void
+  setGenerationError: (error: string | null) => void
+}
+
 // ── Composed Store ───────────────────────────────────────────────────────────
 
-export type SoundsStore = AudioSynthSlice & AudioLibrarySlice & AudioPlaybackSlice
+export type SoundsStore = AudioSynthSlice & AudioLibrarySlice & AudioPlaybackSlice & AudioUISlice
