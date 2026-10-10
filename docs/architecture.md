@@ -1,85 +1,106 @@
-# PixelForge Technical Architecture
+# Architecture
 
-This document provides a deep dive into the architectural decisions and implementation details of PixelForge.
+How PixelForge is built: hexagonal ports & adapters, a Rust/Wasm core with a
+TypeScript reference, local-first persistence.
 
-## 🏛️ Architectural Philosophy
+<p align="center">
+  <img src="architecture.svg" alt="PixelForge architecture: landing links to the editor SPA, which drives a hexagonal PixelCore port with TS and Wasm adapters, IndexedDB persistence, and AI proxies (server key or bring-your-own key)" width="100%">
+</p>
 
-PixelForge follows a **Feature-Based (Screaming) Architecture**. Unlike traditional "Folder-by-Type" structures (components/, hooks/, utils/), PixelForge groups logic by **Domain Feature**.
+## The ideas behind it
 
-### Why?
-1. **Locality of Change**: When working on the "Layers" feature, all related components, hooks, and types are in one place.
-2. **Scalability**: New features can be added without bloating global directories.
-3. **Decoupling**: Features interact through a centralized state (Zustand), keeping the UI components thin and purely presentational.
+- **Hexagonal ports & adapters, not a framework default.** `PixelCore` (the
+  pixel/document engine) and `DocumentRepository` (persistence) are defined
+  as interfaces first. `TsPixelCore` and the IndexedDB repository are today's
+  adapters; `WasmPixelCore` and a future Supabase adapter plug into the exact
+  same seam without touching UI, hooks or store code.
+- **A Rust/Wasm core with a TS reference, not a rewrite-and-pray.** Every
+  Rust port (`pixel-buffer` → `flood-fill` → `quantize`/`downscale` →
+  `document`/`history`) ships behind `PixelCore`/`PixelKernels`, validated
+  against the TS implementation with parity tests and a 300-seed ×
+  60-step differential fuzz test before anything is trusted.
+- **Measured honestly, including the uncomfortable result.** The stateless
+  kernels (flood-fill, quantize, downscale) *are* faster on Wasm and run on
+  it whenever the flag is on. The stateful `Document`/history core is not:
+  measured end-to-end in the real store loop it is **~1.5×–2.1× slower than
+  TS**, because `stroke.points` fires many small wasm-bindgen calls per
+  drawing gesture and the fixed marshalling cost per call outweighs the
+  pixel work. That's why the default implementation is still **`ts`** — see
+  [`../openspec/changes/migrate-to-rust-core/baseline-bench.md`](../openspec/changes/migrate-to-rust-core/baseline-bench.md)
+  for the full numbers and [`design.md`](../openspec/changes/migrate-to-rust-core/design.md#current-status--follow-ups)
+  for the reasoning.
+- **Local-first persistence.** Drafts autosave to IndexedDB; a failed open
+  (private browsing, quota, disabled storage) falls back to an in-memory
+  repository so editing still works, just without persistence that session.
+- **Dirty-rect, not deep-clone, undo history.** The old approach deep-cloned
+  every layer in every frame per undo step — 576 KB for a single 1-pixel
+  stroke on a 64×64/8-frame/4-layer document. The command-dispatch +
+  dirty-rect design stores only the bytes a command actually touched: **8
+  bytes** for that same stroke, a measured 73,728× reduction.
+- **Reproducible Wasm builds, gated in CI.** `packages/core/pkg/` is
+  committed; CI rebuilds it from source and fails the PR on any diff —
+  including a brand-new untracked file, not just a changed one — so Rust and
+  the compiled artifact can never silently drift apart. `cargo fmt`,
+  `cargo clippy -D warnings`, `cargo test`, `cargo deny check`
+  (licenses/advisories/bans/sources) and a 150 KB gzip budget on the `.wasm`
+  all run on every PR.
 
-## 🧠 State Management: The Slice Pattern
+## Toggling the core implementation
 
-We use [Zustand](https://github.com/pmnd.rs/zustand) with a modular slice pattern to manage the complex state of a pixel editor.
-
-### Modular Slices
-The store is divided into specialized slices (found in `apps/editor/src/stores/slices/`):
-- `core.slice.ts`: Owns the document via `dispatch(cmd)` — pixel mutation, undo/redo, dirty-rect history (replaces the old `pixel.slice.ts`/`history.slice.ts`, removed in phase 2 of the Rust-core migration).
-- `layer.slice.ts`: Layer stack management and compositing (dispatches `layer.*` commands).
-- `timeline.slice.ts`: Frame/animation timeline state (dispatches `frame.*`/`timeline.*` commands).
-- `compound.slice.ts`: The "Orchestrator" slice that combines actions from multiple slices.
-
-### Granular Selectors
-To prevent unnecessary re-renders in a high-performance canvas app, we enforce the use of **granular selectors**:
-```typescript
-// Good: Only re-renders when activeTool changes
-const activeTool = useSpriteEditorStore(state => state.activeTool);
-
-// Bad: Re-renders on ANY state change
-const state = useSpriteEditorStore();
+```js
+// Browser console, while the editor is open
+localStorage.setItem('pf:core', 'wasm') // try the Rust/Wasm document core
+localStorage.setItem('pf:core', 'ts')   // back to the default
 ```
 
-## 🎨 Rendering Engine: Konva.js
+A trap inside `WasmPixelCore` (a genuine `WebAssembly.RuntimeError` or any
+other exception) demotes that session to `TsPixelCore` automatically —
+drawn content is preserved, that session's undo history is not.
 
-PixelForge uses [Konva.js](https://konvajs.org/) for GPU-accelerated 2D rendering.
+## Monorepo layout
 
-### Infinite Canvas Pattern
-The editor implements an "Infinite Canvas" pattern:
-1. **Dynamic Scaling**: The canvas tracks the parent container size via `ResizeObserver`.
-2. **Coordinate Mapping**: World coordinates (pixels) are decoupled from Screen coordinates (UI).
-3. **Layered Stacks**: Each sprite layer is rendered as a separate Konva `Layer` to optimize redraws.
+pnpm workspace, two separately deployed apps with two different stacks,
+sharing design tokens and (increasingly) a Rust/Wasm core.
 
-### Pixel vs. Texture
-For performance, high-resolution sprites (128px+) are rendered as native canvas textures instead of individual Konva `Rect` objects. This allows us to handle thousands of pixels at 60 FPS.
+| Path | Stack | Deploys as |
+|---|---|---|
+| `apps/landing` | Next.js 16 (App Router), React 19 | Vercel project "landing" |
+| `apps/editor` | Vite 6 + React 19 SPA, react-router-dom, Zustand, Konva | Vercel project "editor" (`api/ai/*` as Vercel Functions) |
+| `packages/tokens` | CSS custom properties + TS — no build step | Imported directly by both apps |
+| `packages/core` | Rust → `wasm-pack` → committed `pkg/` | Imported by `apps/editor` as `@pixelforge/core` |
 
-## 🤖 AI Integration Flow
+See [`../AGENTS.md`](../AGENTS.md) for the full per-app rule set (navigation,
+images, env var prefixes, `'use client'`) and
+[`adr/0005-monorepo-split.md`](adr/0005-monorepo-split.md) for why
+it's split this way.
 
-Sprite and animation generation is a multi-stage pipeline:
-1. **Prompt Processing**: user input is sent to the `/api/ai/retro-diffusion` Vercel Function (`apps/editor/api/ai/retro-diffusion.ts`), which forwards it to Retro Diffusion with the user's key.
-2. **Response Decoding**: the answer is a true RGBA PNG at the exact requested resolution, decoded straight into the editor's pixel buffer — no background keying, no downscale, no quantization.
-3. **Canvas Synchronization**: generated assets are injected into the Zustand store and automatically synchronized with the Konva renderer.
-4. **Local Persistence**: API keys are stored in `localStorage` for privacy, and never touch the backend.
-
-Animations come back as a single grid spritesheet with exact, evenly spaced cells, so frames are cut by plain division rather than layout detection.
-
-## 🎞️ Animation Pipeline
-
-Animations are managed through a `timeline` state:
-- **Frames**: An array of layer stacks representing individual moments in time.
-- **Onion Skinning**: The renderer optionally draws adjacent frames with reduced opacity to assist artists.
-- **Playback**: A dedicated hook `useAnimationPlayback` manages the frame-switching interval based on the defined FPS.
-
-## 🏗️ Project Structure
-
-pnpm workspace monorepo (see `AGENTS.md` for the full layout and `docs/adr/0005-monorepo-split.md` for why):
+## Testing & quality
 
 ```bash
-apps/
-├── landing/            # Next.js marketing site — its own Vercel project
-└── editor/             # Vite + React SPA (this architecture doc's subject) — its own Vercel project
-    ├── api/ai/          # Vercel Functions (Retro Diffusion, ElevenLabs proxies)
-    └── src/
-        ├── sprites/
-        │   ├── features/      # Feature domains (Layers, Timeline, Tools)
-        │   ├── hooks/         # Feature-bridging hooks
-        │   └── components/    # Feature-specific UI
-        ├── lib/core/          # PixelCore boundary (TS today, Rust/Wasm in later phases)
-        └── stores/
-            ├── slices/        # Logic chunks (Zustand)
-            └── index.ts       # Store assembly
-packages/
-└── tokens/             # Shared design tokens (tokens.css + colors.ts), consumed by both apps
+pnpm run typecheck   # tsc --noEmit, every workspace package
+pnpm run test        # Vitest, every workspace package
+pnpm run bench       # Vitest benchmarks (pixel kernels + store-loop)
+pnpm run check-bench # fails the build if a Wasm/TS bench ratio regresses past its budget
+
+cd packages/core
+cargo test           # Rust unit tests — pure domain, no wasm runtime needed
+cargo clippy --all-targets -- -D warnings
+cargo fmt --check
+cargo deny check      # licenses, advisories, bans, sources
 ```
+
+All of the above run in CI on every PR (`.github/workflows/ci.yml`), plus the
+`pkg/` drift check and the `.wasm` gzip size budget described above.
+
+## Decisions
+
+- [`adr/`](adr) — 7 ADRs covering the flat pixel buffer, the
+  document/dispatch seam, dirty-rect undo, the Rust/Wasm boundary shape, the
+  monorepo split, and the IndexedDB/local-first persistence model.
+- [`../openspec/changes/migrate-to-rust-core/proposal.md`](../openspec/changes/migrate-to-rust-core/proposal.md)
+  and [`design.md`](../openspec/changes/migrate-to-rust-core/design.md) — the
+  full phase-by-phase plan and the architectural reasoning behind it.
+- [`../packages/core/LEARNING.md`](../packages/core/LEARNING.md) — plain-words
+  notes on the Rust concepts used in the crate (ownership/borrowing, the
+  wasm-bindgen marshalling cost, etc.), written while porting it as a JS/React
+  developer.

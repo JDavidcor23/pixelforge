@@ -3,7 +3,7 @@ name = "pixelforge-core"
 version = "0.1.0"
 edition = "2021"
 description = "PixelForge's Rust/Wasm pixel-buffer kernels (design.md D5/D6: stateless PixelKernels under PixelCore)."
-license = "MIT"
+license = "Apache-2.0"
 publish = false
 
 # "cdylib" is what wasm-pack needs to produce a .wasm binary; "rlib" is what

@@ -1,0 +1,243 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1400" height="1420" viewBox="0 0 1400 1420">
+  <defs>
+    <style>
+      text { font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif; fill: #ededed; }
+      .brand   { font-size: 26px; font-weight: 800; letter-spacing: 4px; }
+      .tag     { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; fill: #00fbfb; text-transform: uppercase; }
+      .tagAi   { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; fill: #7c3aed; text-transform: uppercase; }
+      .tagMuted{ font-size: 10px; font-weight: 700; letter-spacing: 1px; fill: #a1a1aa; text-transform: uppercase; }
+      .chip    { font-size: 9px; font-weight: 700; letter-spacing: 1px; fill: #00fbfb; }
+      .chipOk  { font-size: 9px; font-weight: 700; letter-spacing: 1px; fill: #10b981; }
+      .name    { font-size: 14.5px; font-weight: 700; }
+      .nameSm  { font-size: 12.5px; font-weight: 700; }
+      .muted   { font-size: 11px; fill: #a1a1aa; }
+      .subtle  { font-size: 11px; fill: #71717a; }
+      .legend  { font-size: 11.5px; fill: #ededed; }
+    </style>
+
+    <marker id="arrowAccent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#00fbfb"/>
+    </marker>
+    <marker id="arrowMuted" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#71717a"/>
+    </marker>
+    <marker id="arrowAi" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#7c3aed"/>
+    </marker>
+    <marker id="arrowInk" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#a1a1aa"/>
+    </marker>
+  </defs>
+
+  <!-- background -->
+  <rect width="1400" height="1420" rx="22" fill="#0a0c10"/>
+
+  <!-- header -->
+  <rect x="50" y="36" width="16" height="16" rx="3" fill="#00fbfb"/>
+  <text x="76" y="50" class="brand">PIXELFORGE</text>
+  <text x="76" y="72" class="tag">Architecture — hexagonal ports &amp; adapters, Rust/Wasm core behind a flag</text>
+  <line x1="40" y1="100" x2="1360" y2="100" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+
+  <!-- ============ Row 1: apps + shared tokens ============ -->
+  <g>
+    <rect x="40" y="130" width="260" height="70" rx="10" fill="#0f1115" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>
+    <text x="60" y="158" class="name">apps/landing</text>
+    <text x="60" y="178" class="muted">Next.js 16 (App Router) — SEO, marketing</text>
+  </g>
+
+  <g>
+    <rect x="1100" y="130" width="260" height="70" rx="10" fill="#0f1115" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>
+    <text x="1120" y="158" class="name">packages/tokens</text>
+    <text x="1120" y="178" class="muted">tokens.css + colors.ts — shared</text>
+  </g>
+
+  <!-- tokens -> landing (dashed, "imports") -->
+  <path d="M1100,165 L305,165" fill="none" stroke="#71717a" stroke-width="1.3" stroke-dasharray="5 5" marker-end="url(#arrowMuted)"/>
+  <text x="700" y="157" class="subtle" text-anchor="middle">imports tokens.css</text>
+
+  <!-- tokens -> editor container (dashed, "imports") -->
+  <path d="M1150,200 L960,248" fill="none" stroke="#71717a" stroke-width="1.3" stroke-dasharray="5 5" marker-end="url(#arrowMuted)"/>
+
+  <!-- landing -> editor container (links to) -->
+  <path d="M170,200 L170,248" fill="none" stroke="#00fbfb" stroke-width="1.6" marker-end="url(#arrowAccent)"/>
+  <text x="185" y="228" class="subtle">links to</text>
+
+  <!-- ============ apps/editor container ============ -->
+  <rect x="40" y="250" width="960" height="760" rx="14" fill="none" stroke="#00fbfb" stroke-width="1.5" stroke-dasharray="7 5"/>
+  <text x="60" y="275" class="tag">apps/editor/src — Vite + React 19 SPA (Vercel project "editor")</text>
+
+  <!-- R2: UI -> hooks -> store -->
+  <g>
+    <rect x="65" y="300" width="210" height="55" rx="9" fill="#121419" stroke="rgba(255,255,255,0.12)" stroke-width="1.4"/>
+    <text x="80" y="323" class="name">UI</text>
+    <text x="80" y="342" class="muted">React components — JSX only</text>
+  </g>
+  <path d="M275,327 L312,327" fill="none" stroke="#a1a1aa" stroke-width="1.4" marker-end="url(#arrowInk)"/>
+
+  <g>
+    <rect x="315" y="300" width="190" height="55" rx="9" fill="#121419" stroke="rgba(255,255,255,0.12)" stroke-width="1.4"/>
+    <text x="330" y="323" class="name">Hooks</text>
+    <text x="330" y="342" class="muted">use*.hook.ts</text>
+  </g>
+  <path d="M505,327 L542,327" fill="none" stroke="#a1a1aa" stroke-width="1.4" marker-end="url(#arrowInk)"/>
+
+  <g>
+    <rect x="545" y="300" width="250" height="55" rx="9" fill="#121419" stroke="rgba(255,255,255,0.12)" stroke-width="1.4"/>
+    <text x="560" y="323" class="name">Zustand store</text>
+    <text x="560" y="342" class="muted">UI state + pixel cache (layerRevisions)</text>
+  </g>
+
+  <!-- store -> PixelCore port -->
+  <path d="M670,355 L670,413" fill="none" stroke="#00fbfb" stroke-width="1.6" marker-end="url(#arrowAccent)"/>
+  <text x="685" y="390" class="subtle">dispatch(cmd)</text>
+
+  <!-- R3: PixelCore port + adapters + kernels -->
+  <text x="65" y="400" class="tagMuted">PixelCore — port &amp; adapters (phases 4–7)</text>
+
+  <rect x="545" y="415" width="250" height="70" rx="10" fill="#0f1115" stroke="#00fbfb" stroke-width="1.5" stroke-dasharray="6 5"/>
+  <text x="560" y="445" class="name">PixelCore</text>
+  <text x="560" y="466" class="muted">port — dispatch / undo / redo / readLayer</text>
+  <text x="775" y="432" class="chip" text-anchor="end">PORT</text>
+
+  <path d="M615,485 L548,513" fill="none" stroke="#00fbfb" stroke-width="1.5" marker-end="url(#arrowAccent)"/>
+  <path d="M725,485 L828,513" fill="none" stroke="#00fbfb" stroke-width="1.5" marker-end="url(#arrowAccent)"/>
+
+  <rect x="400" y="515" width="210" height="65" rx="10" fill="#0f1115" stroke="rgba(255,255,255,0.18)" stroke-width="1.6"/>
+  <text x="435" y="542" class="name">TsPixelCore</text>
+  <text x="435" y="562" class="muted">default — pure TypeScript</text>
+  <text x="590" y="533" class="chipOk" text-anchor="end">DEFAULT</text>
+
+  <rect x="770" y="515" width="210" height="65" rx="10" fill="#0f1115" stroke="#00fbfb" stroke-width="1.6"/>
+  <text x="785" y="542" class="name">WasmPixelCore (Rust)</text>
+  <text x="785" y="562" class="muted">behind pf:core flag (wasm)</text>
+
+  <!-- fallback -->
+  <path d="M768,548 L612,548" fill="none" stroke="#71717a" stroke-width="1.3" stroke-dasharray="5 4" marker-end="url(#arrowMuted)"/>
+  <text x="690" y="538" class="subtle" text-anchor="middle">trap-safe fallback</text>
+
+  <path d="M535,580 L535,608" fill="none" stroke="#a1a1aa" stroke-width="1.3" marker-end="url(#arrowInk)"/>
+  <path d="M830,580 L830,608" fill="none" stroke="#a1a1aa" stroke-width="1.3" marker-end="url(#arrowInk)"/>
+
+  <rect x="420" y="610" width="540" height="60" rx="10" fill="#121419" stroke="rgba(255,255,255,0.12)" stroke-width="1.4"/>
+  <text x="435" y="635" class="name">PixelKernels</text>
+  <text x="435" y="656" class="muted">flood-fill · quantize · downscale — stateless, TS/Wasm</text>
+
+  <!-- R4: persistence -->
+  <text x="65" y="705" class="tagMuted">Persistence — local-first (ADR 0006 / 0007)</text>
+
+  <rect x="545" y="720" width="250" height="70" rx="10" fill="#0f1115" stroke="#00fbfb" stroke-width="1.5" stroke-dasharray="6 5"/>
+  <text x="560" y="750" class="name">DocumentRepository</text>
+  <text x="560" y="771" class="muted">port — load / save / remove</text>
+  <text x="775" y="737" class="chip" text-anchor="end">PORT</text>
+
+  <!-- store -> DocumentRepository (autosave), routed around the right side -->
+  <path d="M795,327 L1030,327 L1030,755 L798,755" fill="none" stroke="#00fbfb" stroke-width="1.4" stroke-dasharray="2 0" marker-end="url(#arrowAccent)"/>
+  <text x="810" y="317" class="subtle">autosave (debounced, docRevision)</text>
+
+  <path d="M610,790 L535,818" fill="none" stroke="#00fbfb" stroke-width="1.5" marker-end="url(#arrowAccent)"/>
+  <path d="M730,790 L830,818" fill="none" stroke="#71717a" stroke-width="1.3" stroke-dasharray="5 4" marker-end="url(#arrowMuted)"/>
+
+  <rect x="420" y="820" width="230" height="60" rx="10" fill="#0f1115" stroke="rgba(255,255,255,0.18)" stroke-width="1.6"/>
+  <text x="435" y="845" class="name">IndexedDB adapter</text>
+  <text x="435" y="865" class="muted">local-first drafts, autosave</text>
+  <text x="635" y="837" class="chipOk" text-anchor="end">DEFAULT</text>
+
+  <rect x="700" y="820" width="260" height="60" rx="10" fill="none" stroke="#71717a" stroke-width="1.4" stroke-dasharray="6 5"/>
+  <text x="715" y="845" class="nameSm" fill="#a1a1aa">Supabase (planned)</text>
+  <text x="715" y="865" class="subtle">project sync — later change</text>
+
+  <!-- R5: AI generation -->
+  <text x="65" y="915" class="tagAi">AI generation</text>
+
+  <rect x="400" y="930" width="380" height="55" rx="10" fill="#121419" stroke="#7c3aed" stroke-width="1.6"/>
+  <text x="415" y="953" class="name">apps/editor/api/ai/* — Vercel Functions</text>
+  <text x="415" y="972" class="muted">proxy: server key or the user's own key (BYOK)</text>
+
+  <!-- UI -> AI functions, routed down the left side -->
+  <path d="M100,355 L50,355 L50,955 L397,955" fill="none" stroke="#7c3aed" stroke-width="1.4" marker-end="url(#arrowAi)"/>
+  <text x="62" y="945" class="subtle">AI generate request</text>
+
+  <!-- ============ external AI services ============ -->
+  <rect x="1100" y="915" width="260" height="50" rx="10" fill="#0f1115" stroke="#7c3aed" stroke-width="1.6"/>
+  <text x="1115" y="937" class="nameSm">Retro Diffusion API</text>
+  <text x="1115" y="955" class="muted">AI sprite generation</text>
+
+  <rect x="1100" y="978" width="260" height="50" rx="10" fill="#0f1115" stroke="#7c3aed" stroke-width="1.6"/>
+  <text x="1115" y="1000" class="nameSm">ElevenLabs API</text>
+  <text x="1115" y="1018" class="muted">AI sound &amp; voice generation</text>
+
+  <path d="M780,948 L1097,940" fill="none" stroke="#7c3aed" stroke-width="1.4" marker-end="url(#arrowAi)"/>
+  <path d="M780,966 L1097,1000" fill="none" stroke="#7c3aed" stroke-width="1.4" marker-end="url(#arrowAi)"/>
+
+  <!-- ============ packages/core — Rust domain ============ -->
+  <rect x="40" y="1050" width="1320" height="260" rx="14" fill="none" stroke="#00fbfb" stroke-width="1.5"/>
+  <text x="60" y="1075" class="tag">packages/core — Rust domain (no wasm-bindgen outside bindings.rs)</text>
+
+  <g>
+    <rect x="60" y="1090" width="180" height="45" rx="8" fill="#121419" stroke="rgba(255,255,255,0.14)" stroke-width="1.3"/>
+    <text x="150" y="1117" class="nameSm" text-anchor="middle">document.rs</text>
+  </g>
+  <g>
+    <rect x="272" y="1090" width="180" height="45" rx="8" fill="#121419" stroke="rgba(255,255,255,0.14)" stroke-width="1.3"/>
+    <text x="362" y="1117" class="nameSm" text-anchor="middle">history.rs</text>
+  </g>
+  <g>
+    <rect x="484" y="1090" width="180" height="45" rx="8" fill="#121419" stroke="rgba(255,255,255,0.14)" stroke-width="1.3"/>
+    <text x="574" y="1117" class="nameSm" text-anchor="middle">pixels/ (mod.rs)</text>
+  </g>
+  <g>
+    <rect x="696" y="1090" width="180" height="45" rx="8" fill="#121419" stroke="rgba(255,255,255,0.14)" stroke-width="1.3"/>
+    <text x="786" y="1117" class="nameSm" text-anchor="middle">flood_fill.rs</text>
+  </g>
+  <g>
+    <rect x="908" y="1090" width="180" height="45" rx="8" fill="#121419" stroke="rgba(255,255,255,0.14)" stroke-width="1.3"/>
+    <text x="998" y="1117" class="nameSm" text-anchor="middle">quantize.rs</text>
+  </g>
+  <g>
+    <rect x="1120" y="1090" width="180" height="45" rx="8" fill="#121419" stroke="rgba(255,255,255,0.14)" stroke-width="1.3"/>
+    <text x="1210" y="1117" class="nameSm" text-anchor="middle">downscale.rs</text>
+  </g>
+
+  <path d="M150,1135 L580,1173" fill="none" stroke="#a1a1aa" stroke-width="1.1" marker-end="url(#arrowInk)"/>
+  <path d="M362,1135 L620,1173" fill="none" stroke="#a1a1aa" stroke-width="1.1" marker-end="url(#arrowInk)"/>
+  <path d="M574,1135 L660,1173" fill="none" stroke="#a1a1aa" stroke-width="1.1" marker-end="url(#arrowInk)"/>
+  <path d="M786,1135 L700,1173" fill="none" stroke="#a1a1aa" stroke-width="1.1" marker-end="url(#arrowInk)"/>
+  <path d="M998,1135 L740,1173" fill="none" stroke="#a1a1aa" stroke-width="1.1" marker-end="url(#arrowInk)"/>
+  <path d="M1210,1135 L780,1173" fill="none" stroke="#a1a1aa" stroke-width="1.1" marker-end="url(#arrowInk)"/>
+
+  <rect x="540" y="1175" width="280" height="45" rx="8" fill="#0f1115" stroke="#00fbfb" stroke-width="1.6"/>
+  <text x="680" y="1197" class="name" text-anchor="middle">bindings.rs</text>
+  <text x="680" y="1213" class="muted" text-anchor="middle">only wasm-bindgen boundary (D6)</text>
+
+  <path d="M680,1220 L680,1238" fill="none" stroke="#00fbfb" stroke-width="1.6" marker-end="url(#arrowAccent)"/>
+
+  <rect x="530" y="1240" width="300" height="50" rx="8" fill="#0f1115" stroke="#00fbfb" stroke-width="1.6"/>
+  <text x="680" y="1262" class="name" text-anchor="middle">wasm-pack → pkg/</text>
+  <text x="680" y="1280" class="muted" text-anchor="middle">.wasm + .js + .d.ts — committed, CI-verified</text>
+
+  <!-- pkg -> WasmPixelCore / PixelKernels (wasm path), routed up the right margin -->
+  <path d="M830,1265 L1380,1265 L1380,548 L958,548" fill="none" stroke="#00fbfb" stroke-width="1.4" stroke-dasharray="2 0" marker-end="url(#arrowAccent)"/>
+  <path d="M1380,641 L958,641" fill="none" stroke="#00fbfb" stroke-width="1.4" marker-end="url(#arrowAccent)"/>
+  <text x="1365" y="850" class="subtle" text-anchor="end">imported as @pixelforge/core (wasm-bindgen output)</text>
+
+  <!-- ============ legend ============ -->
+  <rect x="40" y="1340" width="1320" height="62" rx="10" fill="#0f1115" stroke="rgba(255,255,255,0.12)" stroke-width="1.4"/>
+
+  <rect x="60" y="1362" width="24" height="16" rx="4" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1.6"/>
+  <text x="94" y="1375" class="legend">Adapter (implementation)</text>
+
+  <rect x="300" y="1362" width="24" height="16" rx="4" fill="none" stroke="#00fbfb" stroke-width="1.6" stroke-dasharray="5 4"/>
+  <text x="334" y="1375" class="legend">Port (interface)</text>
+
+  <path d="M520,1370 L556,1370" fill="none" stroke="#00fbfb" stroke-width="1.6" marker-end="url(#arrowAccent)"/>
+  <text x="566" y="1375" class="legend">Data / call flow</text>
+
+  <path d="M740,1370 L776,1370" fill="none" stroke="#71717a" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#arrowMuted)"/>
+  <text x="786" y="1375" class="legend">Fallback / planned</text>
+
+  <rect x="980" y="1362" width="24" height="16" rx="4" fill="none" stroke="#7c3aed" stroke-width="1.6"/>
+  <text x="1014" y="1375" class="legend">AI-assisted surface</text>
+
+  <text x="1180" y="1375" class="chipOk">DEFAULT</text>
+  <text x="1180" y="1392" class="subtle">= active implementation</text>
+</svg>
