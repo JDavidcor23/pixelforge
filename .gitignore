@@ -58,3 +58,6 @@ next-env.d.ts
 .playwright-cli/
 .playwright/
 package-lock.json
+# impeccable design tool: per-machine cache and consent
+.impeccable/hook.cache.json
+.impeccable/*.local.json
