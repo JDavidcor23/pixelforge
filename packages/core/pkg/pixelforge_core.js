@@ -117,11 +117,12 @@ export class WasmDocument {
      * @param {Uint32Array} visible
      * @param {Uint32Array} locked
      * @param {Float64Array} opacity
-     * @param {string} names
+     * @param {Uint32Array} name_lens
+     * @param {Uint8Array} names_bytes
      * @param {Uint8Array} pixels
      * @returns {Uint32Array}
      */
-    frame_paste(at, layer_counts, durations, visible, locked, opacity, names, pixels) {
+    frame_paste(at, layer_counts, durations, visible, locked, opacity, name_lens, names_bytes, pixels) {
         const ptr0 = passArray32ToWasm0(layer_counts, wasm.__wbindgen_malloc);
         const len0 = WASM_VECTOR_LEN;
         const ptr1 = passArray32ToWasm0(durations, wasm.__wbindgen_malloc);
@@ -132,14 +133,16 @@ export class WasmDocument {
         const len3 = WASM_VECTOR_LEN;
         const ptr4 = passArrayF64ToWasm0(opacity, wasm.__wbindgen_malloc);
         const len4 = WASM_VECTOR_LEN;
-        const ptr5 = passStringToWasm0(names, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const ptr5 = passArray32ToWasm0(name_lens, wasm.__wbindgen_malloc);
         const len5 = WASM_VECTOR_LEN;
-        const ptr6 = passArray8ToWasm0(pixels, wasm.__wbindgen_malloc);
+        const ptr6 = passArray8ToWasm0(names_bytes, wasm.__wbindgen_malloc);
         const len6 = WASM_VECTOR_LEN;
-        const ret = wasm.wasmdocument_frame_paste(this.__wbg_ptr, at, ptr0, len0, ptr1, len1, ptr2, len2, ptr3, len3, ptr4, len4, ptr5, len5, ptr6, len6);
-        var v8 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        const ptr7 = passArray8ToWasm0(pixels, wasm.__wbindgen_malloc);
+        const len7 = WASM_VECTOR_LEN;
+        const ret = wasm.wasmdocument_frame_paste(this.__wbg_ptr, at, ptr0, len0, ptr1, len1, ptr2, len2, ptr3, len3, ptr4, len4, ptr5, len5, ptr6, len6, ptr7, len7);
+        var v9 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
         wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
-        return v8;
+        return v9;
     }
     /**
      * @param {number} index
@@ -167,20 +170,23 @@ export class WasmDocument {
      * `Document::from_payload`'s doc for the exact `doc_meta` layout.
      * @param {Uint32Array} doc_meta
      * @param {Float64Array} layer_opacity
-     * @param {string} layer_names
+     * @param {Uint32Array} layer_name_lens
+     * @param {Uint8Array} layer_names_bytes
      * @param {Uint8Array} pixels
      * @returns {WasmDocument | undefined}
      */
-    static from_payload(doc_meta, layer_opacity, layer_names, pixels) {
+    static from_payload(doc_meta, layer_opacity, layer_name_lens, layer_names_bytes, pixels) {
         const ptr0 = passArray32ToWasm0(doc_meta, wasm.__wbindgen_malloc);
         const len0 = WASM_VECTOR_LEN;
         const ptr1 = passArrayF64ToWasm0(layer_opacity, wasm.__wbindgen_malloc);
         const len1 = WASM_VECTOR_LEN;
-        const ptr2 = passStringToWasm0(layer_names, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const ptr2 = passArray32ToWasm0(layer_name_lens, wasm.__wbindgen_malloc);
         const len2 = WASM_VECTOR_LEN;
-        const ptr3 = passArray8ToWasm0(pixels, wasm.__wbindgen_malloc);
+        const ptr3 = passArray8ToWasm0(layer_names_bytes, wasm.__wbindgen_malloc);
         const len3 = WASM_VECTOR_LEN;
-        const ret = wasm.wasmdocument_from_payload(ptr0, len0, ptr1, len1, ptr2, len2, ptr3, len3);
+        const ptr4 = passArray8ToWasm0(pixels, wasm.__wbindgen_malloc);
+        const len4 = WASM_VECTOR_LEN;
+        const ret = wasm.wasmdocument_from_payload(ptr0, len0, ptr1, len1, ptr2, len2, ptr3, len3, ptr4, len4);
         return ret === 0 ? undefined : WasmDocument.__wrap(ret);
     }
     /**
@@ -256,19 +262,22 @@ export class WasmDocument {
         return v1;
     }
     /**
-     * @returns {string}
+     * @returns {Uint32Array}
      */
-    meta_layer_names() {
-        let deferred1_0;
-        let deferred1_1;
-        try {
-            const ret = wasm.wasmdocument_meta_layer_names(this.__wbg_ptr);
-            deferred1_0 = ret[0];
-            deferred1_1 = ret[1];
-            return getStringFromWasm0(ret[0], ret[1]);
-        } finally {
-            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
-        }
+    meta_layer_name_lens() {
+        const ret = wasm.wasmdocument_meta_layer_name_lens(this.__wbg_ptr);
+        var v1 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v1;
+    }
+    /**
+     * @returns {Uint8Array}
+     */
+    meta_layer_names_bytes() {
+        const ret = wasm.wasmdocument_meta_layer_names_bytes(this.__wbg_ptr);
+        var v1 = getArrayU8FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
+        return v1;
     }
     /**
      * @returns {Float64Array}
@@ -290,6 +299,16 @@ export class WasmDocument {
         this.__wbg_ptr = ret;
         WasmDocumentFinalization.register(this, this.__wbg_ptr, this);
         return this;
+    }
+    /**
+     * Fix-agent 7g (item 3): see `Document::noop`'s doc.
+     * @returns {Uint32Array}
+     */
+    noop() {
+        const ret = wasm.wasmdocument_noop(this.__wbg_ptr);
+        var v1 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v1;
     }
     /**
      * @param {number} frame_id

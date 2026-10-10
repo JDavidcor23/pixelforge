@@ -167,24 +167,32 @@ pub fn downscale(
 // method below is a thin pass-through to `crate::document::Document`, never
 // business logic of its own (same hexagonal rule as every kernel above).
 //
-// ## Wire format (D6: "no serde" — flat numeric arrays + one NUL-joined
-// string, never a serialized object graph)
+// ## Wire format (D6: "no serde" — flat numeric arrays + one length-prefixed
+// byte blob for names, never a serialized object graph)
 //
 // Every mutating method below returns a `Vec<u32>` — the flat encoding of a
 // `crate::document::DispatchResult` (mirrors `commands.ts`'s
 // `DispatchResult`):
 // ```text
 // [0] changed (0/1)            [1] contentChanged (0/1)
-// [2] historyChanged (0/1)     [3] canUndo (0/1)
-// [4] canRedo (0/1)            [5] strokeOpen (0/1)
-// [6] revision (truncated to u32 — see note below)
-// [7] contentRevision (truncated to u32)
-// [8] dirtyCount (D)           [9] evictedCount (E)
-// [10] layerRevisionsCount (L)
+// [2] structureChanged (0/1)   [3] historyChanged (0/1)
+// [4] canUndo (0/1)            [5] canRedo (0/1)
+// [6] strokeOpen (0/1)
+// [7] revision (truncated to u32 — see note below)
+// [8] contentRevision (truncated to u32)
+// [9] dirtyCount (D)           [10] evictedCount (E)
+// [11] layerRevisionsCount (L)
 // next D*6:  [frameId, layerId, x, y, w, h] per dirty rect
 // next E*2:  [frameId, layerId] per evicted ref
 // next L*2:  [layerId, revision] per layer-revisions entry
 // ```
+//
+// `structureChanged` (fix-agent 7g, store-loop performance): `false` for
+// every pixel-only command (stroke/fill/region.clear/selection.commit) —
+// lets `wasm-document-core.ts`'s `WasmPixelCore` caller (`core.slice.ts`)
+// skip calling `meta_doc`/`meta_layer_opacity`/`meta_layer_names` entirely on
+// the hot path (a drawing gesture fires many `stroke_points` calls), since
+// none of those three can possibly have changed.
 // `revision`/`contentRevision` are `u64` in `crate::document` but truncated
 // to `u32` here — a session would need four billion dispatches to overflow
 // this, far beyond this editor's realistic lifetime; truncating avoids a
@@ -196,9 +204,23 @@ pub fn downscale(
 // full document the same flat-array way — see `Document::from_payload`'s doc
 // for the exact `doc_meta` layout, and `meta_doc` below for the
 // metadata-export mirror of it. Layer/frame NAMES are the one piece of
-// genuinely free-form text in this boundary; they cross as a single
-// NUL-joined `String` (`\u0000`-separated) rather than a JSON array — a
-// native JS string needs no escaping/parsing on either side, unlike JSON.
+// genuinely free-form text in this boundary. Fix-agent 7g (item 2, WARNING
+// #3): names used to cross as a single NUL-joined `String`
+// (`\u0000`-separated) — which silently corrupted every name reported AFTER
+// one containing a literal NUL character, since `"x\u{0}y".split('\u{0}')`
+// desyncs the whole array (confirmed via judgment-day's `nul.jb.test.ts`
+// repro). Fixed with a length-prefixed encoding instead: a `u32` byte-length
+// per name (`meta_layer_name_lens`/`layer_name_lens`/`name_lens` depending on
+// the method) paired with the concatenated UTF-8 bytes of every name, NO
+// separator at all (`meta_layer_names_bytes`/`layer_names_bytes`/
+// `names_bytes`) — see `Document::decode_names`'s doc. A JSON array (the
+// originally-suggested fix) was deliberately NOT used: this crate has zero
+// `serde`/`serde_json` dependency by design (D6, this module's own doc,
+// `Cargo.toml`'s comment) and adding one just for this one field would both
+// violate that established boundary-shape convention and grow the `.wasm`
+// binary for a parser this flat length-prefixed scheme makes unnecessary —
+// same "flat numeric array + byte buffer" shape every other free-form-size
+// payload in this crate (pixel buffers) already uses.
 
 use crate::document::{DispatchResult, Document};
 
@@ -206,6 +228,7 @@ fn encode_dispatch_result(r: &DispatchResult) -> Vec<u32> {
     let mut out = vec![
         r.changed as u32,
         r.content_changed as u32,
+        r.structure_changed as u32,
         r.history_changed as u32,
         r.can_undo as u32,
         r.can_redo as u32,
@@ -254,14 +277,22 @@ impl WasmDocument {
     /// Imports a full document from the flat wire format. `undefined` on any
     /// shape mismatch — a boundary-validated no-op, never a panic/throw. See
     /// `Document::from_payload`'s doc for the exact `doc_meta` layout.
+    #[allow(clippy::too_many_arguments)]
     pub fn from_payload(
         doc_meta: &[u32],
         layer_opacity: &[f64],
-        layer_names: &str,
+        layer_name_lens: &[u32],
+        layer_names_bytes: &[u8],
         pixels: &[u8],
     ) -> Option<WasmDocument> {
-        Document::from_payload(doc_meta, layer_opacity, layer_names, pixels)
-            .map(|inner| WasmDocument { inner })
+        Document::from_payload(
+            doc_meta,
+            layer_opacity,
+            layer_name_lens,
+            layer_names_bytes,
+            pixels,
+        )
+        .map(|inner| WasmDocument { inner })
     }
 
     // ── Reads ────────────────────────────────────────────────────────────
@@ -282,8 +313,12 @@ impl WasmDocument {
         self.inner.meta_layer_opacity()
     }
 
-    pub fn meta_layer_names(&self) -> String {
-        self.inner.meta_layer_names()
+    pub fn meta_layer_name_lens(&self) -> Vec<u32> {
+        self.inner.meta_layer_name_lens()
+    }
+
+    pub fn meta_layer_names_bytes(&self) -> Vec<u8> {
+        self.inner.meta_layer_names_bytes()
     }
 
     pub fn can_undo(&self) -> bool {
@@ -296,6 +331,11 @@ impl WasmDocument {
 
     pub fn history_bytes(&self) -> u32 {
         self.inner.history_bytes()
+    }
+
+    /// Fix-agent 7g (item 3): see `Document::noop`'s doc.
+    pub fn noop(&self) -> Vec<u32> {
+        encode_dispatch_result(&self.inner.noop())
     }
 
     /// TEST-ONLY (phase 7f). Deliberately panics — with this crate's
@@ -427,7 +467,8 @@ impl WasmDocument {
         visible: &[u32],
         locked: &[u32],
         opacity: &[f64],
-        names: &str,
+        name_lens: &[u32],
+        names_bytes: &[u8],
         pixels: &[u8],
     ) -> Vec<u32> {
         encode_dispatch_result(&self.inner.frame_paste(
@@ -437,7 +478,8 @@ impl WasmDocument {
             visible,
             locked,
             opacity,
-            names,
+            name_lens,
+            names_bytes,
             pixels,
         ))
     }

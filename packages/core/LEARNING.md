@@ -811,3 +811,74 @@ that generalizes: treat ANY exception from a call on a live Wasm object as
 path's data source is something OTHER than that object (phase 7f: the
 caller's own independently-tracked last-good state), never "one more call"
 on the thing that just broke.
+
+### 34. Phase 7g: a batched call amortizes a per-call cost; an unbatched call pays it every time — "Wasm is faster" is a claim about ONE call shape, not every call shape
+
+Every prior phase's bench measured Wasm against TS using ONE call per
+logical operation — `fill` is one `dispatch` either way, `stroke` in
+`wasm-pixel-core.bench.ts` batches a whole 60-point stroke into one
+`stroke.points` call. Under that shape, Wasm wins (the fixed wasm-bindgen
+marshalling cost per call — typed-array argument setup, the `Vec<u32>`
+result allocation and its JS-side decode — is paid ONCE and amortized over
+60 points' worth of compute). But `apps/editor`'s REAL call site for a
+drawing gesture doesn't call `stroke.points` once per stroke — it calls it
+once per pointer-move EVENT, each carrying only a handful of points. Bench
+that call shape instead (`store-loop.bench.ts`: 20 separate 4-point calls
+instead of one 80-point call) and the SAME two engines doing the SAME total
+work land the other way: Wasm is 1.5x-2x SLOWER, because now the fixed
+per-call tax is paid 20 times instead of once, and for a 4-point payload
+that tax is larger than the actual pixel-writing work being amortized over
+it. Neither bench is "wrong" — they're measuring different questions. The
+lesson: "is Wasm faster than TS for operation X" is not a single fact about
+X — it depends on the GRANULARITY the real call site actually uses, and a
+synthetic bench that picks the best-case granularity (one big batch) can
+report the opposite conclusion from the one the real, unbatched call site
+would experience. Always bench the ACTUAL call shape the production code
+path uses, not just the operation it logically represents — this is why
+`store-loop.bench.ts`'s `storeDispatch` helper mirrors `core.slice.ts`'s
+real per-dispatch logic line-for-line instead of being a generic "exercise
+PixelCore" harness.
+
+### 35. Phase 7g: a wire-format field doesn't need to survive "normal" input to be a real bug — it needs to survive what the format LOGICALLY allows
+
+The NUL-in-layer-name bug (phase 7f found it, phase 7g fixed it) is a good
+example of a class of bug that's easy to miss by testing: nothing about
+"rename a layer" SUGGESTS testing a name containing `\u0000` — real users
+essentially never type one. But the WIRE FORMAT (`layerNames: string`, a
+`\u0000`-joined concatenation) made a false promise: it implied any string
+a `name: string` field could hold was safe to put through it, when actually
+only strings NOT containing the one character chosen as a separator were
+safe. The type system had no way to express that narrower contract (TS's
+`string` type doesn't distinguish "any string" from "any string except
+this one character"), so the gap was invisible until something fuzzed it.
+The general lesson for any hand-rolled wire format sharing a single
+separator-delimited field: ask "what does the FIELD's TYPE claim is valid,
+and does my ENCODING actually handle everything that type allows" — not
+"what do I expect callers to put in it." A length-PREFIXED encoding (this
+fix's replacement) sidesteps the question entirely by construction: there
+is no reserved character to collide with, because there is no separator at
+all.
+
+### 36. Phase 7g: an eagerly-sized `Vec::with_capacity(n)` turns a "reject this later" bug into a "crash right now" bug
+
+Every `from_payload`-style flat-array decoder in this crate reads a
+CLAIMED count from untrusted input, then loops that many times doing a
+fallible per-element read (`next(doc_meta)?`) that correctly rejects a
+payload once the input actually runs out. That loop was always safe. The
+`Vec::with_capacity(claimed_count)` call immediately BEFORE the loop was
+not: `with_capacity` doesn't wait for the loop to discover the input is too
+short — it tries to allocate `claimed_count` elements' worth of memory
+RIGHT AWAY, before a single fallible read has run. For a `claimed_count` of
+a few hundred, this is invisible (a tiny allocation, immediately proven
+correct by the loop that follows). For a `claimed_count` of 4 billion, it
+is an immediate attempt to allocate gigabytes of memory, which `panic =
+"abort"` turns into an instance-ending trap — even though the SAME function
+would have correctly returned `None` a few microseconds later if only it
+had gotten that far. The lesson: a "count" from untrusted input is not safe
+to pass to `with_capacity` just because a LATER check in the same function
+would reject it — the allocation attempt happens before that check runs.
+The fix costs nothing (`claimed_count.min(an_already-known_safe_upper_bound)`,
+here `doc_meta.len()`, since each loop iteration can only ever consume one
+real element) and changes nothing about the function's actual accepted
+inputs — it just stops the allocator from being asked to gamble on a number
+the function was always going to reject anyway.

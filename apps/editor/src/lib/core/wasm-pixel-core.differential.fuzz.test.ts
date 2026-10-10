@@ -129,6 +129,7 @@ function assertResultsMatch(seed: number, step: number, cmd: Command, ts: Return
   const ctx = `seed=${seed} step=${step} cmd=${cmd.type}`
   expect(wasm.changed, ctx).toBe(ts.changed)
   expect(wasm.contentChanged, ctx).toBe(ts.contentChanged)
+  expect(wasm.structureChanged, ctx).toBe(ts.structureChanged)
   expect(wasm.historyChanged, ctx).toBe(ts.historyChanged)
   expect(wasm.canUndo, ctx).toBe(ts.canUndo)
   expect(wasm.canRedo, ctx).toBe(ts.canRedo)
@@ -179,6 +180,83 @@ describe.runIf(pkgAvailable)('WasmPixelCore vs TsPixelCore (differential fuzz)',
         }
       }
     }
+  })
+})
+
+describe.runIf(pkgAvailable)('WasmPixelCore vs TsPixelCore — fractional numeric command fields are a clean no-op on BOTH cores (fix-agent 7g, item 3)', () => {
+  // Confirmed bug class: a `u32` wasm-bindgen argument silently TRUNCATES a
+  // fractional JS number at the boundary (e.g. `1.5` arrives as `1`), which
+  // would make an otherwise-in-range command actually RUN using the
+  // truncated index/value — unlike `ts-core.ts`'s reference, which (after
+  // this fix) rejects these outright. Both facades now reject BEFORE
+  // crossing the boundary (`Number.isInteger` guards in `wasm-document-
+  // core.ts`'s `dispatch`), so they report the identical "nothing changed".
+  /** 3 frames x 3 layers each — enough room for an in-range `from`/`to`/`index`/`at` to also be fractional. */
+  function makeMultiDoc(): DocSnapshot {
+    const w = 4
+    const h = 4
+    return {
+      canvasWidth: w,
+      canvasHeight: h,
+      timeline: {
+        frames: Array.from({ length: 3 }, (_, f) => ({
+          id: `seed-f${f}`,
+          layers: Array.from({ length: 3 }, (_, l) => ({ id: `seed-f${f}-l${l}`, name: `Layer ${l}`, visible: true, locked: false, opacity: 100, pixels: createEmptyBuffer(w, h) })),
+          activeLayerId: `seed-f${f}-l0`,
+          durationMs: 83,
+        })),
+        currentFrameIndex: 0,
+        isPlaying: false,
+        fps: 12,
+        loop: true,
+        selectedFrameIndices: [0],
+      },
+    }
+  }
+
+  function pair(): { ts: PixelCore; wasm: PixelCore } {
+    setIdSeed('frac')
+    const ts = new TsPixelCore(makeMultiDoc())
+    setWasmIdSeed('frac')
+    const wasm = new WasmPixelCore(wasmModule, makeMultiDoc()) as unknown as PixelCore
+    return { ts, wasm }
+  }
+
+  const FRACTIONAL_CASES: ReadonlyArray<{ readonly label: string; readonly cmd: Command }> = [
+    { label: 'layer.reorder with a fractional from', cmd: { type: 'layer.reorder', from: 1.5, to: 2 } },
+    { label: 'layer.reorder with a fractional to', cmd: { type: 'layer.reorder', from: 0, to: 1.5 } },
+    { label: 'frame.select with a fractional index', cmd: { type: 'frame.select', index: 1.5 } },
+    { label: 'frame.remove with a fractional index', cmd: { type: 'frame.remove', index: 1.5 } },
+    { label: 'frame.paste with a fractional at', cmd: { type: 'frame.paste', at: 1.5, frames: [] } },
+  ]
+
+  for (const { label, cmd } of FRACTIONAL_CASES) {
+    it(`${label} — both cores report changed:false, canUndo/canRedo/strokeOpen unchanged`, () => {
+      const { ts, wasm } = pair()
+      const tsResult = ts.dispatch(cmd)
+      const wasmResult = wasm.dispatch(cmd)
+      expect(tsResult.changed, 'ts').toBe(false)
+      expect(wasmResult.changed, 'wasm').toBe(false)
+      expect(wasmResult.canUndo).toBe(tsResult.canUndo)
+      expect(wasmResult.canRedo).toBe(tsResult.canRedo)
+      expect(wasmResult.strokeOpen).toBe(tsResult.strokeOpen)
+    })
+  }
+
+  it('timeline.setFrameSelection drops non-integer entries identically on both cores', () => {
+    const { ts, wasm } = pair()
+    const cmd: Command = { type: 'timeline.setFrameSelection', indices: [0, 1.5, 2] }
+    ts.dispatch(cmd)
+    wasm.dispatch(cmd)
+    expect(wasm.snapshot().timeline.selectedFrameIndices).toEqual(ts.snapshot().timeline.selectedFrameIndices)
+  })
+
+  it('timeline.setFps rounds a fractional fps identically on both cores', () => {
+    const { ts, wasm } = pair()
+    const cmd: Command = { type: 'timeline.setFps', fps: 24.6 }
+    ts.dispatch(cmd)
+    wasm.dispatch(cmd)
+    expect(wasm.snapshot().timeline.fps).toBe(ts.snapshot().timeline.fps)
   })
 })
 

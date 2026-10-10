@@ -11,8 +11,8 @@
  * indices, scalars, typed arrays) maps to ONE matching `WasmDocument` method
  * 1:1; `doc.replace`/`frame.paste`/construction/`importDocument` — the
  * genuinely nested, multi-frame/multi-layer payloads — are flattened here
- * into the numeric-array + NUL-joined-names + concatenated-pixel-bytes wire
- * format `Document::from_payload`'s doc (`../src/document.rs`) defines.
+ * into the numeric-array + length-prefixed-names + concatenated-pixel-bytes
+ * wire format `Document::from_payload`'s doc (`../src/document.rs`) defines.
  */
 import type {
   Command,
@@ -21,6 +21,7 @@ import type {
   DocMetaSnapshot,
   DocSnapshot,
   DocumentFramePayload,
+  DocumentLayerPayload,
   DocumentPayload,
   FrameId,
   LayerId,
@@ -40,8 +41,17 @@ type WasmDocumentHandle = InstanceType<WasmExports['WasmDocument']>
 const DOCUMENT_SCHEMA_VERSION = 1
 /** Mirrors `apps/editor/src/constants/index.ts`'s `SPRITE_EDITOR_TIMELINE.DEFAULT_FPS`. */
 const DEFAULT_FPS = 12
-/** Mirrors `apps/editor/src/constants/index.ts`'s `SPRITE_EDITOR_CANVAS.DEFAULT_WIDTH`/`DEFAULT_HEIGHT` — used only by `importDocument`'s last-resort empty-document fallback. */
+/** Mirrors `apps/editor/src/constants/index.ts`'s `SPRITE_EDITOR_TIMELINE.DEFAULT_FRAME_DURATION_MS` — fix-agent 7g (item 2): used by `repairDocumentPayload` for a frame whose `frameMs` entry is missing/undefined, same fallback `ts-core.ts`'s `payloadToDoc` uses (`payload.frameMs[i] ?? DEFAULT_FRAME_DURATION_MS`). */
+const DEFAULT_FRAME_DURATION_MS = 83
+/** Mirrors `apps/editor/src/constants/index.ts`'s `SPRITE_EDITOR_DEFAULTS.LAYER_NAME_PREFIX` — fix-agent 7g (item 2): used by `repairDocumentPayload`'s fallback-layer synthesis, same name `ts-core.ts`'s `createFallbackLayer` gives it. */
+const LAYER_NAME_PREFIX = 'Layer'
+/** Mirrors `apps/editor/src/constants/index.ts`'s `SPRITE_EDITOR_LAYER.DEFAULT_OPACITY`. */
+const DEFAULT_LAYER_OPACITY = 100
+/** Mirrors `apps/editor/src/constants/index.ts`'s `SPRITE_EDITOR_CANVAS.DEFAULT_WIDTH`/`DEFAULT_HEIGHT` — used only by `importDocument`'s last-resort empty-document fallback (a payload too corrupted for even `repairDocumentPayload` to recover anything from — no frames at all, or a non-positive canvas size). */
 const FALLBACK_CANVAS_SIZE = 32
+const CHANNELS = 4
+const textEncoder = new TextEncoder()
+const textDecoder = new TextDecoder()
 
 /**
  * One-shot id-seed override — same contract as `apps/editor/src/lib/core/
@@ -76,7 +86,8 @@ function highestIdSuffix(ids: readonly string[], idSeed: string, kind: 'f' | 'l'
 interface EncodedDoc {
   readonly docMeta: Uint32Array
   readonly layerOpacity: Float64Array
-  readonly layerNames: string
+  readonly layerNameLens: Uint32Array
+  readonly layerNamesBytes: Uint8Array
   readonly pixels: Uint8Array
 }
 
@@ -89,6 +100,33 @@ function concatLayerBytes(buffers: ReadonlyArray<Uint8Array | Uint8ClampedArray>
     offset += b.byteLength
   }
   return out
+}
+
+/**
+ * Fix-agent 7g (item 2, WARNING #3): encodes `names` as the length-prefixed
+ * wire format `Document::decode_names` (`../src/document.rs`) expects — a
+ * `u32` UTF-8 byte length per name, paired with the concatenated UTF-8 bytes
+ * of every name, NO separator character. Replaces the old `names.join('\u0000')`
+ * encoding, which silently corrupted every name reported AFTER one
+ * containing a literal NUL character (confirmed via judgment-day's
+ * `nul.jb.test.ts` repro — `"x\u0000y".split('\u0000')` desyncs the whole
+ * array). A length-prefixed scheme has no separator to collide with, so a
+ * name can contain ANY Unicode scalar value, including NUL, safely.
+ */
+function encodeNames(names: ReadonlyArray<string>): { readonly lens: Uint32Array; readonly bytes: Uint8Array } {
+  const encoded = names.map((n) => textEncoder.encode(n))
+  return { lens: Uint32Array.from(encoded.map((b) => b.length)), bytes: concatLayerBytes(encoded) }
+}
+
+/** Inverse of {@link encodeNames} — decodes `meta_layer_name_lens()`/`meta_layer_names_bytes()`'s length-prefixed pair back into an array of names, in cursor order. */
+function decodeNames(lens: Uint32Array, bytes: Uint8Array): string[] {
+  const names: string[] = []
+  let offset = 0
+  for (const len of lens) {
+    names.push(textDecoder.decode(bytes.subarray(offset, offset + len)))
+    offset += len
+  }
+  return names
 }
 
 /** Encodes a live `DocSnapshot` into `Document::from_payload`'s wire format — see that function's doc (`../src/document.rs`) for the exact `docMeta` layout this must match field-for-field. */
@@ -129,16 +167,90 @@ function encodeDocSnapshot(doc: DocSnapshot): EncodedDoc {
     ...visible,
     ...locked,
   ])
-  return { docMeta, layerOpacity: Float64Array.from(opacity), layerNames: names.join('\u0000'), pixels: concatLayerBytes(layerBuffers) }
+  const { lens: layerNameLens, bytes: layerNamesBytes } = encodeNames(names)
+  return { docMeta, layerOpacity: Float64Array.from(opacity), layerNameLens, layerNamesBytes, pixels: concatLayerBytes(layerBuffers) }
 }
 
 /**
- * Encodes a `DocumentPayload` the same way (`importDocument`'s input shape —
+ * Fix-agent 7g (item 2): mirrors `ts-core.ts`'s `payloadToDoc` repair pass
+ * EXACTLY — byte-length-mismatched layers are dropped (a frame left with
+ * zero valid layers gets ONE synthesized blank fallback layer instead of
+ * rejecting the whole import), duplicate layer/frame ids (anywhere in the
+ * document — the pixel cache is keyed GLOBALLY by layer id, never scoped to
+ * a frame, same reason `payloadToDoc`'s own doc gives) are reassigned a
+ * fresh id (first occurrence keeps its original), and a missing/undefined
+ * `frameMs[i]` falls back to the default frame duration. Called from
+ * `importDocument` BEFORE `encodeDocumentPayload`, so the wire-format
+ * encoder below always receives an already-well-formed payload — `null`
+ * ONLY for the same genuinely-unrecoverable top-level shape `payloadToDoc`
+ * also gives up on outright (no frames array, an empty frames array, or a
+ * non-positive canvas size); `importDocument` still falls back to a
+ * brand-new empty document in that one case.
+ */
+function isValidLayerPayload(l: DocumentLayerPayload, w: number, h: number): boolean {
+  return l.data.byteLength === w * h * CHANNELS
+}
+
+function createFallbackLayer(w: number, h: number, id: LayerId): DocumentLayerPayload {
+  return { id, name: `${LAYER_NAME_PREFIX} 1`, visible: true, locked: false, opacity: DEFAULT_LAYER_OPACITY, data: new Uint8Array(w * h * CHANNELS) }
+}
+
+function repairDocumentPayload(payload: DocumentPayload, idSeed: string): DocumentPayload | null {
+  if (!payload || payload.w <= 0 || payload.h <= 0 || !Array.isArray(payload.frames) || payload.frames.length === 0) return null
+  let minted = 0
+  const mintId = (kind: 'f' | 'l'): string => {
+    minted += 1
+    return `${idSeed}-repair-${kind}${minted}`
+  }
+  const seenFrameIds = new Set<FrameId>()
+  const seenLayerIds = new Set<LayerId>()
+  const frames: DocumentFramePayload[] = payload.frames.map((f) => {
+    const validLayers = f.layers.filter((l) => isValidLayerPayload(l, payload.w, payload.h))
+    if (validLayers.length < f.layers.length) {
+      console.error(
+        `[pixelforge-core] WasmPixelCore.importDocument: dropped ${f.layers.length - validLayers.length} corrupted layer(s) in frame "${f.id}" (byte length mismatch for ${payload.w}x${payload.h})`
+      )
+    }
+    let layers = validLayers.length > 0 ? validLayers : [createFallbackLayer(payload.w, payload.h, mintId('l'))]
+    layers = layers.map((l) => {
+      if (!seenLayerIds.has(l.id)) {
+        seenLayerIds.add(l.id)
+        return l
+      }
+      console.error(`[pixelforge-core] WasmPixelCore.importDocument: duplicate layer id "${l.id}" in frame "${f.id}" — assigning a fresh id`)
+      const fresh = { ...l, id: mintId('l') }
+      seenLayerIds.add(fresh.id)
+      return fresh
+    })
+    let frameId = f.id
+    if (seenFrameIds.has(frameId)) {
+      console.error(`[pixelforge-core] WasmPixelCore.importDocument: duplicate frame id "${frameId}" — assigning a fresh id`)
+      frameId = mintId('f')
+    }
+    seenFrameIds.add(frameId)
+    const activeLayerId = layers.some((l) => l.id === f.activeLayerId) ? f.activeLayerId : layers[0].id
+    return { id: frameId, activeLayerId, layers }
+  })
+  return {
+    schemaVersion: payload.schemaVersion,
+    w: payload.w,
+    h: payload.h,
+    // `payload.frameMs` itself may be entirely missing/`undefined` on a
+    // malformed draft (not just shorter than `frames`) — `?? []` before
+    // indexing so this never throws (indexing `undefined` would).
+    frameMs: payload.frames.map((_, i) => (payload.frameMs ?? [])[i] ?? DEFAULT_FRAME_DURATION_MS),
+    frames,
+  }
+}
+
+/**
+ * Encodes an (already `repairDocumentPayload`-repaired) `DocumentPayload`
+ * the same way `encodeDocSnapshot` does (`importDocument`'s input shape —
  * NOT a `DocSnapshot`, it has no fps/loop/isPlaying/currentFrameIndex at
- * all). `null` on gross corruption (mirrors `ts-core.ts`'s `payloadToDoc`'s
- * top-level guard) — `importDocument` falls back to a brand-new empty
- * document in that case (a COARSER recovery than `payloadToDoc`'s per-layer
- * repair — documented deviation, see `HANDOFF.md`).
+ * all). The per-layer byte-length/empty-frame checks below are now a
+ * defensive double-check (repair already guarantees well-formedness, so
+ * they should never actually trigger for a payload routed through
+ * `repairDocumentPayload` first) rather than the primary validation gate.
  */
 function encodeDocumentPayload(payload: DocumentPayload): EncodedDoc | null {
   if (!payload || payload.w <= 0 || payload.h <= 0 || !Array.isArray(payload.frames) || payload.frames.length === 0) return null
@@ -182,7 +294,8 @@ function encodeDocumentPayload(payload: DocumentPayload): EncodedDoc | null {
     ...visible,
     ...locked,
   ])
-  return { docMeta, layerOpacity: Float64Array.from(opacity), layerNames: names.join('\u0000'), pixels: concatLayerBytes(layerBuffers) }
+  const { lens: layerNameLens, bytes: layerNamesBytes } = encodeNames(names)
+  return { docMeta, layerOpacity: Float64Array.from(opacity), layerNameLens, layerNamesBytes, pixels: concatLayerBytes(layerBuffers) }
 }
 
 /** Mirrors `ts-core.ts`'s `clampRectToBuffer` — used ONLY by `region.clear`, which CLAMPS a negative/oversized rect rather than rejecting it (unlike `selection.commit`, which rejects — see this file's `dispatch` doc on that case). A `u32` Wasm argument cannot represent a negative coordinate without wraparound, so this half of the clamp (resolving a possibly-negative `rect.x`/`rect.y` against the ORIGINAL, unclamped far edge) must happen here, in JS, before anything crosses the boundary. */
@@ -201,7 +314,8 @@ interface EncodedPaste {
   readonly visible: Uint32Array
   readonly locked: Uint32Array
   readonly opacity: Float64Array
-  readonly names: string
+  readonly nameLens: Uint32Array
+  readonly namesBytes: Uint8Array
   readonly pixels: Uint8Array
 }
 
@@ -229,13 +343,15 @@ function encodeSerializedFrames(frames: ReadonlyArray<SerializedFrame>, canvasW:
       layerBuffers.push(l.data)
     }
   }
+  const { lens: nameLens, bytes: namesBytes } = encodeNames(names)
   return {
     layerCounts: Uint32Array.from(layerCounts),
     durations: Uint32Array.from(durations),
     visible: Uint32Array.from(visible),
     locked: Uint32Array.from(locked),
     opacity: Float64Array.from(opacity),
-    names: names.join('\u0000'),
+    nameLens,
+    namesBytes,
     pixels: concatLayerBytes(layerBuffers),
   }
 }
@@ -279,7 +395,7 @@ export class WasmPixelCore implements PixelCore {
     this.layerIdCounter = highestIdSuffix(layerIds, this.idSeed, 'l')
 
     const encoded = encodeDocSnapshot(doc)
-    const built = mod.WasmDocument.from_payload(encoded.docMeta, encoded.layerOpacity, encoded.layerNames, encoded.pixels)
+    const built = mod.WasmDocument.from_payload(encoded.docMeta, encoded.layerOpacity, encoded.layerNameLens, encoded.layerNamesBytes, encoded.pixels)
     if (!built) throw new Error('WasmPixelCore: the provided DocSnapshot failed to encode for the Wasm boundary (this should never happen for a document produced by this codebase)')
     this.doc = built
     this.registerFrames(doc.timeline.frames.map((f) => ({ id: f.id, layerIds: f.layers.map((l) => l.id) })))
@@ -340,6 +456,7 @@ export class WasmPixelCore implements PixelCore {
     let i = 0
     const changed = raw[i++] !== 0
     const contentChanged = raw[i++] !== 0
+    const structureChanged = raw[i++] !== 0
     const historyChanged = raw[i++] !== 0
     const canUndo = raw[i++] !== 0
     const canRedo = raw[i++] !== 0
@@ -391,7 +508,7 @@ export class WasmPixelCore implements PixelCore {
       if (layerId !== undefined) layerRevisions[layerId] = rev
     }
 
-    return { changed, contentChanged, historyChanged, canUndo, canRedo, strokeOpen, revision, contentRevision, dirty, evicted, layerRevisions }
+    return { changed, contentChanged, structureChanged, historyChanged, canUndo, canRedo, strokeOpen, revision, contentRevision, dirty, evicted, layerRevisions }
   }
 
   dispatch(cmd: Command): DispatchResult {
@@ -420,15 +537,23 @@ export class WasmPixelCore implements PixelCore {
       case 'layer.meta':
         return this.decode(this.doc.layer_meta(this.layerHandle(cmd.layerId), cmd.patch.name, cmd.patch.visible, cmd.patch.locked, cmd.patch.opacity))
       case 'layer.reorder':
-        return this.decode(this.doc.layer_reorder(cmd.from, cmd.to))
+        // Fix-agent 7g (item 3): reject a fractional `from`/`to` on THIS side
+        // of the boundary — a `u32` wasm-bindgen argument TRUNCATES a
+        // fractional JS number (e.g. `1.5` arrives as `1`), which would make
+        // an otherwise-in-range reorder actually RUN using the truncated
+        // index instead of staying a no-op (the TS reference's own fix for
+        // this exact case — see `ts-core.ts`'s `layer.reorder` case —
+        // rejects it outright). `noop()` reports "nothing changed" without
+        // ever letting wasm-bindgen's coercion see the fractional value.
+        return Number.isInteger(cmd.from) && Number.isInteger(cmd.to) ? this.decode(this.doc.layer_reorder(cmd.from, cmd.to)) : this.decode(this.doc.noop())
       case 'layer.setActive':
         return this.decode(this.doc.layer_set_active(this.layerHandle(cmd.layerId)))
       case 'frame.select':
-        return this.decode(this.doc.frame_select(cmd.index))
+        return Number.isInteger(cmd.index) ? this.decode(this.doc.frame_select(cmd.index)) : this.decode(this.doc.noop())
       case 'frame.add':
         return this.decode(this.doc.frame_add())
       case 'frame.remove':
-        return this.decode(this.doc.frame_remove(cmd.index))
+        return Number.isInteger(cmd.index) ? this.decode(this.doc.frame_remove(cmd.index)) : this.decode(this.doc.noop())
       case 'doc.replace': {
         const meta = this.doc.meta_doc()
         const sizeMismatch =
@@ -442,23 +567,42 @@ export class WasmPixelCore implements PixelCore {
         return this.decode(this.doc.doc_replace(cmd.canvasWidth, cmd.canvasHeight, frameCount, cmd.frameDurationMs, pixels, cmd.label))
       }
       case 'frame.paste': {
+        // Fix-agent 7g (item 3): a fractional `at` (e.g. `1.5`) used to
+        // truncate silently at the wasm-bindgen `u32` boundary — unlike
+        // `ts-core.ts`'s reference (which now rejects it outright, see that
+        // case's doc), this would have let the paste actually run at the
+        // truncated index. Reject on THIS side instead, for parity.
+        if (!Number.isInteger(cmd.at)) return this.decode(this.doc.noop())
         const meta = this.doc.meta_doc()
         const encoded = encodeSerializedFrames(cmd.frames, meta[0], meta[1])
         if (!encoded) {
-          return this.decode(this.doc.frame_paste(cmd.at, new Uint32Array(0), new Uint32Array(0), new Uint32Array(0), new Uint32Array(0), new Float64Array(0), '', new Uint8Array(0)))
+          return this.decode(
+            this.doc.frame_paste(cmd.at, new Uint32Array(0), new Uint32Array(0), new Uint32Array(0), new Uint32Array(0), new Float64Array(0), new Uint32Array(0), new Uint8Array(0), new Uint8Array(0))
+          )
         }
-        return this.decode(this.doc.frame_paste(cmd.at, encoded.layerCounts, encoded.durations, encoded.visible, encoded.locked, encoded.opacity, encoded.names, encoded.pixels))
+        return this.decode(
+          this.doc.frame_paste(cmd.at, encoded.layerCounts, encoded.durations, encoded.visible, encoded.locked, encoded.opacity, encoded.nameLens, encoded.namesBytes, encoded.pixels)
+        )
       }
       case 'undo':
         return this.decode(this.doc.undo())
       case 'redo':
         return this.decode(this.doc.redo())
       case 'timeline.setFps':
-        return this.decode(this.doc.timeline_set_fps(cmd.fps))
+        // Fix-agent 7g (item 3): round BEFORE crossing into the `u32`
+        // parameter — matches `ts-core.ts`'s reference, which now also
+        // rounds before clamping (see that case's doc) instead of letting
+        // Rust's `u32` coercion silently truncate a fractional fps.
+        return this.decode(this.doc.timeline_set_fps(Math.round(cmd.fps)))
       case 'timeline.toggleLoop':
         return this.decode(this.doc.timeline_toggle_loop())
       case 'timeline.setFrameSelection':
-        return this.decode(this.doc.timeline_set_frame_selection(Uint32Array.from(cmd.indices)))
+        // Fix-agent 7g (item 3): drop non-integer entries BEFORE building the
+        // `Uint32Array` — `Uint32Array.from` silently truncates a fractional
+        // number (the same coercion-hides-a-bad-input class every other fix
+        // in this pass addresses), where `ts-core.ts`'s reference explicitly
+        // filters them out (see that case's `Number.isInteger` guard).
+        return this.decode(this.doc.timeline_set_frame_selection(Uint32Array.from(cmd.indices.filter((i) => Number.isInteger(i)))))
       case 'timeline.togglePlayback':
         return this.decode(this.doc.timeline_toggle_playback())
       default: {
@@ -513,7 +657,7 @@ export class WasmPixelCore implements PixelCore {
     const locked: number[] = []
     for (let k = 0; k < totalLayers; k++) locked.push(raw[i++])
     const opacity = this.doc.meta_layer_opacity()
-    const names = totalLayers === 0 ? [] : this.doc.meta_layer_names().split('\u0000')
+    const names = totalLayers === 0 ? [] : decodeNames(this.doc.meta_layer_name_lens(), this.doc.meta_layer_names_bytes())
 
     const frames: DecodedMeta['frames'][number][] = []
     let cursor = 0
@@ -598,30 +742,50 @@ export class WasmPixelCore implements PixelCore {
     this.layerIdByHandle.clear()
     this.layerHandleById.clear()
 
-    const encoded = encodeDocumentPayload(payload)
-    const built = encoded && this.mod.WasmDocument.from_payload(encoded.docMeta, encoded.layerOpacity, encoded.layerNames, encoded.pixels)
-    if (built) {
-      this.doc = built
-      this.registerFrames(payload.frames.map((f) => ({ id: f.id, layerIds: f.layers.map((l) => l.id) })))
-      this.frameIdCounter = highestIdSuffix(
-        payload.frames.map((f) => f.id),
-        this.idSeed,
-        'f'
-      )
-      this.layerIdCounter = highestIdSuffix(
-        payload.frames.flatMap((f) => f.layers.map((l) => l.id)),
-        this.idSeed,
-        'l'
-      )
-      return
+    // Fix-agent 7g (item 2, WARNING #3/7.12): `repairDocumentPayload` runs
+    // the SAME per-layer/per-id repair pass `ts-core.ts`'s `payloadToDoc`
+    // does — dropping only the corrupted layer/frame, deduping ids, defaulting
+    // a missing `frameMs` entry — BEFORE this payload is flattened into the
+    // wire format. `encodeDocumentPayload`'s own validation (below) is now a
+    // defensive double-check that should never actually trigger for a
+    // `repaired` payload; it still falls through to the coarse empty-document
+    // fallback if it somehow does, same safety net as before this fix. The
+    // whole attempt is wrapped in try/catch — `payloadToDoc`'s OWN outer
+    // try/catch is this method's reference for "never let a malformed/hostile
+    // payload throw past this method", and `repairDocumentPayload`/
+    // `encodeDocumentPayload` are plain data transforms with no Wasm calls of
+    // their own, so any unexpected exception here (e.g. a shape this fix
+    // didn't anticipate) is treated exactly like `repaired === null` — fall
+    // through to the coarse empty-document fallback below, never escape.
+    try {
+      const repaired = repairDocumentPayload(payload, this.idSeed)
+      const encoded = repaired && encodeDocumentPayload(repaired)
+      const built = encoded && this.mod.WasmDocument.from_payload(encoded.docMeta, encoded.layerOpacity, encoded.layerNameLens, encoded.layerNamesBytes, encoded.pixels)
+      if (built && repaired) {
+        this.doc = built
+        this.registerFrames(repaired.frames.map((f) => ({ id: f.id, layerIds: f.layers.map((l) => l.id) })))
+        this.frameIdCounter = highestIdSuffix(
+          repaired.frames.map((f) => f.id),
+          this.idSeed,
+          'f'
+        )
+        this.layerIdCounter = highestIdSuffix(
+          repaired.frames.flatMap((f) => f.layers.map((l) => l.id)),
+          this.idSeed,
+          'l'
+        )
+        return
+      }
+    } catch (error) {
+      console.error('[pixelforge-core] WasmPixelCore.importDocument: unexpected error repairing/encoding the payload — falling back to a new empty document.', error)
     }
 
-    // Coarser recovery than `ts-core.ts`'s `payloadToDoc` (which repairs
-    // per-layer corruption and dedupes ids) — documented deviation, see
-    // `HANDOFF.md`'s Phase 7 section. Never throws, never corrupts: falls
-    // back to a brand-new empty document, same shape `createEmptyDocSnapshot`
-    // builds.
-    console.error('[pixelforge-core] WasmPixelCore.importDocument: payload failed validation — falling back to a new empty document (coarser recovery than TsPixelCore.payloadToDoc).')
+    // Only reached for the SAME genuinely-unrecoverable top-level shape
+    // `payloadToDoc` also gives up on outright (no frames array, an empty
+    // frames array, or a non-positive canvas size), or an unexpected
+    // exception caught above. Never throws, never corrupts: falls back to a
+    // brand-new empty document, same shape `createEmptyDocSnapshot` builds.
+    console.error('[pixelforge-core] WasmPixelCore.importDocument: payload failed validation — falling back to a new empty document.')
     this.doc = new this.mod.WasmDocument(FALLBACK_CANVAS_SIZE, FALLBACK_CANVAS_SIZE)
     const frameId = `${this.idSeed}-f1`
     const layerId = `${this.idSeed}-l1`
@@ -661,5 +825,25 @@ export class WasmPixelCore implements PixelCore {
    */
   debugForceTrap(): void {
     this.doc.debug_force_trap()
+  }
+
+  /**
+   * Fix-agent 7g (item 5): explicit, deterministic release of the underlying
+   * `WasmDocument`'s Wasm-linear-memory allocation — NOT part of the
+   * `PixelCore` interface (`TsPixelCore` has nothing to release; a Wasm core
+   * is the only implementation that owns a foreign allocation at all).
+   * `importDocument` already does this internally on every document REPLACE
+   * (phase 7f WARNING #6); this covers the one case that didn't: discarding
+   * a `WasmPixelCore` instance ENTIRELY (never calling anything else on it
+   * again) without waiting on GC + wasm-bindgen's `FinalizationRegistry`,
+   * which verify-report-phase-7 confirmed is fine for the app's actual
+   * "one long-lived core per session" pattern but is not deterministic —
+   * useful for tests and any future caller that creates/discards many cores
+   * (e.g. a multi-document workflow). Calling ANY other method on this
+   * instance after `dispose()` throws (the underlying Wasm object is freed);
+   * this is intentionally a terminal operation, not a reset.
+   */
+  dispose(): void {
+    this.doc.free()
   }
 }

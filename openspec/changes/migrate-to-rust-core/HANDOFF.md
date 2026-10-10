@@ -1,6 +1,6 @@
 # Handoff — migrate-to-rust-core
 
-Last updated: 2026-10-09 (Phase 7f session). Branch: `feat/migrate-to-rust-core` (nothing committed yet — user commits manually).
+Last updated: 2026-10-09 (Phase 7g session). Branch: `feat/migrate-to-rust-core` (nothing committed yet — user commits manually).
 
 ## How to resume
 1. Read this file, then `tasks.md` (checkboxes are the source of truth), `design.md`, `baseline-bench.md`, and the `verify-report-*.md` files in this folder.
@@ -36,10 +36,11 @@ Last updated: 2026-10-09 (Phase 7f session). Branch: `feat/migrate-to-rust-core`
 
 ## Next steps
 ~~Phase 7 (Rust Document/history, full `PixelCore`)~~ — **IMPLEMENTED this session** (see "Phase 7" section below). DEFAULT STAYS `ts` — flipping it is the user's call after manual browser testing, not something this session did. Remaining before the final non-technical summary + `/gp-init`:
-1. **Manual browser testing of `pf:core = 'wasm'`** (this agent had no browser) — open the editor with `localStorage.setItem('pf:core','wasm')`, exercise draw/undo/redo/layers/frames/save-reload, confirm it feels right, THEN decide whether to flip the default (`tasks.md` 7.9) and remove the override dance. This is the one thing that genuinely could not be verified by an agent without a browser.
-2. Phase 7 follow-ups, UPDATED after phase 7f (`tasks.md` 7.11-7.15): `frame.paste`'s pasted-frame active-layer default (always first layer, not the original selection) — still open; `importDocument`'s coarser corrupted-payload recovery (one fallback empty doc, not per-layer repair) — still open; the trap-safety wrapper's secondary fallback — CLOSED in 7f, but by replacing the whole recovery design (see "Phase 7f" section below), not by building the originally-planned "else the store's pixel cache" branch; hoisting `Command`/`DispatchResult`/`PixelCore` into `@pixelforge/core` as a true shared type — still open; wiring a bench gate for `wasm-pixel-core.bench.ts`'s numbers — still open (now also needs a STORE-LOOP-level gate, not just a `PixelCore`-level one — see "Phase 7f" section's open items).
+1. **Manual browser testing of `pf:core = 'wasm'`** (this agent had no browser) — open the editor with `localStorage.setItem('pf:core','wasm')`, exercise draw/undo/redo/layers/frames/save-reload, confirm it feels right, THEN decide whether to flip the default (`tasks.md` 7.9) and remove the override dance. This is the one thing that genuinely could not be verified by an agent without a browser. **UPDATED after phase 7g**: the store-loop performance question that was the single biggest open risk before this conversation (`7f.6`/WARNING #7) is now answered — honestly, Wasm is STILL ~1.5x-2.1x slower than TS end-to-end for a drawing gesture (improved from phase 7f's informal ~1.95x, not reversed) — see "Phase 7g" section below. This is real, relevant information for the default-flip decision, not a blocker removed.
+2. Phase 7 follow-ups, UPDATED after phase 7g (`tasks.md` 7.11-7.15): `frame.paste`'s pasted-frame active-layer default (always first layer) — still open, low-impact, not attempted; `importDocument`'s per-layer repair — **CLOSED in 7g** (`repairDocumentPayload`, mirrors `payloadToDoc`); the trap-safety wrapper's secondary fallback — CLOSED in 7f (replaced design); hoisting `Command`/`DispatchResult`/`PixelCore` into `@pixelforge/core` as a true shared type — still open; the store-LOOP-level bench gate — **CLOSED in 7g** (`apps/editor/bench/thresholds.json` + a second `check-bench.ts` invocation); a `PixelCore`-level gate for `wasm-pixel-core.bench.ts`'s own numbers — still open, lower priority now.
 3. Remaining follow-ups from phase 4f: `.env.example` per app (blocked by sandbox permissions this session — try again in an unrestricted environment); confirm whether `vite-plugin-wasm`/`vite-plugin-top-level-await` are actually removable for `--target web` by running a real `vite build`/`vite dev` (this agent could not — no app builds allowed).
-4. Then final non-technical summary + `/gp-init` with the user.
+4. Phase 7g follow-ups (new, see that section for full detail): WARNING #3's remainder (an exhaustive numeric-field audit beyond the confirmed `layer.reorder`/`frame.remove`/`frame.paste`/`timeline.*` fixes, and extending the differential fuzz past 300 seeds with adversarial generator modes); WARNING #5's remainder (an exhaustive `document.rs` arithmetic audit beyond the two confirmed `from_payload`/`doc_replace` DoS paths closed); WARNING #8 (`layer_revisions`/id-map eviction) — investigated and deliberately NOT attempted this session, see that item's note for why a naive fix would break undo.
+5. Then final non-technical summary + `/gp-init` with the user.
 
 ~~Phase 6 judge findings (W-A overflow, W-B loader race) + kill-switch bypass + the WRONG "FFI-copy dominated" downscale diagnosis~~ — **ADDRESSED in phase 6f** (fix-agent pass, this session): downscale is now measured 2.8x FASTER than TS (was 1.18x slower) once the real cost (a per-cell HashMap allocation, not the FFI copy) was found and fixed. See "Phase 6f" section below for the full list.
 ~~Open item from Phase 5: flood-fill's Wasm/TS ratio (~2.3x-2.6x) is below the proposal's 3x target~~ — **ADDRESSED in phase 5f** (fix-agent pass): rewrote flood-fill to a scanline span-fill algorithm (both Rust and the TS reference) and switched `opt-level` to `3`. CORRECTION to this note's old guess: the "per-call FFI whole-buffer copy" was NOT the bottleneck — measured directly at ~1.6% of total time (`judgeB5/decomp.mts`), not worth chasing. The real lever was compute (per-pixel -> per-span). Result: absolute time improved substantially (Wasm mean ~0.32-0.39ms, down from ~0.9-1.0ms), but the Wasm/TS RATIO actually moved further from 3x (~1.3x-2.0x now vs ~2.3x-2.6x before) — a faster algorithm can narrow the ratio while making both sides faster (LEARNING.md §15 explains the mechanism). Thresholds re-set to the new measured reality with margin (`thresholds.json`). See `baseline-bench.md`'s "Phase 5f" section for full numbers.
@@ -385,3 +386,221 @@ WARNING #7 above). `cargo fmt --check`/`clippy --all-targets -D warnings`/
 scan clean. Gzip `.wasm`: 41,364 bytes (~27.6% of the 150KB budget, was
 41,234 — the one-method `debug_force_trap` addition). No commits made (per
 instruction).
+
+## Phase 7g (fix-agent pass — the remaining phase 7f items, worked in priority order 1 → 2 → 3 → 4 → 5, item 6 investigated and deliberately not attempted)
+
+Full per-item detail in `tasks.md`'s "Phase 7g" section. Summary, honest numbers only:
+
+### Item 1 — store-loop performance (the single highest-priority remaining item)
+
+`DispatchResult` gained a `structureChanged` field (TS: `commands.ts`/
+`document-types.ts`; Rust: `document.rs`'s `DispatchResult` struct, threaded
+through every `finish()`/`build_result()` call site; wire format: `bindings.rs`'s
+flat `Vec<u32>` gained one bit). `false` for every pixel-only command
+(`stroke.*`/`fill`/`region.clear`/`selection.commit`), `true` for everything
+else (structural commands and `undo`/`redo` unconditionally — not re-derived
+per history-entry kind, a deliberate scope cut since undo/redo isn't the hot
+path). `core.slice.ts`'s `dispatch` now calls `PixelCore.snapshot()` ONLY when
+`structureChanged` is true; for a pixel-only dispatch it patches just the
+dirty layers' pixel bytes into the EXISTING `timeline` (`patchDirtyLayers`,
+new helper) — no snapshot, no full-timeline rebuild, no Wasm metadata
+round-trip (`meta_doc`/`meta_layer_opacity`/`meta_layer_names_bytes`).
+
+Judge B's `store-loop.bench.ts` ported into the repo as `apps/editor/src/lib/
+core/store-loop.bench.ts` (both cores, two canvas/frame/layer-count
+scenarios), gated FAIL-CLOSED via a new `apps/editor/bench/thresholds.json` +
+a second `check-bench.ts` invocation (root `package.json`'s `check-bench`
+script now runs it twice: once against `packages/core`'s `PixelKernels`
+gates as before, once against `apps/editor`'s own `bench/results.json` for
+this store-loop gate).
+
+**Honest result, stated plainly as instructed**: Wasm is measured
+**~1.5x-2.1x SLOWER than TS end-to-end** for a drawing gesture (begin + 20x4pt
+points + end) even after this fix:
+- 64px/1-frame/1-layer canvas: wasm ~0.25ms vs ts ~0.16ms (~1.5x-1.65x slower)
+- 256px/8-frame/8-layer canvas: wasm ~4.2ms vs ts ~2.2ms (~1.9x-2.1x slower)
+
+This IS an improvement over the informal pre-fix number (~1.95x slower,
+measured with an unconditional `snapshot()` every dispatch) but does NOT
+reverse the sign. Mechanism: for a SMALL per-call workload like
+`stroke.points` (a handful of points per call, fired many times per
+gesture), the fixed per-call wasm-bindgen marshalling cost (argument
+boxing/typed-array creation, the `Vec<u32>` result allocation, decoding it
+back into a `DispatchResult` object) is itself larger than the actual pixel
+work being done — TS has no such per-call tax. A future session could try
+batching multiple `stroke.points` calls into one FFI call per animation
+frame instead of per pointer-move event; this phase did not attempt that
+(a bigger, riskier API-shape change than a boundary-shape fix).
+
+### Item 2 — import robustness (WARNING #3, `7f.4`)
+
+The NUL-in-name wire corruption judges' `nul.jb.test.ts` confirmed is fixed:
+`layerNames`'s `\u0000`-joined `String` wire format is replaced with a
+length-prefixed encoding (`layer_name_lens: &[u32]` + `layer_names_bytes:
+&[u8]`, decoded by a new `Document::decode_names` helper shared by
+`from_payload`/`frame_paste`; `meta_layer_names` split into
+`meta_layer_name_lens`/`meta_layer_names_bytes`) — a name can contain ANY
+Unicode scalar value, including a literal NUL, with no parsing ambiguity.
+**Deviation from the brief's literal "JSON metadata" suggestion**: used a flat
+length-prefixed scheme instead, to preserve this crate's explicit "no serde"
+architecture decision (D6) rather than add a JSON parser dependency (and the
+`.wasm` size it would cost) for one field — documented in `bindings.rs`'s
+module doc.
+
+`WasmPixelCore.importDocument`'s corrupted-payload recovery is no longer a
+single "fall back to a brand-new empty document" branch (`tasks.md` 7.12,
+now closed): a new `repairDocumentPayload` mirrors `TsPixelCore`'s
+`payloadToDoc` repair pass field-for-field — drops only byte-length-
+mismatched layers (synthesizing ONE fallback layer if a frame ends up
+empty), dedupes duplicate layer/frame ids globally (fresh id for the second
+occurrence, first occurrence keeps its own), and defaults a missing/short
+`frameMs[i]` to the standard frame duration. The whole repair+encode+build
+attempt is wrapped in try/catch, falling back to the coarse empty-document
+path only for the same genuinely-unrecoverable top-level shape
+`payloadToDoc` itself also gives up on (or any unexpected exception) — this
+is also a real latent-crash fix in its own right: the ORIGINAL frameMs
+fallback logic indexed `payload.frameMs[i]` directly, which throws if
+`payload.frameMs` is entirely `undefined` (not just short), and nothing
+caught that before this session.
+
+### Item 3 — numeric validation parity (WARNING #4, `7f.5`) — PARTIAL
+
+Found and fixed two confirmed, real bugs while auditing index-like command
+fields in `ts-core.ts` (the TS reference `TsPixelCore` implementation):
+
+1. **CRASH**: `layer.reorder` with a fractional in-range `from`/`to` (e.g.
+   `from: 1.5` with 3 layers) passed the old range check (`cmd.from < 0 ||
+   cmd.from >= length`, neither true for `1.5`), then `layers[1.5].id`
+   threw an uncaught `TypeError` (`layers[1.5]` is `undefined` — array
+   indexing with a non-integer key never matches an element). Fixed with an
+   explicit `Number.isInteger` guard.
+2. **Silent corruption**: `frame.remove` with a fractional in-range index
+   passed its guard the same way, read `undefined` for the "removed" frame,
+   the `filter((_, i) => i !== cmd.index)` removed NOTHING (every real
+   integer index is `!== 1.5`), yet the dispatch still reported
+   `changed:true` and pushed a CORRUPT history entry (`frame: undefined`)
+   — which would crash later on undo (`entry.frame.id`). Fixed the same way.
+
+Also fixed for consistency/parity (not independently confirmed as
+crash-causing, but real divergences from the intended "fractional input is
+a no-op" contract): `frame.paste`'s `at` (used to survive clamping
+unchanged and get stored as a fractional `currentFrameIndex`, corrupting
+the NEXT command); `timeline.setFrameSelection` (a fractional entry used
+to pass its range filter); `timeline.setFps` (now rounds BEFORE clamping,
+matching the point where Wasm's `u32` parameter truncates a fractional
+value, so both cores land on the same integer fps for a `.5`+ input).
+
+`wasm-document-core.ts`'s facade got matching `Number.isInteger` guards
+BEFORE crossing into Wasm for all five fields — a fractional `u32`
+wasm-bindgen argument is silently TRUNCATED by the JS-to-Wasm numeric ABI
+(e.g. `1.5` arrives as `1`), which would otherwise make an in-range command
+actually RUN using the truncated value instead of staying a no-op like the
+now-fixed TS reference does. Backed by a new `Document::noop()`/
+`WasmDocument.noop()` method (returns the CURRENT, unchanged
+`DispatchResult`) so the facade can report "nothing changed" without ever
+letting wasm-bindgen's coercion see the rejected value.
+
+**NOT done** (the full scope of WARNING #4): a field-by-field audit of
+every OTHER numeric command field (`doc.replace`'s `frameDurationMs`,
+deeper NaN-specific edge cases beyond fractional values, `selection.commit`'s
+rect fields beyond what phase 5f.5 already covers); extending the
+differential fuzz past the existing 300 seeds/60 steps with the judge's
+adversarial generator modes (stale/invalid ids, mismatched paste sizes,
+export/import round-trips under fuzz, eviction pressure) to the ≥400-seed/
+<10s target the original brief asked for. This was explicitly the LARGEST
+remaining item, and was scoped down to "confirmed, high-value, well-tested
+bugs" rather than attempted exhaustively, once the two crash-class bugs
+were closed — a coherent green point, not the finish line for this item.
+
+### Item 4 — checked math in `document.rs` (WARNING #5 remainder, `7f.7`) — PARTIAL
+
+Two confirmed, real "hostile input traps the Wasm instance" DoS paths
+closed, both reachable only via a DIRECT call to the public `#[wasm_bindgen]`
+FFI surface (bypassing the TS facade, which always derives these counts
+from real, already-allocated array lengths — this crate's own documented
+threat model treats the whole surface as "legally callable from any JS"):
+
+1. `Document::from_payload`'s `Vec::with_capacity(selected_count)` /
+   `Vec::with_capacity(frame_count)` (x3) / `Vec::with_capacity(total_layers)`
+   (x2) calls used to size an EAGER allocation from a caller-CLAIMED count,
+   before the per-element fallible `next(doc_meta)?` read ever got a chance
+   to reject a payload where that count was absurd (e.g. a `doc_meta` of
+   8 real `u32`s claiming `selected_count = u32::MAX`). Fixed with a new
+   `bounded_capacity(claimed, remaining)` helper: every element pushed
+   consumes exactly one `doc_meta` slot, so no loop can ever legitimately
+   need more than `doc_meta.len()` elements — capping the allocation HINT
+   there is always safe and doesn't change the loop's own correct
+   fail-fast behavior.
+2. `Document::doc_replace`'s validity check let a ZERO-SIZED canvas
+   (`canvas_w`/`canvas_h` of 0, never produced by legitimate callers but not
+   otherwise rejected) make `per_frame_len == 0`, and
+   `0.checked_mul(frame_count) == Some(0)` is trivially satisfied by an
+   empty `pixels_data` for ANY `frame_count` — including `u32::MAX` — before
+   `Vec::with_capacity(frame_count)`. Fixed by requiring `per_frame_len > 0`.
+
+Two new `cargo test` cases prove each one completes INSTANTLY (not an
+OOM/hang) and rejects cleanly (`!r.changed`/`is_none()`).
+
+**NOT done**: an exhaustive audit of every other arithmetic expression in
+`document.rs`. `layer_add`/`frame_add`'s own buffer allocations use `self`'s
+ALREADY-validated canvas dimensions (checked at construction/`doc_replace`
+time), safe by invariant — not independently re-audited. `frame_paste`'s
+`total_layers: usize` sum of caller-supplied `layer_counts` VALUES could
+theoretically wrap on a 32-bit `wasm32` `usize` in a way that is unreachable
+on the 64-bit host `cargo test` actually runs on — partially mitigated with
+a defensive `lc.min(total_layers)` clamp on the per-frame allocation, but
+not fully closed or proven with a `u64`-widened simulation test (unlike
+phase 6f's `downscale.rs` `cell_range` precedent for the same wasm32-vs-host
+testing gap).
+
+### Item 5 — memory: free on replace / dispose (WARNING #6 remainder)
+
+Added `WasmPixelCore.dispose()`: an explicit, deterministic `this.doc.free()`
+for discarding a whole core instance without waiting on GC +
+`FinalizationRegistry` — closes phase 7f's documented remaining gap ("no
+explicit dispose/teardown path exists for the FIRST `WasmDocument`").
+
+Investigated the literal "free previous WasmDocument on doc.replace" ask:
+the `doc.replace` COMMAND (dispatched through `core.dispatch`, NOT
+`importDocument`) mutates the SAME `Document`/`WasmDocument` instance in
+place (`document.rs`'s `doc_replace` reassigns `self.frames` etc. on
+`&mut self`) — there is no second `WasmDocument` instance ever allocated,
+so there is nothing to `.free()` here; Rust's own `Drop` reclaims the old
+`Vec<Frame>` the instant the reassignment runs. A new test confirmed this
+empirically, and along the way surfaced that `doc.replace` DISPATCHES do
+retain meaningful memory for a while via `HistoryEntry::DocReplace`'s full
+before/after document snapshot — this is the documented, CORRECT "Bounded
+History Retention" budget working as designed (not a leak), so the test
+asserts growth PLATEAUS once that budget is hit (the second half of N
+repeated calls grows strictly less than the first half), not that memory
+never grows at all.
+
+### Item 6 — evict `layer_revisions`/id-map entries for removed layers/frames (WARNING #8) — DELIBERATELY NOT ATTEMPTED
+
+Investigated and found it UNSAFE to do naively. `Document.layer_revisions`
+(Rust `HashMap<u32,u64>`) and `WasmPixelCore`'s 4 handle↔id bimaps are kept
+specifically so `undo` can resurrect a removed layer/frame's EXACT original
+id (`LEARNING.md` §29's documented intent) — evicting an entry the moment a
+layer/frame is forward-removed would break that resurrection the very next
+time the user undoes the removal, which is a WORSE regression (silent undo
+corruption) than the unbounded-memory-growth risk being fixed. A genuinely
+safe fix needs a NEW signal from `history.rs`'s own eviction logic — only
+prune an id-map/revision entry once the history entry that could ever
+resurrect it is ITSELF evicted from the undo stack for good (budget-driven,
+not removal-driven) — and that signal does not exist today. Designing and
+threading it through both engines correctly is a real, nontrivial piece of
+work, not attempted this session; still the documented, intentional-but-
+unbounded tradeoff from phase 7/7f.
+
+### Results this session
+
+`pnpm run typecheck`/`test` all green: `packages/core` 4,274/4,274 (+8),
+`apps/editor` 321/321 (+10), `packages/tokens` 5/5. `pnpm run bench`/
+`check-bench` green (now TWO gated invocations — `packages/core`'s
+`PixelKernels` gates, and the new `apps/editor` store-loop gate — both
+pass). `cargo fmt --check`/`clippy --all-targets -D warnings`/`cargo test`
+92/92 (+4)/`cargo deny check` all clean. Two consecutive `build:wasm` runs
+byte-identical (SHA-256, all 5 `pkg/` files); host-path scan clean. Gzip
+`.wasm`: 41,537 bytes (~27.7% of the 150KB budget, was 41,364 — the
+`noop()`/length-prefixed-names/`bounded_capacity` additions). No commits
+made (per instruction).

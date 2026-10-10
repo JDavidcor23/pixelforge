@@ -78,7 +78,7 @@ class FakeWasmPixelCore {
 
   dispatch(_cmd: Command): DispatchResult {
     this.maybeTrap()
-    return { changed: false, contentChanged: false, historyChanged: false, canUndo: this.canUndo, canRedo: this.canRedo, strokeOpen: false, revision: 0, contentRevision: 0, dirty: [], evicted: [], layerRevisions: {} }
+    return { changed: false, contentChanged: false, structureChanged: false, historyChanged: false, canUndo: this.canUndo, canRedo: this.canRedo, strokeOpen: false, revision: 0, contentRevision: 0, dirty: [], evicted: [], layerRevisions: {} }
   }
   undo(): DispatchResult {
     return this.dispatch({ type: 'undo' })

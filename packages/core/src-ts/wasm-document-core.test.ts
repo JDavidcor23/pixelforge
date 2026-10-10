@@ -37,6 +37,11 @@ function emptyBuffer(w: number, h: number): Uint8ClampedArray {
   return new Uint8ClampedArray(w * h * 4)
 }
 
+/** `DocumentLayerPayload.data` is `Uint8Array` (unlike `DocSnapshot`'s `Uint8ClampedArray` pixels) — a distinct helper for `importDocument`-payload test literals. */
+function emptyPayloadLayerData(w: number, h: number): Uint8Array {
+  return new Uint8Array(w * h * 4)
+}
+
 function freshDoc(w = 4, h = 4): DocSnapshot {
   return {
     canvasWidth: w,
@@ -226,6 +231,144 @@ describe.runIf(pkgAvailable)('WasmPixelCore', () => {
   })
 })
 
+describe.runIf(pkgAvailable)('WasmPixelCore — layer names surviving the wire boundary (fix-agent 7g, item 2, WARNING #3)', () => {
+  it('a name containing a literal NUL character round-trips through layer.meta/exportDocument/importDocument without corrupting ANY other layer\'s name', () => {
+    // Reproduces judges' `nul.jb.test.ts` (scratchpad `judgeB7`): the OLD
+    // `\u0000`-joined wire format desynced every name reported AFTER one
+    // containing a literal NUL — confirmed (before this fix) layer B's name
+    // was reported as "y" (stolen from the back half of A's corrupted name)
+    // and layer C's name vanished from the array entirely. The length-
+    // prefixed encoding this test guards has no separator to desync.
+    const doc: DocSnapshot = {
+      canvasWidth: 1,
+      canvasHeight: 1,
+      timeline: {
+        frames: [
+          {
+            id: 'F',
+            activeLayerId: 'A',
+            durationMs: 83,
+            layers: [
+              { id: 'A', name: 'A', visible: true, locked: false, opacity: 100, pixels: { w: 1, h: 1, data: emptyBuffer(1, 1) } },
+              { id: 'B', name: 'B', visible: true, locked: false, opacity: 100, pixels: { w: 1, h: 1, data: emptyBuffer(1, 1) } },
+              { id: 'C', name: 'C', visible: true, locked: false, opacity: 100, pixels: { w: 1, h: 1, data: emptyBuffer(1, 1) } },
+            ],
+          },
+        ],
+        currentFrameIndex: 0,
+        isPlaying: false,
+        fps: 12,
+        loop: true,
+        selectedFrameIndices: [0],
+      },
+    }
+    const core = new WasmPixelCore(mod, doc)
+    core.dispatch({ type: 'layer.meta', layerId: 'A', patch: { name: 'x\u0000y' } })
+
+    const namesAfterMeta = core.snapshot().timeline.frames[0].layers.map((l) => l.name)
+    expect(namesAfterMeta).toEqual(['x\u0000y', 'B', 'C'])
+
+    const exported = core.exportDocument()
+    expect(exported.frames[0].layers.map((l) => l.name)).toEqual(['x\u0000y', 'B', 'C'])
+
+    core.importDocument(exported)
+    expect(core.snapshot().timeline.frames[0].layers.map((l) => l.name)).toEqual(['x\u0000y', 'B', 'C'])
+  })
+})
+
+describe.runIf(pkgAvailable)('WasmPixelCore — importDocument robustness parity with TsPixelCore (fix-agent 7g, item 2, WARNING #3)', () => {
+  function baseDoc(): DocSnapshot {
+    return freshDoc(2, 2)
+  }
+
+  it('a frameMs array shorter than the frame count falls back to the default duration per missing frame, instead of rejecting the whole import', () => {
+    const core = new WasmPixelCore(mod, baseDoc())
+    const payload = {
+      schemaVersion: 1,
+      w: 2,
+      h: 2,
+      frameMs: [100], // only 1 entry for 2 frames
+      frames: [
+        { id: 'F1', activeLayerId: 'A', layers: [{ id: 'A', name: 'A', visible: true, locked: false, opacity: 100, data: emptyPayloadLayerData(2, 2) }] },
+        { id: 'F2', activeLayerId: 'B', layers: [{ id: 'B', name: 'B', visible: true, locked: false, opacity: 100, data: emptyPayloadLayerData(2, 2) }] },
+      ],
+    }
+    expect(() => core.importDocument(payload)).not.toThrow()
+    const snap = core.snapshot()
+    expect(snap.timeline.frames).toHaveLength(2)
+    expect(snap.timeline.frames[0].durationMs).toBe(100)
+    expect(snap.timeline.frames[1].durationMs).toBe(83) // DEFAULT_FRAME_DURATION_MS fallback, mirrors TsPixelCore's payloadToDoc
+  })
+
+  it('a missing frameMs field falls back to the default duration for every frame', () => {
+    const core = new WasmPixelCore(mod, baseDoc())
+    const payload = {
+      schemaVersion: 1,
+      w: 2,
+      h: 2,
+      frames: [{ id: 'F1', activeLayerId: 'A', layers: [{ id: 'A', name: 'A', visible: true, locked: false, opacity: 100, data: emptyPayloadLayerData(2, 2) }] }],
+      // frameMs intentionally omitted
+    } as unknown as Parameters<WasmPixelCore['importDocument']>[0]
+    expect(() => core.importDocument(payload)).not.toThrow()
+    expect(core.snapshot().timeline.frames[0].durationMs).toBe(83)
+  })
+
+  it('a duplicate layer id reused across two different frames is repaired (the second occurrence gets a fresh id), never silently aliased', () => {
+    const core = new WasmPixelCore(mod, baseDoc())
+    const payload = {
+      schemaVersion: 1,
+      w: 2,
+      h: 2,
+      frameMs: [100, 100],
+      frames: [
+        { id: 'F1', activeLayerId: 'DUP', layers: [{ id: 'DUP', name: 'A', visible: true, locked: false, opacity: 100, data: emptyPayloadLayerData(2, 2) }] },
+        { id: 'F2', activeLayerId: 'DUP', layers: [{ id: 'DUP', name: 'B', visible: true, locked: false, opacity: 100, data: emptyPayloadLayerData(2, 2) }] },
+      ],
+    }
+    expect(() => core.importDocument(payload)).not.toThrow()
+    const snap = core.snapshot()
+    const idF1 = snap.timeline.frames[0].layers[0].id
+    const idF2 = snap.timeline.frames[1].layers[0].id
+    expect(idF1).toBe('DUP')
+    expect(idF2).not.toBe('DUP') // repaired to a fresh id
+    expect(idF2).not.toBe(idF1)
+  })
+
+  it('a duplicate frame id is repaired (the second occurrence gets a fresh id)', () => {
+    const core = new WasmPixelCore(mod, baseDoc())
+    const payload = {
+      schemaVersion: 1,
+      w: 2,
+      h: 2,
+      frameMs: [100, 100],
+      frames: [
+        { id: 'DUP', activeLayerId: 'A', layers: [{ id: 'A', name: 'A', visible: true, locked: false, opacity: 100, data: emptyPayloadLayerData(2, 2) }] },
+        { id: 'DUP', activeLayerId: 'B', layers: [{ id: 'B', name: 'B', visible: true, locked: false, opacity: 100, data: emptyPayloadLayerData(2, 2) }] },
+      ],
+    }
+    expect(() => core.importDocument(payload)).not.toThrow()
+    const snap = core.snapshot()
+    expect(snap.timeline.frames[0].id).toBe('DUP')
+    expect(snap.timeline.frames[1].id).not.toBe('DUP')
+  })
+
+  it('a frame with every layer byte-length-mismatched gets ONE synthesized fallback layer instead of rejecting the whole import', () => {
+    const core = new WasmPixelCore(mod, baseDoc())
+    const payload = {
+      schemaVersion: 1,
+      w: 2,
+      h: 2,
+      frameMs: [100],
+      frames: [{ id: 'F1', activeLayerId: 'A', layers: [{ id: 'A', name: 'A', visible: true, locked: false, opacity: 100, data: new Uint8Array(5) /* wrong length */ }] }],
+    }
+    expect(() => core.importDocument(payload)).not.toThrow()
+    const snap = core.snapshot()
+    expect(snap.timeline.frames).toHaveLength(1)
+    expect(snap.timeline.frames[0].layers).toHaveLength(1)
+    expect(core.readLayer('F1', snap.timeline.frames[0].layers[0].id).length).toBe(2 * 2 * 4)
+  })
+})
+
 describe.runIf(pkgAvailable)('WasmPixelCore memory — importDocument frees the PREVIOUS WasmDocument (phase 7f WARNING #6)', () => {
   it('repeated importDocument on the SAME instance does not grow Wasm linear memory without bound', () => {
     // Reproduces judges' `mem.jb.test.ts` (scratchpad `judgeB7`), which found
@@ -266,6 +409,55 @@ describe.runIf(pkgAvailable)('WasmPixelCore memory — importDocument frees the 
     // fix) — bounding at 4x ONE document's size catches that class of bug
     // while tolerating normal allocator overhead.
     expect(grownBytes).toBeLessThan(docBytes * 4)
+  })
+
+  it('repeated doc.replace DISPATCHES on the SAME instance PLATEAU instead of growing linearly forever (fix-agent 7g, item 5)', () => {
+    // Unlike `importDocument` (which replaces `this.doc` with a brand-new
+    // `WasmDocument` instance), `doc.replace` mutates the SAME `Document`
+    // struct in place (`document.rs`'s `doc_replace` reassigns `self.frames`
+    // etc.) — no new `WasmDocument` is ever allocated, so there is no
+    // "previous instance" to `.free()` here; Rust's own `Drop` reclaims the
+    // OLD `Vec<Frame>` the instant `self.frames = new_frames` runs. BUT
+    // `doc.replace` IS undoable (`HistoryEntry::DocReplace` retains a FULL
+    // before/after snapshot of the whole document for undo), so memory DOES
+    // legitimately grow for a while — that is the documented "Bounded
+    // History Retention" budget working as designed (`history.rs`'s
+    // `HISTORY_MAX_BYTES` eviction), not a leak. The real invariant this
+    // test checks: growth PLATEAUS once that budget is hit (every new entry
+    // evicts an old one of comparable size) — a genuine per-call leak would
+    // keep growing at the SAME rate indefinitely instead.
+    const pageSize = 65536
+    const w = 256
+    const h = 256
+    const docBytes = w * h * 4
+    const core = new WasmPixelCore(mod, freshDoc(w, h))
+    const pagesAt = (): number => wasmExports.memory.buffer.byteLength / pageSize
+    const replaceOnce = (): void => {
+      core.dispatch({ type: 'doc.replace', canvasWidth: w, canvasHeight: h, frames: [{ pixels: { w, h, data: new Uint8ClampedArray(docBytes) } }], frameDurationMs: 83, label: 'Import' })
+    }
+
+    const startPages = pagesAt()
+    const N = 80
+    for (let i = 0; i < N; i++) replaceOnce()
+    const midPages = pagesAt()
+    for (let i = 0; i < N; i++) replaceOnce()
+    const endPages = pagesAt()
+
+    const firstHalfGrowth = (midPages - startPages) * pageSize
+    const secondHalfGrowth = (endPages - midPages) * pageSize
+    // The second N calls must grow memory by meaningfully LESS than the
+    // first N did — proof the history's own eviction is bounding retention,
+    // not that nothing was ever retained (some growth up to the history
+    // budget is expected and correct).
+    expect(secondHalfGrowth).toBeLessThan(firstHalfGrowth)
+  })
+})
+
+describe.runIf(pkgAvailable)('WasmPixelCore — dispose() (fix-agent 7g, item 5)', () => {
+  it('releases the underlying WasmDocument deterministically — further calls on the instance throw, never silently succeed on freed memory', () => {
+    const core = new WasmPixelCore(mod, freshDoc())
+    expect(() => core.dispose()).not.toThrow()
+    expect(() => core.dispatch({ type: 'layer.add' })).toThrow()
   })
 })
 

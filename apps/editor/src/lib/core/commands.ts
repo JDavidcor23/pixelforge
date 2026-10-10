@@ -183,6 +183,21 @@ export interface DispatchResult {
   readonly contentChanged: boolean
   /** Whether the undo/redo stack changed (a new entry pushed, or cursor moved by undo/redo). */
   readonly historyChanged: boolean
+  /**
+   * Fix-agent 7g (store-loop performance): whether the document's SHAPE/
+   * metadata — the frame/layer LIST, names, order, visibility/locked/opacity,
+   * canvas size, current frame, active layer, or any `timeline.*` setting —
+   * could possibly have changed. `false` for every pixel-only command
+   * (`stroke.*`/`fill`/`region.clear`/`selection.commit`): those only ever
+   * mutate the BYTES of layers already named in `dirty`, never the shape
+   * `PixelCore.snapshot()` describes. Consumers (`core.slice.ts`) use this to
+   * skip the `snapshot()` round-trip entirely on the hot path (a drawing
+   * gesture fires many `stroke.points` dispatches per second) and patch
+   * `dirty` layers' pixel data into their own already-held copy of the
+   * timeline instead — see `core.slice.ts`'s `dispatch` for the mechanism and
+   * `baseline-bench.md`'s "Phase 7g" section for the measured win.
+   */
+  readonly structureChanged: boolean
   readonly canUndo: boolean
   readonly canRedo: boolean
   /** Whether a stroke is open AFTER this dispatch — mirrors `CoreState.strokeState !== null`. */

@@ -34,7 +34,7 @@ export class WasmDocument {
     export_pixels(): Uint8Array;
     fill(layer_id: number, x: number, y: number, rgba: number, label: string): Uint32Array;
     frame_add(): Uint32Array;
-    frame_paste(at: number, layer_counts: Uint32Array, durations: Uint32Array, visible: Uint32Array, locked: Uint32Array, opacity: Float64Array, names: string, pixels: Uint8Array): Uint32Array;
+    frame_paste(at: number, layer_counts: Uint32Array, durations: Uint32Array, visible: Uint32Array, locked: Uint32Array, opacity: Float64Array, name_lens: Uint32Array, names_bytes: Uint8Array, pixels: Uint8Array): Uint32Array;
     frame_remove(index: number): Uint32Array;
     frame_select(index: number): Uint32Array;
     /**
@@ -42,7 +42,7 @@ export class WasmDocument {
      * shape mismatch — a boundary-validated no-op, never a panic/throw. See
      * `Document::from_payload`'s doc for the exact `doc_meta` layout.
      */
-    static from_payload(doc_meta: Uint32Array, layer_opacity: Float64Array, layer_names: string, pixels: Uint8Array): WasmDocument | undefined;
+    static from_payload(doc_meta: Uint32Array, layer_opacity: Float64Array, layer_name_lens: Uint32Array, layer_names_bytes: Uint8Array, pixels: Uint8Array): WasmDocument | undefined;
     history_bytes(): number;
     layer_add(): Uint32Array;
     layer_meta(layer_id: number, name?: string | null, visible?: boolean | null, locked?: boolean | null, opacity?: number | null): Uint32Array;
@@ -50,13 +50,18 @@ export class WasmDocument {
     layer_reorder(from: number, to: number): Uint32Array;
     layer_set_active(layer_id: number): Uint32Array;
     meta_doc(): Uint32Array;
-    meta_layer_names(): string;
+    meta_layer_name_lens(): Uint32Array;
+    meta_layer_names_bytes(): Uint8Array;
     meta_layer_opacity(): Float64Array;
     /**
      * Fresh document: one frame, one default layer. Mirrors
      * `Document::new` — see that function's doc.
      */
     constructor(canvas_w: number, canvas_h: number);
+    /**
+     * Fix-agent 7g (item 3): see `Document::noop`'s doc.
+     */
+    noop(): Uint32Array;
     read_layer(frame_id: number, layer_id: number): Uint8Array;
     redo(): Uint32Array;
     region_clear(layer_id: number, rx: number, ry: number, rw: number, rh: number): Uint32Array;
@@ -183,10 +188,10 @@ export interface InitOutput {
     readonly wasmdocument_export_pixels: (a: number) => [number, number];
     readonly wasmdocument_fill: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => [number, number];
     readonly wasmdocument_frame_add: (a: number) => [number, number];
-    readonly wasmdocument_frame_paste: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number, m: number, n: number, o: number, p: number) => [number, number];
+    readonly wasmdocument_frame_paste: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number, m: number, n: number, o: number, p: number, q: number, r: number) => [number, number];
     readonly wasmdocument_frame_remove: (a: number, b: number) => [number, number];
     readonly wasmdocument_frame_select: (a: number, b: number) => [number, number];
-    readonly wasmdocument_from_payload: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => number;
+    readonly wasmdocument_from_payload: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number) => number;
     readonly wasmdocument_history_bytes: (a: number) => number;
     readonly wasmdocument_layer_add: (a: number) => [number, number];
     readonly wasmdocument_layer_meta: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => [number, number];
@@ -194,9 +199,11 @@ export interface InitOutput {
     readonly wasmdocument_layer_reorder: (a: number, b: number, c: number) => [number, number];
     readonly wasmdocument_layer_set_active: (a: number, b: number) => [number, number];
     readonly wasmdocument_meta_doc: (a: number) => [number, number];
-    readonly wasmdocument_meta_layer_names: (a: number) => [number, number];
+    readonly wasmdocument_meta_layer_name_lens: (a: number) => [number, number];
+    readonly wasmdocument_meta_layer_names_bytes: (a: number) => [number, number];
     readonly wasmdocument_meta_layer_opacity: (a: number) => [number, number];
     readonly wasmdocument_new: (a: number, b: number) => number;
+    readonly wasmdocument_noop: (a: number) => [number, number];
     readonly wasmdocument_read_layer: (a: number, b: number, c: number) => [number, number];
     readonly wasmdocument_redo: (a: number) => [number, number];
     readonly wasmdocument_region_clear: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];

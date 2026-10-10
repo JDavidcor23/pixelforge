@@ -144,6 +144,51 @@ export const createCoreSlice: StateCreator<
   })
 
   /**
+   * Fix-agent 7g (store-loop performance, item 1): patches ONLY the pixel
+   * data of the `(frameId, layerId)` pairs named in `dirty` into the store's
+   * EXISTING `timeline` — no `PixelCore.snapshot()` round-trip, no visiting
+   * frames/layers the dispatch didn't touch. Safe to use whenever
+   * `DispatchResult.structureChanged` is `false`: by definition the frame/
+   * layer LIST, names, order, visibility/locked/opacity, canvas size, current
+   * frame, active layer and every `timeline.*` setting are all unchanged —
+   * the only thing that could have changed is the raw bytes of the layers
+   * `dirty` names, which `pixelCache` (already refreshed by the caller, via
+   * `refreshLayer`) holds. Returns `timeline` UNCHANGED (same reference) if
+   * `dirty` is empty, so a no-visual-change dispatch triggers no re-render.
+   */
+  const patchDirtyLayers = (timeline: Timeline, dirty: ReadonlyArray<{ readonly frameId: string; readonly layerId: string }>): Timeline => {
+    if (dirty.length === 0) return timeline
+    const dirtyLayerIdsByFrame = new Map<string, Set<string>>()
+    for (const { frameId, layerId } of dirty) {
+      let ids = dirtyLayerIdsByFrame.get(frameId)
+      if (!ids) {
+        ids = new Set()
+        dirtyLayerIdsByFrame.set(frameId, ids)
+      }
+      ids.add(layerId)
+    }
+    return {
+      ...timeline,
+      frames: timeline.frames.map((frame) => {
+        const dirtyLayerIds = dirtyLayerIdsByFrame.get(frame.id)
+        if (!dirtyLayerIds) return frame
+        return {
+          ...frame,
+          layers: frame.layers.map((layer) => {
+            if (!dirtyLayerIds.has(layer.id)) return layer
+            const data = pixelCache.get(layer.id)
+            if (!data) {
+              console.error(`[core.slice] pixel cache miss for layer "${layer.id}" while patching dirty layers — keeping its previous pixels`)
+              return layer
+            }
+            return { ...layer, pixels: { ...layer.pixels, data } }
+          }),
+        }
+      }),
+    }
+  }
+
+  /**
    * Phase 7f (CRITICAL #2): a `DocSnapshot` built from whatever the store
    * CURRENTLY holds — the metadata + pixel cache written back after the last
    * successful `dispatch`/`importDocument`. This is the recovery source a
@@ -220,6 +265,7 @@ export const createCoreSlice: StateCreator<
         return {
           changed: false,
           contentChanged: false,
+          structureChanged: true,
           historyChanged: true,
           canUndo: c.canUndo,
           canRedo: c.canRedo,
@@ -240,7 +286,20 @@ export const createCoreSlice: StateCreator<
       // but DOES push a history entry for the stroke it just closed, so
       // `canUndo`/`canRedo` must still be refreshed.
       if (result.changed || result.historyChanged) {
-        const meta = c.snapshot()
+        // Fix-agent 7g (store-loop performance, item 1): `snapshot()` is ONLY
+        // fetched when `result.structureChanged` says the document's SHAPE/
+        // metadata could possibly have changed. A pixel-only command
+        // (stroke/fill/region.clear/selection.commit) never does — this is
+        // the hot path (a drawing gesture fires many `stroke.points`
+        // dispatches per second), and for a Wasm core `snapshot()` crosses
+        // the FFI boundary three times (`meta_doc`/`meta_layer_opacity`/
+        // `meta_layer_names`) and rebuilds every frame-id lookup — the single
+        // biggest cost `judgeB7/store-loop.bench.ts` measured making Wasm
+        // ~1.95x SLOWER than TS end-to-end despite faster raw `PixelCore`-
+        // level ops. `meta` stays `null` (no snapshot fetched) unless a
+        // structural command ran OR the dirty-layer refresh below hits a
+        // shape-mismatch fallback (a bug signal, see `refreshLayer`'s doc).
+        let meta: DocMetaSnapshot | null = result.structureChanged ? c.snapshot() : null
 
         if (result.changed) {
           // C1/W8 fix: refresh/evict EXACTLY the (frameId, layerId) pairs the
@@ -261,29 +320,50 @@ export const createCoreSlice: StateCreator<
           // to be misread as cache corruption and triggered an expensive,
           // unnecessary full-document sweep on every one of these commands.
           const evictedKeys = new Set(result.evicted.map((e) => `${e.frameId}:${e.layerId}`))
-          const expectedLength = meta.canvasWidth * meta.canvasHeight * 4
+          // `structureChanged:false` means the canvas size cannot have
+          // changed either (the one command that changes it, `doc.replace`,
+          // always reports `structureChanged:true`) — the store's OWN
+          // current `canvasWidth`/`canvasHeight` is a valid, cheaper stand-in
+          // for `meta`'s when `meta` wasn't fetched.
+          const expectedLength = (meta ? meta.canvasWidth : get().canvasWidth) * (meta ? meta.canvasHeight : get().canvasHeight) * 4
           let needsFullRefresh = false
           for (const { frameId, layerId } of result.dirty) {
             if (evictedKeys.has(`${frameId}:${layerId}`)) continue
             if (!refreshLayer(c, frameId, layerId, expectedLength)) needsFullRefresh = true
           }
-          if (needsFullRefresh) refreshAllLayers(c, meta)
+          if (needsFullRefresh) {
+            meta ??= c.snapshot()
+            refreshAllLayers(c, meta)
+          }
         }
 
-        set({
-          ...(result.changed
+        const timelinePatch = meta
+          ? (() => {
+              const timeline = buildTimeline(meta)
+              const frame = timeline.frames[timeline.currentFrameIndex]
+              return {
+                canvasWidth: meta.canvasWidth,
+                canvasHeight: meta.canvasHeight,
+                layers: frame.layers,
+                activeLayerId: frame.activeLayerId,
+                timeline,
+              }
+            })()
+          : result.changed
             ? (() => {
-                const timeline = buildTimeline(meta)
+                // Fix-agent 7g: no structural change happened — patch only
+                // the dirty layers' pixel bytes into the EXISTING timeline,
+                // never touching `canvasWidth`/`canvasHeight`/`activeLayerId`
+                // (unchanged by definition) or any frame/layer this dispatch
+                // didn't report dirty.
+                const timeline = patchDirtyLayers(get().timeline, result.dirty)
                 const frame = timeline.frames[timeline.currentFrameIndex]
-                return {
-                  canvasWidth: meta.canvasWidth,
-                  canvasHeight: meta.canvasHeight,
-                  layers: frame.layers,
-                  activeLayerId: frame.activeLayerId,
-                  timeline,
-                }
+                return { layers: frame.layers, timeline }
               })()
-            : {}),
+            : {}
+
+        set({
+          ...timelinePatch,
           // judgment-day round 2 (finding 5): autosave watches `docRevision`,
           // which must bump ONLY for document-CONTENT changes
           // (`result.contentRevision`), never for view/playback-only

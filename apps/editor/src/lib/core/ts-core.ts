@@ -701,6 +701,28 @@ const NON_CONTENT_COMMANDS: ReadonlySet<Command['type']> = new Set([
 ])
 
 /**
+ * Fix-agent 7g (store-loop performance, item 1): commands that touch ONLY the
+ * pixel bytes of layers already named in `dirty` — never add/remove/reorder/
+ * rename a frame or layer, never change canvas size, current frame, active
+ * layer, or any `timeline.*` setting. `dispatchCommand`'s wrapper uses this
+ * (independent of `NON_CONTENT_COMMANDS`, which is about autosave, not shape)
+ * to compute `DispatchResult.structureChanged` — `false` for every command in
+ * this set, `true` for everything else (including `undo`/`redo`, since either
+ * can pop a structural history entry; see `document.rs`'s mirrored `finish`
+ * call sites for the Rust side of this same rule). `core.slice.ts` uses the
+ * flag to skip `PixelCore.snapshot()` entirely on the hot path (a drawing
+ * gesture fires many `stroke.points` dispatches per second).
+ */
+const PIXEL_ONLY_COMMANDS: ReadonlySet<Command['type']> = new Set([
+  'stroke.begin',
+  'stroke.points',
+  'stroke.end',
+  'fill',
+  'region.clear',
+  'selection.commit',
+])
+
+/**
  * Phase 2e: the single place that assembles the explicit {@link
  * DispatchResult} every caller (the zustand slice, the `PixelCore` facade,
  * tests) relies on — `canUndo`/`canRedo`/`strokeOpen` are always computed
@@ -710,6 +732,7 @@ function buildResult(
   state: CoreState,
   changed: boolean,
   contentChanged: boolean,
+  structureChanged: boolean,
   historyChanged: boolean,
   dirty: ReadonlyArray<DirtyRect>,
   evicted: ReadonlyArray<LayerRef>
@@ -717,6 +740,7 @@ function buildResult(
   return {
     changed,
     contentChanged,
+    structureChanged,
     historyChanged,
     canUndo: historyCanUndo(state.history),
     canRedo: historyCanRedo(state.history),
@@ -760,7 +784,7 @@ export function dispatchCommand(inputState: CoreState, cmd: Command): DispatchOu
   if (!changed) {
     return {
       state: switchOutcome.state,
-      result: buildResult(switchOutcome.state, false, false, historyChanged, dirty, evicted),
+      result: buildResult(switchOutcome.state, false, false, false, historyChanged, dirty, evicted),
     }
   }
 
@@ -769,6 +793,10 @@ export function dispatchCommand(inputState: CoreState, cmd: Command): DispatchOu
   if (contentChanged) {
     next = { ...next, contentRevision: (next.contentRevision ?? 0) + 1 }
   }
+  // Fix-agent 7g: a pixel-only command (see `PIXEL_ONLY_COMMANDS`'s doc) never
+  // changes the document's shape/metadata — not even indirectly via a
+  // force-committed stroke, which only ever pushes a 'patch' history entry.
+  const structureChanged = !PIXEL_ONLY_COMMANDS.has(cmd.type)
 
   const dirtyLayerIds = dirty.map((d) => d.layerId)
   const layerIds =
@@ -783,7 +811,7 @@ export function dispatchCommand(inputState: CoreState, cmd: Command): DispatchOu
     next = { ...next, layerRevisions }
   }
 
-  return { state: next, result: buildResult(next, true, contentChanged, historyChanged, dirty, evicted) }
+  return { state: next, result: buildResult(next, true, contentChanged, structureChanged, historyChanged, dirty, evicted) }
 }
 
 function dispatchCommandSwitch(state: CoreState, cmd: Command): SwitchOutcome {
@@ -938,7 +966,15 @@ function dispatchCommandSwitch(state: CoreState, cmd: Command): SwitchOutcome {
 
     case 'frame.remove': {
       if (state.doc.timeline.frames.length <= 1) return noChange(state)
-      if (cmd.index < 0 || cmd.index >= state.doc.timeline.frames.length) return noChange(state) // out-of-range index is a no-op, not a crash
+      // Fix-agent 7g (item 3, CONFIRMED bug): a FRACTIONAL in-range index
+      // (e.g. `1.5` with 3 frames) used to pass this guard (neither `<0` nor
+      // `>=length`), then `frames[1.5]` read back `undefined` for
+      // `removedFrame`, `frames.filter((_, i) => i !== 1.5)` removed NOTHING
+      // (every integer `i` is `!== 1.5`), yet a corrupt history entry
+      // (`frame: undefined`) was still pushed and `changed:true` reported —
+      // silent data corruption that crashes LATER on undo (`entry.frame.id`).
+      // `Number.isInteger` added to the guard makes this a clean no-op.
+      if (!Number.isInteger(cmd.index) || cmd.index < 0 || cmd.index >= state.doc.timeline.frames.length) return noChange(state) // out-of-range index is a no-op, not a crash
 
       const removedFrame = state.doc.timeline.frames[cmd.index]
       const frames = state.doc.timeline.frames.filter((_, i) => i !== cmd.index)
@@ -1146,7 +1182,13 @@ function dispatchCommandSwitch(state: CoreState, cmd: Command): SwitchOutcome {
     }
 
     case 'layer.reorder': {
-      if (cmd.from === cmd.to) return noChange(state) // no actual change
+      // Fix-agent 7g (item 3, CONFIRMED CRASH bug): a FRACTIONAL in-range
+      // `from`/`to` (e.g. `from: 1.5` with 3 layers) used to pass the range
+      // check below (neither `<0` nor `>=length`), then `layers[1.5]` read
+      // back `undefined` for `movedLayerId`, and `.id` on `undefined` threw
+      // an uncaught `TypeError` — crashing the whole dispatch. `Number.
+      // isInteger` added to the guard makes this a clean no-op instead.
+      if (!Number.isInteger(cmd.from) || !Number.isInteger(cmd.to) || cmd.from === cmd.to) return noChange(state) // no actual change
       const layers = currentLayers(state.doc)
       if (cmd.from < 0 || cmd.from >= layers.length || cmd.to < 0 || cmd.to >= layers.length) return noChange(state)
 
@@ -1182,7 +1224,11 @@ function dispatchCommandSwitch(state: CoreState, cmd: Command): SwitchOutcome {
 
     case 'frame.select': {
       const index = cmd.index
-      if (!state.doc.timeline.frames[index]) return noChange(state)
+      // Fix-agent 7g (item 3): explicit integer check — `frames[index]` is
+      // already an accidental no-op for a fractional/negative index (array
+      // indexing with a non-integer key never matches), but making it
+      // explicit documents the invariant instead of relying on that JS quirk.
+      if (!Number.isInteger(index) || !state.doc.timeline.frames[index]) return noChange(state)
       // "frame.select ... end any open stroke". C1 fix: the committed
       // stroke's `dirty` pair (tagged with the frame it was bound to, NOT
       // the frame we're about to switch to) must be carried through — this
@@ -1202,7 +1248,17 @@ function dispatchCommandSwitch(state: CoreState, cmd: Command): SwitchOutcome {
     // ── Undoable: frame CRUD / clipboard paste ──────────────────────────────
 
     case 'frame.paste': {
-      if (cmd.frames.length === 0) return noChange(state)
+      // Fix-agent 7g (item 3, CONFIRMED corruption bug): `at` used to be only
+      // `Math.max(0, Math.min(cmd.at, length))`-clamped, never checked for
+      // integer-ness — a fractional `at` (e.g. `1.5`) survived clamping
+      // unchanged and was then stored directly as `currentFrameIndex: 1.5`.
+      // `Array.prototype.splice` silently TRUNCATES a fractional `start`
+      // argument (so the paste itself landed at index 1, not 1.5), but the
+      // STORED `currentFrameIndex` stayed fractional — `frames[1.5]` is
+      // `undefined`, so `currentFrame(doc)` and everything built on it
+      // (`currentLayers`, the NEXT dispatch's force-commit logic, etc.)
+      // would crash on the very next command. A clean no-op instead.
+      if (cmd.frames.length === 0 || !Number.isInteger(cmd.at)) return noChange(state)
       // Bug #2 (W5 hardened): reject a paste whose layers don't match the
       // CURRENT canvas size, whose `data` byte length doesn't match
       // `w*h*4` for the DECLARED size (a declared-size-only check missed a
@@ -1323,7 +1379,13 @@ function dispatchCommandSwitch(state: CoreState, cmd: Command): SwitchOutcome {
     // ── Non-undoable: playback/view prefs — never reverted by document undo ──
 
     case 'timeline.setFps': {
-      const fps = Math.max(SPRITE_EDITOR_TIMELINE.MIN_FPS, Math.min(SPRITE_EDITOR_TIMELINE.MAX_FPS, cmd.fps))
+      // Fix-agent 7g (item 3): round BEFORE clamping — matches `WasmPixelCore`'s
+      // facade, which now does the same `Math.round` before `cmd.fps` crosses
+      // into Rust's `u32` parameter (which would otherwise TRUNCATE toward
+      // zero via the JS-to-Wasm numeric ABI, diverging from TS's un-rounded
+      // fractional fps for a `.5`+ value — e.g. `12.7` truncates to `12` on
+      // Wasm but used to store `12.7` as-is on TS).
+      const fps = Math.max(SPRITE_EDITOR_TIMELINE.MIN_FPS, Math.min(SPRITE_EDITOR_TIMELINE.MAX_FPS, Math.round(cmd.fps)))
       const doc: DocSnapshot = { ...state.doc, timeline: { ...state.doc.timeline, fps } }
       const revision = state.revision + 1
       return { state: { ...state, doc, revision }, result: { dirty: [], changed: true } }
@@ -1339,7 +1401,7 @@ function dispatchCommandSwitch(state: CoreState, cmd: Command): SwitchOutcome {
       // Boundary validation: unknown/out-of-range frame indices are dropped,
       // never stored (a Wasm core would have no way to validate an index it
       // never sees individually otherwise).
-      const valid = cmd.indices.filter((i) => i >= 0 && i < state.doc.timeline.frames.length)
+      const valid = cmd.indices.filter((i) => Number.isInteger(i) && i >= 0 && i < state.doc.timeline.frames.length)
       const doc: DocSnapshot = { ...state.doc, timeline: { ...state.doc.timeline, selectedFrameIndices: valid } }
       const revision = state.revision + 1
       return { state: { ...state, doc, revision }, result: { dirty: [], changed: true } }

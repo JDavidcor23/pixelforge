@@ -643,3 +643,68 @@ pass/fail gate. None of these affect the DEFAULT (`ts`) user experience —
 they only matter once `pf:core`/`VITE_PIXEL_CORE` is explicitly set to
 `wasm`.
 indexing (less generic code to compile into Wasm).
+
+## Phase 7g (fix-agent pass — store-loop performance, the single highest-priority remaining item after phase 7f)
+
+**Bench** (`pnpm run bench`, `apps/editor/src/lib/core/store-loop.bench.ts`,
+warm, this machine, `storeDispatch` mirroring `core.slice.ts`'s REAL
+post-fix per-dispatch logic — `snapshot()` only when `DispatchResult.
+structureChanged` is true, otherwise just a per-dirty-pair `readLayer`
+copy): a stroke gesture of `stroke.begin` + 20x `stroke.points` (4 points
+each) + `stroke.end`, two canvas/frame/layer-count scenarios:
+
+| Scenario | ts mean | wasm mean | wasm/ts ratio |
+|------|---------|-----------|----------------|
+| 64px canvas, 1 frame, 1 layer | 0.156-0.169 ms | 0.251-0.256 ms | **1.49x-1.65x SLOWER** |
+| 256px canvas, 8 frames, 8 layers | 2.18-2.19 ms | 4.21-4.32 ms | **1.92x-2.14x SLOWER** |
+
+Gated FAIL-CLOSED at measured reality (not an aspirational target) via
+`apps/editor/bench/thresholds.json` (`maxWasmToTsRatio: 2.0` and `2.6`
+respectively, both with margin over the ranges above) — the root
+`check-bench` script now runs `check-bench.ts` TWICE: once against
+`packages/core`'s own bench output for the `PixelKernels` gates (unchanged),
+once against `apps/editor`'s bench output for this store-loop gate.
+
+**Said plainly, as instructed**: Wasm is slower than TS for this workload,
+end to end, even after the `structureChanged` fix removed the unconditional
+`snapshot()` call that was the single biggest identified cost. This is a
+real, measured result, not a methodology artifact — repeated runs land
+consistently in the ~1.5x-2.1x-slower range. The fix is a genuine
+improvement (HANDOFF.md's phase-7f note put the pre-fix number at an
+informal ~1.95x slower; the worse of the two post-fix scenarios here,
+256px/8f/8l, is ~1.92x-2.14x — comparable-to-slightly-better, and the
+64px/1f/1l scenario, the more common real-world canvas size, improved more
+meaningfully to ~1.49x-1.65x) — but it does not reverse the sign, because
+the remaining cost is structural, not a leftover inefficiency: `stroke.
+points` is called many times per gesture with only a HANDFUL of points
+each, and every one of those calls pays a FIXED wasm-bindgen marshalling
+tax (typed-array argument marshalling, the `Vec<u32>` `DispatchResult`
+allocation on the Rust side, decoding that flat array back into a JS object
+on the TS side) that is itself larger than the pixel work being done for
+such a small per-call payload. TS has no equivalent per-call tax — it's
+already "in" the same JS heap the points live in. The raw `PixelCore`-level
+bench (`wasm-pixel-core.bench.ts`, same canvas size, ONE 60-point BATCH
+call instead of 20 separate 4-point calls) still shows Wasm ~1.9x-2.1x
+FASTER — confirming the mechanism: batching amortizes the fixed per-call
+cost over more work, and `stroke.points` as currently wired from the
+pointer-move event handler does NOT batch (this session's bench
+deliberately mirrors that unbatched real-world call pattern, not the
+best-case batched one `wasm-pixel-core.bench.ts` measures). A future
+session could try accumulating points across one animation frame (one FFI
+call per RAF tick instead of per pointer-move event) — not attempted this
+session, a bigger API-shape change than this phase's boundary-shape fix.
+
+**Tests**: `packages/core` 4,274 (4,266 + 8: `wasm-document-core.test.ts`'s
+new NUL-name round-trip, 5 import-robustness cases, `dispose()`, and the
+doc.replace plateau case); `apps/editor` 321 (311 + 10: 3 `ts-core.test.ts`
+crash/corruption regression cases + 7 `wasm-pixel-core.differential.fuzz.
+test.ts` fractional-numeric-parity cases). `cargo test` 92/92 (88 + 4: 2
+`from_payload` NUL/non-UTF8-name cases from item 2, 2 DoS-path regression
+cases from item 4). Full monorepo `pnpm run typecheck`/`test`/`bench`/
+`check-bench` green.
+
+**Reproducibility + size**: two consecutive `build:wasm` runs byte-identical
+(SHA-256 compare, all 5 `pkg/` files); host-path scan clean. Gzip `.wasm`:
+41,537 bytes (~27.7% of the 150KB budget, up from 41,364 at the end of
+phase 7f — the `structureChanged` wire field, `noop()` method, length-
+prefixed names encoding, and `bounded_capacity` hardening).

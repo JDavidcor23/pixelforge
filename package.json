@@ -12,7 +12,7 @@
     "test:watch": "pnpm -r test:watch",
     "bench": "pnpm -r --workspace-concurrency=1 bench",
     "typecheck": "pnpm -r typecheck",
-    "check-bench": "node --experimental-strip-types scripts/check-bench.ts bench/core-results.json packages/core/bench/thresholds.json",
+    "check-bench": "node --experimental-strip-types scripts/check-bench.ts bench/core-results.json packages/core/bench/thresholds.json && node --experimental-strip-types scripts/check-bench.ts bench/results.json apps/editor/bench/thresholds.json",
     "changeset": "changeset",
     "changeset:version": "changeset version"
   },

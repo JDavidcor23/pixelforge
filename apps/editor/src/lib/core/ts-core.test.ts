@@ -144,6 +144,20 @@ describe('frame.add / frame.remove via dispatch', () => {
     expect(outcome.result.changed).toBe(false)
     expect(outcome.state.doc.timeline.frames).toHaveLength(1)
   })
+
+  it('frame.remove is a no-op for a fractional in-range index, never a corrupting partial-remove (fix-agent 7g, item 3)', () => {
+    // Before the fix: a fractional index like 1.5 (3 frames, neither <0 nor
+    // >=length) passed the range guard, `frames[1.5]` read back `undefined`
+    // for the "removed" frame, the `filter` removed NOTHING (every integer
+    // index is `!== 1.5`), yet `changed:true` was reported and a corrupt
+    // history entry (`frame: undefined`) was pushed anyway.
+    const doc = makeDoc(4, 4, 3, 1)
+    const state = createCoreState(doc)
+    const outcome = dispatchCommand(state, { type: 'frame.remove', index: 1.5 })
+    expect(outcome.result.changed).toBe(false)
+    expect(outcome.state.doc.timeline.frames).toHaveLength(3)
+    expect(outcome.state.history.entries).toHaveLength(0)
+  })
 })
 
 describe('doc.replace via dispatch (AI Copilot apply/import)', () => {
@@ -271,6 +285,19 @@ describe('layer CRUD via dispatch (undoable, phase 2c)', () => {
     expect(currentLayers(outcome.state.doc).map((l) => l.id)).toEqual([ids[1], ids[2], ids[0]])
     expect(outcome.state.history.entries).toHaveLength(1)
   })
+
+  it('layer.reorder is a no-op for a fractional from/to, never a crash (fix-agent 7g, item 3)', () => {
+    // Before the fix: `from: 1.5` (3 layers, in-range) passed the range
+    // guard, then `layers[1.5].id` threw an uncaught TypeError (`layers[1.5]`
+    // is `undefined` — array indexing with a non-integer key never matches).
+    const doc = makeDoc(4, 4, 1, 3)
+    const state = createCoreState(doc)
+    const ids = currentLayers(state.doc).map((l) => l.id)
+    expect(() => dispatchCommand(state, { type: 'layer.reorder', from: 1.5, to: 2 })).not.toThrow()
+    const outcome = dispatchCommand(state, { type: 'layer.reorder', from: 1.5, to: 2 })
+    expect(outcome.result.changed).toBe(false)
+    expect(currentLayers(outcome.state.doc).map((l) => l.id)).toEqual(ids)
+  })
 })
 
 describe('frame.select (non-undoable view state) / frame.paste (undoable, phase 2c)', () => {
@@ -294,6 +321,22 @@ describe('frame.select (non-undoable view state) / frame.paste (undoable, phase 
 
     expect(getPixel(currentLayers(state.doc)[0].pixels, 0, 0)).toEqual(RED)
     expect(getPixel(state.doc.timeline.frames[0].layers[0].pixels, 0, 0)).toEqual(TRANSPARENT)
+  })
+
+  it('frame.paste is a no-op for a fractional `at`, never a corrupted fractional currentFrameIndex (fix-agent 7g, item 3)', () => {
+    // Before the fix: `at: 1.5` survived `Math.max(0, Math.min(at, length))`
+    // clamping unchanged (clamping doesn't round), and was stored directly as
+    // `currentFrameIndex: 1.5` — `Array.prototype.splice` silently truncates
+    // a fractional `start`, so the paste itself landed at index 1, but the
+    // STORED `currentFrameIndex` stayed fractional, which would crash the
+    // NEXT command (`currentFrame(doc)` reads `frames[1.5]`, `undefined`).
+    const doc = makeDoc(4, 4, 1, 1)
+    const state = createCoreState(doc)
+    const pasted: AnimationFrame[] = [{ id: 'pasted-1', layers: [makeLayer('p1', 4, 4)], activeLayerId: 'p1', durationMs: 83 }]
+    const outcome = dispatchCommand(state, { type: 'frame.paste', at: 1.5, frames: pasted.map(frameToSerializedFrame) })
+    expect(outcome.result.changed).toBe(false)
+    expect(outcome.state.doc.timeline.frames).toHaveLength(1)
+    expect(Number.isInteger(outcome.state.doc.timeline.currentFrameIndex)).toBe(true)
   })
 
   it('frame.paste inserts frames at the given index, selects them, and is undoable as one entry', () => {

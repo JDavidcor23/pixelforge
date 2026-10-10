@@ -102,6 +102,11 @@ struct StrokeState {
 pub struct DispatchResult {
     pub changed: bool,
     pub content_changed: bool,
+    /// Fix-agent 7g (store-loop performance): mirrors `commands.ts`'s
+    /// `DispatchResult.structureChanged` — see that field's doc. `false` for
+    /// every pixel-only command (stroke/fill/region.clear/selection.commit),
+    /// `true` for everything else.
+    pub structure_changed: bool,
     pub history_changed: bool,
     pub can_undo: bool,
     pub can_redo: bool,
@@ -201,6 +206,42 @@ fn resolve_active_layer_id(layers: &[Layer], preferred: u32, fallback: u32) -> u
         return fallback;
     }
     layers.first().map(|l| l.id).unwrap_or(preferred)
+}
+
+/// Fix-agent 7g (item 4): caps a wire-supplied COUNT's `Vec::with_capacity`
+/// allocation hint at `remaining` (how many elements the actual input could
+/// possibly still supply) — see `Document::from_payload`'s call sites for the
+/// full reasoning (a hostile/corrupted absurd count must never make
+/// `with_capacity` attempt an eager multi-GB allocation before the normal
+/// per-element fallible read has a chance to reject the payload).
+fn bounded_capacity(claimed: u32, remaining: usize) -> usize {
+    (claimed as usize).min(remaining)
+}
+
+/// Fix-agent 7g (item 2, WARNING #3): decodes `total` names out of the
+/// length-prefixed wire format `meta_layer_name_lens`/`meta_layer_names_bytes`
+/// encode (shared by `from_payload` and `frame_paste`, the two methods that
+/// decode a caller-supplied names blob rather than reading `self`).
+/// `None` — a boundary-validated no-op, never a panic — on ANY shape
+/// mismatch: wrong length count, a length that runs past the end of `bytes`,
+/// or bytes that aren't valid UTF-8 at the claimed boundary (a hostile or
+/// corrupted payload, never trusted blindly). Never uses a separator
+/// character, so a name containing a literal NUL (or any other byte) decodes
+/// correctly — the bug class the old `\u{0}`-joined `String` format had.
+fn decode_names(lens: &[u32], bytes: &[u8], total: usize) -> Option<Vec<String>> {
+    if lens.len() != total {
+        return None;
+    }
+    let mut out = Vec::with_capacity(total);
+    let mut cursor = 0usize;
+    for &len in lens {
+        let len = len as usize;
+        let end = cursor.checked_add(len)?;
+        let slice = bytes.get(cursor..end)?;
+        out.push(std::str::from_utf8(slice).ok()?.to_string());
+        cursor = end;
+    }
+    Some(out)
 }
 
 /// Non-negative rect-clamp — the TS facade pre-clamps any NEGATIVE x/y to 0
@@ -444,7 +485,8 @@ impl Document {
     pub fn from_payload(
         doc_meta: &[u32],
         layer_opacity: &[f64],
-        layer_names: &str,
+        layer_name_lens: &[u32],
+        layer_names_bytes: &[u8],
         pixels_data: &[u8],
     ) -> Option<Self> {
         let mut idx = 0usize;
@@ -464,28 +506,44 @@ impl Document {
         if frame_count == 0 {
             return None;
         }
-        let mut selected_frame_indices = Vec::with_capacity(selected_count as usize);
+        // Fix-agent 7g (item 4): every element pushed in the loops below
+        // consumes exactly one `u32` from `doc_meta` via `next()` — so NO
+        // loop can ever push more than `doc_meta.len()` elements, regardless
+        // of what a hostile/corrupted `selected_count`/`frame_count`/
+        // `total_layers` CLAIMS. Without this bound, a single absurd claimed
+        // count (e.g. `u32::MAX`) makes `Vec::with_capacity` attempt an
+        // immediate multi-GB allocation BEFORE the loop's `next(doc_meta)?`
+        // ever gets a chance to fail and reject the payload — on `wasm32`
+        // (bounded linear memory, `panic = "abort"`), an allocation failure
+        // aborts the whole instance, i.e. exactly the "hostile input traps
+        // the Wasm instance" bug class this phase's other fixes close
+        // elsewhere. `bounded_capacity` caps the ALLOCATION HINT only — the
+        // loop itself is unaffected and still correctly bails out via `?`
+        // the moment `doc_meta` actually runs out.
+        let remaining = doc_meta.len();
+        let mut selected_frame_indices =
+            Vec::with_capacity(bounded_capacity(selected_count, remaining));
         for _ in 0..selected_count {
             selected_frame_indices.push(next(doc_meta)?);
         }
-        let mut durations = Vec::with_capacity(frame_count as usize);
+        let mut durations = Vec::with_capacity(bounded_capacity(frame_count, remaining));
         for _ in 0..frame_count {
             durations.push(next(doc_meta)?);
         }
-        let mut active_layer_index = Vec::with_capacity(frame_count as usize);
+        let mut active_layer_index = Vec::with_capacity(bounded_capacity(frame_count, remaining));
         for _ in 0..frame_count {
             active_layer_index.push(next(doc_meta)?);
         }
-        let mut layer_counts = Vec::with_capacity(frame_count as usize);
+        let mut layer_counts = Vec::with_capacity(bounded_capacity(frame_count, remaining));
         for _ in 0..frame_count {
             layer_counts.push(next(doc_meta)?);
         }
         let total_layers: usize = layer_counts.iter().map(|&c| c as usize).sum();
-        let mut visible = Vec::with_capacity(total_layers);
+        let mut visible = Vec::with_capacity(total_layers.min(remaining));
         for _ in 0..total_layers {
             visible.push(next(doc_meta)?);
         }
-        let mut locked = Vec::with_capacity(total_layers);
+        let mut locked = Vec::with_capacity(total_layers.min(remaining));
         for _ in 0..total_layers {
             locked.push(next(doc_meta)?);
         }
@@ -493,14 +551,7 @@ impl Document {
         if layer_opacity.len() != total_layers {
             return None;
         }
-        let names_vec: Vec<&str> = if total_layers == 0 {
-            vec![]
-        } else {
-            layer_names.split('\u{0}').collect()
-        };
-        if names_vec.len() != total_layers {
-            return None;
-        }
+        let names_vec = decode_names(layer_name_lens, layer_names_bytes, total_layers)?;
         let per_layer_len = (canvas_w as usize)
             .checked_mul(canvas_h as usize)?
             .checked_mul(CHANNELS as usize)?;
@@ -517,7 +568,14 @@ impl Document {
             if lc == 0 {
                 return None; // every frame must have at least one layer (mirrors frame.paste's "invalid" rule)
             }
-            let mut layers = Vec::with_capacity(lc);
+            // `lc` is a single addend of `total_layers` (already validated
+            // against the REAL `layer_opacity`/`pixels_data` lengths above) —
+            // `.min(total_layers)` costs nothing when `lc <= total_layers`
+            // holds normally, and caps the allocation hint defensively on the
+            // (wasm32-only, 32-bit `usize`) theoretical case where summing
+            // many huge `layer_counts` entries wrapped `total_layers` down to
+            // something small while an individual `lc` stayed large.
+            let mut layers = Vec::with_capacity(lc.min(total_layers));
             for _ in 0..lc {
                 layer_handle += 1;
                 let data = pixels_data[byte_cursor..byte_cursor + per_layer_len].to_vec();
@@ -588,6 +646,25 @@ impl Document {
         self.history.total_bytes() as u32
     }
 
+    /// Fix-agent 7g (item 3): a pure "nothing changed" `DispatchResult`
+    /// reflecting the CURRENT state, used by `wasm-document-core.ts`'s
+    /// TS-side numeric validation (a fractional/non-integer command field —
+    /// e.g. `frame.select`'s index, `layer.reorder`'s from/to) to report a
+    /// safe no-op WITHOUT ever crossing the boundary with that value. A
+    /// fractional JS number passed as a `u32` wasm-bindgen argument is
+    /// TRUNCATED by the JS-to-Wasm numeric ABI (e.g. `1.5` arrives as `1`),
+    /// which would make an otherwise-in-range command actually RUN using the
+    /// truncated integer instead of staying a no-op — the same "individually
+    /// valid-looking after coercion" class of bug `isValidU32`/5f.5 fixed for
+    /// `PixelKernels`. DECISION: reject on the TS facade (`wasm-document-
+    /// core.ts`), mirroring that same convention, so wasm-bindgen's own
+    /// coercion is never reached for these inputs; this method supplies the
+    /// "nothing changed" result the facade reports instead of calling the
+    /// real command.
+    pub fn noop(&self) -> DispatchResult {
+        self.build_result(false, false, false, false, vec![], vec![])
+    }
+
     /// A COPY of the layer's live pixels — `None` (facade returns an empty
     /// buffer) for an unknown (frame, layer) pair, never a panic. A Wasm
     /// linear-memory view handed to JS is invalidated by the next call that
@@ -651,21 +728,45 @@ impl Document {
             .collect()
     }
 
-    pub fn meta_layer_names(&self) -> String {
+    /// Fix-agent 7g (item 2, WARNING #3): per-layer UTF-8 BYTE LENGTH of each
+    /// name, in the same cursor order `meta_layer_names_bytes` concatenates
+    /// them — paired, these two methods replace the old single
+    /// `meta_layer_names() -> String` (`\u{0}`-joined) wire format, which
+    /// silently corrupted every name reported AFTER one containing a literal
+    /// NUL character (`"x\u{0}y".split('\u{0}')` desyncs the whole array).
+    /// Length-prefixing instead of using ANY separator character means a name
+    /// can contain literally any Unicode scalar value, including NUL, with no
+    /// parsing ambiguity — see `meta_layer_names_bytes`'s doc for the
+    /// matching byte-blob half.
+    pub fn meta_layer_name_lens(&self) -> Vec<u32> {
         self.frames
             .iter()
-            .flat_map(|f| f.layers.iter().map(|l| l.name.clone()))
-            .collect::<Vec<_>>()
-            .join("\u{0}")
+            .flat_map(|f| f.layers.iter().map(|l| l.name.len() as u32))
+            .collect()
+    }
+
+    /// Concatenated UTF-8 bytes of every layer name, NO separator — decode by
+    /// cursoring through this blob using `meta_layer_name_lens`'s per-layer
+    /// byte lengths. See that method's doc for why (NUL-safety).
+    pub fn meta_layer_names_bytes(&self) -> Vec<u8> {
+        let mut out = Vec::new();
+        for f in &self.frames {
+            for l in &f.layers {
+                out.extend_from_slice(l.name.as_bytes());
+            }
+        }
+        out
     }
 
     // ── Result assembly (mirrors `ts-core.ts`'s `buildResult`/the
     // `dispatchCommand` wrapper's contentRevision/layerRevisions logic) ────
 
+    #[allow(clippy::too_many_arguments)]
     fn build_result(
         &self,
         changed: bool,
         content_changed: bool,
+        structure_changed: bool,
         history_changed: bool,
         dirty: Vec<DirtyRect>,
         evicted: Vec<LayerRef>,
@@ -673,6 +774,7 @@ impl Document {
         DispatchResult {
             changed,
             content_changed,
+            structure_changed,
             history_changed,
             can_undo: self.history.can_undo(),
             can_redo: self.history.can_redo(),
@@ -687,12 +789,18 @@ impl Document {
 
     fn no_change(&self, history_v0: u64) -> DispatchResult {
         let history_changed = self.history.version != history_v0;
-        self.build_result(false, false, history_changed, vec![], vec![])
+        self.build_result(false, false, false, history_changed, vec![], vec![])
     }
 
     /// `non_content`: true for the handful of commands that mutate ONLY
     /// view/playback state (`layer.setActive`, `frame.select`,
     /// `timeline.*`) — mirrors `NON_CONTENT_COMMANDS` in `commands.ts`.
+    /// `structural`: true unless this call site is one of the six pixel-only
+    /// commands (stroke/fill/region.clear/selection.commit) — mirrors
+    /// `PIXEL_ONLY_COMMANDS` in `ts-core.ts` (fix-agent 7g, store-loop
+    /// performance: lets `WasmPixelCore`'s TS caller skip `snapshot()` on the
+    /// hot path when this is `false`).
+    #[allow(clippy::too_many_arguments)]
     fn finish(
         &mut self,
         changed: bool,
@@ -700,9 +808,10 @@ impl Document {
         dirty: Vec<DirtyRect>,
         evicted: Vec<LayerRef>,
         non_content: bool,
+        structural: bool,
     ) -> DispatchResult {
         if !changed {
-            return self.build_result(false, false, history_changed, dirty, evicted);
+            return self.build_result(false, false, false, history_changed, dirty, evicted);
         }
         let content_changed = !non_content || history_changed;
         if content_changed {
@@ -719,7 +828,14 @@ impl Document {
         for id in layer_ids {
             *self.layer_revisions.entry(id).or_insert(0) += 1;
         }
-        self.build_result(true, content_changed, history_changed, dirty, evicted)
+        self.build_result(
+            true,
+            content_changed,
+            structural,
+            history_changed,
+            dirty,
+            evicted,
+        )
     }
 
     /// Finalizes the open stroke (if any): diffs the live layer buffer
@@ -1062,7 +1178,14 @@ impl Document {
             }
         }
         let history_changed = self.history.version != history_v0;
-        self.finish(commit_changed, history_changed, commit_dirty, vec![], false)
+        self.finish(
+            commit_changed,
+            history_changed,
+            commit_dirty,
+            vec![],
+            false,
+            false,
+        )
     }
 
     pub fn stroke_points(&mut self, points: &[i32], rgba: u32) -> DispatchResult {
@@ -1126,7 +1249,7 @@ impl Document {
             rect,
         }];
         let history_changed = self.history.version != history_v0;
-        self.finish(true, history_changed, dirty, vec![], false)
+        self.finish(true, history_changed, dirty, vec![], false, false)
     }
 
     pub fn stroke_end(&mut self, label: &str) -> DispatchResult {
@@ -1137,7 +1260,7 @@ impl Document {
         let dirty = self.end_open_stroke(label);
         let changed = !dirty.is_empty();
         let history_changed = self.history.version != history_v0;
-        self.finish(changed, history_changed, dirty, vec![], false)
+        self.finish(changed, history_changed, dirty, vec![], false, false)
     }
 
     pub fn fill(
@@ -1216,7 +1339,7 @@ impl Document {
         let dirty = [commit_dirty, own_dirty].concat();
         let changed = own_changed || commit_changed;
         let history_changed = self.history.version != history_v0;
-        self.finish(changed, history_changed, dirty, vec![], false)
+        self.finish(changed, history_changed, dirty, vec![], false, false)
     }
 
     pub fn region_clear(
@@ -1308,7 +1431,7 @@ impl Document {
         let dirty = [commit_dirty, own_dirty].concat();
         let changed = own_changed || commit_changed;
         let history_changed = self.history.version != history_v0;
-        self.finish(changed, history_changed, dirty, vec![], false)
+        self.finish(changed, history_changed, dirty, vec![], false, false)
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -1405,7 +1528,7 @@ impl Document {
         let dirty = [commit_dirty, own_dirty].concat();
         let changed = own_changed || commit_changed;
         let history_changed = self.history.version != history_v0;
-        self.finish(changed, history_changed, dirty, vec![], false)
+        self.finish(changed, history_changed, dirty, vec![], false, false)
     }
 
     pub fn layer_add(&mut self) -> DispatchResult {
@@ -1448,7 +1571,7 @@ impl Document {
         }];
         let dirty = [commit_dirty, own_dirty].concat();
         let history_changed = self.history.version != history_v0;
-        self.finish(true, history_changed, dirty, vec![], false)
+        self.finish(true, history_changed, dirty, vec![], false, true)
     }
 
     pub fn layer_remove(&mut self, layer_id: u32) -> DispatchResult {
@@ -1491,7 +1614,7 @@ impl Document {
         }
         let changed = own_changed || commit_changed;
         let history_changed = self.history.version != history_v0;
-        self.finish(changed, history_changed, commit_dirty, evicted, false)
+        self.finish(changed, history_changed, commit_dirty, evicted, false, true)
     }
 
     pub fn layer_meta(
@@ -1562,7 +1685,7 @@ impl Document {
         }
         let changed = own_changed || commit_changed;
         let history_changed = self.history.version != history_v0;
-        self.finish(changed, history_changed, commit_dirty, vec![], false)
+        self.finish(changed, history_changed, commit_dirty, vec![], false, true)
     }
 
     pub fn layer_reorder(&mut self, from: u32, to: u32) -> DispatchResult {
@@ -1594,7 +1717,7 @@ impl Document {
         }
         let changed = own_changed || commit_changed;
         let history_changed = self.history.version != history_v0;
-        self.finish(changed, history_changed, commit_dirty, vec![], false)
+        self.finish(changed, history_changed, commit_dirty, vec![], false, true)
     }
 
     pub fn layer_set_active(&mut self, layer_id: u32) -> DispatchResult {
@@ -1606,7 +1729,7 @@ impl Document {
         self.frames[frame_idx].active_layer_id = layer_id;
         self.revision += 1;
         let history_changed = self.history.version != history_v0;
-        self.finish(true, history_changed, vec![], vec![], true)
+        self.finish(true, history_changed, vec![], vec![], true, true)
     }
 
     pub fn frame_select(&mut self, index: u32) -> DispatchResult {
@@ -1623,7 +1746,7 @@ impl Document {
         self.selected_frame_indices = vec![index];
         self.revision += 1;
         let history_changed = self.history.version != history_v0;
-        self.finish(true, history_changed, commit_dirty, vec![], true)
+        self.finish(true, history_changed, commit_dirty, vec![], true, true)
     }
 
     pub fn frame_add(&mut self) -> DispatchResult {
@@ -1670,7 +1793,7 @@ impl Document {
         let own_dirty = full_dirty(&new_frame, canvas_w, canvas_h);
         let dirty = [commit_dirty, own_dirty].concat();
         let history_changed = self.history.version != history_v0;
-        self.finish(true, history_changed, dirty, vec![], false)
+        self.finish(true, history_changed, dirty, vec![], false, true)
     }
 
     pub fn frame_remove(&mut self, index: u32) -> DispatchResult {
@@ -1706,7 +1829,7 @@ impl Document {
         }
         let changed = own_changed || commit_changed;
         let history_changed = self.history.version != history_v0;
-        self.finish(changed, history_changed, commit_dirty, evicted, false)
+        self.finish(changed, history_changed, commit_dirty, evicted, false, true)
     }
 
     /// Simplified `doc.replace`: each replaced frame always gets exactly ONE
@@ -1733,9 +1856,23 @@ impl Document {
         let per_frame_len = (canvas_w as usize)
             .checked_mul(canvas_h as usize)
             .and_then(|v| v.checked_mul(CHANNELS as usize));
+        // Fix-agent 7g (item 4): `l > 0` closes a real DoS path — `frame_count`
+        // is a raw caller-supplied `u32`, not derived from any actual array
+        // length (unlike `frame_paste`'s equivalent, which uses
+        // `layer_counts.len()`). Without the `l > 0` guard, a zero-sized
+        // canvas (`canvas_w`/`canvas_h` of 0, never produced by legitimate
+        // callers but not otherwise rejected here) makes `per_frame_len == 0`,
+        // and `0.checked_mul(frame_count) == Some(0)` is trivially satisfied
+        // by `pixels_data.len() == 0` for ANY `frame_count`, including
+        // `u32::MAX` — `Vec::with_capacity(frame_count as usize)` below would
+        // then attempt an immediate multi-GB allocation and abort the Wasm
+        // instance (`panic = "abort"`) on a hostile direct call to this
+        // public FFI method (bypassing the TS facade, which always derives
+        // `frameCount` from a REAL `cmd.frames.length`).
         let valid = frame_count > 0
-            && per_frame_len
-                .is_some_and(|l| l.checked_mul(frame_count as usize) == Some(pixels_data.len()));
+            && per_frame_len.is_some_and(|l| {
+                l > 0 && l.checked_mul(frame_count as usize) == Some(pixels_data.len())
+            });
 
         let mut own_dirty = vec![];
         let mut evicted = vec![];
@@ -1812,7 +1949,7 @@ impl Document {
         let dirty = [commit_dirty, own_dirty].concat();
         let changed = own_changed || commit_changed;
         let history_changed = self.history.version != history_v0;
-        self.finish(changed, history_changed, dirty, evicted, false)
+        self.finish(changed, history_changed, dirty, evicted, false, true)
     }
 
     /// `frame.paste` — pastes `layer_counts.len()` fresh frames at `at`,
@@ -1831,7 +1968,8 @@ impl Document {
         visible: &[u32],
         locked: &[u32],
         opacity: &[f64],
-        names: &str,
+        name_lens: &[u32],
+        names_bytes: &[u8],
         pixels_data: &[u8],
     ) -> DispatchResult {
         let history_v0 = self.history.version;
@@ -1844,11 +1982,7 @@ impl Document {
 
         let frame_count = layer_counts.len();
         let total_layers: usize = layer_counts.iter().map(|&c| c as usize).sum();
-        let names_vec: Vec<&str> = if total_layers == 0 {
-            vec![]
-        } else {
-            names.split('\u{0}').collect()
-        };
+        let names_vec = decode_names(name_lens, names_bytes, total_layers);
         let per_layer_len = (self.canvas_w as usize)
             .checked_mul(self.canvas_h as usize)
             .and_then(|v| v.checked_mul(CHANNELS as usize));
@@ -1858,9 +1992,10 @@ impl Document {
             && opacity.len() == total_layers
             && visible.len() == total_layers
             && locked.len() == total_layers
-            && names_vec.len() == total_layers
+            && names_vec.is_some()
             && per_layer_len
                 .is_some_and(|l| l.checked_mul(total_layers) == Some(pixels_data.len()));
+        let names_vec = names_vec.unwrap_or_default();
 
         let mut own_dirty = vec![];
         let mut own_changed = false;
@@ -1918,7 +2053,7 @@ impl Document {
         let dirty = [commit_dirty, own_dirty].concat();
         let changed = own_changed || commit_changed;
         let history_changed = self.history.version != history_v0;
-        self.finish(changed, history_changed, dirty, vec![], false)
+        self.finish(changed, history_changed, dirty, vec![], false, true)
     }
 
     pub fn undo(&mut self) -> DispatchResult {
@@ -1928,14 +2063,22 @@ impl Document {
         }
         let Some(entry) = self.history.pop_undo() else {
             let history_changed = self.history.version != history_v0;
-            return self.finish(false, history_changed, vec![], vec![], false);
+            return self.finish(false, history_changed, vec![], vec![], false, false);
         };
         self.apply_entry(&entry, Direction::Before);
         self.revision += 1;
         let (dirty, evicted) = dirty_and_evicted_of(&entry, Direction::Before);
         let dirty = patch_in_canvas_rects(dirty, self.canvas_w, self.canvas_h);
         let history_changed = self.history.version != history_v0;
-        self.finish(true, history_changed, dirty, evicted, false)
+        // Fix-agent 7g: `undo`/`redo` can pop ANY of the 9 history-entry
+        // kinds (a pixel-only `Patch` just as easily as a structural
+        // `LayerAdd`/`FrameRemove`/`DocReplace`) — always report
+        // `structural: true` rather than branching on `entry`'s kind here.
+        // `undo`/`redo` are user-initiated, not a per-frame hot-path command
+        // (unlike `stroke.points`), so this costs nothing in practice and
+        // avoids a second classification surface to keep in sync with
+        // `history.rs`'s entry kinds.
+        self.finish(true, history_changed, dirty, evicted, false, true)
     }
 
     pub fn redo(&mut self) -> DispatchResult {
@@ -1945,14 +2088,14 @@ impl Document {
         }
         let Some(entry) = self.history.pop_redo() else {
             let history_changed = self.history.version != history_v0;
-            return self.finish(false, history_changed, vec![], vec![], false);
+            return self.finish(false, history_changed, vec![], vec![], false, false);
         };
         self.apply_entry(&entry, Direction::After);
         self.revision += 1;
         let (dirty, evicted) = dirty_and_evicted_of(&entry, Direction::After);
         let dirty = patch_in_canvas_rects(dirty, self.canvas_w, self.canvas_h);
         let history_changed = self.history.version != history_v0;
-        self.finish(true, history_changed, dirty, evicted, false)
+        self.finish(true, history_changed, dirty, evicted, false, true)
     }
 
     pub fn timeline_set_fps(&mut self, fps: u32) -> DispatchResult {
@@ -1960,7 +2103,7 @@ impl Document {
         self.fps = fps.clamp(MIN_FPS, MAX_FPS);
         self.revision += 1;
         let history_changed = self.history.version != history_v0;
-        self.finish(true, history_changed, vec![], vec![], true)
+        self.finish(true, history_changed, vec![], vec![], true, true)
     }
 
     pub fn timeline_toggle_loop(&mut self) -> DispatchResult {
@@ -1968,7 +2111,7 @@ impl Document {
         self.loop_enabled = !self.loop_enabled;
         self.revision += 1;
         let history_changed = self.history.version != history_v0;
-        self.finish(true, history_changed, vec![], vec![], true)
+        self.finish(true, history_changed, vec![], vec![], true, true)
     }
 
     pub fn timeline_set_frame_selection(&mut self, indices: &[u32]) -> DispatchResult {
@@ -1977,7 +2120,7 @@ impl Document {
         self.selected_frame_indices = indices.iter().copied().filter(|&i| i < len).collect();
         self.revision += 1;
         let history_changed = self.history.version != history_v0;
-        self.finish(true, history_changed, vec![], vec![], true)
+        self.finish(true, history_changed, vec![], vec![], true, true)
     }
 
     pub fn timeline_toggle_playback(&mut self) -> DispatchResult {
@@ -1985,7 +2128,7 @@ impl Document {
         self.is_playing = !self.is_playing;
         self.revision += 1;
         let history_changed = self.history.version != history_v0;
-        self.finish(true, history_changed, vec![], vec![], true)
+        self.finish(true, history_changed, vec![], vec![], true, true)
     }
 }
 
@@ -2023,6 +2166,17 @@ mod tests {
 
     fn rgba(r: u8, g: u8, b: u8, a: u8) -> u32 {
         crate::pixels::pack_rgba(r, g, b, a)
+    }
+
+    /// Test-only mirror of `encodeDocSnapshot`/`encodeDocumentPayload`'s name
+    /// encoding on the TS side (fix-agent 7g, item 2): builds the
+    /// length-prefixed `(lens, bytes)` pair `from_payload`/`frame_paste` now
+    /// expect, replacing the old `"a\u{0}b"`-joined `&str` literals these
+    /// tests used before the NUL-safety fix.
+    fn encode_names(names: &[&str]) -> (Vec<u32>, Vec<u8>) {
+        let lens = names.iter().map(|n| n.len() as u32).collect();
+        let bytes = names.iter().flat_map(|n| n.as_bytes().to_vec()).collect();
+        (lens, bytes)
     }
 
     #[test]
@@ -2212,10 +2366,41 @@ mod tests {
     }
 
     #[test]
+    fn doc_replace_rejects_a_huge_frame_count_on_a_zero_sized_canvas_instead_of_attempting_a_multi_gb_allocation(
+    ) {
+        // Fix-agent 7g (item 4, CONFIRMED DoS path): a raw, direct call to
+        // this public FFI method (bypassing the TS facade, which always
+        // derives `frameCount` from a REAL `cmd.frames.length`) with a
+        // zero-sized canvas makes `per_frame_len == 0`, which used to let
+        // `0.checked_mul(u32::MAX) == Some(0) == pixels_data.len()` (empty
+        // slice) satisfy the old `valid` check for ANY `frame_count` —
+        // `Vec::with_capacity(u32::MAX as usize)` would then attempt an
+        // immediate multi-GB allocation. This test completing at all (not
+        // hanging/OOM-crashing the test process) is itself the proof the
+        // fix works; the explicit `!r.changed` assertion confirms it is
+        // ALSO a correct, clean reject, not an accidental success.
+        let mut doc = Document::new(2, 2);
+        let r = doc.doc_replace(0, 0, u32::MAX, 100, &[], "Import");
+        assert!(!r.changed);
+        assert_eq!(doc.canvas_w, 2); // untouched
+    }
+
+    #[test]
     fn frame_paste_inserts_fresh_frames_and_is_undoable() {
         let mut doc = Document::new(2, 2);
         let pixels = vec![7u8; 2 * 2 * 4]; // 1 frame, 1 layer
-        let r = doc.frame_paste(1, &[1], &[50], &[1], &[0], &[100.0], "L1", &pixels);
+        let (name_lens, names_bytes) = encode_names(&["L1"]);
+        let r = doc.frame_paste(
+            1,
+            &[1],
+            &[50],
+            &[1],
+            &[0],
+            &[100.0],
+            &name_lens,
+            &names_bytes,
+            &pixels,
+        );
         assert!(r.changed);
         assert_eq!(doc.meta_doc()[6], 2);
         doc.undo();
@@ -2225,7 +2410,7 @@ mod tests {
     #[test]
     fn frame_paste_rejects_zero_layer_frame() {
         let mut doc = Document::new(2, 2);
-        let r = doc.frame_paste(0, &[0], &[50], &[], &[], &[], "", &[]);
+        let r = doc.frame_paste(0, &[0], &[50], &[], &[], &[], &[], &[], &[]);
         assert!(!r.changed);
     }
 
@@ -2292,20 +2477,76 @@ mod tests {
             0,  // locked[0]
         ];
         let opacity = vec![100.0];
-        let names = "Layer 1";
+        let (name_lens, names_bytes) = encode_names(&["Layer 1"]);
         let pixels = vec![5u8; 2 * 2 * 4];
-        let doc =
-            Document::from_payload(&doc_meta, &opacity, names, &pixels).expect("valid payload");
+        let doc = Document::from_payload(&doc_meta, &opacity, &name_lens, &names_bytes, &pixels)
+            .expect("valid payload");
         assert_eq!(doc.export_pixels(), pixels);
-        assert_eq!(doc.meta_layer_names(), "Layer 1");
+        assert_eq!(doc.meta_layer_name_lens(), vec![7]);
+        assert_eq!(doc.meta_layer_names_bytes(), b"Layer 1");
+    }
+
+    #[test]
+    fn from_payload_rejects_an_absurd_claimed_count_instead_of_attempting_a_multi_gb_allocation() {
+        // Fix-agent 7g (item 4, CONFIRMED DoS path): `selected_count` here
+        // claims ~4 billion entries while `doc_meta` actually has none left —
+        // `Vec::with_capacity(selected_count as usize)` used to attempt an
+        // immediate multi-GB allocation BEFORE the per-element `next(doc_meta)?`
+        // ever got a chance to fail. This test completing at all (not
+        // hanging/OOM-crashing the process) is the proof; `is_none()`
+        // confirms it is ALSO a correct, clean reject.
+        let doc_meta: Vec<u32> = vec![2, 2, 12, 1, 0, 0, 1, u32::MAX]; // selected_count = u32::MAX, nothing follows
+        let opacity = vec![100.0];
+        let (name_lens, names_bytes) = encode_names(&["Layer 1"]);
+        let pixels = vec![5u8; 2 * 2 * 4];
+        assert!(
+            Document::from_payload(&doc_meta, &opacity, &name_lens, &names_bytes, &pixels)
+                .is_none()
+        );
     }
 
     #[test]
     fn from_payload_rejects_mismatched_pixel_length() {
         let doc_meta: Vec<u32> = vec![2, 2, 12, 1, 0, 0, 1, 1, 0, 83, 0, 1, 1, 0];
         let opacity = vec![100.0];
+        let (name_lens, names_bytes) = encode_names(&["Layer 1"]);
         let pixels = vec![5u8; 3]; // wrong length
-        assert!(Document::from_payload(&doc_meta, &opacity, "Layer 1", &pixels).is_none());
+        assert!(
+            Document::from_payload(&doc_meta, &opacity, &name_lens, &names_bytes, &pixels)
+                .is_none()
+        );
+    }
+
+    #[test]
+    fn from_payload_rejects_non_utf8_name_bytes() {
+        // Fix-agent 7g (item 2): a hostile/corrupted names blob whose claimed
+        // length splits a name in the middle of a multi-byte UTF-8 sequence
+        // (or is otherwise invalid UTF-8) must be a clean reject, never a
+        // panic — `decode_names`'s `std::str::from_utf8(...).ok()?`.
+        let doc_meta: Vec<u32> = vec![2, 2, 12, 1, 0, 0, 1, 1, 0, 83, 0, 1, 1, 0];
+        let opacity = vec![100.0];
+        let name_lens = vec![2u32];
+        let names_bytes = vec![0xFFu8, 0xFE]; // not valid UTF-8
+        let pixels = vec![5u8; 2 * 2 * 4];
+        assert!(
+            Document::from_payload(&doc_meta, &opacity, &name_lens, &names_bytes, &pixels)
+                .is_none()
+        );
+    }
+
+    #[test]
+    fn from_payload_accepts_a_name_containing_a_literal_nul_byte() {
+        // Fix-agent 7g (item 2, WARNING #3): the bug the old `\u{0}`-joined
+        // `String` wire format had — a name containing a literal NUL no
+        // longer desyncs anything, since there is no separator character at
+        // all in the length-prefixed encoding.
+        let doc_meta: Vec<u32> = vec![2, 2, 12, 1, 0, 0, 1, 1, 0, 83, 0, 1, 1, 0];
+        let opacity = vec![100.0];
+        let (name_lens, names_bytes) = encode_names(&["x\u{0}y"]);
+        let pixels = vec![5u8; 2 * 2 * 4];
+        let doc = Document::from_payload(&doc_meta, &opacity, &name_lens, &names_bytes, &pixels)
+            .expect("a NUL byte inside a name must not break decoding");
+        assert_eq!(doc.meta_layer_names_bytes(), "x\u{0}y".as_bytes());
     }
 
     #[test]
@@ -2313,8 +2554,9 @@ mod tests {
         let doc_meta: Vec<u32> = vec![2, 2, 12, 1, 0, 0, 2, 1, 0, 83, 83, 0, 0, 1, 1, 1, 1, 0, 0];
         let opacity = vec![100.0, 100.0];
         let pixels = vec![0u8; 2 * 2 * 4 * 2];
+        let (name_lens, names_bytes) = encode_names(&["Layer 1", "Layer 1"]);
         let mut doc =
-            Document::from_payload(&doc_meta, &opacity, "Layer 1\u{0}Layer 1", &pixels).unwrap();
+            Document::from_payload(&doc_meta, &opacity, &name_lens, &names_bytes, &pixels).unwrap();
         let add = doc.layer_add();
         let new_id = add.dirty[0].layer_id;
         // handles 1 and 2 are already taken by the two imported layers.

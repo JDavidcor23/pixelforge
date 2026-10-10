@@ -165,6 +165,8 @@ export interface DispatchResult {
   readonly changed: boolean
   readonly contentChanged: boolean
   readonly historyChanged: boolean
+  /** Fix-agent 7g (store-loop performance): see `apps/editor/src/lib/core/commands.ts`'s `DispatchResult.structureChanged` doc — same field, same meaning. */
+  readonly structureChanged: boolean
   readonly canUndo: boolean
   readonly canRedo: boolean
   readonly strokeOpen: boolean
