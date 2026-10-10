@@ -58,7 +58,7 @@ function isValidU32(n: number): boolean {
 }
 
 /**
- * Fix-agent 6f.4 (verify-report-phase-6.md W-A): `isValidU32` alone lets
+ * Fix-agent 6f.4 (phase 6 review finding W-A): `isValidU32` alone lets
  * through numbers that are individually "valid" `u32`s but whose PRODUCT
  * (`target_w * target_h * 4`) overflows a 32-bit `usize` on the `wasm32`
  * target — e.g. `downscale(data, 1, 1, 32768, 32768)`, where

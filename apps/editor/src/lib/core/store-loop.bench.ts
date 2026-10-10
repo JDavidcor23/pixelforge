@@ -5,8 +5,8 @@
  * measures. `storeDispatch` below mirrors that slice's real post-7g logic
  * exactly: `snapshot()` is only ever called when `DispatchResult.
  * structureChanged` is `true`; otherwise only the dirty layers' pixel bytes
- * are copied out via `readLayer`. This is the bench phase 7f's HANDOFF.md
- * flagged as the single most important remaining item (WARNING #7): prior to
+ * are copied out via `readLayer`. This is the bench phase 7f flagged as the
+ * single most important remaining item (WARNING #7): prior to
  * 7g, the store called `snapshot()` unconditionally after EVERY dispatch that
  * changed anything, which for a Wasm core means crossing the FFI boundary
  * three times (`meta_doc`/`meta_layer_opacity`/`meta_layer_names`) and

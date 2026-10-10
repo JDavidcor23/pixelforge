@@ -74,8 +74,8 @@ export function resetWasmPixelCoreFallbackLogForTests(): void {
  * design.md's rollout note. DEFAULT STAYS `'ts'` — `resolveCoreImpl()` only
  * returns `'wasm'` when the user (or a test) explicitly set the `pf:core`
  * override or `VITE_PIXEL_CORE` env var; flipping the default is a decision
- * for AFTER full manual browser testing (see `HANDOFF.md`'s Phase 7
- * section), not something this function does on its own.
+ * for AFTER full manual browser testing (see design.md's "Current status
+ * & follow-ups" section), not something this function does on its own.
  *
  * Phase 7f CRITICAL #1 fix: this function being synchronous used to mean the
  * Wasm module was NEVER loaded by the time the very first `ensureCore()`

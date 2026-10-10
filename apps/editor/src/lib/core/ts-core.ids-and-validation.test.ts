@@ -30,7 +30,7 @@ import { setIdSeed, type DocSnapshot } from './ts-core'
  *   dangling `activeLayerId`. Fixed: both commands now validate byte length,
  *   and `frame.paste` rejects empty-layer frames outright.
  *
- * Fix-agent phase 5f.2 (`verify-report-phase-5.md` CRITICAL finding): the
+ * Fix-agent phase 5f.2 (phase 5 review CRITICAL finding): the
  * test below ("a seeded core re-importing...") passed BEFORE this fix too,
  * but for the wrong reason — `TsPixelCore.importDocument` evaluates
  * `createCoreState(payloadToDoc(doc))` left-to-right, and `payloadToDoc`

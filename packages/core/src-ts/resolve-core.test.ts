@@ -80,7 +80,7 @@ describe('fallback to TS on load failure (W6)', () => {
   })
 })
 
-describe.skipIf(!pkgAvailable)('loadWasmModule concurrency (fix-agent 6f.2, verify-report-phase-6.md W-B)', () => {
+describe.skipIf(!pkgAvailable)('loadWasmModule concurrency (fix-agent 6f.2, phase 6 review finding W-B)', () => {
   it('two concurrent first callers share ONE in-flight instantiation, not a separate one each', async () => {
     let initCalls = 0
     const countingInit: Parameters<typeof loadWasmModule>[0] = (mod) => {

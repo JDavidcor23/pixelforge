@@ -525,10 +525,10 @@ consecutive runs):
 `packages/core/bench/thresholds.json`'s downscale gate tightened from `1.4`
 (the old, wrong "Wasm is slower" reality) to `0.45` (margin above the new
 measured ~0.35x) — the false "FFI-copy dominated" claim is removed from
-every doc it appeared in (this file, `HANDOFF.md`, `tasks.md`).
+every doc it appeared in (this file, `tasks.md`).
 
 **Other fixes in this pass** (full detail in `tasks.md`'s "Phase 6f"
-section and `HANDOFF.md`):
+section):
 1. `sprite-pipeline.ts` bypassed the `pf:core`/`VITE_PIXEL_CORE` kill switch
    by calling `@pixelforge/core`'s `resolveKernels()` directly — fixed to
    route through `lib/core/kernels.ts`'s new `getActiveKernelsAsync()`.
@@ -573,8 +573,8 @@ undo stack, mirrors `history.ts`) + `bindings.rs`'s new `WasmDocument`
 wasm-bindgen class + `packages/core/src-ts/wasm-document-core.ts`'s
 `WasmPixelCore` facade (implements the SAME `PixelCore` interface
 `TsPixelCore` does). DEFAULT STAYS `ts` per the orchestrator's explicit
-decision — see `HANDOFF.md`'s Phase 7 section for exactly how to flip it for
-manual testing.
+decision — see `design.md`'s "Current status & follow-ups" section for
+exactly how to flip it for manual testing.
 
 **Bug found and fixed BY the differential fuzz, not before it** (worth
 recording as a methodology note): `focus_structural` (undo/redo's "which
@@ -631,7 +631,7 @@ surface (≈20 new wasm-bindgen methods + the domain logic behind them), still
 comfortably under budget.
 
 **Known deviations/gaps** (documented, not hidden — full detail in
-`HANDOFF.md`'s Phase 7 section): `frame.paste`'s pasted-frame `activeLayerId`
+`design.md`'s "Current status & follow-ups" section): `frame.paste`'s pasted-frame `activeLayerId`
 always defaults to the first layer (the original `SerializedFrame.
 activeLayerId` passthrough isn't part of this phase's wire format); `import
 Document`'s corrupted-payload recovery is a single "fall back to one new
@@ -670,7 +670,7 @@ end to end, even after the `structureChanged` fix removed the unconditional
 `snapshot()` call that was the single biggest identified cost. This is a
 real, measured result, not a methodology artifact — repeated runs land
 consistently in the ~1.5x-2.1x-slower range. The fix is a genuine
-improvement (HANDOFF.md's phase-7f note put the pre-fix number at an
+improvement (phase 7f's note put the pre-fix number at an
 informal ~1.95x slower; the worse of the two post-fix scenarios here,
 256px/8f/8l, is ~1.92x-2.14x — comparable-to-slightly-better, and the
 64px/1f/1l scenario, the more common real-world canvas size, improved more

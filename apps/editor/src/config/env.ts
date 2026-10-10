@@ -1,6 +1,6 @@
 /**
  * The single place `apps/editor` reads `import.meta.env.VITE_*` (phase 3
- * cleanup, from `verify-report-phase-3.md`: `lib/supabase.ts` and
+ * cleanup, from the phase 3 verification review: `lib/supabase.ts` and
  * `lib/core/core-config.ts` each read Vite env vars directly — one module
  * instead means a future env var rename/addition touches exactly one file,
  * and nothing else in the codebase needs to know `import.meta.env` exists.

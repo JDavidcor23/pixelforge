@@ -55,7 +55,7 @@ use crate::pixels::CHANNELS;
 
 const SATURATION_WEIGHT: f64 = 6.0;
 
-/// Fix-agent 6f.4 (verify-report-phase-6.md, bundled with W-A's
+/// Fix-agent 6f.4 (phase 6 review finding, bundled with W-A's
 /// `downscale` target-dimension bound): `colors` has no upper bound today,
 /// so a technically-valid-but-absurd value (e.g. `colors = 4_000_000_000`)
 /// would run `build_palette`'s `O(points * centroids)` seeding/refinement

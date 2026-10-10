@@ -725,7 +725,7 @@ export class WasmPixelCore implements PixelCore {
     // wasm-bindgen's auto-generated `FinalizationRegistry` collected the OLD
     // `WasmDocument`'s linear-memory allocation "eventually" — which is
     // correct for ONE long-lived document per `WasmPixelCore` (confirmed fine
-    // by verify-report-phase-7), but wrong for THIS method's actual usage
+    // by the phase 7 verification review), but wrong for THIS method's actual usage
     // pattern (replace the document on an otherwise long-lived core — every
     // "open file"/draft restore/corrupted-import recovery). `.free()` is
     // wasm-bindgen's synchronous, deterministic release of that instance's
@@ -836,7 +836,7 @@ export class WasmPixelCore implements PixelCore {
    * (phase 7f WARNING #6); this covers the one case that didn't: discarding
    * a `WasmPixelCore` instance ENTIRELY (never calling anything else on it
    * again) without waiting on GC + wasm-bindgen's `FinalizationRegistry`,
-   * which verify-report-phase-7 confirmed is fine for the app's actual
+   * which the phase 7 verification review confirmed is fine for the app's actual
    * "one long-lived core per session" pattern but is not deterministic —
    * useful for tests and any future caller that creates/discards many cores
    * (e.g. a multi-document workflow). Calling ANY other method on this

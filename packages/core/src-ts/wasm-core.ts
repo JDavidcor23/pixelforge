@@ -23,7 +23,7 @@ type WasmExports = typeof import('../pkg/pixelforge_core')
 
 let wasmModule: WasmExports | null = null
 /**
- * Fix-agent 6f.2 (verify-report-phase-6.md W-B): the in-flight LOAD promise
+ * Fix-agent 6f.2 (phase 6 review finding W-B): the in-flight LOAD promise
  * itself, memoized — not just the resolved `wasmModule`. Before this, two
  * concurrent FIRST callers (e.g. `Promise.all`-ing several AI-generated
  * animation frames through `decodeGeneratedSprite` -> `resolveKernels()` ->
@@ -191,7 +191,7 @@ export function makeWasmKernels(mod: WasmExports): PixelKernels {
     },
     // Fix-agent 6f.4: `targetW`/`targetH` additionally capped at
     // `MAX_DOWNSCALE_DIMENSION` — see `ts-core.ts`'s doc on that constant
-    // (verify-report-phase-6.md W-A: an individually-"valid" but huge target
+    // (phase 6 review finding W-A: an individually-"valid" but huge target
     // size overflows a 32-bit wasm32 `usize` in `target_w*target_h*4` and
     // traps the Wasm instance).
     downscale: (data, srcW, srcH, targetW, targetH) => {

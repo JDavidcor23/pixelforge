@@ -508,7 +508,7 @@ export function diff_rect(before, after, w, h) {
  * or `target_w`/`target_h` exceeds `crate::downscale::
  * MAX_DOWNSCALE_TARGET_DIMENSION` (phase 6f boundary hardening — closes an
  * allocation-size overflow that used to trap the Wasm instance for an
- * individually-"valid" `u32` target, verify-report-phase-6.md W-A). See
+ * individually-"valid" `u32` target, phase 6 review finding W-A). See
  * `crate::downscale` for the algorithm.
  * @param {Uint8Array} data
  * @param {number} src_w

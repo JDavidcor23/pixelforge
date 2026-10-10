@@ -1,5 +1,5 @@
 /**
- * Fix-agent 6f.1/6f.3 (verify-report-phase-6.md findings): `sprite-pipeline.ts`
+ * Fix-agent 6f.1/6f.3 (phase 6 review findings): `sprite-pipeline.ts`
  * used to import `@pixelforge/core`'s `resolveKernels()` directly, which has
  * NO knowledge of the `pf:core`/`VITE_PIXEL_CORE` kill switch — every
  * quantize/downscale call attempted to load Wasm regardless of the override.

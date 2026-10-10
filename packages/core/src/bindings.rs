@@ -147,7 +147,7 @@ pub fn quantize(
 /// or `target_w`/`target_h` exceeds `crate::downscale::
 /// MAX_DOWNSCALE_TARGET_DIMENSION` (phase 6f boundary hardening — closes an
 /// allocation-size overflow that used to trap the Wasm instance for an
-/// individually-"valid" `u32` target, verify-report-phase-6.md W-A). See
+/// individually-"valid" `u32` target, phase 6 review finding W-A). See
 /// `crate::downscale` for the algorithm.
 #[allow(clippy::too_many_arguments)] // flat FFI args by design — see pixels::write_rect's precedent
 #[wasm_bindgen]

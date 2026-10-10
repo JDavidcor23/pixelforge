@@ -53,7 +53,7 @@
 //! cell, not `1 << 15`. No hashing, no per-cell heap allocation, same exact
 //! vote-counting and first-seen tie-break semantics as the original.
 //!
-//! ## Fix-agent phase 6f: overflow safety (verify-report-phase-6.md W-A)
+//! ## Fix-agent phase 6f: overflow safety (phase 6 review finding W-A)
 //!
 //! `target_w`/`target_h` are NOT bounded by `data`'s actual length the way
 //! `src_w`/`src_h` are (`pixels::valid_buffer` ties `src_w*src_h*4` to a real,
@@ -93,7 +93,7 @@ const CORE_ALPHA_THRESHOLD: u8 = 200;
 /// => `1 << 15` possible keys.
 const BUCKET_SLOT_COUNT: usize = 1 << 15;
 
-/// Fix-agent 6f.4 (verify-report-phase-6.md W-A): see this module's
+/// Fix-agent 6f.4 (phase 6 review finding W-A): see this module's
 /// "Overflow safety" doc. Mirrors `src-ts/ts-core.ts`'s
 /// `MAX_DOWNSCALE_DIMENSION` exactly — kept as a separate Rust constant
 /// (`packages/core` never depends on `apps/editor`/`src-ts`, same rule every
@@ -446,7 +446,7 @@ mod tests {
         assert_eq!(&out_above[0..3], &[9, 9, 9]);
     }
 
-    // ── Fix-agent phase 6f: overflow safety (verify-report-phase-6.md W-A) ──
+    // ── Fix-agent phase 6f: overflow safety (phase 6 review finding W-A) ──
 
     #[test]
     fn rejects_a_target_dimension_above_the_max_bound() {

@@ -437,7 +437,7 @@ describe('pixel kernels parity (ts vs wasm)', () => {
 
   // ── Fix-agent phase 6f: MAX_DOWNSCALE_DIMENSION / MAX_QUANTIZE_COLORS parity (W-A) ──
   // An individually-"valid" u32 target can still overflow the allocation-size
-  // math (verify-report-phase-6.md W-A: `downscale(data, 1, 1, 32768, 32768)`
+  // math (phase 6 review finding W-A: `downscale(data, 1, 1, 32768, 32768)`
   // trapped the real .wasm). Both implementations must reject identically.
 
   it('downscale: ts and wasm both reject a target dimension above MAX_DOWNSCALE_DIMENSION, and both still accept the bound itself', () => {

@@ -1,4 +1,4 @@
-# Fix-agent phase 6f (verify-report-phase-6.md SUGGESTION #2): makes the
+# Fix-agent phase 6f (phase 6 review SUGGESTION #2): makes the
 # packages/core/pkg/ CRLF/LF contract explicit and version-controlled instead
 # of resting entirely on every contributor's local `core.autocrlf` setting —
 # the same reproducibility philosophy that motivated build-wasm.mjs's own

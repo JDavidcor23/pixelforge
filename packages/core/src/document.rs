@@ -424,7 +424,7 @@ impl Document {
     /// Fresh document: one frame, one default layer, same shape
     /// `createEmptyDocSnapshot` builds. Ids start at 1.
     ///
-    /// Phase 7f (verify-report-phase-7, WARNING #1): `canvas_w * canvas_h *
+    /// Phase 7f (found by the phase 7 verification review, WARNING #1): `canvas_w * canvas_h *
     /// CHANNELS` is `checked_mul`'d exactly like every sibling constructor in
     /// this crate (`from_payload`, `doc_replace`) — the same overflow class
     /// phase 6f's W-A fixed for `downscale`/`quantize` (on wasm32's 32-bit
@@ -1958,7 +1958,8 @@ impl Document {
     /// `ts-core.ts`'s `serializedFrameToFrame`: every pasted frame's
     /// `activeLayerId` defaults to its FIRST layer — the original
     /// `SerializedFrame.activeLayerId` passthrough is dropped from this
-    /// phase's wire format for simplicity (documented in `HANDOFF.md`).
+    /// phase's wire format for simplicity (documented in `tasks.md`'s 7.11
+    /// follow-up task).
     #[allow(clippy::too_many_arguments)]
     pub fn frame_paste(
         &mut self,

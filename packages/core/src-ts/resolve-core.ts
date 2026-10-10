@@ -67,7 +67,7 @@ export function resetRuntimeTrapDemotionForTests(): void {
 }
 
 /**
- * Fix-agent 6f.2 (verify-report-phase-6.md W-B): `loadWasmModule` now caches
+ * Fix-agent 6f.2 (phase 6 review finding W-B): `loadWasmModule` now caches
  * a failed load for the whole session (no retry storm) — which means EVERY
  * later `resolveKernels()` call reaches this `catch` with the SAME cached
  * error. Without this flag, that would log one `console.error` per call

@@ -4,8 +4,8 @@
  * those files for the full design rationale behind every field/command
  * below, this file does not repeat it).
  *
- * KNOWN DEVIATION (documented, not hidden — see `HANDOFF.md`'s Phase 7
- * section): `Command`/`DispatchResult`/`PixelCore`/`DocSnapshot`/
+ * KNOWN DEVIATION (documented, not hidden — see `tasks.md`'s 7.14 follow-up
+ * task): `Command`/`DispatchResult`/`PixelCore`/`DocSnapshot`/
  * `DocumentPayload` canonically live in `apps/editor`, not here. The
  * established precedent for a TRULY shared boundary type is `PixelKernels`
  * (`./types.ts`) — `apps/editor` imports THAT one from `@pixelforge/core`.

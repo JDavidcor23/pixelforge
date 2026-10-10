@@ -97,7 +97,8 @@ function describeTrap(error: unknown): string {
  *   `DocSnapshot` (no history), so the rebuilt `TsPixelCore` starts with
  *   `canUndo`/`canRedo` both `false` — the pre-trap undo stack lived only
  *   inside the now-abandoned Wasm instance and cannot be recovered. This is
- *   an intentional, documented tradeoff (see `HANDOFF.md`), not a bug.
+ *   an intentional, documented tradeoff (see design.md's "Phase 7f: trap
+ *   recovery strategy" section), not a bug.
  * - **The failing command is not applied.** The trapped call still rethrows
  *   (see `guard` below) — the caller's `dispatch(cmd)` for that ONE command
  *   throws and no content/history change from it is observable anywhere.
