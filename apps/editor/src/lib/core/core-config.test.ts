@@ -3,18 +3,30 @@
  * used to claim "no Wasm implementation exists yet", which reads as a claim
  * about the WHOLE `@pixelforge/core` package — false since phase 5
  * (`lib/core/kernels.ts` already wires a real Rust/Wasm `floodFill` kernel
- * into `dispatchCommand`). The message is now scoped to what is actually
- * true (`PixelCore`, the document/history boundary, is TS-only until phase
- * 7) and names `PixelKernels` as the exception. It also now logs at most
- * ONCE per session instead of once per `resolveCore()` call.
+ * into `dispatchCommand`). It also now logs at most ONCE per session instead
+ * of once per `resolveCore()` call.
+ *
+ * Phase 7 update: `'wasm'` now ACTUALLY attempts a `WasmPixelCore` via
+ * `wasm-pixel-core-resolver.ts`'s `tryResolveWasmPixelCore` (mocked here —
+ * that function's OWN behavior, including the trap-safety wrapper, is
+ * covered by `wasm-pixel-core-resolver.test.ts`). This file only tests
+ * `resolveCore()`'s own wiring: does it use what `tryResolveWasmPixelCore`
+ * returns, and does it fall back + log correctly when that returns `null`
+ * (module not loaded / construction failed)?
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createEmptyBuffer } from '../pixel-buffer'
 import type { DocSnapshot } from './ts-core'
+import type { PixelCore } from './pixel-core'
 
 const mockGetPixelCoreEnvOverride = vi.fn<() => string | null>(() => null)
 vi.mock('@/config/env', () => ({
   getPixelCoreEnvOverride: () => mockGetPixelCoreEnvOverride(),
+}))
+
+const mockTryResolveWasmPixelCore = vi.fn<(doc: DocSnapshot) => PixelCore | null>(() => null)
+vi.mock('./wasm-pixel-core-resolver', () => ({
+  tryResolveWasmPixelCore: (doc: DocSnapshot) => mockTryResolveWasmPixelCore(doc),
 }))
 
 function makeDoc(): DocSnapshot {
@@ -34,39 +46,76 @@ function makeDoc(): DocSnapshot {
   }
 }
 
-describe('resolveCore (fix-agent 5f.7: accurate, once-per-session "wasm" fallback log)', () => {
+describe('resolveCore', () => {
   afterEach(() => {
     vi.resetModules()
     vi.restoreAllMocks()
     mockGetPixelCoreEnvOverride.mockReturnValue(null)
+    mockTryResolveWasmPixelCore.mockReset()
+    mockTryResolveWasmPixelCore.mockReturnValue(null)
   })
 
-  it('"ts" override (default): never logs', async () => {
+  it('"ts" override (default): never logs, never even asks for a Wasm core', async () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     mockGetPixelCoreEnvOverride.mockReturnValue(null)
     const { resolveCore } = await import('./core-config')
     resolveCore(makeDoc())
     resolveCore(makeDoc())
     expect(errorSpy).not.toHaveBeenCalled()
+    expect(mockTryResolveWasmPixelCore).not.toHaveBeenCalled()
   })
 
-  it('"wasm" override: logs an ACCURATE, scoped message, and only ONCE across repeated resolveCore() calls', async () => {
+  it('"wasm" override with the module not yet loaded: falls back to TsPixelCore and logs ONCE across repeated resolveCore() calls', async () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     mockGetPixelCoreEnvOverride.mockReturnValue('wasm')
+    mockTryResolveWasmPixelCore.mockReturnValue(null)
     const { resolveCore, resetWasmPixelCoreFallbackLogForTests } = await import('./core-config')
     resetWasmPixelCoreFallbackLogForTests()
 
-    resolveCore(makeDoc())
-    resolveCore(makeDoc())
+    const core1 = resolveCore(makeDoc())
+    const core2 = resolveCore(makeDoc())
     resolveCore(makeDoc())
 
+    expect(core1.impl).toBe('ts')
+    expect(core2.impl).toBe('ts')
+    expect(mockTryResolveWasmPixelCore).toHaveBeenCalledTimes(3)
     expect(errorSpy).toHaveBeenCalledTimes(1)
     const message = errorSpy.mock.calls[0][0] as string
-    // Must NOT repeat the old, misleading blanket claim...
     expect(message).not.toMatch(/no Wasm implementation exists yet/i)
-    // ...must scope the TS-only fact to PixelCore specifically...
-    expect(message).toMatch(/PixelCore/)
-    // ...and must name PixelKernels as the documented exception (already Wasm-backed since phase 5).
-    expect(message).toMatch(/PixelKernels/)
+    expect(message).toMatch(/wasm/i)
+  })
+
+  it('"wasm" override with the module already loaded: uses the Wasm core it gets back, logs nothing', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    mockGetPixelCoreEnvOverride.mockReturnValue('wasm')
+    const fakeWasmCore: PixelCore = {
+      impl: 'wasm',
+      dispatch: () => {
+        throw new Error('not used in this test')
+      },
+      undo: () => {
+        throw new Error('not used in this test')
+      },
+      redo: () => {
+        throw new Error('not used in this test')
+      },
+      readLayer: () => new Uint8ClampedArray(0),
+      snapshot: () => {
+        throw new Error('not used in this test')
+      },
+      exportDocument: () => {
+        throw new Error('not used in this test')
+      },
+      importDocument: () => undefined,
+      canUndo: false,
+      canRedo: false,
+    }
+    mockTryResolveWasmPixelCore.mockReturnValue(fakeWasmCore)
+    const { resolveCore } = await import('./core-config')
+
+    const core = resolveCore(makeDoc())
+    expect(core.impl).toBe('wasm')
+    expect(core).toBe(fakeWasmCore)
+    expect(errorSpy).not.toHaveBeenCalled()
   })
 })

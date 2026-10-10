@@ -1,6 +1,6 @@
 # Handoff — migrate-to-rust-core
 
-Last updated: 2026-10-09 (Phase 6f session). Branch: `feat/migrate-to-rust-core` (nothing committed yet — user commits manually).
+Last updated: 2026-10-09 (Phase 7 session). Branch: `feat/migrate-to-rust-core` (nothing committed yet — user commits manually).
 
 ## How to resume
 1. Read this file, then `tasks.md` (checkboxes are the source of truth), `design.md`, `baseline-bench.md`, and the `verify-report-*.md` files in this folder.
@@ -35,11 +35,87 @@ Last updated: 2026-10-09 (Phase 6f session). Branch: `feat/migrate-to-rust-core`
 - Phase 5 (Rust flood-fill, `packages/core/src/flood_fill.rs` — 4-connected, stack-based, no recursion, boundary-validated): DONE, with one open item. `PixelKernels.floodFill` wired (tsKernels reference + wasm kernel + runtime-trap fallback, same pattern as every other kernel). **First phase that actually wires a Rust kernel into `apps/editor`'s live dispatch path**: new `lib/core/kernels.ts` bridges `dispatchCommand`'s sync requirement with `resolveKernels()`'s async load (honors the same `pf:core`/`VITE_PIXEL_CORE` override chain, default stays `'ts'`); `ts-core.ts`'s `fill` case now calls `getActiveKernels().floodFill(...)` instead of the old hardcoded TS import, undo semantics unchanged. **Open item (honestly reported, not hidden)**: bench shows Wasm well under the <5ms absolute budget (~0.92-0.97ms both the full-fill and maze/holes cases) but does NOT reach the proposal's ≥3x-faster-than-TS target — measured ~2.3x-2.6x, stable across repeated runs. One optimization was tried (dropping the `visited` bool array) and measured as a NET REGRESSION (~1.3x-1.7x only) — reverted; documented in `flood_fill.rs`'s module doc, `LEARNING.md`'s new Phase 5 section (§7-12), and `baseline-bench.md`. `packages/core/bench/thresholds.json` gates both flood-fill cases at the measured reality (0.45/0.48), not the aspirational 3x, via an explicit `_comment_flood_fill` key. Tests: `packages/core` 172/172 (9 new parity cases + a new 126-case deterministic fuzz suite comparing ts/wasm byte-for-byte on random mazes); `apps/editor` 276/276 (271 prior + 5 new: `kernels.test.ts` + `ts-core.kernels-wiring.test.ts`, the latter proving via a fake-kernel mock that `dispatchCommand` genuinely calls the resolved kernel, not just that the default TS path still works). `.wasm` gzip 11,769 bytes (~7.7% of the 150KB budget); two consecutive `build:wasm` runs confirmed byte-identical (reproducibility). `cargo test` 30/30, `cargo fmt`/`clippy -D warnings`/`cargo deny check` all clean. Full monorepo `pnpm run typecheck`/`test`/`bench`/`check-bench` green. **UPDATE (phase 5f, this session)**: the "open item" above is addressed — see the "Phase 5f" section below for the scanline rewrite, the corrected FFI-copy finding, and the re-measured (still-below-3x, but now re-confirmed and better-understood) ratio.
 
 ## Next steps
-~~Phase 6 judge findings (W-A overflow, W-B loader race) + kill-switch bypass + the WRONG "FFI-copy dominated" downscale diagnosis~~ — **ADDRESSED in phase 6f** (fix-agent pass, this session): downscale is now measured 2.8x FASTER than TS (was 1.18x slower) once the real cost (a per-cell HashMap allocation, not the FFI copy) was found and fixed. See "Phase 6f" section below for the full list.
-1. Phase 7 (Rust Document/history owning buffers in linear memory, flip default core flag) — now the only remaining phase before the final non-technical summary + `/gp-init`.
-2. ~~Open item from Phase 5: flood-fill's Wasm/TS ratio (~2.3x-2.6x) is below the proposal's 3x target~~ — **ADDRESSED in phase 5f** (fix-agent pass): rewrote flood-fill to a scanline span-fill algorithm (both Rust and the TS reference) and switched `opt-level` to `3`. CORRECTION to this note's old guess: the "per-call FFI whole-buffer copy" was NOT the bottleneck — measured directly at ~1.6% of total time (`judgeB5/decomp.mts`), not worth chasing. The real lever was compute (per-pixel -> per-span). Result: absolute time improved substantially (Wasm mean ~0.32-0.39ms, down from ~0.9-1.0ms), but the Wasm/TS RATIO actually moved further from 3x (~1.3x-2.0x now vs ~2.3x-2.6x before) — a faster algorithm can narrow the ratio while making both sides faster (LEARNING.md §15 explains the mechanism). Thresholds re-set to the new measured reality with margin (`thresholds.json`). See `baseline-bench.md`'s "Phase 5f" section for full numbers.
+~~Phase 7 (Rust Document/history, full `PixelCore`)~~ — **IMPLEMENTED this session** (see "Phase 7" section below). DEFAULT STAYS `ts` — flipping it is the user's call after manual browser testing, not something this session did. Remaining before the final non-technical summary + `/gp-init`:
+1. **Manual browser testing of `pf:core = 'wasm'`** (this agent had no browser) — open the editor with `localStorage.setItem('pf:core','wasm')`, exercise draw/undo/redo/layers/frames/save-reload, confirm it feels right, THEN decide whether to flip the default (`tasks.md` 7.9) and remove the override dance. This is the one thing that genuinely could not be verified by an agent without a browser.
+2. Phase 7 follow-ups (`tasks.md` 7.11-7.15, all documented deviations, none blocking, none affecting the default `ts` experience): `frame.paste`'s pasted-frame active-layer default (always first layer, not the original selection); `importDocument`'s coarser corrupted-payload recovery (one fallback empty doc, not per-layer repair); the trap-safety wrapper's secondary ("else the store's pixel cache") fallback; hoisting `Command`/`DispatchResult`/`PixelCore` into `@pixelforge/core` as a true shared type (currently a structural duplicate, see `document-types.ts`); wiring a bench gate for `wasm-pixel-core.bench.ts`'s numbers.
 3. Remaining follow-ups from phase 4f: `.env.example` per app (blocked by sandbox permissions this session — try again in an unrestricted environment); confirm whether `vite-plugin-wasm`/`vite-plugin-top-level-await` are actually removable for `--target web` by running a real `vite build`/`vite dev` (this agent could not — no app builds allowed).
 4. Then final non-technical summary + `/gp-init` with the user.
+
+~~Phase 6 judge findings (W-A overflow, W-B loader race) + kill-switch bypass + the WRONG "FFI-copy dominated" downscale diagnosis~~ — **ADDRESSED in phase 6f** (fix-agent pass, this session): downscale is now measured 2.8x FASTER than TS (was 1.18x slower) once the real cost (a per-cell HashMap allocation, not the FFI copy) was found and fixed. See "Phase 6f" section below for the full list.
+~~Open item from Phase 5: flood-fill's Wasm/TS ratio (~2.3x-2.6x) is below the proposal's 3x target~~ — **ADDRESSED in phase 5f** (fix-agent pass): rewrote flood-fill to a scanline span-fill algorithm (both Rust and the TS reference) and switched `opt-level` to `3`. CORRECTION to this note's old guess: the "per-call FFI whole-buffer copy" was NOT the bottleneck — measured directly at ~1.6% of total time (`judgeB5/decomp.mts`), not worth chasing. The real lever was compute (per-pixel -> per-span). Result: absolute time improved substantially (Wasm mean ~0.32-0.39ms, down from ~0.9-1.0ms), but the Wasm/TS RATIO actually moved further from 3x (~1.3x-2.0x now vs ~2.3x-2.6x before) — a faster algorithm can narrow the ratio while making both sides faster (LEARNING.md §15 explains the mechanism). Thresholds re-set to the new measured reality with margin (`thresholds.json`). See `baseline-bench.md`'s "Phase 5f" section for full numbers.
+
+## Phase 7 (Rust `Document` + history — the full, stateful `PixelCore`)
+
+The hardest port, landed last per D5 ("two seams"). Full detail in
+`tasks.md`'s "Phase 7" section (source of truth), `design.md`'s new "Phase 7"
+subsection (encoding + fallback design decisions), and `LEARNING.md`'s new
+Phase 7 section (§25-§32, plain-English Rust walkthrough). Summary:
+
+- **What exists now**: `packages/core/src/document.rs` (`Document`: frames,
+  layers, pixel buffers owned in Wasm linear memory, stroke lifecycle, id
+  handles, the FULL `Command` surface — stroke/fill/region.clear/
+  selection.commit/layer CRUD/frame CRUD/`doc.replace`/`frame.paste`/undo/
+  redo/timeline.*) + `packages/core/src/history.rs` (byte-budget undo stack,
+  9 entry kinds, mirrors `history.ts`) + `bindings.rs`'s `WasmDocument`
+  wasm-bindgen class + `packages/core/src-ts/wasm-document-core.ts`'s
+  `WasmPixelCore` (implements the SAME `PixelCore` interface `TsPixelCore`
+  does, via a flat numeric wire format — no JSON, no serde, see `bindings.rs`'s
+  module doc) + `apps/editor/src/lib/core/wasm-pixel-core-resolver.ts`
+  (sync-if-loaded resolution + a `TrapSafePixelCore` wrapper that recovers
+  from a mid-session Wasm trap by exporting the trapped core's last-good
+  state and rebuilding a `TsPixelCore` from it). `core-config.ts`'s
+  `resolveCore()` now actually constructs a Wasm core when `pf:core`/
+  `VITE_PIXEL_CORE` is `'wasm'` — **DEFAULT STAYS `ts`**, per the
+  orchestrator's explicit decision (no browser available this session; real
+  user data at stake). To test manually: `localStorage.setItem('pf:core',
+  'wasm')` in the browser console, or `VITE_PIXEL_CORE=wasm` in
+  `apps/editor`'s env.
+- **Parity gate**: a 300-seed x 60-step differential fuzz
+  (`apps/editor/src/lib/core/wasm-pixel-core.differential.fuzz.test.ts`)
+  comparing `TsPixelCore` and `WasmPixelCore` on the identical random command
+  sequence — every `DispatchResult` field every step, byte-identical
+  `exportDocument()` every 7th step. Runs in well under a second. This fuzz
+  FOUND a real bug on its first run (seed 92, step 26): `focus_structural`
+  (undo/redo's "which frame becomes current" resolution) read a STALE array
+  index after `self.frames` had already been mutated by an insert/remove —
+  fixed by capturing the previous current-frame id BEFORE any mutation,
+  mirroring how `ts-core.ts`'s equivalent reads it off the UNMUTATED `doc`
+  argument. Full mechanism in `baseline-bench.md`'s "Phase 7" section and
+  `LEARNING.md` §32 — a genuine example of a differential fuzz catching
+  something no hand-written unit test in `document.rs` happened to exercise.
+- **Tests**: `cargo test` 87/87 (55 prior + 32 new: `document.rs`/`history.rs`
+  unit tests covering the full command surface, undo/redo, id-collision-
+  after-import, the undo-memory reference scenario). `packages/core`
+  4,265/4,265 (4,249 + 16 new: `wasm-document-core.test.ts`, against the real
+  compiled `.wasm`). `apps/editor` 303/303 (294 + 9: `core-config.test.ts`
+  rewritten for the now-real wasm wiring, `wasm-pixel-core-resolver.test.ts`'s
+  4 trap-safety cases, the differential fuzz, the undo-memory baseline).
+  `cargo fmt --check`/`cargo clippy --all-targets -- -D warnings` clean. Two
+  consecutive `build:wasm` runs byte-identical (SHA-256 compare via Node's
+  `crypto` — `cmp`/`sha256sum` unavailable in this shell). Gzip `.wasm`:
+  41,234 bytes (~27.5% of the 150KB budget), up from 12,619 bytes at the end
+  of phase 6f — the expected cost of the full `Document` surface (~20 new
+  wasm-bindgen methods), still comfortably under budget.
+- **Bench** (honest numbers, `apps/editor/src/lib/core/wasm-pixel-core.
+  bench.ts`, NOT wired into a pass/fail gate — `packages/core/bench/
+  thresholds.json`'s gate is `PixelKernels`-scoped): stroke (60-point batch)
+  1.95x faster on Wasm, fill 2.06x faster, undo+redo 3.01x faster, a
+  structural op pair (layer.add+remove) 1.94x faster. Full table in
+  `baseline-bench.md`'s "Phase 7" section.
+- **Known, documented deviations** (none affect the default `ts` experience
+  — `tasks.md` 7.11-7.15 have the full list and exact file pointers):
+  `frame.paste`'s pasted-frame active-layer always defaults to the first
+  layer; `importDocument`'s corrupted-payload recovery is one coarse
+  fallback-to-empty-document branch (not `payloadToDoc`'s finer per-layer
+  repair); the trap-safety wrapper's secondary "else the store's pixel
+  cache" fallback isn't implemented (only the primary, export-based
+  recovery); `Command`/`DispatchResult`/`PixelCore` types are a structural
+  duplicate in `@pixelforge/core` (`document-types.ts`) rather than a shared
+  import — the `PixelKernels` precedent this phase did not extend; the bench
+  numbers above have no pass/fail gate yet.
+- **Not done, by explicit instruction**: flipping `VITE_PIXEL_CORE`'s
+  default to `wasm` (7.9) and the final commit (7.10) — both left for the
+  user/orchestrator.
 
 - Phase 6 (Rust quantize + downscale, `packages/core/src/{quantize,downscale}.rs`): DONE, verified; **superseded by phase 6f below** for the downscale perf numbers and the editor-wiring kill-switch (phase 6's original claims are kept here for history, corrected inline). `quantize` ported as a flat-buffer weighted k-means-style palette reducer (no `w`/`h` needed — spatially agnostic); `downscale` ports ONLY `downscaleTo` (majority-vote + anti-alias defringe) — `resizeNearest` intentionally out of scope (not named by tasks.md, not covered by the pixel-core spec scenario; `apps/editor` keeps calling it directly). Both wired into `PixelKernels` (`types.ts`, `ts-core.ts`, `wasm-core.ts`, `resolve-core.ts`'s `withRuntimeTrapFallback`) with the same `isValidU32` boundary-number-validation convention every other kernel argument gets (phase 5f.5). **Editor wiring**: `apps/editor/src/lib/sprite-pipeline.ts`'s `quantizeIfNeeded`/`downscaleViaKernels` now route through `resolveKernels()` (same override chain + automatic TS fallback every other caller uses) — covers both the file-import pipeline AND the AI sprite pipeline (`retro-diffusion-utils.ts`'s `decodeGeneratedSprite` calls `decodeToPixels` directly), with the original oracle kept as a defensive (never-triggered) fallback. **Parity**: `cargo test` 50/50 (20 new: 9 quantize + 11 downscale); `pixel-parity.test.ts` +14 ts/wasm cases; new `quantize-downscale.fuzz.test.ts` (2,000 randomized ts/wasm cases EACH for quantize and downscale, deterministic LCG, 0 failures); two new `apps/editor` oracle-parity suites (`quantize.oracle-parity.test.ts`, `downscale.oracle-parity.test.ts`, mirroring `flood-fill.oracle-parity.test.ts`'s pattern) — 2,000 randomized cases EACH vs the ORIGINAL untouched oracle files, plus dedicated edge-case and boundary-number-validation tests, 0 failures. Full monorepo `pnpm run typecheck`/`test` green (`packages/core` 4,244 tests, `apps/editor` 289 tests). **Bench** (honest numbers, `baseline-bench.md`'s "Phase 6" section): quantize is COMPUTE-HEAVY and Wasm wins decisively (~3.4x-3.65x faster than TS at 16/32 colors on a 64x64 buffer); downscale is FFI-copy-dominated (whole 512x512 source buffer copied per call, same cost class as `extractRect`/`writeRect`/batched `put_points`) and Wasm is measured ~1.17x-1.18x SLOWER than TS — recorded honestly, no spec requirement violated (the pixel-core spec's 3x/5ms performance budget names only flood-fill). `thresholds.json` gates both at measured reality with margin (0.4 for quantize, 1.4 for downscale). `cargo fmt`/`clippy -D warnings`/`cargo deny check` all clean. Two consecutive `build:wasm` runs byte-identical; post-build host-path scan clean; gzip `.wasm` 14,647 bytes (~9.8% of the 150KB budget, up from 10,273 bytes at the end of phase 5f). `LEARNING.md` gained a new "Phase 6" section (§17-22): `f64`/JS `number` bit-identical parity, the `127.5` fallback-threshold float, iterators vs index loops, `Vec::with_capacity`, why NOT sorting/deduping the vote buckets (insertion-order tie-break), and why quantize/downscale's wasm-bindgen return needs none of flood-fill's tuple-packing machinery.
 
@@ -185,3 +261,12 @@ clean. Two consecutive `build:wasm` runs byte-identical (all 5 `pkg/`
 files); gzip `.wasm` 12,619 bytes (~8.4% of the 150KB budget, DOWN from
 14,647 bytes — the flat-table rewrite compiles to less code than
 `HashMap`'s generic machinery). No commits made (per instruction).
+
+## Phase 7 status (one-line summary — full writeup earlier in this file)
+
+IMPLEMENTED this session. Default stays `ts`; `'wasm'` is fully wired
+(trap-safe) behind the existing `pf:core`/`VITE_PIXEL_CORE` override. Parity
+verified by a 300-seed x 60-step differential fuzz (found and fixed one real
+bug on its first run — see the "Phase 7" section above). `cargo test`
+87/87, `packages/core` 4,265/4,265, `apps/editor` 303/303, gzip `.wasm`
+41,234 bytes. No commits made (per instruction).

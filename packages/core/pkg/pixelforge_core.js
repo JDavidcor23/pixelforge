@@ -1,6 +1,416 @@
 /* @ts-self-types="./pixelforge_core.d.ts" */
 
 /**
+ * The Wasm-exposed `Document` handle. Holds the ENTIRE document (frames,
+ * layers, pixel buffers) in Wasm linear memory — `readLayer`/`exportPixels`
+ * are the only ways pixel bytes ever leave it, and both always COPY (D7: a
+ * view into Wasm memory is invalidated by the next call that might grow
+ * that memory).
+ */
+export class WasmDocument {
+    static __wrap(ptr) {
+        const obj = Object.create(WasmDocument.prototype);
+        obj.__wbg_ptr = ptr;
+        WasmDocumentFinalization.register(obj, obj.__wbg_ptr, obj);
+        return obj;
+    }
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        WasmDocumentFinalization.unregister(this);
+        return ptr;
+    }
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_wasmdocument_free(ptr, 0);
+    }
+    /**
+     * @returns {boolean}
+     */
+    can_redo() {
+        const ret = wasm.wasmdocument_can_redo(this.__wbg_ptr);
+        return ret !== 0;
+    }
+    /**
+     * @returns {boolean}
+     */
+    can_undo() {
+        const ret = wasm.wasmdocument_can_undo(this.__wbg_ptr);
+        return ret !== 0;
+    }
+    /**
+     * @param {number} canvas_w
+     * @param {number} canvas_h
+     * @param {number} frame_count
+     * @param {number} frame_duration_ms
+     * @param {Uint8Array} pixels
+     * @param {string} label
+     * @returns {Uint32Array}
+     */
+    doc_replace(canvas_w, canvas_h, frame_count, frame_duration_ms, pixels, label) {
+        const ptr0 = passArray8ToWasm0(pixels, wasm.__wbindgen_malloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ptr1 = passStringToWasm0(label, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len1 = WASM_VECTOR_LEN;
+        const ret = wasm.wasmdocument_doc_replace(this.__wbg_ptr, canvas_w, canvas_h, frame_count, frame_duration_ms, ptr0, len0, ptr1, len1);
+        var v3 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v3;
+    }
+    /**
+     * @returns {Uint8Array}
+     */
+    export_pixels() {
+        const ret = wasm.wasmdocument_export_pixels(this.__wbg_ptr);
+        var v1 = getArrayU8FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
+        return v1;
+    }
+    /**
+     * @param {number} layer_id
+     * @param {number} x
+     * @param {number} y
+     * @param {number} rgba
+     * @param {string} label
+     * @returns {Uint32Array}
+     */
+    fill(layer_id, x, y, rgba, label) {
+        const ptr0 = passStringToWasm0(label, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.wasmdocument_fill(this.__wbg_ptr, layer_id, x, y, rgba, ptr0, len0);
+        var v2 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v2;
+    }
+    /**
+     * @returns {Uint32Array}
+     */
+    frame_add() {
+        const ret = wasm.wasmdocument_frame_add(this.__wbg_ptr);
+        var v1 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v1;
+    }
+    /**
+     * @param {number} at
+     * @param {Uint32Array} layer_counts
+     * @param {Uint32Array} durations
+     * @param {Uint32Array} visible
+     * @param {Uint32Array} locked
+     * @param {Float64Array} opacity
+     * @param {string} names
+     * @param {Uint8Array} pixels
+     * @returns {Uint32Array}
+     */
+    frame_paste(at, layer_counts, durations, visible, locked, opacity, names, pixels) {
+        const ptr0 = passArray32ToWasm0(layer_counts, wasm.__wbindgen_malloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ptr1 = passArray32ToWasm0(durations, wasm.__wbindgen_malloc);
+        const len1 = WASM_VECTOR_LEN;
+        const ptr2 = passArray32ToWasm0(visible, wasm.__wbindgen_malloc);
+        const len2 = WASM_VECTOR_LEN;
+        const ptr3 = passArray32ToWasm0(locked, wasm.__wbindgen_malloc);
+        const len3 = WASM_VECTOR_LEN;
+        const ptr4 = passArrayF64ToWasm0(opacity, wasm.__wbindgen_malloc);
+        const len4 = WASM_VECTOR_LEN;
+        const ptr5 = passStringToWasm0(names, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len5 = WASM_VECTOR_LEN;
+        const ptr6 = passArray8ToWasm0(pixels, wasm.__wbindgen_malloc);
+        const len6 = WASM_VECTOR_LEN;
+        const ret = wasm.wasmdocument_frame_paste(this.__wbg_ptr, at, ptr0, len0, ptr1, len1, ptr2, len2, ptr3, len3, ptr4, len4, ptr5, len5, ptr6, len6);
+        var v8 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v8;
+    }
+    /**
+     * @param {number} index
+     * @returns {Uint32Array}
+     */
+    frame_remove(index) {
+        const ret = wasm.wasmdocument_frame_remove(this.__wbg_ptr, index);
+        var v1 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v1;
+    }
+    /**
+     * @param {number} index
+     * @returns {Uint32Array}
+     */
+    frame_select(index) {
+        const ret = wasm.wasmdocument_frame_select(this.__wbg_ptr, index);
+        var v1 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v1;
+    }
+    /**
+     * Imports a full document from the flat wire format. `undefined` on any
+     * shape mismatch — a boundary-validated no-op, never a panic/throw. See
+     * `Document::from_payload`'s doc for the exact `doc_meta` layout.
+     * @param {Uint32Array} doc_meta
+     * @param {Float64Array} layer_opacity
+     * @param {string} layer_names
+     * @param {Uint8Array} pixels
+     * @returns {WasmDocument | undefined}
+     */
+    static from_payload(doc_meta, layer_opacity, layer_names, pixels) {
+        const ptr0 = passArray32ToWasm0(doc_meta, wasm.__wbindgen_malloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ptr1 = passArrayF64ToWasm0(layer_opacity, wasm.__wbindgen_malloc);
+        const len1 = WASM_VECTOR_LEN;
+        const ptr2 = passStringToWasm0(layer_names, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len2 = WASM_VECTOR_LEN;
+        const ptr3 = passArray8ToWasm0(pixels, wasm.__wbindgen_malloc);
+        const len3 = WASM_VECTOR_LEN;
+        const ret = wasm.wasmdocument_from_payload(ptr0, len0, ptr1, len1, ptr2, len2, ptr3, len3);
+        return ret === 0 ? undefined : WasmDocument.__wrap(ret);
+    }
+    /**
+     * @returns {number}
+     */
+    history_bytes() {
+        const ret = wasm.wasmdocument_history_bytes(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @returns {Uint32Array}
+     */
+    layer_add() {
+        const ret = wasm.wasmdocument_layer_add(this.__wbg_ptr);
+        var v1 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v1;
+    }
+    /**
+     * @param {number} layer_id
+     * @param {string | null} [name]
+     * @param {boolean | null} [visible]
+     * @param {boolean | null} [locked]
+     * @param {number | null} [opacity]
+     * @returns {Uint32Array}
+     */
+    layer_meta(layer_id, name, visible, locked, opacity) {
+        var ptr0 = isLikeNone(name) ? 0 : passStringToWasm0(name, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        var len0 = WASM_VECTOR_LEN;
+        const ret = wasm.wasmdocument_layer_meta(this.__wbg_ptr, layer_id, ptr0, len0, isLikeNone(visible) ? 0xFFFFFF : visible ? 1 : 0, isLikeNone(locked) ? 0xFFFFFF : locked ? 1 : 0, !isLikeNone(opacity), isLikeNone(opacity) ? 0 : opacity);
+        var v2 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v2;
+    }
+    /**
+     * @param {number} layer_id
+     * @returns {Uint32Array}
+     */
+    layer_remove(layer_id) {
+        const ret = wasm.wasmdocument_layer_remove(this.__wbg_ptr, layer_id);
+        var v1 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v1;
+    }
+    /**
+     * @param {number} from
+     * @param {number} to
+     * @returns {Uint32Array}
+     */
+    layer_reorder(from, to) {
+        const ret = wasm.wasmdocument_layer_reorder(this.__wbg_ptr, from, to);
+        var v1 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v1;
+    }
+    /**
+     * @param {number} layer_id
+     * @returns {Uint32Array}
+     */
+    layer_set_active(layer_id) {
+        const ret = wasm.wasmdocument_layer_set_active(this.__wbg_ptr, layer_id);
+        var v1 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v1;
+    }
+    /**
+     * @returns {Uint32Array}
+     */
+    meta_doc() {
+        const ret = wasm.wasmdocument_meta_doc(this.__wbg_ptr);
+        var v1 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v1;
+    }
+    /**
+     * @returns {string}
+     */
+    meta_layer_names() {
+        let deferred1_0;
+        let deferred1_1;
+        try {
+            const ret = wasm.wasmdocument_meta_layer_names(this.__wbg_ptr);
+            deferred1_0 = ret[0];
+            deferred1_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+        }
+    }
+    /**
+     * @returns {Float64Array}
+     */
+    meta_layer_opacity() {
+        const ret = wasm.wasmdocument_meta_layer_opacity(this.__wbg_ptr);
+        var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+        return v1;
+    }
+    /**
+     * Fresh document: one frame, one default layer. Mirrors
+     * `Document::new` — see that function's doc.
+     * @param {number} canvas_w
+     * @param {number} canvas_h
+     */
+    constructor(canvas_w, canvas_h) {
+        const ret = wasm.wasmdocument_new(canvas_w, canvas_h);
+        this.__wbg_ptr = ret;
+        WasmDocumentFinalization.register(this, this.__wbg_ptr, this);
+        return this;
+    }
+    /**
+     * @param {number} frame_id
+     * @param {number} layer_id
+     * @returns {Uint8Array}
+     */
+    read_layer(frame_id, layer_id) {
+        const ret = wasm.wasmdocument_read_layer(this.__wbg_ptr, frame_id, layer_id);
+        var v1 = getArrayU8FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
+        return v1;
+    }
+    /**
+     * @returns {Uint32Array}
+     */
+    redo() {
+        const ret = wasm.wasmdocument_redo(this.__wbg_ptr);
+        var v1 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v1;
+    }
+    /**
+     * @param {number} layer_id
+     * @param {number} rx
+     * @param {number} ry
+     * @param {number} rw
+     * @param {number} rh
+     * @returns {Uint32Array}
+     */
+    region_clear(layer_id, rx, ry, rw, rh) {
+        const ret = wasm.wasmdocument_region_clear(this.__wbg_ptr, layer_id, rx, ry, rw, rh);
+        var v1 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v1;
+    }
+    /**
+     * @param {number} layer_id
+     * @param {number} rx
+     * @param {number} ry
+     * @param {number} rw
+     * @param {number} rh
+     * @param {Uint8Array} pixels
+     * @returns {Uint32Array}
+     */
+    selection_commit(layer_id, rx, ry, rw, rh, pixels) {
+        const ptr0 = passArray8ToWasm0(pixels, wasm.__wbindgen_malloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.wasmdocument_selection_commit(this.__wbg_ptr, layer_id, rx, ry, rw, rh, ptr0, len0);
+        var v2 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v2;
+    }
+    /**
+     * @param {number} layer_id
+     * @returns {Uint32Array}
+     */
+    stroke_begin(layer_id) {
+        const ret = wasm.wasmdocument_stroke_begin(this.__wbg_ptr, layer_id);
+        var v1 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v1;
+    }
+    /**
+     * @param {string} label
+     * @returns {Uint32Array}
+     */
+    stroke_end(label) {
+        const ptr0 = passStringToWasm0(label, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.wasmdocument_stroke_end(this.__wbg_ptr, ptr0, len0);
+        var v2 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v2;
+    }
+    /**
+     * @param {Int32Array} points
+     * @param {number} rgba
+     * @returns {Uint32Array}
+     */
+    stroke_points(points, rgba) {
+        const ptr0 = passArray32ToWasm0(points, wasm.__wbindgen_malloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.wasmdocument_stroke_points(this.__wbg_ptr, ptr0, len0, rgba);
+        var v2 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v2;
+    }
+    /**
+     * @param {number} fps
+     * @returns {Uint32Array}
+     */
+    timeline_set_fps(fps) {
+        const ret = wasm.wasmdocument_timeline_set_fps(this.__wbg_ptr, fps);
+        var v1 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v1;
+    }
+    /**
+     * @param {Uint32Array} indices
+     * @returns {Uint32Array}
+     */
+    timeline_set_frame_selection(indices) {
+        const ptr0 = passArray32ToWasm0(indices, wasm.__wbindgen_malloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.wasmdocument_timeline_set_frame_selection(this.__wbg_ptr, ptr0, len0);
+        var v2 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v2;
+    }
+    /**
+     * @returns {Uint32Array}
+     */
+    timeline_toggle_loop() {
+        const ret = wasm.wasmdocument_timeline_toggle_loop(this.__wbg_ptr);
+        var v1 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v1;
+    }
+    /**
+     * @returns {Uint32Array}
+     */
+    timeline_toggle_playback() {
+        const ret = wasm.wasmdocument_timeline_toggle_playback(this.__wbg_ptr);
+        var v1 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v1;
+    }
+    /**
+     * @returns {Uint32Array}
+     */
+    undo() {
+        const ret = wasm.wasmdocument_undo(this.__wbg_ptr);
+        var v1 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v1;
+    }
+}
+if (Symbol.dispose) WasmDocument.prototype[Symbol.dispose] = WasmDocument.prototype.free;
+
+/**
  * `true` iff two same-length byte slices hold identical values.
  * @param {Uint8Array} a
  * @param {Uint8Array} b
@@ -250,6 +660,9 @@ function __wbg_get_imports() {
         __wbg___wbindgen_copy_to_typed_array_88899a52af046901: function(arg0, arg1, arg2) {
             new Uint8Array(arg2.buffer, arg2.byteOffset, arg2.byteLength).set(getArrayU8FromWasm0(arg0, arg1));
         },
+        __wbg___wbindgen_throw_41e9ee4f547fc59a: function(arg0, arg1) {
+            throw new Error(getStringFromWasm0(arg0, arg1));
+        },
         __wbindgen_init_externref_table: function() {
             const table = wasm.__wbindgen_externrefs;
             const offset = table.grow(4);
@@ -266,6 +679,15 @@ function __wbg_get_imports() {
     };
 }
 
+const WasmDocumentFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_wasmdocument_free(ptr, 1));
+
+function getArrayF64FromWasm0(ptr, len) {
+    ptr = ptr >>> 0;
+    return getFloat64ArrayMemory0().subarray(ptr / 8, ptr / 8 + len);
+}
+
 function getArrayU32FromWasm0(ptr, len) {
     ptr = ptr >>> 0;
     return getUint32ArrayMemory0().subarray(ptr / 4, ptr / 4 + len);
@@ -274,6 +696,18 @@ function getArrayU32FromWasm0(ptr, len) {
 function getArrayU8FromWasm0(ptr, len) {
     ptr = ptr >>> 0;
     return getUint8ArrayMemory0().subarray(ptr / 1, ptr / 1 + len);
+}
+
+let cachedFloat64ArrayMemory0 = null;
+function getFloat64ArrayMemory0() {
+    if (cachedFloat64ArrayMemory0 === null || cachedFloat64ArrayMemory0.byteLength === 0) {
+        cachedFloat64ArrayMemory0 = new Float64Array(wasm.memory.buffer);
+    }
+    return cachedFloat64ArrayMemory0;
+}
+
+function getStringFromWasm0(ptr, len) {
+    return decodeText(ptr >>> 0, len);
 }
 
 let cachedUint32ArrayMemory0 = null;
@@ -292,6 +726,10 @@ function getUint8ArrayMemory0() {
     return cachedUint8ArrayMemory0;
 }
 
+function isLikeNone(x) {
+    return x === undefined || x === null;
+}
+
 function passArray32ToWasm0(arg, malloc) {
     const ptr = malloc(arg.length * 4, 4) >>> 0;
     getUint32ArrayMemory0().set(arg, ptr / 4);
@@ -306,6 +744,77 @@ function passArray8ToWasm0(arg, malloc) {
     return ptr;
 }
 
+function passArrayF64ToWasm0(arg, malloc) {
+    const ptr = malloc(arg.length * 8, 8) >>> 0;
+    getFloat64ArrayMemory0().set(arg, ptr / 8);
+    WASM_VECTOR_LEN = arg.length;
+    return ptr;
+}
+
+function passStringToWasm0(arg, malloc, realloc) {
+    if (realloc === undefined) {
+        const buf = cachedTextEncoder.encode(arg);
+        const ptr = malloc(buf.length, 1) >>> 0;
+        getUint8ArrayMemory0().subarray(ptr, ptr + buf.length).set(buf);
+        WASM_VECTOR_LEN = buf.length;
+        return ptr;
+    }
+
+    let len = arg.length;
+    let ptr = malloc(len, 1) >>> 0;
+
+    const mem = getUint8ArrayMemory0();
+
+    let offset = 0;
+
+    for (; offset < len; offset++) {
+        const code = arg.charCodeAt(offset);
+        if (code > 0x7F) break;
+        mem[ptr + offset] = code;
+    }
+    if (offset !== len) {
+        if (offset !== 0) {
+            arg = arg.slice(offset);
+        }
+        ptr = realloc(ptr, len, len = offset + arg.length * 3, 1) >>> 0;
+        const view = getUint8ArrayMemory0().subarray(ptr + offset, ptr + len);
+        const ret = cachedTextEncoder.encodeInto(arg, view);
+
+        offset += ret.written;
+        ptr = realloc(ptr, len, offset, 1) >>> 0;
+    }
+
+    WASM_VECTOR_LEN = offset;
+    return ptr;
+}
+
+let cachedTextDecoder = new TextDecoder('utf-8', { ignoreBOM: true, fatal: true });
+cachedTextDecoder.decode();
+const MAX_SAFARI_DECODE_BYTES = 2146435072;
+let numBytesDecoded = 0;
+function decodeText(ptr, len) {
+    numBytesDecoded += len;
+    if (numBytesDecoded >= MAX_SAFARI_DECODE_BYTES) {
+        cachedTextDecoder = new TextDecoder('utf-8', { ignoreBOM: true, fatal: true });
+        cachedTextDecoder.decode();
+        numBytesDecoded = len;
+    }
+    return cachedTextDecoder.decode(getUint8ArrayMemory0().subarray(ptr, ptr + len));
+}
+
+const cachedTextEncoder = new TextEncoder();
+
+if (!('encodeInto' in cachedTextEncoder)) {
+    cachedTextEncoder.encodeInto = function (arg, view) {
+        const buf = cachedTextEncoder.encode(arg);
+        view.set(buf);
+        return {
+            read: arg.length,
+            written: buf.length
+        };
+    };
+}
+
 let WASM_VECTOR_LEN = 0;
 
 let wasmModule, wasmInstance, wasm;
@@ -313,6 +822,7 @@ function __wbg_finalize_init(instance, module) {
     wasmInstance = instance;
     wasm = instance.exports;
     wasmModule = module;
+    cachedFloat64ArrayMemory0 = null;
     cachedUint32ArrayMemory0 = null;
     cachedUint8ArrayMemory0 = null;
     wasm.__wbindgen_start();

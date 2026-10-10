@@ -21,6 +21,13 @@ mod flood_fill;
 mod pixels;
 mod quantize;
 
+/// Phase 7: `Document` (frames/layers/pixel buffers owned in Wasm linear
+/// memory) + its command dispatch. Same hexagonal rule.
+pub mod document;
+/// Phase 7: dirty-rect/structural undo history. Same hexagonal rule as every
+/// other domain module — no wasm-bindgen import.
+pub mod history;
+
 pub mod bindings;
 
 // Re-exported so `cargo test` (which compiles this crate as a plain `rlib`,

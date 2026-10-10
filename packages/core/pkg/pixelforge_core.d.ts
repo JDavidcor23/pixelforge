@@ -2,6 +2,59 @@
 /* eslint-disable */
 
 /**
+ * The Wasm-exposed `Document` handle. Holds the ENTIRE document (frames,
+ * layers, pixel buffers) in Wasm linear memory — `readLayer`/`exportPixels`
+ * are the only ways pixel bytes ever leave it, and both always COPY (D7: a
+ * view into Wasm memory is invalidated by the next call that might grow
+ * that memory).
+ */
+export class WasmDocument {
+    free(): void;
+    [Symbol.dispose](): void;
+    can_redo(): boolean;
+    can_undo(): boolean;
+    doc_replace(canvas_w: number, canvas_h: number, frame_count: number, frame_duration_ms: number, pixels: Uint8Array, label: string): Uint32Array;
+    export_pixels(): Uint8Array;
+    fill(layer_id: number, x: number, y: number, rgba: number, label: string): Uint32Array;
+    frame_add(): Uint32Array;
+    frame_paste(at: number, layer_counts: Uint32Array, durations: Uint32Array, visible: Uint32Array, locked: Uint32Array, opacity: Float64Array, names: string, pixels: Uint8Array): Uint32Array;
+    frame_remove(index: number): Uint32Array;
+    frame_select(index: number): Uint32Array;
+    /**
+     * Imports a full document from the flat wire format. `undefined` on any
+     * shape mismatch — a boundary-validated no-op, never a panic/throw. See
+     * `Document::from_payload`'s doc for the exact `doc_meta` layout.
+     */
+    static from_payload(doc_meta: Uint32Array, layer_opacity: Float64Array, layer_names: string, pixels: Uint8Array): WasmDocument | undefined;
+    history_bytes(): number;
+    layer_add(): Uint32Array;
+    layer_meta(layer_id: number, name?: string | null, visible?: boolean | null, locked?: boolean | null, opacity?: number | null): Uint32Array;
+    layer_remove(layer_id: number): Uint32Array;
+    layer_reorder(from: number, to: number): Uint32Array;
+    layer_set_active(layer_id: number): Uint32Array;
+    meta_doc(): Uint32Array;
+    meta_layer_names(): string;
+    meta_layer_opacity(): Float64Array;
+    /**
+     * Fresh document: one frame, one default layer. Mirrors
+     * `Document::new` — see that function's doc.
+     */
+    constructor(canvas_w: number, canvas_h: number);
+    read_layer(frame_id: number, layer_id: number): Uint8Array;
+    redo(): Uint32Array;
+    region_clear(layer_id: number, rx: number, ry: number, rw: number, rh: number): Uint32Array;
+    selection_commit(layer_id: number, rx: number, ry: number, rw: number, rh: number, pixels: Uint8Array): Uint32Array;
+    stroke_begin(layer_id: number): Uint32Array;
+    stroke_end(label: string): Uint32Array;
+    stroke_points(points: Int32Array, rgba: number): Uint32Array;
+    timeline_set_fps(fps: number): Uint32Array;
+    timeline_set_frame_selection(indices: Uint32Array): Uint32Array;
+    timeline_toggle_loop(): Uint32Array;
+    timeline_toggle_playback(): Uint32Array;
+    undo(): Uint32Array;
+}
+
+/**
  * `true` iff two same-length byte slices hold identical values.
  */
 export function bytes_equal(a: Uint8Array, b: Uint8Array): boolean;
@@ -95,6 +148,7 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 
 export interface InitOutput {
     readonly memory: WebAssembly.Memory;
+    readonly __wbg_wasmdocument_free: (a: number, b: number) => void;
     readonly bytes_equal: (a: number, b: number, c: number, d: number) => number;
     readonly clone_buffer: (a: number, b: number) => [number, number];
     readonly diff_rect: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];
@@ -105,10 +159,43 @@ export interface InitOutput {
     readonly put_pixel: (a: number, b: number, c: any, d: number, e: number, f: number, g: number, h: number) => number;
     readonly put_points: (a: number, b: number, c: any, d: number, e: number, f: number, g: number, h: number) => number;
     readonly quantize: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];
+    readonly wasmdocument_can_redo: (a: number) => number;
+    readonly wasmdocument_can_undo: (a: number) => number;
+    readonly wasmdocument_doc_replace: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number) => [number, number];
+    readonly wasmdocument_export_pixels: (a: number) => [number, number];
+    readonly wasmdocument_fill: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => [number, number];
+    readonly wasmdocument_frame_add: (a: number) => [number, number];
+    readonly wasmdocument_frame_paste: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number, m: number, n: number, o: number, p: number) => [number, number];
+    readonly wasmdocument_frame_remove: (a: number, b: number) => [number, number];
+    readonly wasmdocument_frame_select: (a: number, b: number) => [number, number];
+    readonly wasmdocument_from_payload: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => number;
+    readonly wasmdocument_history_bytes: (a: number) => number;
+    readonly wasmdocument_layer_add: (a: number) => [number, number];
+    readonly wasmdocument_layer_meta: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => [number, number];
+    readonly wasmdocument_layer_remove: (a: number, b: number) => [number, number];
+    readonly wasmdocument_layer_reorder: (a: number, b: number, c: number) => [number, number];
+    readonly wasmdocument_layer_set_active: (a: number, b: number) => [number, number];
+    readonly wasmdocument_meta_doc: (a: number) => [number, number];
+    readonly wasmdocument_meta_layer_names: (a: number) => [number, number];
+    readonly wasmdocument_meta_layer_opacity: (a: number) => [number, number];
+    readonly wasmdocument_new: (a: number, b: number) => number;
+    readonly wasmdocument_read_layer: (a: number, b: number, c: number) => [number, number];
+    readonly wasmdocument_redo: (a: number) => [number, number];
+    readonly wasmdocument_region_clear: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];
+    readonly wasmdocument_selection_commit: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => [number, number];
+    readonly wasmdocument_stroke_begin: (a: number, b: number) => [number, number];
+    readonly wasmdocument_stroke_end: (a: number, b: number, c: number) => [number, number];
+    readonly wasmdocument_stroke_points: (a: number, b: number, c: number, d: number) => [number, number];
+    readonly wasmdocument_timeline_set_fps: (a: number, b: number) => [number, number];
+    readonly wasmdocument_timeline_set_frame_selection: (a: number, b: number, c: number) => [number, number];
+    readonly wasmdocument_timeline_toggle_loop: (a: number) => [number, number];
+    readonly wasmdocument_timeline_toggle_playback: (a: number) => [number, number];
+    readonly wasmdocument_undo: (a: number) => [number, number];
     readonly write_rect: (a: number, b: number, c: any, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number) => number;
     readonly __wbindgen_externrefs: WebAssembly.Table;
     readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __wbindgen_free: (a: number, b: number, c: number) => void;
+    readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
     readonly __wbindgen_start: () => void;
 }
 

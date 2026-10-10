@@ -1,6 +1,7 @@
 import type { DocSnapshot } from './ts-core'
 import { TsPixelCore, type PixelCore } from './pixel-core'
 import { getPixelCoreEnvOverride } from '@/config/env'
+import { tryResolveWasmPixelCore } from './wasm-pixel-core-resolver'
 
 /**
  * Implementation switch (phase 2e, design.md: "Flag: `resolveCore()` reads
@@ -62,24 +63,31 @@ export function resetWasmPixelCoreFallbackLogForTests(): void {
 }
 
 /**
- * Builds the active `PixelCore` implementation. `'wasm'` has no backing
- * `PixelCore` (document/history) implementation yet (phase 7) — falls back
- * to `TsPixelCore` and logs via `console.error` ONCE, per design.md's
- * rollout note ("Wasm init failure falls back to TS and logs with
- * `console.error`"). This is unrelated to `PixelKernels` (flood-fill, etc.),
- * which already has a Wasm implementation as of phase 5 — see
- * `lib/core/kernels.ts`. Ids are no longer injected here (Wasm-boundary
- * blocker B4, closed) — call `setIdSeed` from `lib/core/ts-core.ts` directly
- * if a deterministic id sequence is needed (tests only; production never
- * needs one).
+ * Builds the active `PixelCore` implementation. `'wasm'` (phase 7): attempts
+ * a trap-safe `WasmPixelCore` (`lib/core/wasm-pixel-core-resolver.ts`) —
+ * returns it ONLY if the Wasm module happens to already be loaded this
+ * session (this function must stay SYNCHRONOUS, `core.slice.ts` depends on
+ * it), otherwise kicks off a background load and falls back to
+ * `TsPixelCore` for THIS document (a later `resolveCore()` call in the same
+ * session may get Wasm once loading finishes). Any construction failure
+ * ALSO falls back to `TsPixelCore`, logged once via `console.error`, per
+ * design.md's rollout note. DEFAULT STAYS `'ts'` — `resolveCoreImpl()` only
+ * returns `'wasm'` when the user (or a test) explicitly set the `pf:core`
+ * override or `VITE_PIXEL_CORE` env var; flipping the default is a decision
+ * for AFTER full manual browser testing (see `HANDOFF.md`'s Phase 7
+ * section), not something this function does on its own.
  */
 export function resolveCore(doc: DocSnapshot): PixelCore {
   const impl = resolveCoreImpl()
-  if (impl === 'wasm' && !loggedWasmPixelCoreFallback) {
-    loggedWasmPixelCoreFallback = true
-    console.error(
-      '[pixel-core] "wasm" PixelCore (document/history) requested but not implemented yet (lands in phase 7) — falling back to "ts". Note: PixelKernels (flood-fill and other per-op kernels) already run on Wasm when available, independently of this flag — see lib/core/kernels.ts.'
-    )
+  if (impl === 'wasm') {
+    const wasmCore = tryResolveWasmPixelCore(doc)
+    if (wasmCore) return wasmCore
+    if (!loggedWasmPixelCoreFallback) {
+      loggedWasmPixelCoreFallback = true
+      console.error(
+        '[pixel-core] "wasm" PixelCore requested but the Wasm module is not loaded (yet, or failed to load) this session — falling back to "ts" for this document. A later resolveCore() call may pick up Wasm once background loading finishes.'
+      )
+    }
   }
   return new TsPixelCore(doc)
 }

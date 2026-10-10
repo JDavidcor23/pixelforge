@@ -562,4 +562,84 @@ byte-identical `.wasm` (confirmed via `cmp`, all 5 `pkg/` files). Gzip'd
 `.wasm`: 12,619 bytes (~8.4% of the 150 KB budget) — SMALLER than phase 6's
 14,647 bytes, despite adding the two new bound checks, because the
 flat-table rewrite replaces `HashMap`'s generic machinery with plain array
+index (see "Phase 7" below for the full-`Document` gzip number).
+
+## Phase 7 (Rust `Document`/history — stateful `PixelCore`, the hardest port)
+
+`packages/core/src/document.rs` (full `Document`: frames, layers, pixel
+buffers owned in Wasm linear memory, stroke lifecycle, id handles, dirty-rect
++ structural undo history) + `packages/core/src/history.rs` (byte-budget
+undo stack, mirrors `history.ts`) + `bindings.rs`'s new `WasmDocument`
+wasm-bindgen class + `packages/core/src-ts/wasm-document-core.ts`'s
+`WasmPixelCore` facade (implements the SAME `PixelCore` interface
+`TsPixelCore` does). DEFAULT STAYS `ts` per the orchestrator's explicit
+decision — see `HANDOFF.md`'s Phase 7 section for exactly how to flip it for
+manual testing.
+
+**Bug found and fixed BY the differential fuzz, not before it** (worth
+recording as a methodology note): `focus_structural` (undo/redo's "which
+frame/layer becomes current" resolution) read `self.frames[self.
+current_frame_index]` to find "the frame that was current before this
+undo/redo" — but by the time it ran, `self.frames` had ALREADY been mutated
+(a frame inserted/removed), so a STALE index landed on the wrong frame
+entirely. `ts-core.ts`'s `focusStructural(doc, frames, ...)` avoids this by
+reading the OLD current frame's id off the UNMUTATED `doc` argument, before
+computing the new `frames` array. Fixed by capturing `prev_current_frame_id`
+once, at the top of `apply_entry`, BEFORE any branch mutates `self.frames`.
+Caught by seed 92 of the 300-seed differential fuzz (an `undo` of a
+`frame.paste`, which bumped the wrong layer's `layerRevisions` entry) —
+exactly the kind of bug a hand-written unit test would very plausibly have
+missed (every hand-written test in `document.rs` happened to undo/redo from
+a state where the stale-index bug was invisible: either only one frame
+existed, or the "current" frame never moved during the sequence).
+
+**Bench** (`pnpm run bench`, `apps/editor/src/lib/core/wasm-pixel-core.
+bench.ts`, 64x64 canvas, warm, this machine):
+
+| Case | ts mean | wasm mean | wasm/ts ratio |
+|------|---------|-----------|----------------|
+| stroke (60-point batch: begin+points+end) | 0.0273 ms | 0.0140 ms | **1.95x faster** |
+| fill (full 64x64) | 0.0546 ms | 0.0265 ms | **2.06x faster** |
+| fill + undo + redo | 0.0252 ms | 0.0084 ms | **3.01x faster** |
+| layer.add + layer.remove (structural) | 0.5717 ms | 0.2944 ms | **1.94x faster** |
+
+Not wired into `packages/core/bench/thresholds.json`/`check-bench.ts` (that
+gate is scoped to `packages/core/bench/*.bench.ts`'s stateless `PixelKernels`
+results; this is a NEW, stateful-`PixelCore`-level bench living in
+`apps/editor`) — recorded here honestly instead, same as every prior phase's
+numbers, with gate-wiring left as a documented follow-up (`tasks.md`).
+
+**Tests**: `packages/core` 4,265 (4,249 + 16 new: `document.rs`/`history.rs`
+unit tests under `cargo test`, 87 total — 55 prior + 32 new covering stroke/
+fill/region.clear/selection.commit lifecycle, layer/frame CRUD + undo/redo,
+`doc.replace`/`frame.paste` + undo, id-collision-after-import, history
+eviction, the undo-memory reference scenario — plus `wasm-document-core.
+test.ts`'s 16 contract cases against the real compiled `.wasm`); `apps/
+editor` 303 (294 + 9: `core-config.test.ts`'s 3 rewritten cases for the now-
+real wasm wiring, `wasm-pixel-core-resolver.test.ts`'s 4 trap-safety cases,
+the 300-seed x 60-step differential fuzz [+ 1 skip-notice], the undo-memory
+baseline [+ 1 skip-notice]). Full monorepo `pnpm run typecheck`/`test` green;
+`cargo fmt --check`/`cargo clippy --all-targets -- -D warnings`/`cargo test`
+(87/87) clean.
+
+**Reproducibility + size**: two consecutive `build:wasm` runs byte-identical
+(confirmed via a SHA-256 compare of `pixelforge_core_bg.wasm`, Node's
+`crypto` module — `cmp`/`sha256sum` were unavailable in this shell). Gzip'd
+`.wasm`: 41,234 bytes (~27.5% of the 150 KB budget) — up from 12,619 bytes at
+the end of phase 6f, the expected cost of the full `Document`/history
+surface (≈20 new wasm-bindgen methods + the domain logic behind them), still
+comfortably under budget.
+
+**Known deviations/gaps** (documented, not hidden — full detail in
+`HANDOFF.md`'s Phase 7 section): `frame.paste`'s pasted-frame `activeLayerId`
+always defaults to the first layer (the original `SerializedFrame.
+activeLayerId` passthrough isn't part of this phase's wire format); `import
+Document`'s corrupted-payload recovery is a single "fall back to one new
+empty document" branch, coarser than `payloadToDoc`'s per-layer repair/
+dedup; the trap-safety wrapper's secondary fallback ("else from the store's
+pixel cache") isn't implemented, only the primary ("recover via the trapped
+core's own `exportDocument()`"); the bench numbers above aren't wired into a
+pass/fail gate. None of these affect the DEFAULT (`ts`) user experience —
+they only matter once `pf:core`/`VITE_PIXEL_CORE` is explicitly set to
+`wasm`.
 indexing (less generic code to compile into Wasm).

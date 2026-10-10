@@ -160,3 +160,291 @@ pub fn downscale(
 ) -> Option<Vec<u8>> {
     crate::downscale::downscale(data, src_w, src_h, target_w, target_h)
 }
+
+// ─────────────────────────────────────────────────────────────────────────
+// Phase 7: `WasmDocument` — the stateful `PixelCore` seam (design.md D5:
+// "PixelKernels (stateless) under PixelCore (stateful document)"). Every
+// method below is a thin pass-through to `crate::document::Document`, never
+// business logic of its own (same hexagonal rule as every kernel above).
+//
+// ## Wire format (D6: "no serde" — flat numeric arrays + one NUL-joined
+// string, never a serialized object graph)
+//
+// Every mutating method below returns a `Vec<u32>` — the flat encoding of a
+// `crate::document::DispatchResult` (mirrors `commands.ts`'s
+// `DispatchResult`):
+// ```text
+// [0] changed (0/1)            [1] contentChanged (0/1)
+// [2] historyChanged (0/1)     [3] canUndo (0/1)
+// [4] canRedo (0/1)            [5] strokeOpen (0/1)
+// [6] revision (truncated to u32 — see note below)
+// [7] contentRevision (truncated to u32)
+// [8] dirtyCount (D)           [9] evictedCount (E)
+// [10] layerRevisionsCount (L)
+// next D*6:  [frameId, layerId, x, y, w, h] per dirty rect
+// next E*2:  [frameId, layerId] per evicted ref
+// next L*2:  [layerId, revision] per layer-revisions entry
+// ```
+// `revision`/`contentRevision` are `u64` in `crate::document` but truncated
+// to `u32` here — a session would need four billion dispatches to overflow
+// this, far beyond this editor's realistic lifetime; truncating avoids a
+// second, BigInt-flavored wire format for two render-purpose counters whose
+// only real use is "did this change" (a client compares successive values,
+// never prints them).
+//
+// `WasmDocument::from_payload`/`doc_replace`/`frame_paste` decode/encode a
+// full document the same flat-array way — see `Document::from_payload`'s doc
+// for the exact `doc_meta` layout, and `meta_doc` below for the
+// metadata-export mirror of it. Layer/frame NAMES are the one piece of
+// genuinely free-form text in this boundary; they cross as a single
+// NUL-joined `String` (`\u0000`-separated) rather than a JSON array — a
+// native JS string needs no escaping/parsing on either side, unlike JSON.
+
+use crate::document::{DispatchResult, Document};
+
+fn encode_dispatch_result(r: &DispatchResult) -> Vec<u32> {
+    let mut out = vec![
+        r.changed as u32,
+        r.content_changed as u32,
+        r.history_changed as u32,
+        r.can_undo as u32,
+        r.can_redo as u32,
+        r.stroke_open as u32,
+        r.revision as u32,
+        r.content_revision as u32,
+        r.dirty.len() as u32,
+        r.evicted.len() as u32,
+        r.layer_revisions.len() as u32,
+    ];
+    for d in &r.dirty {
+        out.extend([
+            d.frame_id, d.layer_id, d.rect.x, d.rect.y, d.rect.w, d.rect.h,
+        ]);
+    }
+    for e in &r.evicted {
+        out.extend([e.frame_id, e.layer_id]);
+    }
+    for (layer_id, rev) in &r.layer_revisions {
+        out.extend([*layer_id, *rev as u32]);
+    }
+    out
+}
+
+/// The Wasm-exposed `Document` handle. Holds the ENTIRE document (frames,
+/// layers, pixel buffers) in Wasm linear memory — `readLayer`/`exportPixels`
+/// are the only ways pixel bytes ever leave it, and both always COPY (D7: a
+/// view into Wasm memory is invalidated by the next call that might grow
+/// that memory).
+#[wasm_bindgen]
+pub struct WasmDocument {
+    inner: Document,
+}
+
+#[wasm_bindgen]
+impl WasmDocument {
+    /// Fresh document: one frame, one default layer. Mirrors
+    /// `Document::new` — see that function's doc.
+    #[wasm_bindgen(constructor)]
+    pub fn new(canvas_w: u32, canvas_h: u32) -> WasmDocument {
+        WasmDocument {
+            inner: Document::new(canvas_w, canvas_h),
+        }
+    }
+
+    /// Imports a full document from the flat wire format. `undefined` on any
+    /// shape mismatch — a boundary-validated no-op, never a panic/throw. See
+    /// `Document::from_payload`'s doc for the exact `doc_meta` layout.
+    pub fn from_payload(
+        doc_meta: &[u32],
+        layer_opacity: &[f64],
+        layer_names: &str,
+        pixels: &[u8],
+    ) -> Option<WasmDocument> {
+        Document::from_payload(doc_meta, layer_opacity, layer_names, pixels)
+            .map(|inner| WasmDocument { inner })
+    }
+
+    // ── Reads ────────────────────────────────────────────────────────────
+
+    pub fn read_layer(&self, frame_id: u32, layer_id: u32) -> Vec<u8> {
+        self.inner.read_layer(frame_id, layer_id)
+    }
+
+    pub fn export_pixels(&self) -> Vec<u8> {
+        self.inner.export_pixels()
+    }
+
+    pub fn meta_doc(&self) -> Vec<u32> {
+        self.inner.meta_doc()
+    }
+
+    pub fn meta_layer_opacity(&self) -> Vec<f64> {
+        self.inner.meta_layer_opacity()
+    }
+
+    pub fn meta_layer_names(&self) -> String {
+        self.inner.meta_layer_names()
+    }
+
+    pub fn can_undo(&self) -> bool {
+        self.inner.can_undo()
+    }
+
+    pub fn can_redo(&self) -> bool {
+        self.inner.can_redo()
+    }
+
+    pub fn history_bytes(&self) -> u32 {
+        self.inner.history_bytes()
+    }
+
+    // ── Commands (each returns the flat `DispatchResult` encoding above) ───
+
+    pub fn stroke_begin(&mut self, layer_id: u32) -> Vec<u32> {
+        encode_dispatch_result(&self.inner.stroke_begin(layer_id))
+    }
+
+    pub fn stroke_points(&mut self, points: &[i32], rgba: u32) -> Vec<u32> {
+        encode_dispatch_result(&self.inner.stroke_points(points, rgba))
+    }
+
+    pub fn stroke_end(&mut self, label: &str) -> Vec<u32> {
+        encode_dispatch_result(&self.inner.stroke_end(label))
+    }
+
+    pub fn fill(&mut self, layer_id: u32, x: u32, y: u32, rgba: u32, label: &str) -> Vec<u32> {
+        encode_dispatch_result(&self.inner.fill(layer_id, x, y, rgba, label))
+    }
+
+    pub fn region_clear(&mut self, layer_id: u32, rx: u32, ry: u32, rw: u32, rh: u32) -> Vec<u32> {
+        encode_dispatch_result(&self.inner.region_clear(layer_id, rx, ry, rw, rh))
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn selection_commit(
+        &mut self,
+        layer_id: u32,
+        rx: u32,
+        ry: u32,
+        rw: u32,
+        rh: u32,
+        pixels: &[u8],
+    ) -> Vec<u32> {
+        encode_dispatch_result(
+            &self
+                .inner
+                .selection_commit(layer_id, rx, ry, rw, rh, pixels),
+        )
+    }
+
+    pub fn layer_add(&mut self) -> Vec<u32> {
+        encode_dispatch_result(&self.inner.layer_add())
+    }
+
+    pub fn layer_remove(&mut self, layer_id: u32) -> Vec<u32> {
+        encode_dispatch_result(&self.inner.layer_remove(layer_id))
+    }
+
+    pub fn layer_meta(
+        &mut self,
+        layer_id: u32,
+        name: Option<String>,
+        visible: Option<bool>,
+        locked: Option<bool>,
+        opacity: Option<f64>,
+    ) -> Vec<u32> {
+        encode_dispatch_result(
+            &self
+                .inner
+                .layer_meta(layer_id, name, visible, locked, opacity),
+        )
+    }
+
+    pub fn layer_reorder(&mut self, from: u32, to: u32) -> Vec<u32> {
+        encode_dispatch_result(&self.inner.layer_reorder(from, to))
+    }
+
+    pub fn layer_set_active(&mut self, layer_id: u32) -> Vec<u32> {
+        encode_dispatch_result(&self.inner.layer_set_active(layer_id))
+    }
+
+    pub fn frame_add(&mut self) -> Vec<u32> {
+        encode_dispatch_result(&self.inner.frame_add())
+    }
+
+    pub fn frame_remove(&mut self, index: u32) -> Vec<u32> {
+        encode_dispatch_result(&self.inner.frame_remove(index))
+    }
+
+    pub fn frame_select(&mut self, index: u32) -> Vec<u32> {
+        encode_dispatch_result(&self.inner.frame_select(index))
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn doc_replace(
+        &mut self,
+        canvas_w: u32,
+        canvas_h: u32,
+        frame_count: u32,
+        frame_duration_ms: u32,
+        pixels: &[u8],
+        label: &str,
+    ) -> Vec<u32> {
+        encode_dispatch_result(&self.inner.doc_replace(
+            canvas_w,
+            canvas_h,
+            frame_count,
+            frame_duration_ms,
+            pixels,
+            label,
+        ))
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn frame_paste(
+        &mut self,
+        at: u32,
+        layer_counts: &[u32],
+        durations: &[u32],
+        visible: &[u32],
+        locked: &[u32],
+        opacity: &[f64],
+        names: &str,
+        pixels: &[u8],
+    ) -> Vec<u32> {
+        encode_dispatch_result(&self.inner.frame_paste(
+            at,
+            layer_counts,
+            durations,
+            visible,
+            locked,
+            opacity,
+            names,
+            pixels,
+        ))
+    }
+
+    pub fn undo(&mut self) -> Vec<u32> {
+        encode_dispatch_result(&self.inner.undo())
+    }
+
+    pub fn redo(&mut self) -> Vec<u32> {
+        encode_dispatch_result(&self.inner.redo())
+    }
+
+    pub fn timeline_set_fps(&mut self, fps: u32) -> Vec<u32> {
+        encode_dispatch_result(&self.inner.timeline_set_fps(fps))
+    }
+
+    pub fn timeline_toggle_loop(&mut self) -> Vec<u32> {
+        encode_dispatch_result(&self.inner.timeline_toggle_loop())
+    }
+
+    pub fn timeline_set_frame_selection(&mut self, indices: &[u32]) -> Vec<u32> {
+        encode_dispatch_result(&self.inner.timeline_set_frame_selection(indices))
+    }
+
+    pub fn timeline_toggle_playback(&mut self) -> Vec<u32> {
+        encode_dispatch_result(&self.inner.timeline_toggle_playback())
+    }
+}

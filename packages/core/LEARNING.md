@@ -621,3 +621,157 @@ crate that targets `wasm32`: trusting "it worked when I ran `cargo test`"
 is not evidence it is safe on the actual deployment target, if the
 computation's magnitude is anywhere near `u32::MAX` on a target where
 `usize` is narrower than the host that ran the test.
+
+## Phase 7 — `Document`: a stateful struct, not a stateless function (plain English, for a JS dev)
+
+Phases 4-6 ported stateless FUNCTIONS: `data` in, a new/mutated `data` out,
+nothing remembered between calls. Phase 7 ports a stateful OBJECT — the
+whole sprite document, living in Wasm memory for as long as the page keeps
+it open. This section is about what changes once Rust has to REMEMBER
+things, not just compute them.
+
+### 25. A command is an `enum`, not a string — `match` is JS's `switch`, but exhaustive
+
+TS's `Command` is a union of 20 object shapes discriminated by a `type`
+string (`commands.ts`). The literal Rust equivalent would be an `enum
+Command { StrokeBegin { layer_id: u32 }, StrokePoints { ... }, ... }`
+dispatched with `match cmd { ... }` — and this crate's `history.rs` DOES use
+exactly that shape for `HistoryEntry` (nine variants, each carrying only the
+data that kind of undo entry needs — `Patch`'s `before`/`after` bytes,
+`LayerAdd`'s whole removed `Layer`, `LayerMeta`'s two small metadata
+snapshots). The difference from a JS `switch`: `match` on an `enum` is
+EXHAUSTIVE at compile time — forgetting a variant is a compile ERROR, not a
+silently-falls-through-to-`default` bug discovered at runtime. `document.rs`
+itself does NOT use one big `Command` enum, though — see §26 for why.
+
+### 26. Why `Document` has 20 separate public methods instead of one `dispatch(cmd)`
+
+TS's engine is ONE function, `dispatchCommand`, switching on `cmd.type`.
+This crate's `Document` has 20 separate public methods (`stroke_begin`,
+`fill`, `layer_add`, …) instead. This is a wasm-bindgen ABI constraint, not
+a style choice: wasm-bindgen cannot marshal an arbitrary tagged-union
+JS object across the FFI boundary without `serde`, which design D6 rules
+out ("no serde" — see `bindings.rs`'s module doc). Splitting one polymorphic
+`dispatch` into many monomorphic methods, each with a FLAT parameter list
+(`u32`s, slices, one `&str`), sidesteps the problem entirely: every method
+is already the shape wasm-bindgen marshals for free. The TS facade
+(`wasm-document-core.ts`'s `dispatch`) is where the `switch` on `cmd.type`
+still lives — it just routes to a specific Rust METHOD instead of passing a
+tagged payload to one generic Rust FUNCTION.
+
+### 27. Owning data IN Wasm memory vs copying it OUT — the whole point of phase 7
+
+Phases 4-6's kernels took a buffer IN, returned a buffer OUT — the ACTUAL
+pixel array always lived in JS (a `Uint8ClampedArray`), Wasm only ever saw a
+temporary copy for the duration of one call. Phase 7 flips this: `Document`
+OWNS every `Layer.data: Vec<u8>` permanently, for as long as the page keeps
+this document open — JS never holds the authoritative copy at all. This is
+WHY `readLayer`/`exportPixels` must always COPY on the way out (`.clone()`/
+`.to_vec()`): a `Vec<u8>`'s backing allocation lives in Wasm's linear
+memory, and that memory can be REALLOCATED (moved to a different address)
+the next time Wasm needs more of it — which can happen on ANY later call
+into this crate, including one that has nothing to do with the layer you
+just read. A raw pointer/view into the OLD location would then point at
+stale or reused memory. `wasm-bindgen`'s `Vec<u8>` return type already does
+this copy for you automatically (same mechanism §4 describes for a `&mut
+[u8]` argument) — the Rust code only has to remember to RETURN a `Vec<u8>`
+(owned, copied out) and never try to hand back something view-like.
+
+### 28. `Vec<Layer>` nested inside `Vec<Frame>` — not one big arena, and why that's fine here
+
+A natural "fast" instinct is: one giant `Vec<u8>` arena for ALL pixels,
+with frames/layers as index ranges into it (closer to how a real game
+engine might lay out texture memory). This crate does NOT do that —
+`Document.frames: Vec<Frame>`, each `Frame.layers: Vec<Layer>`, each
+`Layer.data: Vec<u8>` — a separate heap allocation per layer, nested two
+levels deep. This is a deliberate simplicity-over-micro-optimization choice
+for THIS workload: sprite documents are small (a handful of frames/layers,
+each at most a few hundred KB), structural edits (add/remove/reorder a
+frame or layer) are exactly the operations a single arena would make
+EXPENSIVE (an arena needs to shift every byte after an insertion point; a
+`Vec<Frame>`/`Vec<Layer>` needs only to shift pointers), and Rust's
+ownership model makes "a `Layer` owns its own `Vec<u8>`" the path of least
+resistance (no lifetime parameters, no unsafe, no manual offset bookkeeping)
+— `rustc`/LLVM already optimize the common case (iterate every layer's
+bytes, e.g. `export_pixels`) into a tight loop regardless of how the outer
+`Vec`s are nested. A single arena would be the right call for a workload
+with thousands of tiny, fixed-size records (exactly what `downscale.rs`'s
+§23 flat-table rewrite does, at a MUCH smaller unit size) — not for a
+handful of independently-resizable, independently-undoable pixel buffers.
+
+### 29. `HashMap<u32, u64>` for `layerRevisions` — why a hash map THIS time, unlike §23
+
+§23 replaced a per-cell `HashMap` with a flat array because the key space
+was small and bounded (`1 << 15`, a 3-channel-quantized color) and the map
+was reallocated thousands of times per call. `Document.layer_revisions` is
+the opposite shape: the key space (layer ids) is UNBOUNDED (a session can
+mint arbitrarily many layers over its lifetime) and the map is built ONCE
+and updated in place for the life of the document, never reallocated per
+call. A flat array indexed by id would need to be pre-sized to "however
+many ids might ever exist" — impossible to bound in advance — so the
+general-purpose hash map is the right tool here specifically because the
+access pattern (rare growth, frequent small in-place updates, unbounded
+sparse keys) is the one hash maps are actually designed for, unlike §23's
+dense-small-bounded-key, reallocated-every-call pattern.
+
+### 30. How an undo patch works in Rust — `extract_rect`/`write_rect`, not a second fork of the data
+
+A `HistoryPatch` doesn't store "the layer before" and "the layer after" as
+two full copies — only `before`/`after`: the BYTES of the dirty rect itself
+(`crate::pixels::extract_rect`), typically a few bytes to a few KB even on a
+large canvas. `Document::end_open_stroke` computes this by diffing the
+pre-stroke `shadow` copy (one clone, taken once at `stroke_begin`) against
+the live post-stroke buffer via `diff_rect` (same algorithm `pixels.rs`'s
+kernel already provides — undo history is built ENTIRELY out of the same
+primitives the kernels expose, no separate "history diffing" code path).
+Undoing later is just `write_rect(&mut layer.data, ..., &patch.before)` —
+the SAME function a live stroke uses to paint, just writing recorded bytes
+instead of freshly-computed ones. This is why `history.rs`'s per-entry byte
+cost (`entry_bytes`) stays small regardless of canvas size: a 1-pixel edit
+on a 4096x4096 canvas still costs exactly 8 bytes (4 before + 4 after), the
+same as on a 4x4 canvas — verified by `document.rs`'s
+`undo_memory_reference_scenario_a_single_pixel_stroke_retains_8_bytes` test
+and the matching `apps/editor` bench (`wasm-pixel-core.undo-memory.
+baseline.test.ts`).
+
+### 31. `Option<T>` at the boundary, not `Result<T, E>` — only ONE way to fail here
+
+Phases 4-6's kernels return `Option<...>`/`bool` for "boundary-validated
+no-op" (§3). Phase 7's ONE genuinely fallible boundary call,
+`Document::from_payload`, follows the exact same convention: `Option<Self>`,
+`None` for any shape mismatch (wrong array lengths, zero frames, a
+zero-layer frame) — never `Result<Self, String>`. The reason is the same as
+§3's: wasm-bindgen CAN marshal a `Result<T, JsValue>` as a thrown JS
+exception, but this crate has exactly ONE failure REASON worth
+distinguishing from success ("the input didn't decode"), and the CALLER
+(`wasm-document-core.ts`) already has a richer, TS-side error message it
+wants to log instead of whatever string crossed the FFI boundary — so
+`None` (the caller decides what to say) is both simpler AND more useful
+than `Result` here. `Result` would earn its keep the moment this crate ever
+needs to distinguish MULTIPLE failure reasons that the CALLER must branch
+on differently — that day hasn't come for this crate.
+
+### 32. The bug the 300-seed differential fuzz caught that no hand-written unit test did
+
+Worth recording as its own lesson, not just a changelog line (full
+mechanism in `baseline-bench.md`'s "Phase 7" section): `focus_structural`
+(undo/redo's "which frame/layer becomes current after this" resolution)
+read `self.current_frame_index` against `self.frames` AFTER a branch of
+`apply_entry` had already inserted/removed a frame — landing on whatever
+frame now sat at that STALE index, not the frame that was actually current
+before the mutation. `ts-core.ts`'s equivalent (`focusStructural(doc,
+frames, ...)`) never has this problem because it reads the old current
+frame's id off the UNMUTATED `doc` argument, computed BEFORE the new
+`frames` array exists at all. Every hand-written `document.rs` test
+happened to undo/redo from a document shape where this was invisible
+(either only one frame existed, or "current" never moved) — a 300-seed x
+60-step random command sequence against the TS reference (`apps/editor/src/
+lib/core/wasm-pixel-core.differential.fuzz.test.ts`) found it on seed 92,
+step 26, within the first run. The fix: capture `prev_current_frame_id`
+ONCE, at the very top of `apply_entry`, before ANY branch touches
+`self.frames` — the general lesson for any Rust port of an immutable-data-
+style TS reducer: a function that reads "the OLD value of something" must
+capture that value BEFORE the equivalent of a React/Redux-style "new state"
+starts getting built in place, because Rust's mutation-in-place has no
+separate "old object" lying around to fall back on the way TS's `{...prev,
+...patch}` spread always does.
