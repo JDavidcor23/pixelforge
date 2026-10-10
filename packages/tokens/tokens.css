@@ -45,8 +45,18 @@
   --pf-accent: #00fbfb; /* the engine: actions, focus, active tool     */
   --pf-accent-strong: #00d4db; /* pressed / hover on solid accent fills       */
   --pf-ai: #7c3aed; /* AI-assisted features ONLY                   */
+  --pf-ai-ink: #a78bfa; /* AI marker icons/text on dark surfaces       */
+  --pf-ai-ink-strong: #c4b5fd; /* AI links / emphasized AI text on dark       */
+  --pf-on-accent: #000000; /* text + icons placed on solid accent fills   */
   --pf-success: #10b981;
   --pf-danger: #ff4d4d;
+
+  /* -- Elevation: floating overlays only (popovers, menus). Panels stay flat. */
+  --pf-shadow-popover: 0 16px 40px rgb(0 0 0 / 0.6);
+
+  /* -- Motion: strong ease-out for entrances and press feedback (Tailwind's
+   * built-in ease-out is too weak for deliberate UI motion). */
+  --pf-ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
 
   /* Channel triplets, for building translucent variants in plain CSS.
    * Keep in sync with the hex values directly above. */
@@ -84,8 +94,26 @@
   --color-accent: var(--pf-accent);
   --color-accent-strong: var(--pf-accent-strong);
   --color-ai: var(--pf-ai);
+  --color-ai-ink: var(--pf-ai-ink);
+  --color-ai-ink-strong: var(--pf-ai-ink-strong);
+  --color-on-accent: var(--pf-on-accent);
   --color-success: var(--pf-success);
   --color-danger: var(--pf-danger);
+
+  /* Elevation → shadow-popover */
+  --shadow-popover: var(--pf-shadow-popover);
+
+  /* Motion → ease-out-strong */
+  --ease-out-strong: var(--pf-ease-out-strong);
+
+  /* Dense UI type steps missing from Tailwind's scale
+   * → text-2xs (11px meta), text-ui (13px controls), text-title (22px detail title) */
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 0.875rem;
+  --text-ui: 0.8125rem;
+  --text-ui--line-height: 1.0625rem;
+  --text-title: 1.375rem;
+  --text-title--line-height: 1.8125rem;
 
   /* Legacy */
   --color-background: var(--background);
