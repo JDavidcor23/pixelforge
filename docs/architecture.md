@@ -16,10 +16,10 @@ PixelForge follows a **Feature-Based (Screaming) Architecture**. Unlike traditio
 We use [Zustand](https://github.com/pmnd.rs/zustand) with a modular slice pattern to manage the complex state of a pixel editor.
 
 ### Modular Slices
-The store is divided into specialized slices (found in `src/app/editor/stores/slices/`):
-- `pixel.slice.ts`: Core pixel manipulation logic.
-- `layer.slice.ts`: Layer stack management and compositing.
-- `history.slice.ts`: Undo/Redo state tracking.
+The store is divided into specialized slices (found in `apps/editor/src/stores/slices/`):
+- `core.slice.ts`: Owns the document via `dispatch(cmd)` — pixel mutation, undo/redo, dirty-rect history (replaces the old `pixel.slice.ts`/`history.slice.ts`, removed in phase 2 of the Rust-core migration).
+- `layer.slice.ts`: Layer stack management and compositing (dispatches `layer.*` commands).
+- `timeline.slice.ts`: Frame/animation timeline state (dispatches `frame.*`/`timeline.*` commands).
 - `compound.slice.ts`: The "Orchestrator" slice that combines actions from multiple slices.
 
 ### Granular Selectors
@@ -48,7 +48,7 @@ For performance, high-resolution sprites (128px+) are rendered as native canvas 
 ## 🤖 AI Integration Flow
 
 Sprite and animation generation is a multi-stage pipeline:
-1. **Prompt Processing**: user input is sent to the `/api/ai/retro-diffusion` route handler, which forwards it to Retro Diffusion with the user's key.
+1. **Prompt Processing**: user input is sent to the `/api/ai/retro-diffusion` Vercel Function (`apps/editor/api/ai/retro-diffusion.ts`), which forwards it to Retro Diffusion with the user's key.
 2. **Response Decoding**: the answer is a true RGBA PNG at the exact requested resolution, decoded straight into the editor's pixel buffer — no background keying, no downscale, no quantization.
 3. **Canvas Synchronization**: generated assets are injected into the Zustand store and automatically synchronized with the Konva renderer.
 4. **Local Persistence**: API keys are stored in `localStorage` for privacy, and never touch the backend.
@@ -64,14 +64,22 @@ Animations are managed through a `timeline` state:
 
 ## 🏗️ Project Structure
 
+pnpm workspace monorepo (see `AGENTS.md` for the full layout and `docs/adr/0005-monorepo-split.md` for why):
+
 ```bash
-src/
-├── app/editor/
-│   ├── sprites/
-│   │   ├── features/      # Feature domains (Layers, Timeline, Tools)
-│   │   ├── hooks/         # Feature-bridging hooks
-│   │   └── components/    # Feature-specific UI
-│   └── stores/
-│       ├── slices/        # Logic chunks (Zustand)
-│       └── index.ts       # Store assembly
+apps/
+├── landing/            # Next.js marketing site — its own Vercel project
+└── editor/             # Vite + React SPA (this architecture doc's subject) — its own Vercel project
+    ├── api/ai/          # Vercel Functions (Retro Diffusion, ElevenLabs proxies)
+    └── src/
+        ├── sprites/
+        │   ├── features/      # Feature domains (Layers, Timeline, Tools)
+        │   ├── hooks/         # Feature-bridging hooks
+        │   └── components/    # Feature-specific UI
+        ├── lib/core/          # PixelCore boundary (TS today, Rust/Wasm in later phases)
+        └── stores/
+            ├── slices/        # Logic chunks (Zustand)
+            └── index.ts       # Store assembly
+packages/
+└── tokens/             # Shared design tokens (tokens.css + colors.ts), consumed by both apps
 ```
