@@ -1,5 +1,3 @@
-'use client'
-
 import { Play, Square, Repeat } from 'lucide-react'
 import { useTransportBar } from './useTransportBar.hook'
 

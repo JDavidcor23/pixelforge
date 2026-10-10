@@ -9,11 +9,26 @@ You are the frontend agent for this project.
 Before generating any UI, use the design plugin:
 frontend-design@claude-plugins-official
 
+## This is a pnpm monorepo — check which app you're in FIRST
+
+| | `apps/landing` | `apps/editor` |
+|---|---|---|
+| Framework | Next.js 16 (App Router) | Vite 6 SPA |
+| Navigation | `next/link`, `useRouter` from `next/navigation` | `Link`, `useNavigate` from `react-router-dom` |
+| Images | `next/image` | plain `<img>` |
+| `'use client'` | add when needed (useState/useEffect/browser APIs) | **never** — meaningless outside Next's RSC, do not add |
+| Env vars | `process.env.NEXT_PUBLIC_*` | `import.meta.env.VITE_*` |
+| Store | none | Zustand (`apps/editor/src/stores`) |
+| Fonts | `next/font/google` | `<link>` tag in `index.html` |
+
+Everything else below (separation of responsibilities, Tailwind, Zustand
+selectors, no magic values, strict TypeScript, import order) applies to BOTH
+apps identically.
+
 ## Stack
-- Next.js 14 (App Router)
 - TypeScript (strict)
-- Tailwind CSS (no inline styles, no CSS files)
-- Zustand (granular selectors)
+- Tailwind CSS (no inline styles, no CSS files) — tokens from `packages/tokens`
+- Zustand (granular selectors) — `apps/editor` only
 
 ## Rules you always apply
 
@@ -130,56 +145,84 @@ import type { Item } from '@/types/item.types'
 
 ## Folder structure you generate
 
+`apps/landing/src/`:
 ```
-src/
-├── app/
-│   ├── page.tsx
-│   └── [feature]/
-│       └── page.tsx
-├── components/
-│   └── [domain]/
-│       └── ComponentName/
-│           ├── ComponentName.tsx
-│           └── useComponentName.hook.ts
-├── stores/
-│   └── useAppStore.store.ts
-├── services/
-│   └── feature.service.ts
-├── constants/
-│   ├── ROUTES.ts
-│   └── FEATURE_NAME.ts
-└── types/
-    └── entity.types.ts
+app/
+├── page.tsx
+└── [feature]/
+    └── page.tsx
+constants/
+└── ROUTES.ts
 ```
 
-## Navigation: Next.js only
+`apps/editor/src/` (feature-based — see `AGENTS.md` for the full tree):
+```
+[domain]/                       # e.g. sprites/, sounds/
+├── features/[feature]/
+│   └── components/ComponentName/
+│       ├── ComponentName.tsx
+│       └── useComponentName.hook.ts
+stores/
+└── slices/[feature].slice.ts   # NOT a new top-level store — add a slice
+services/
+└── feature.service.ts
+constants/
+└── FEATURE_NAME.ts
+types/
+└── entity.types.ts
+```
 
+## Navigation
+
+`apps/landing` (Next.js):
 ```tsx
 // ✅ GOOD
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 <Link href={ROUTES.HOME}>Home</Link>
 router.push(ROUTES.DASHBOARD)
+```
 
+`apps/editor` (react-router SPA):
+```tsx
+// ✅ GOOD
+import { Link, useNavigate } from 'react-router-dom'
+<Link to={EDITOR_ROUTES.SPRITES}>Sprites</Link>
+navigate(EDITOR_ROUTES.SOUNDS)
+```
+
+Never, in either app:
+```tsx
 // ❌ BAD
 window.location.href = '/dashboard'
-<a href="/dashboard">Dashboard</a>
+<a href="/dashboard">Dashboard</a>  // internal nav — use the router's Link
 ```
+An external link (different origin/domain) is the one valid case for a plain
+`<a target="_blank" rel="noopener noreferrer">` in either app.
 
 ## `'use client'` directive
 
-Add only when the component uses: `useState`, `useEffect`, `useRef`, browser APIs, or event handlers.
-Server components are the default. Do not add `'use client'` unnecessarily.
+`apps/landing` only: add when the component uses `useState`, `useEffect`,
+`useRef`, browser APIs, or event handlers. Server components are the default
+— do not add it unnecessarily.
+
+`apps/editor`: **never add it.** There is no React Server Components
+boundary in a Vite SPA — the string is inert there and signals confusion
+about the stack to the next reader.
 
 ## Images
 
+`apps/landing` (Next.js — has an image optimizer):
 ```tsx
 // ✅ GOOD
 import Image from 'next/image'
 <Image src={item.imageUrl} alt={item.name} width={64} height={64} />
+```
 
-// ❌ BAD
-<img src={item.imageUrl} alt={item.name} />
+`apps/editor` (Vite SPA — no Next image optimizer to call):
+```tsx
+// ✅ GOOD
+<img src={item.imageUrl} alt={item.name} className="h-16 w-16 object-contain" />
 ```
 
 ## When done

@@ -1,0 +1,87 @@
+@import "tailwindcss";
+@import "@pixelforge/tokens/tokens.css";
+
+/* Geist Sans/Mono loaded via a <link> in index.html (no next/font here). */
+@theme inline {
+  --font-sans: 'Geist', system-ui, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, monospace;
+}
+
+body {
+  background: var(--pf-base);
+  color: var(--pf-ink);
+  font-family: var(--font-sans);
+}
+
+/* -- Scrollbars ------------------------------------------------------------ */
+:root {
+  --scrollbar-bg: var(--pf-surface);
+  --scrollbar-thumb: rgba(255, 255, 255, 0.15);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.25);
+  --scrollbar-accent: var(--pf-accent);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-bg);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 20px;
+  border: 2px solid var(--scrollbar-bg);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: var(--scrollbar-accent);
+}
+
+@layer utilities {
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
+  .bg-grid {
+    background-size: 40px 40px;
+    background-image:
+      linear-gradient(to right, rgb(var(--pf-accent-rgb) / 0.07) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(var(--pf-accent-rgb) / 0.07) 1px, transparent 1px);
+  }
+
+  .bg-grid-fade {
+    mask-image: radial-gradient(circle at center, black, transparent 80%);
+  }
+
+  .text-shadow-accent {
+    text-shadow: 0 0 20px rgb(var(--pf-accent-rgb) / 0.3);
+  }
+
+  .glow-accent {
+    box-shadow: 0 0 30px rgb(var(--pf-accent-rgb) / 0.2);
+  }
+
+  .glow-ai {
+    box-shadow: 0 0 30px rgb(var(--pf-ai-rgb) / 0.25);
+  }
+}
+
+.konvajs-content canvas {
+  image-rendering: pixelated !important;
+}

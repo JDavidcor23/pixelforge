@@ -2,7 +2,7 @@
 
 PixelForge is a state-of-the-art, browser-based 2D game builder designed for professional game developers and artists. It combines traditional pixel art precision with cutting-edge AI workflows, allowing you to create, animate, and deploy game assets with unprecedented speed.
 
-![PixelForge Presentation](./src/assets/presentation.png)
+![PixelForge Presentation](./apps/landing/src/assets/presentation.png)
 
 ## ✨ Core Features
 
@@ -32,29 +32,36 @@ PixelForge is a state-of-the-art, browser-based 2D game builder designed for pro
 
 ## 🏗️ Technical Architecture
 
-PixelForge is built with a **Screaming Architecture** (Feature-based) to ensure maximum maintainability and scalability.
+PixelForge is a **pnpm workspace monorepo**: the marketing site and the
+editor are two separately deployed apps with two different stacks, sharing a
+design-token package. See `AGENTS.md` for the full per-app rule set and
+`docs/adr/0005-monorepo-split.md` for why.
 
-- **Frontend**: [Next.js 14](https://nextjs.org/) (App Router) + [TypeScript](https://www.typescriptlang.org/)
-- **State Management**: [Zustand](https://zustand-demo.pmnd.rs/) with a **Modular Slice Pattern**.
-- **Rendering**: [Konva.js](https://konvajs.org/) for the high-performance 2D canvas.
-- **Styling**: [Tailwind CSS](https://tailwindcss.com/) for a utility-first, performant UI.
-- **Backend/Auth**: [Supabase](https://supabase.com/) for cloud storage and user synchronization.
-- **Local Persistence**: Integrated browser `localStorage` for API keys and UI preferences, prioritizing security and privacy.
+- **Landing** (`apps/landing`): [Next.js 16](https://nextjs.org/) (App Router) + [TypeScript](https://www.typescriptlang.org/) — its own Vercel project.
+- **Editor** (`apps/editor`): [Vite](https://vitejs.dev/) + [React 19](https://react.dev/) SPA + [react-router](https://reactrouter.com/) — its own Vercel project, with `api/ai/*.ts` Vercel Functions for the AI proxies.
+- **State Management**: [Zustand](https://zustand-demo.pmnd.rs/) with a **Modular Slice Pattern** (editor only).
+- **Rendering**: [Konva.js](https://konvajs.org/) for the high-performance 2D canvas (editor).
+- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/) (CSS-first), tokens shared via `packages/tokens`.
+- **Backend/Auth**: [Supabase](https://supabase.com/) for cloud storage and user synchronization (editor).
+- **Local Persistence**: IndexedDB for sprite/animation drafts (local-first — see `docs/adr/0006`/`0007`); `localStorage` for API keys and UI preferences only.
 
 ### Project Structure Breakdown
 
 ```
-src/
-├── app/                        # Next.js App Router (Features & Routing)
-│   ├── editor/                 # Core Editor implementation
-│   │   ├── sprites/            # Sprite creation module
-│   │   │   ├── features/       # Feature-specific components (Layers, Tools, AI)
-│   │   │   ├── hooks/          # Custom hooks for canvas and state interaction
-│   │   │   └── types/          # Module-specific type definitions
-│   │   └── stores/             # Modular Zustand slices (Compound, Pixel, Tool, etc.)
-├── components/                 # Shared UI components (Atomic Design)
-├── constants/                  # Global immutable constants (UPPER_SNAKE_CASE)
-└── lib/                        # Infrastructure-level utilities and API clients
+apps/
+├── landing/                    # Next.js marketing site (its own Vercel project)
+└── editor/                     # Vite SPA — the entire editor
+    ├── api/ai/                 # Vercel Functions (Retro Diffusion, ElevenLabs proxies)
+    └── src/
+        ├── sprites/             # Sprite creation module
+        │   ├── features/        # Feature-specific components (Layers, Tools, AI)
+        │   └── hooks/            # Custom hooks for canvas and state interaction
+        ├── sounds/               # Sound editor module
+        ├── stores/              # Modular Zustand slices (Compound, Core, Tool, etc.)
+        ├── lib/core/            # PixelCore boundary (TS today, Rust/Wasm in a later phase)
+        └── types/               # Module-specific type definitions
+packages/
+└── tokens/                     # Shared design tokens (tokens.css, colors.ts) — no build step
 ```
 
 ## 🚀 Getting Started
@@ -74,21 +81,25 @@ src/
    cd pixelforge
    ```
 
-2. **Install Dependencies**:
+2. **Install Dependencies** (installs for every workspace package in one pass):
    ```bash
-   npm install
+   pnpm install
    ```
 
 3. **Environment Setup**:
-   Configure `.env.local` with your Supabase credentials:
+   Each app has its own env vars — see `apps/landing/README.md` and
+   `apps/editor/README.md` for the full list. The editor needs a local
+   `.env.local` with your Supabase credentials:
    ```env
-   NEXT_PUBLIC_SUPABASE_URL=your_project_url
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+   VITE_SUPABASE_URL=your_project_url
+   VITE_SUPABASE_ANON_KEY=your_anon_key
    ```
 
-4. **Launch Development**:
+4. **Launch Development** (both apps in parallel, or target one):
    ```bash
-   npm run dev
+   pnpm dev                              # both apps
+   pnpm --filter @pixelforge/editor dev  # editor only (http://localhost:5173)
+   pnpm --filter @pixelforge/landing dev # landing only (http://localhost:3000)
    ```
 
 ## 📖 Feature Documentation

@@ -1,5 +1,6 @@
-import type { PixelBuffer, RgbaColor, QuantizeOptions } from '@/app/editor/types'
-import { QUANTIZE_DEFAULTS } from '@/app/editor/constants'
+import type { PixelBuffer, QuantizeOptions } from '@/types'
+import { QUANTIZE_DEFAULTS } from '@/constants'
+import { cloneBuffer } from './pixel-buffer'
 
 interface Centroid { r: number; g: number; b: number }
 interface WeightedPoint extends Centroid { w: number }
@@ -53,16 +54,29 @@ const buildPalette = (points: WeightedPoint[], k: number, iterations: number): C
 export const quantizePixels = (buffer: PixelBuffer, opts: QuantizeOptions): PixelBuffer => {
   const { colors, weightBySaturation, iterations, alphaThreshold } = opts
   const k = QUANTIZE_DEFAULTS.SATURATION_WEIGHT
+  const { data } = buffer
   const points: WeightedPoint[] = []
-  for (const row of buffer) for (const p of row) {
-    if (p.a < alphaThreshold) continue
-    const w = weightBySaturation ? 1 + k * saturation(p.r, p.g, p.b) : 1
-    points.push({ r: p.r, g: p.g, b: p.b, w })
+
+  for (let i = 0; i < data.length; i += 4) {
+    const a = data[i + 3]
+    if (a < alphaThreshold) continue
+    const r = data[i]; const g = data[i + 1]; const b = data[i + 2]
+    const w = weightBySaturation ? 1 + k * saturation(r, g, b) : 1
+    points.push({ r, g, b, w })
   }
+
   const palette = buildPalette(points, colors, iterations)
-  return buffer.map(row => row.map((p): RgbaColor => {
-    if (p.a < alphaThreshold) return { ...p }
-    const c = nearest(palette, { r: p.r, g: p.g, b: p.b })
-    return { r: c.r, g: c.g, b: c.b, a: p.a }
-  }))
+  const out = cloneBuffer(buffer)
+  const outData = out.data
+
+  for (let i = 0; i < outData.length; i += 4) {
+    const a = outData[i + 3]
+    if (a < alphaThreshold) continue
+    const c = nearest(palette, { r: outData[i], g: outData[i + 1], b: outData[i + 2] })
+    outData[i] = c.r
+    outData[i + 1] = c.g
+    outData[i + 2] = c.b
+  }
+
+  return out
 }

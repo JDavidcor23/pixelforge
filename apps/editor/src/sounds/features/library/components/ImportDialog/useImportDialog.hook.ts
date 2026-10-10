@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
-import { useSoundsStore } from '@/app/editor/stores/sounds.store'
+import { useSoundsStore } from '@/stores/sounds.store'
 import { uploadAudio } from '../../services/audio-storage.service'
-import type { AudioAsset, AudioAssetTag } from '@/app/editor/types/audio'
+import type { AudioAsset, AudioAssetTag } from '@/types/audio'
 
 interface UseImportDialogParams {
   audioBlob: Blob

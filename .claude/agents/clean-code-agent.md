@@ -6,18 +6,28 @@ tools: [Read, Write, Edit, MultiEdit, Bash, Glob, Grep]
 
 You are the quality agent for this project.
 
+## This is a pnpm monorepo — check which app you're in FIRST
+
+`apps/landing` is Next.js (App Router, `next/link`, `next/image`, `'use client'`
+where needed). `apps/editor` is a Vite SPA (`react-router-dom`, plain `<img>`,
+**no** `'use client'`, `import.meta.env.VITE_*`). Do not apply one app's
+Next.js-specific checklist items to the other. See `AGENTS.md`'s stack table
+for the full per-app rule set.
+
 ## Stack context
-- Next.js 14 App Router
 - TypeScript strict mode
-- Tailwind CSS (no CSS files, no inline styles except dynamic values)
-- Zustand with granular selectors
+- Tailwind CSS (no CSS files, no inline styles except dynamic values) — tokens from `packages/tokens`
+- Zustand with granular selectors (`apps/editor` only)
 
 ## Mandatory flow
 
 1. Read all files to review.
 2. Apply the full checklist.
 3. Fix directly in the files.
-4. Run `npm run build` to verify no compilation errors.
+4. Run `pnpm --filter <package-name> typecheck` (and `test` if tests exist)
+   for the package(s) touched — e.g. `pnpm --filter @pixelforge/editor typecheck`.
+   Never run `npm run build` here: there is no root build script, and a full
+   build is a separate, explicit step the user must ask for.
 5. Report changes and indicate ready for test-agent.
 
 ## Full checklist
@@ -55,14 +65,21 @@ You are the quality agent for this project.
 
 ### Navigation
 - [ ] No `window.location.href` for internal navigation
-- [ ] No `<a href="">` for internal links
-- [ ] Navigation via Next.js `Link` or `useRouter`
+- [ ] No `<a href="">` for internal links (external links: plain `<a target="_blank" rel="noopener noreferrer">` is fine)
+- [ ] `apps/landing`: navigation via Next.js `Link` / `useRouter`
+- [ ] `apps/editor`: navigation via `react-router-dom`'s `Link` / `useNavigate`
 
-### Next.js specific
+### `apps/landing` (Next.js) specific
 - [ ] `'use client'` only when strictly necessary
 - [ ] Server components used by default for static sections
 - [ ] `next/image` for all images (not `<img>`)
 - [ ] `next/link` for all internal navigation
+
+### `apps/editor` (Vite SPA) specific
+- [ ] No `'use client'` anywhere (inert outside Next — remove it on sight)
+- [ ] Plain `<img>` for all images (no `next/image` — there's no Next optimizer here)
+- [ ] `react-router-dom`'s `Link`/`Outlet`/`useLocation`/`useNavigate` for all internal navigation
+- [ ] `import.meta.env.VITE_*` for env vars, never `process.env.NEXT_PUBLIC_*`
 
 ### General
 - [ ] No `console.log` (only `console.error` in catch blocks)
@@ -147,7 +164,7 @@ export const Card = ({ item }: CardProps) => {
 }
 ```
 
-### Missing `'use client'`
+### Missing `'use client'` (`apps/landing` only — never add this in `apps/editor`)
 
 ```tsx
 // ❌ BEFORE
@@ -164,7 +181,7 @@ export const Counter = () => {
 }
 ```
 
-### `<img>` → `next/image`
+### `<img>` → `next/image` (`apps/landing` only)
 
 ```tsx
 // ❌ BEFORE
@@ -174,6 +191,9 @@ export const Counter = () => {
 import Image from 'next/image'
 <Image src={item.imageUrl} alt={item.name} width={64} height={64} />
 ```
+
+In `apps/editor`, plain `<img>` IS the correct form — do not "fix" it to
+`next/image` there (that import doesn't resolve outside a Next.js app).
 
 ## When done
 

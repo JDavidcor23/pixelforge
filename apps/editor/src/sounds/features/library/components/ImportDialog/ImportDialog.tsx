@@ -1,7 +1,5 @@
-'use client'
-
 import { X, Loader2 } from 'lucide-react'
-import type { AudioAssetTag } from '@/app/editor/types/audio'
+import type { AudioAssetTag } from '@/types/audio'
 import { useImportDialog } from './useImportDialog.hook'
 
 interface ImportDialogProps {

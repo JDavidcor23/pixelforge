@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { encodeWav, createAudioObjectUrl } from '@/app/editor/lib/audio-encoder'
+import { encodeWav, createAudioObjectUrl } from '@/lib/audio-encoder'
 
 // ── Mock AudioBuffer ─────────────────────────────────────────────────────────
 

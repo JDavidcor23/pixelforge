@@ -1,0 +1,93 @@
+/* ============================================================================
+ * PixelForge — Design Token Contract
+ * ----------------------------------------------------------------------------
+ * THIS FILE IS THE SINGLE SOURCE OF TRUTH FOR THE VISUAL LANGUAGE.
+ *
+ * Every color in the product resolves here. Do not hardcode a hex in a
+ * component. If a value you need is missing, add it here first.
+ *
+ * The palette is derived from the landing page, which is the reference design.
+ * Neutrals are blue-tinted dark (never violet-tinted) — violet is reserved
+ * exclusively for AI-assisted surfaces.
+ *
+ * Canvas rendering (Konva) cannot read CSS custom properties, so the same
+ * values are mirrored as literals in `colors.ts`. Those two files must be
+ * changed together — `colors.test.ts` checks they stay in sync.
+ *
+ * Each app imports this file from its own global stylesheet, after
+ * `@import "tailwindcss"`:
+ *   @import "tailwindcss";
+ *   @import "@pixelforge/tokens/tokens.css";
+ *
+ * Font CSS variables (`--font-geist-sans` / `--font-geist-mono`) are NOT
+ * defined here — each app loads fonts its own way (Next `next/font`, or a
+ * <link> tag for the Vite editor) and maps `--font-sans` / `--font-mono` to
+ * whatever it loaded in its own `@theme inline` block.
+ * ========================================================================== */
+
+:root {
+  /* -- Surfaces: a four-step dark ladder, coolest at the bottom ------------ */
+  --pf-base: #0a0c10; /* page / app background, canvas backdrop      */
+  --pf-surface: #0f1115; /* sidebars, panels, primary containers        */
+  --pf-raised: #121419; /* navbars, panel headers, cards               */
+  --pf-hover: #171a21; /* hover + active rows, selected list items    */
+
+  /* -- Lines: alpha-based so they read correctly on any surface ----------- */
+  --pf-line: rgba(255, 255, 255, 0.06);
+  --pf-line-strong: rgba(255, 255, 255, 0.12);
+
+  /* -- Content ------------------------------------------------------------ */
+  --pf-ink: #ededed; /* primary text                                */
+  --pf-muted: #a1a1aa; /* secondary text, inactive labels             */
+  --pf-subtle: #71717a; /* metadata, placeholders, disabled            */
+
+  /* -- Accents ------------------------------------------------------------ */
+  --pf-accent: #00fbfb; /* the engine: actions, focus, active tool     */
+  --pf-accent-strong: #00d4db; /* pressed / hover on solid accent fills       */
+  --pf-ai: #7c3aed; /* AI-assisted features ONLY                   */
+  --pf-success: #10b981;
+  --pf-danger: #ff4d4d;
+
+  /* Channel triplets, for building translucent variants in plain CSS.
+   * Keep in sync with the hex values directly above. */
+  --pf-accent-rgb: 0 251 251;
+  --pf-ai-rgb: 124 58 237;
+
+  /* -- Canvas chrome (mirrored in colors.ts for Konva) --------------------- */
+  --pf-grid-line: #171a21;
+  --pf-checker-a: #1a1d24;
+  --pf-checker-b: #14171d;
+
+  /* -- Legacy aliases: kept so `bg-background` / `text-foreground` still
+   *    resolve. Prefer `bg-base` / `text-ink` in new code. ----------------- */
+  --background: var(--pf-base);
+  --foreground: var(--pf-ink);
+}
+
+@theme inline {
+  /* Surfaces  → bg-base, bg-surface, bg-raised, bg-hover */
+  --color-base: var(--pf-base);
+  --color-surface: var(--pf-surface);
+  --color-raised: var(--pf-raised);
+  --color-hover: var(--pf-hover);
+
+  /* Lines     → border-line, border-line-strong */
+  --color-line: var(--pf-line);
+  --color-line-strong: var(--pf-line-strong);
+
+  /* Content   → text-ink, text-muted, text-subtle */
+  --color-ink: var(--pf-ink);
+  --color-muted: var(--pf-muted);
+  --color-subtle: var(--pf-subtle);
+
+  /* Accents   → bg-accent, text-ai, border-success, ... */
+  --color-accent: var(--pf-accent);
+  --color-accent-strong: var(--pf-accent-strong);
+  --color-ai: var(--pf-ai);
+  --color-success: var(--pf-success);
+  --color-danger: var(--pf-danger);
+
+  /* Legacy */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+}

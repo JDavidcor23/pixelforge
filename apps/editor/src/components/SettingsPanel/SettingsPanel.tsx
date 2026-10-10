@@ -1,5 +1,3 @@
-'use client'
-
 import { Key, Eye, EyeOff, X, Trash2, Check, ExternalLink, Shield } from 'lucide-react'
 import { useSettingsPanel } from './useSettingsPanel.hook'
 

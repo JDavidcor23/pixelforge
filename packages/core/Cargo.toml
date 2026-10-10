@@ -1,0 +1,39 @@
+[package]
+name = "pixelforge-core"
+version = "0.1.0"
+edition = "2021"
+description = "PixelForge's Rust/Wasm pixel-buffer kernels (design.md D5/D6: stateless PixelKernels under PixelCore)."
+license = "MIT"
+publish = false
+
+# "cdylib" is what wasm-pack needs to produce a .wasm binary; "rlib" is what
+# lets `cargo test` run the pure-Rust domain tests natively (no wasm runtime
+# needed for those) — the standard wasm-bindgen pattern for a crate that is
+# both unit-tested on the host and compiled to Wasm.
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+# D6: no serde at the boundary — wasm-bindgen is the only dependency this
+# crate needs to expose functions to JS.
+wasm-bindgen = "0.2"
+
+# Fix-agent phase 5f.3: switched from `opt-level = "z"` (optimize for size) to
+# `opt-level = 3` (optimize for speed) — flood-fill is this crate's first
+# genuinely compute-heavy kernel (every prior kernel is near-memcpy, where
+# size vs speed barely matters), and the whole point of phase 5 is beating
+# TS on compute, not FFI-call count. Verified, not assumed: a measured
+# gzip'd `.wasm` at `opt-level = 3` came out SMALLER than at `"z"` here
+# (10,273 bytes vs 11,833 bytes, same scanline source, same wasm-opt pass —
+# "z" avoids inlining/unrolling that would grow code
+# size on a LARGER surface than this crate currently has; at this crate's
+# small size, `lto = true` + `codegen-units = 1` already dominate dead-code
+# elimination, so `opt-level = 3`'s extra inlining pays for itself before
+# the gzip budget even notices) — see `baseline-bench.md`'s "Phase 5f"
+# section for the exact before/after numbers. Still well under the 150KB
+# workspace-build "Wasm Artifact Size Budget".
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"   # smaller .wasm — this crate never unwinds across the FFI boundary (no `unwrap()` on boundary inputs)

@@ -1,11 +1,9 @@
-'use client'
-
 import { useCallback } from 'react'
 
-import { useSoundsStore } from '@/app/editor/stores/sounds.store'
-import { audioEngine } from '@/app/editor/lib/audio-engine'
-import { OSCILLATOR_TYPES, OSCILLATOR_LIMITS } from '@/app/editor/constants/audio'
-import type { OscillatorType, SynthParameters } from '@/app/editor/types/audio'
+import { useSoundsStore } from '@/stores/sounds.store'
+import { audioEngine } from '@/lib/audio-engine'
+import { OSCILLATOR_TYPES, OSCILLATOR_LIMITS } from '@/constants/audio'
+import type { OscillatorType, SynthParameters } from '@/types/audio'
 
 const PREVIEW_DURATION = 0.3
 

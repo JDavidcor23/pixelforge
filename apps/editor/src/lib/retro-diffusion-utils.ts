@@ -6,15 +6,15 @@ import type {
   RetroDiffusionGenerationResult,
   RetroDiffusionRequestBody,
   RetroDiffusionStyle,
-} from '@/app/editor/types'
+} from '@/types'
 import {
   RETRO_DIFFUSION_ROUTE,
   RETRO_DIFFUSION_ANIMATION_ACTIONS,
   RETRO_DIFFUSION_ANIMATION_PROMPT,
   RETRO_DIFFUSION_ANIMATION_STYLE_PREFIX,
-} from '@/app/editor/constants'
+} from '@/constants'
 import { base64ToNativePixels } from './image-decode'
-import { decodeToPixels } from './sprite-pipeline'
+import { decodeToPixels, cropRegion } from './sprite-pipeline'
 
 async function postToRetroDiffusion<T>(body: RetroDiffusionRequestBody): Promise<T> {
   const res = await fetch(RETRO_DIFFUSION_ROUTE, {
@@ -63,9 +63,7 @@ export async function estimateRetroDiffusionCost(
  */
 export async function decodeGeneratedSprite(base64: string, size: number): Promise<PixelBuffer> {
   const native: PixelBuffer = await base64ToNativePixels(base64)
-  const height = native.length
-  const width = native[0]?.length ?? 0
-  if (width === size && height === size) return native
+  if (native.w === size && native.h === size) return native
   return decodeToPixels(base64, size, true)
 }
 
@@ -110,8 +108,8 @@ export async function sliceAnimationSheet(
   expectedFrames: number,
 ): Promise<PixelBuffer[]> {
   const sheet: PixelBuffer = await base64ToNativePixels(sheetBase64)
-  const sheetHeight = sheet.length
-  const sheetWidth = sheet[0]?.length ?? 0
+  const sheetHeight = sheet.h
+  const sheetWidth = sheet.w
   if (sheetHeight === 0 || sheetWidth === 0 || frameSize <= 0) return []
 
   const cols = Math.max(1, Math.floor(sheetWidth / frameSize))
@@ -122,15 +120,9 @@ export async function sliceAnimationSheet(
   for (let index = 0; index < Math.min(expectedFrames, available); index++) {
     const originX = (index % cols) * frameSize
     const originY = Math.floor(index / cols) * frameSize
-    const frame: PixelBuffer = []
-    for (let y = 0; y < frameSize; y++) {
-      const sourceRow = sheet[originY + y]
-      if (!sourceRow) break
-      frame.push(sourceRow.slice(originX, originX + frameSize))
-    }
-    // A truncated final row means the sheet was not an exact multiple; skip it
-    // rather than hand a ragged buffer to the store.
-    if (frame.length === frameSize) frames.push(frame)
+    // cols/rows are floor(sheetDim / frameSize), so this region is always
+    // fully inside the sheet — no ragged final row to guard against.
+    frames.push(cropRegion(sheet, originX, originX + frameSize - 1, originY, originY + frameSize - 1))
   }
   return frames
 }

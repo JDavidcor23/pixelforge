@@ -1,5 +1,5 @@
-import type { Layer, AnimationFrame, PixelBuffer } from '@/app/editor/types'
-import { rgbaToString } from './color-utils'
+import type { Layer, AnimationFrame, PixelBuffer } from '@/types'
+import { renderPixelsToCanvas } from './buffer-to-canvas'
 
 /**
  * Triggers a download of a canvas as a PNG file.
@@ -12,7 +12,10 @@ export function downloadCanvasAsPng(canvas: HTMLCanvasElement, filename: string)
 }
 
 /**
- * Renders a set of layers to a canvas.
+ * Renders a set of layers to a canvas. Each layer goes through its own
+ * native-size offscreen canvas (`putImageData`) and is composited with
+ * `drawImage`, which is where the width/height scale and layer opacity
+ * happen — `putImageData` itself ignores `globalAlpha` and cannot scale.
  */
 function renderLayersToCanvas(
   ctx: CanvasRenderingContext2D,
@@ -25,31 +28,12 @@ function renderLayersToCanvas(
   for (const layer of layers) {
     if (!layer.visible) continue
 
+    const offscreen = renderPixelsToCanvas(layer.pixels)
+    if (!offscreen) continue
+
     ctx.globalAlpha = layer.opacity / 100
-    const pixels = layer.pixels
-    
-    // Calculamos la escala basada en el tamaño del buffer vs el tamaño objetivo
-    const sourceHeight = pixels.length
-    const sourceWidth = pixels[0]?.length || 1
-    const scaleX = width / sourceWidth
-    const scaleY = height / sourceHeight
-
-    for (let y = 0; y < sourceHeight; y++) {
-      for (let x = 0; x < sourceWidth; x++) {
-        const color = pixels[y][x]
-        if (color.a === 0) continue
-
-        ctx.fillStyle = rgbaToString(color)
-        // Dibujamos el píxel escalado
-        ctx.fillRect(
-          offsetX + (x * scaleX), 
-          offsetY + (y * scaleY), 
-          scaleX, 
-          scaleY
-        )
-      }
-    }
-
+    ctx.imageSmoothingEnabled = false
+    ctx.drawImage(offscreen, offsetX, offsetY, width, height)
     ctx.globalAlpha = 1
   }
 }
@@ -66,7 +50,7 @@ export function exportFrameAsPng(
   const canvas = document.createElement('canvas')
   canvas.width = width
   canvas.height = height
-  
+
   const ctx = canvas.getContext('2d')
   if (!ctx) return
 
@@ -126,28 +110,7 @@ export function layersToBase64(
  * sprite sheet the model returns, which would blow the localStorage quota.
  */
 export function pixelBufferToDataUri(buffer: PixelBuffer): string {
-  const height = buffer.length
-  const width = buffer[0]?.length ?? 0
-  if (width === 0 || height === 0) return ''
-
-  const canvas = document.createElement('canvas')
-  canvas.width = width
-  canvas.height = height
-
-  const ctx = canvas.getContext('2d')
-  if (!ctx) return ''
-
-  const imageData = ctx.createImageData(width, height)
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const { r, g, b, a } = buffer[y][x]
-      const i = (y * width + x) * 4
-      imageData.data[i] = r
-      imageData.data[i + 1] = g
-      imageData.data[i + 2] = b
-      imageData.data[i + 3] = a
-    }
-  }
-  ctx.putImageData(imageData, 0, 0)
+  const canvas = renderPixelsToCanvas(buffer)
+  if (!canvas) return ''
   return canvas.toDataURL('image/png')
 }

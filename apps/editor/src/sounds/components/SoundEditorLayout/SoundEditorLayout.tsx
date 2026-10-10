@@ -1,10 +1,8 @@
-'use client'
-
 import { Volume2 } from 'lucide-react'
-import { SynthPanel } from '@/app/editor/sounds/features/synthesizer'
-import { AIGeneratePanel, GenerationHistory } from '@/app/editor/sounds/features/ai-generate'
-import { WaveformDisplay, TransportBar } from '@/app/editor/sounds/features/playback'
-import { LibraryPanel } from '@/app/editor/sounds/features/library'
+import { SynthPanel } from '@/sounds/features/synthesizer'
+import { AIGeneratePanel, GenerationHistory } from '@/sounds/features/ai-generate'
+import { WaveformDisplay, TransportBar } from '@/sounds/features/playback'
+import { LibraryPanel } from '@/sounds/features/library'
 import { useSoundEditorLayout } from './useSoundEditorLayout.hook'
 
 export function SoundEditorLayout() {

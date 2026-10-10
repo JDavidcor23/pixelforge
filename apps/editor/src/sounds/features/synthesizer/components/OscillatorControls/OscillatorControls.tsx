@@ -1,7 +1,5 @@
-'use client'
-
 import { Waves, Square, Triangle, Activity, Radio } from 'lucide-react'
-import type { OscillatorType } from '@/app/editor/types/audio'
+import type { OscillatorType } from '@/types/audio'
 import { useOscillatorControls } from './useOscillatorControls.hook'
 
 const WAVEFORM_ICONS: Record<OscillatorType, { icon: React.ComponentType<{ className?: string }>; label: string }> = {

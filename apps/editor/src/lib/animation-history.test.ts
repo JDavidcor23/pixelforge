@@ -4,8 +4,8 @@ import {
   ANIMATION_HISTORY_STORAGE_KEY,
   ANIMATION_HISTORY_LIMIT,
   ANIMATION_PIPELINE_VERSION,
-} from '@/app/editor/constants'
-import type { AIAnimation } from '@/app/editor/types'
+} from '@/constants'
+import type { AIAnimation } from '@/types'
 import { parseAnimationHistory, persistAnimationHistory } from './animation-history'
 
 const PNG_DATA_URI =

@@ -1,10 +1,10 @@
 /**
- * Literal mirror of the design token contract defined in `src/app/globals.css`.
+ * Literal mirror of the design token contract defined in `packages/tokens/tokens.css`.
  *
  * CSS custom properties are the source of truth. This file exists only because
  * canvas APIs (Konva, 2D context) cannot resolve `var(--pf-*)` — they need real
- * color strings. Any change here MUST be mirrored in `globals.css`, and vice
- * versa.
+ * color strings. Any change here MUST be mirrored in `tokens.css`, and vice
+ * versa (see `colors.test.ts` for the parity check).
  *
  * In React components, use the Tailwind utilities (`bg-surface`, `text-muted`,
  * `border-line`, ...) instead of importing from here.

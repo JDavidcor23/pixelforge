@@ -2,6 +2,7 @@ import Link from 'next/link'
 
 import { LANDING_NAV, LANDING_NAV_LINKS } from '../../constants'
 import { ROUTES } from '@/constants/ROUTES'
+import { EDITOR_APP_URL } from '@/constants/env'
 
 export const Navbar = () =>
 {
@@ -26,12 +27,12 @@ export const Navbar = () =>
             ) ) }
           </ul>
 
-          <Link
-            href={ ROUTES.EDITOR }
+          <a
+            href={ EDITOR_APP_URL }
             className="rounded-lg bg-accent px-5 py-2 text-sm font-semibold text-black shadow-[0_0_20px_rgba(0,251,251,0.2)] transition-all hover:scale-105 hover:bg-white"
           >
             { LANDING_NAV.CTA_BUTTON }
-          </Link>
+          </a>
         </div>
       </div>
     </nav>

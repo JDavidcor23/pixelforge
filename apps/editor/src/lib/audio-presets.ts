@@ -1,4 +1,4 @@
-import type { SynthPreset, PresetCategory } from '@/app/editor/types/audio'
+import type { SynthPreset, PresetCategory } from '@/types/audio'
 
 export const SYNTH_PRESETS: SynthPreset[] = [
   {

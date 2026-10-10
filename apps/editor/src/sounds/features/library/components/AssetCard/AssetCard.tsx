@@ -1,7 +1,5 @@
-'use client'
-
 import { Play } from 'lucide-react'
-import type { AudioAsset } from '@/app/editor/types/audio'
+import type { AudioAsset } from '@/types/audio'
 import { useAssetCard } from './useAssetCard.hook'
 
 interface AssetCardProps {

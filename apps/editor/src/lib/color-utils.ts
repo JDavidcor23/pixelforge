@@ -1,4 +1,4 @@
-import type { RgbaColor } from '@/app/editor/types'
+import type { RgbaColor } from '@/types'
 
 export function rgbaToHex(color: RgbaColor): string {
   const r = color.r.toString(16).padStart(2, '0')

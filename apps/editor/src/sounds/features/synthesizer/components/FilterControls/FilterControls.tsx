@@ -1,6 +1,4 @@
-'use client'
-
-import type { FilterType } from '@/app/editor/types/audio'
+import type { FilterType } from '@/types/audio'
 import { useFilterControls } from './useFilterControls.hook'
 
 const FILTER_LABELS: Record<FilterType, string> = {

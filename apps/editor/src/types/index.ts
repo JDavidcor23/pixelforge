@@ -1,5 +1,8 @@
 export * from './ai-generation'
 
+import type { Command, DispatchResult } from '@/lib/core/commands'
+import type { DocumentPayload } from './document'
+
 export interface RgbaColor {
   readonly r: number
   readonly g: number
@@ -12,7 +15,25 @@ export interface PixelCoord {
   readonly y: number
 }
 
-export type PixelBuffer = RgbaColor[][]
+/**
+ * Flat RGBA pixel buffer: row-major, 4 bytes per pixel (`i = (y*w+x)*4`).
+ * Replaces the old `RgbaColor[][]` representation (phase 1 of
+ * migrate-to-rust-core) — this shape round-trips through `ImageData` /
+ * `putImageData` with zero per-pixel object allocation, and maps directly
+ * onto the `&mut [u8]` buffers the Rust/Wasm core will operate on later.
+ */
+export interface PixelBuffer {
+  readonly w: number
+  readonly h: number
+  readonly data: Uint8ClampedArray
+}
+
+export interface Rect {
+  x: number
+  y: number
+  w: number
+  h: number
+}
 
 export interface Layer {
   readonly id: string
@@ -32,6 +53,16 @@ export interface SelectionState {
   readonly scaleY: number
   readonly floatingPixels: PixelBuffer | null
   readonly originalArea: { x: number; y: number; width: number; height: number } | null
+  /**
+   * The frame+layer the floating selection was lifted FROM (set when
+   * `floatSelection()` captures `floatingPixels`). A floating selection must
+   * always bake back into its SOURCE, never whatever layer/frame happens to
+   * be active at commit time — `commitTransformation` resolves against these,
+   * not `activeLayerId`/the current frame. Undefined until a selection is
+   * floated.
+   */
+  readonly sourceFrameId?: string
+  readonly sourceLayerId?: string
 }
 
 export interface ToolDefinition {
@@ -57,14 +88,6 @@ export interface Timeline {
   readonly selectedFrameIndices: number[]
 }
 
-export interface HistoryEntry {
-  readonly layers: Layer[]
-  readonly activeLayerId: string
-  readonly description: string
-  readonly frames: AnimationFrame[]
-  readonly currentFrameIndex: number
-}
-
 export interface ViewportState {
   readonly zoom: number
   readonly offsetX: number
@@ -72,6 +95,14 @@ export interface ViewportState {
 }
 
 export type LeftSidebarTab = 'layers' | 'assets' | 'code'
+
+/**
+ * Local-draft lifecycle gate (phase 1, D8). `'loading'` until
+ * `useDocumentPersistence` has run the legacy migration and restored (or
+ * initialized) the draft; autosave and canvas rendering both wait for
+ * `'ready'` so an in-flight restore can never be clobbered by an empty save.
+ */
+export type DocStatus = 'loading' | 'ready'
 
 // ── Animation Types ─────────────────────────────────────────────────────────
 
@@ -97,20 +128,37 @@ export interface SpriteEditorState {
   readonly primaryColor: RgbaColor
   readonly secondaryColor: RgbaColor
   readonly cursorPixel: PixelCoord | null
-  readonly history: HistoryEntry[]
-  readonly historyIndex: number
+  /** Monotonic counter bumped by `dispatch` whenever the document content changes — the autosave trigger (phase 2, D14). */
+  readonly docRevision: number
+  readonly canUndo: boolean
+  readonly canRedo: boolean
+  /** Mirrors the core's `strokeState !== null` — lets UI hooks detect a stroke the core ended EXTERNALLY mid-drag (judgment-day round 2). */
+  readonly isStrokeOpen: boolean
+  /** Per-layer dirty counter (judgment-day round 2) — the Konva render contract keys on this, not pixel-buffer identity. */
+  readonly layerRevisions: Readonly<Record<string, number>>
   readonly timeline: Timeline
   readonly frameClipboard: AnimationFrame[] | null
   readonly selection: SelectionState | null
   readonly clipboard: PixelBuffer | null
   readonly lastAIReferenceBase64: string | null
+  readonly docStatus: DocStatus
 }
 
 export interface SpriteEditorActions {
-  setPixel: (layerId: string, x: number, y: number, color: RgbaColor) => void
-  setPixelBatch: (layerId: string, pixels: Array<{ coord: PixelCoord; color: RgbaColor }>) => void
-  floodFill: (layerId: string, x: number, y: number, color: RgbaColor) => void
-  clearLayer: (layerId: string) => void
+  /**
+   * Command-dispatch seam (phase 2, D3/D5) — the SINGLE entry point for
+   * every pixel/frame/layer mutation, undoable or not. Undoable: pixel
+   * strokes (`stroke.begin/points/end`), bucket fill (`fill`), frame
+   * add/remove, AI Copilot document replace. Non-undoable (phase 2b, D3):
+   * layer CRUD, frame select/paste, selection/clipboard pixel ops — these
+   * still go through `dispatch`, just without pushing a history entry, so
+   * the document (`timeline.frames[i].layers`) has exactly one owner. See
+   * `lib/core/commands.ts` for the full `Command` union and the
+   * undoable/non-undoable split.
+   */
+  dispatch: (cmd: Command) => DispatchResult
+  exportDocument: () => DocumentPayload
+  importDocument: (payload: DocumentPayload) => void
   addLayer: () => void
   removeLayer: (id: string) => void
   toggleLayerVisibility: (id: string) => void
@@ -123,11 +171,8 @@ export interface SpriteEditorActions {
   setPrimaryColor: (color: RgbaColor) => void
   setSecondaryColor: (color: RgbaColor) => void
   setCursorPixel: (coord: PixelCoord | null) => void
-  pushHistory: (description: string) => void
   undo: () => void
   redo: () => void
-  saveCurrentFrameSnapshot: () => void
-  restoreFrameSnapshot: (index: number) => void
   addFrame: () => void
   removeFrame: (index: number) => void
   setCurrentFrame: (index: number) => void
@@ -158,6 +203,7 @@ export interface SpriteEditorActions {
   overwriteWithPixels: (pixels: PixelBuffer, referenceBase64?: string) => void
   importAnimationFrames: (frames: PixelBuffer[], frameDurationMs: number) => void
   setLastAIReferenceBase64: (base64: string | null) => void
+  setDocStatus: (status: DocStatus) => void
 }
 
 export type SpriteEditorStore = SpriteEditorState & SpriteEditorActions

@@ -1,6 +1,4 @@
-'use client'
-
-import type { EnvelopeParameters } from '@/app/editor/types/audio'
+import type { EnvelopeParameters } from '@/types/audio'
 import { useEnvelopeControls } from './useEnvelopeControls.hook'
 
 const ENVELOPE_PARAMS: { key: keyof EnvelopeParameters; label: string }[] = [

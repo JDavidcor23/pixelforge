@@ -1,3 +1,3 @@
-import { useSoundsStore } from '@/app/editor/stores/sounds.store'
+import { useSoundsStore } from '@/stores/sounds.store'
 
 export { useSoundsStore as useSoundEditorStore }

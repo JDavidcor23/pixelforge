@@ -1,5 +1,3 @@
-'use client'
-
 import { Key, Eye, EyeOff, Loader2, Sparkles, X, AlertCircle, Upload, Trash2 } from 'lucide-react'
 import { ModelSelector } from '../ModelSelector/ModelSelector'
 import { useAIGeneratePanel } from './useAIGeneratePanel.hook'

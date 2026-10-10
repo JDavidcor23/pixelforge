@@ -1,8 +1,9 @@
-import type { PixelBuffer, RgbaColor } from '@/app/editor/types'
-import { ALPHA_TRANSPARENT_THRESHOLD, QUANTIZE_DEFAULTS } from '@/app/editor/constants'
+import type { PixelBuffer } from '@/types'
+import { ALPHA_TRANSPARENT_THRESHOLD, QUANTIZE_DEFAULTS } from '@/constants'
 import { base64ToNativePixels } from './image-decode'
 import { downscaleTo, resizeNearest } from './downscale'
 import { quantizePixels } from './quantize'
+import { createEmptyBuffer } from './pixel-buffer'
 
 /**
  * Pixel processing for images that arrive from OUTSIDE the editor — user file
@@ -19,19 +20,18 @@ import { quantizePixels } from './quantize'
  * guessed at.
  */
 
-const TRANSPARENT_PIXEL: RgbaColor = { r: 0, g: 0, b: 0, a: 0 }
+const EMPTY_BUFFER: PixelBuffer = { w: 0, h: 0, data: new Uint8ClampedArray(0) }
 
 /** Bounding box (inclusive) of pixels above the transparency threshold, or null if empty. */
 const contentBox = (pixels: PixelBuffer): [x0: number, y0: number, x1: number, y1: number] | null => {
-  const height = pixels.length
-  const width = pixels[0]?.length ?? 0
+  const { w: width, h: height, data } = pixels
   let x0 = width
   let y0 = height
   let x1 = -1
   let y1 = -1
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
-      if (pixels[y][x].a < ALPHA_TRANSPARENT_THRESHOLD) continue
+      if (data[(y * width + x) * 4 + 3] < ALPHA_TRANSPARENT_THRESHOLD) continue
       if (x < x0) x0 = x
       if (x > x1) x1 = x
       if (y < y0) y0 = y
@@ -41,26 +41,43 @@ const contentBox = (pixels: PixelBuffer): [x0: number, y0: number, x1: number, y
   return x1 < x0 ? null : [x0, y0, x1, y1]
 }
 
-/** Crops to [x0..x1] x [y0..y1], all inclusive. */
-const cropRegion = (pixels: PixelBuffer, x0: number, x1: number, y0: number, y1: number): PixelBuffer =>
-  pixels.slice(y0, y1 + 1).map((row) => row.slice(x0, x1 + 1))
+/** Crops to [x0..x1] x [y0..y1], all inclusive. Exported: reused by retro-diffusion-utils sheet slicing. */
+export const cropRegion = (pixels: PixelBuffer, x0: number, x1: number, y0: number, y1: number): PixelBuffer => {
+  const width = x1 - x0 + 1
+  const height = y1 - y0 + 1
+  if (width <= 0 || height <= 0) return EMPTY_BUFFER
+
+  const out = createEmptyBuffer(width, height)
+  const srcW = pixels.w
+  for (let y = 0; y < height; y++) {
+    const srcRowStart = ((y0 + y) * srcW + x0) * 4
+    const dstRowStart = y * width * 4
+    out.data.set(pixels.data.subarray(srcRowStart, srcRowStart + width * 4), dstRowStart)
+  }
+  return out
+}
 
 /** Composes `scaled` centered into a transparent size x size buffer. */
 const composeCentered = (scaled: PixelBuffer, size: number): PixelBuffer => {
-  const buffer: PixelBuffer = Array.from({ length: size }, () =>
-    Array.from({ length: size }, (): RgbaColor => ({ ...TRANSPARENT_PIXEL })),
-  )
-  const sourceHeight = scaled.length
-  const sourceWidth = scaled[0]?.length ?? 0
+  const buffer = createEmptyBuffer(size, size)
+  const sourceHeight = scaled.h
+  const sourceWidth = scaled.w
   const offsetX = Math.floor((size - sourceWidth) / 2)
   const offsetY = Math.floor((size - sourceHeight) / 2)
+
   for (let y = 0; y < sourceHeight; y++) {
-    for (let x = 0; x < sourceWidth; x++) {
-      const targetY = y + offsetY
-      const targetX = x + offsetX
-      if (targetY < 0 || targetY >= size || targetX < 0 || targetX >= size) continue
-      buffer[targetY][targetX] = scaled[y][x]
-    }
+    const targetY = y + offsetY
+    if (targetY < 0 || targetY >= size) continue
+    const visibleX0 = Math.max(0, -offsetX)
+    const visibleX1 = Math.min(sourceWidth, size - offsetX)
+    if (visibleX1 <= visibleX0) continue
+
+    const srcRowStart = (y * sourceWidth + visibleX0) * 4
+    const dstRowStart = (targetY * size + (offsetX + visibleX0)) * 4
+    buffer.data.set(
+      scaled.data.subarray(srcRowStart, srcRowStart + (visibleX1 - visibleX0) * 4),
+      dstRowStart
+    )
   }
   return buffer
 }
@@ -81,7 +98,7 @@ const quantizeIfNeeded = (pixels: PixelBuffer, quantize: boolean): PixelBuffer =
  */
 const fitSpriteCentered = (pixels: PixelBuffer, size: number): PixelBuffer => {
   const box = contentBox(pixels)
-  if (!box) return composeCentered([], size)
+  if (!box) return composeCentered(EMPTY_BUFFER, size)
   const [x0, y0, x1, y1] = box
   const boxWidth = x1 - x0 + 1
   const boxHeight = y1 - y0 + 1
@@ -116,8 +133,8 @@ export async function decodeSheetToFrames(
   quantize: boolean,
 ): Promise<PixelBuffer[]> {
   const sheet: PixelBuffer = await base64ToNativePixels(base64)
-  const sheetHeight = sheet.length
-  const sheetWidth = sheet[0]?.length ?? 0
+  const sheetHeight = sheet.h
+  const sheetWidth = sheet.w
   if (sheetHeight === 0 || sheetWidth === 0 || frameCount <= 0 || size <= 0) return []
 
   const cellWidth = Math.floor(sheetWidth / frameCount)

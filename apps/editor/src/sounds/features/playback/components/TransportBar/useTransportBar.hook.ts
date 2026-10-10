@@ -1,10 +1,8 @@
-'use client'
-
 import { useRef, useCallback, useEffect } from 'react'
 
-import { audioEngine } from '@/app/editor/lib/audio-engine'
-import { useSoundsStore } from '@/app/editor/stores/sounds.store'
-import type { AudioAsset } from '@/app/editor/types/audio'
+import { audioEngine } from '@/lib/audio-engine'
+import { useSoundsStore } from '@/stores/sounds.store'
+import type { AudioAsset } from '@/types/audio'
 
 function formatTime(seconds: number): string {
   const mins = Math.floor(seconds / 60)

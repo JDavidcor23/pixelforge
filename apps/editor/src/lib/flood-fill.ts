@@ -1,41 +1,65 @@
-import type { PixelBuffer, RgbaColor } from '@/app/editor/types'
-import { colorsEqual, getPixel, isInBounds } from './pixel-buffer'
+import type { PixelBuffer, RgbaColor } from '@/types'
+import { cloneBuffer, colorsEqual } from './pixel-buffer'
 
+/**
+ * BFS/stack-based 4-connected flood fill over the flat buffer. Traversal
+ * order differs from the old row/col object-array version (index-stack
+ * instead of coordinate-queue), but the FILLED SET is identical for any
+ * 4-connected region — order never affects the final result. Mirrors the
+ * Rust surface this will become in phase 5: one clone in, direct byte writes,
+ * no per-pixel allocation.
+ */
 export function floodFill(
   buffer: PixelBuffer,
   startX: number,
   startY: number,
   fillColor: RgbaColor
 ): PixelBuffer {
-  const targetColor = getPixel(buffer, startX, startY)
+  const { w, h, data } = buffer
+  const startIdx = (startY * w + startX) * 4
+  const targetColor: RgbaColor = {
+    r: data[startIdx],
+    g: data[startIdx + 1],
+    b: data[startIdx + 2],
+    a: data[startIdx + 3],
+  }
 
   if (colorsEqual(targetColor, fillColor)) {
     return buffer
   }
 
-  const height = buffer.length
-  const width = buffer[0].length
-  const newBuffer = buffer.map((row) => row.map((pixel) => ({ ...pixel })))
-  const visited = new Set<string>()
-  const queue: Array<[number, number]> = [[startX, startY]]
+  const next = cloneBuffer(buffer)
+  const nextData = next.data
+  const visited = new Uint8Array(w * h)
+  const stack: number[] = [startY * w + startX]
 
-  while (queue.length > 0) {
-    const [x, y] = queue.shift()!
-    const key = `${x},${y}`
+  const matchesTarget = (i: number): boolean =>
+    nextData[i] === targetColor.r &&
+    nextData[i + 1] === targetColor.g &&
+    nextData[i + 2] === targetColor.b &&
+    nextData[i + 3] === targetColor.a
 
-    if (visited.has(key)) continue
-    if (!isInBounds(buffer, x, y)) continue
-    if (!colorsEqual(getPixel(buffer, x, y), targetColor)) continue
+  while (stack.length > 0) {
+    const pixelIdx = stack.pop()!
+    if (pixelIdx < 0 || pixelIdx >= w * h || visited[pixelIdx]) continue
 
-    visited.add(key)
-    newBuffer[y][x] = { ...fillColor }
+    const x = pixelIdx % w
+    const y = (pixelIdx - x) / w
+    const byteIdx = pixelIdx * 4
 
-    if (x + 1 < width) queue.push([x + 1, y])
-    if (x - 1 >= 0) queue.push([x - 1, y])
-    if (y + 1 < height) queue.push([x, y + 1])
-    if (y - 1 >= 0) queue.push([x, y - 1])
+    if (!matchesTarget(byteIdx)) continue
+
+    visited[pixelIdx] = 1
+    nextData[byteIdx] = fillColor.r
+    nextData[byteIdx + 1] = fillColor.g
+    nextData[byteIdx + 2] = fillColor.b
+    nextData[byteIdx + 3] = fillColor.a
+
+    if (x + 1 < w) stack.push(pixelIdx + 1)
+    if (x - 1 >= 0) stack.push(pixelIdx - 1)
+    if (y + 1 < h) stack.push(pixelIdx + w)
+    if (y - 1 >= 0) stack.push(pixelIdx - w)
   }
 
-  return newBuffer
+  return next
 }
-

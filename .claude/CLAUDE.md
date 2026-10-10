@@ -44,9 +44,10 @@ elevation and component conventions.
 - The pipeline is: **design-agent → frontend-agent → cleancode-agent**.
 - Never hardcode a hex, radius or spacing value into a component. If the token
   does not exist in `DESIGN.md`, that is a design decision, not an improvisation.
-- `DESIGN.md` frontmatter, `DESIGN.md` prose and `src/app/globals.css` currently
-  disagree on the palette and font stack. design-agent owns reconciling them and
-  must report the conflict rather than guess.
+- `DESIGN.md` frontmatter and prose currently disagree with the token CSS
+  (`packages/tokens/tokens.css`, imported by `apps/landing/src/app/globals.css`
+  and `apps/editor/src/index.css`) on the palette and font stack. design-agent
+  owns reconciling them and must report the conflict rather than guess.
 
 ## Project Instructions
 

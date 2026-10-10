@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
-import { useSoundsStore } from '@/app/editor/stores/sounds.store'
-import type { AudioAsset, AudioAssetTag, SortField, SortDirection } from '@/app/editor/types/audio'
+import { useSoundsStore } from '@/stores/sounds.store'
+import type { AudioAsset, AudioAssetTag, SortField, SortDirection } from '@/types/audio'
 
 function filterBySearch(assets: AudioAsset[], query: string): AudioAsset[] {
   if (!query.trim()) return assets

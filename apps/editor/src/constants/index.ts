@@ -5,8 +5,8 @@ import type {
   AnimationDirection,
   RetroDiffusionStyle,
   RetroDiffusionAnimationAction,
-} from '@/app/editor/types'
-import { COLORS } from '@/constants/COLORS'
+} from '@/types'
+import { COLORS } from '@pixelforge/tokens/colors'
 
 export const SPRITE_EDITOR_CANVAS = {
   DEFAULT_WIDTH: 32,
@@ -27,8 +27,9 @@ export const SPRITE_EDITOR_CANVAS = {
 
 /**
  * Canvas-facing colors. These are aliases onto the global token contract
- * (`src/constants/COLORS.ts` → `src/app/globals.css`) — the editor does NOT own
- * a palette of its own. Add nothing here that is not already a token.
+ * (`packages/tokens/colors.ts` → `packages/tokens/tokens.css`) — the editor
+ * does NOT own a palette of its own. Add nothing here that is not already a
+ * token.
  */
 export const SPRITE_EDITOR_COLORS = {
   BACKGROUND: COLORS.SURFACE.BASE,
@@ -56,15 +57,30 @@ export const SPRITE_EDITOR_TOOLS: readonly ToolDefinition[] = [
   { type: 'transform', label: 'Transform', shortcut: 'V', iconName: 'Move' },
 ] as const
 
+/**
+ * The one fully-transparent RGBA value, reused everywhere a command/slice
+ * needs to "erase" a pixel (eraser stroke color, `region.clear`,
+ * `selection.commit`'s baked-out original area). Phase 2c cleanup: this used
+ * to be re-declared as an inline `{ r: 0, g: 0, b: 0, a: 0 }` literal in
+ * `lib/core/ts-core.ts`, `stores/slices/selection.slice.ts` and
+ * `stores/slices/clipboard.slice.ts`.
+ */
+export const TRANSPARENT_COLOR: RgbaColor = { r: 0, g: 0, b: 0, a: 0 }
+
+/** Milliseconds per second — used wherever an fps <-> per-frame-duration conversion happens. */
+export const MS_PER_SECOND = 1000
+
 export const SPRITE_EDITOR_DEFAULTS = {
   /** COLORS.ACCENT.DEFAULT (#00fbfb) expressed as RGBA. */
   PRIMARY_COLOR: { r: 0, g: 251, b: 251, a: 255 } as RgbaColor,
-  SECONDARY_COLOR: { r: 0, g: 0, b: 0, a: 0 } as RgbaColor,
+  SECONDARY_COLOR: TRANSPARENT_COLOR,
   LAYER_NAME_PREFIX: 'Layer',
 } as const
 
 export const SPRITE_EDITOR_HISTORY = {
   MAX_ENTRIES: 50,
+  /** Dirty-rect undo history budget (phase 2, design D4): 32 MiB retained total. */
+  MAX_BYTES: 32 * 1024 * 1024,
 } as const
 
 export const SPRITE_EDITOR_TIMELINE = {

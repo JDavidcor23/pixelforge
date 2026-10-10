@@ -1,5 +1,3 @@
-'use client'
-
 import { Loader2, Download } from 'lucide-react'
 import { PresetSelector } from '../PresetSelector/PresetSelector'
 import { OscillatorControls } from '../OscillatorControls/OscillatorControls'

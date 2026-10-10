@@ -1,0 +1,45 @@
+{
+  "name": "@pixelforge/editor",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "bench": "vitest bench --run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@pixelforge/core": "workspace:*",
+    "@pixelforge/tokens": "workspace:*",
+    "@supabase/supabase-js": "^2.112.3",
+    "colord": "^2.9.3",
+    "idb": "^8.0.4",
+    "konva": "^10.2.5",
+    "lucide-react": "^1.8.0",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "react-konva": "^19.2.3",
+    "react-router-dom": "^7.1.1",
+    "use-image": "^1.1.4",
+    "zustand": "^5.0.12"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^5.0.0",
+    "@vitest/ui": "^4.1.4",
+    "babel-plugin-react-compiler": "1.0.0",
+    "fake-indexeddb": "^6.2.5",
+    "tailwindcss": "^4",
+    "typescript": "^5",
+    "vite": "^6.3.0",
+    "vite-plugin-top-level-await": "^1.6.0",
+    "vite-plugin-wasm": "^3.6.0",
+    "vitest": "^4.1.4"
+  }
+}

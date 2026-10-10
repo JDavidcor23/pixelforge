@@ -1,4 +1,4 @@
-import type { ElevenLabsMode } from '@/app/editor/types/audio'
+import type { ElevenLabsMode } from '@/types/audio'
 
 const ELEVENLABS_KEY_STORAGE = 'pixelforge-elevenlabs-key'
 const API_ENDPOINT = '/api/ai/elevenlabs'

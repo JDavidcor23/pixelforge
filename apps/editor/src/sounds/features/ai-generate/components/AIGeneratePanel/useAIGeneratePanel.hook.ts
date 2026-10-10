@@ -1,10 +1,8 @@
-'use client'
-
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import type { AudioAsset, ElevenLabsMode, GenerationRecord } from '@/app/editor/types/audio'
-import { useSoundsStore } from '@/app/editor/stores/sounds.store'
-import { MAX_REFERENCE_FILE_SIZE, SUPPORTED_AUDIO_FORMATS } from '@/app/editor/constants/audio'
+import type { AudioAsset, ElevenLabsMode, GenerationRecord } from '@/types/audio'
+import { useSoundsStore } from '@/stores/sounds.store'
+import { MAX_REFERENCE_FILE_SIZE, SUPPORTED_AUDIO_FORMATS } from '@/constants/audio'
 import {
   generateSFX,
   generateMusic,

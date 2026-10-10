@@ -3,7 +3,7 @@ import Link from 'next/link'
 
 import EditorImage from '@/assets/editor.jpeg'
 import { LANDING_HERO, LANDING_HERO_LABELS } from '../../constants'
-import { ROUTES } from '@/constants/ROUTES'
+import { EDITOR_APP_URL } from '@/constants/env'
 
 export const HeroSection = () =>
 {
@@ -24,12 +24,12 @@ export const HeroSection = () =>
           </p>
 
           <div className="mt-10 flex flex-col gap-4 sm:flex-row">
-            <Link
-              href={ ROUTES.EDITOR }
+            <a
+              href={ EDITOR_APP_URL }
               className="rounded-lg bg-accent px-8 py-3 text-base font-semibold text-black shadow-[0_0_30px_rgba(0,251,251,0.2)] transition-all hover:scale-105 hover:bg-white"
             >
               { LANDING_HERO.CTA_PRIMARY }
-            </Link>
+            </a>
             <button
               className="rounded-lg border border-accent px-8 py-3 text-base font-semibold text-accent transition-all hover:bg-accent/10 hover:scale-105"
             >

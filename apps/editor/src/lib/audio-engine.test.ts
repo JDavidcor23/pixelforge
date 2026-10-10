@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import type { SynthParameters } from '@/app/editor/types/audio'
+import type { SynthParameters } from '@/types/audio'
 
 // ── Web Audio API Mocks ──────────────────────────────────────────────────────
 
@@ -180,13 +180,13 @@ describe('AudioEngine', () => {
   })
 
   async function getEngine() {
-    const mod = await import('@/app/editor/lib/audio-engine')
+    const mod = await import('@/lib/audio-engine')
     return new mod.AudioEngine()
   }
 
   describe('lazy initialization', () => {
     it('does not create AudioContext at construction time', async () => {
-      const mod = await import('@/app/editor/lib/audio-engine')
+      const mod = await import('@/lib/audio-engine')
       const _engine = new mod.AudioEngine()
       // The instance should not have triggered AudioContext creation
       expect(mockCtxInstance.createOscillator).not.toHaveBeenCalled()

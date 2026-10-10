@@ -1,12 +1,10 @@
-'use client'
-
 import { useState, useCallback, useEffect } from 'react'
-import { useEditorPrefsStore } from '@/app/editor/stores/prefs.store'
+import { useEditorPrefsStore } from '@/stores/prefs.store'
 import {
   getElevenLabsApiKey,
   setElevenLabsApiKey,
   removeElevenLabsApiKey,
-} from '@/app/editor/sounds/features/ai-generate/services/elevenlabs.service'
+} from '@/sounds/features/ai-generate/services/elevenlabs.service'
 
 export const useSettingsPanel = (onClose: () => void) => {
   const retroDiffusionApiKey = useEditorPrefsStore((s) => s.retroDiffusionApiKey)

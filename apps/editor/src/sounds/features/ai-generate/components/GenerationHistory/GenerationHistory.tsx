@@ -1,7 +1,5 @@
-'use client'
-
 import { Wand2, Music, Mic, Clock } from 'lucide-react'
-import type { ElevenLabsMode } from '@/app/editor/types/audio'
+import type { ElevenLabsMode } from '@/types/audio'
 import { useGenerationHistory } from './useGenerationHistory.hook'
 
 const MODE_ICONS: Record<ElevenLabsMode, React.ReactNode> = {

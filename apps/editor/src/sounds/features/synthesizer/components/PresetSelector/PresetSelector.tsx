@@ -1,7 +1,5 @@
-'use client'
-
 import { Zap, Bomb, ArrowUp, Coins, Sparkles } from 'lucide-react'
-import type { PresetCategory } from '@/app/editor/types/audio'
+import type { PresetCategory } from '@/types/audio'
 import { usePresetSelector } from './usePresetSelector.hook'
 
 const CATEGORY_ICONS: Record<PresetCategory, React.ComponentType<{ className?: string }>> = {

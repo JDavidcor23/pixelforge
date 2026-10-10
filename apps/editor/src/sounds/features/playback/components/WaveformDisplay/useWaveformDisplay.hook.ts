@@ -1,9 +1,7 @@
-'use client'
-
 import { useRef, useEffect, useCallback } from 'react'
 
-import { audioEngine } from '@/app/editor/lib/audio-engine'
-import { useSoundsStore } from '@/app/editor/stores/sounds.store'
+import { audioEngine } from '@/lib/audio-engine'
+import { useSoundsStore } from '@/stores/sounds.store'
 
 const CANVAS_HEIGHT = 120
 const WAVEFORM_COLOR = '#10b981'

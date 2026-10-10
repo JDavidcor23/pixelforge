@@ -1,7 +1,5 @@
-'use client'
-
 import { useCallback, useState } from 'react'
-import type { ElevenLabsMode } from '@/app/editor/types/audio'
+import type { ElevenLabsMode } from '@/types/audio'
 
 export function useModelSelector(
   initialMode: ElevenLabsMode = 'sfx',

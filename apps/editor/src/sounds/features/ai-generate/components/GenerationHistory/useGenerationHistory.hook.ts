@@ -1,9 +1,7 @@
-'use client'
-
 import { useCallback } from 'react'
 
-import { useSoundsStore } from '@/app/editor/stores/sounds.store'
-import { GENERATION_HISTORY_LIMIT } from '@/app/editor/constants/audio'
+import { useSoundsStore } from '@/stores/sounds.store'
+import { GENERATION_HISTORY_LIMIT } from '@/constants/audio'
 
 export function useGenerationHistory() {
   const generationHistory = useSoundsStore((s) => s.generationHistory)

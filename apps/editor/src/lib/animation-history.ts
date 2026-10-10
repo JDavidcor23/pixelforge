@@ -2,8 +2,8 @@ import {
   ANIMATION_HISTORY_LIMIT,
   ANIMATION_HISTORY_STORAGE_KEY,
   ANIMATION_PIPELINE_VERSION,
-} from '@/app/editor/constants'
-import type { AIAnimation } from '@/app/editor/types'
+} from '@/constants'
+import type { AIAnimation } from '@/types'
 
 const PNG_DATA_URI_PREFIX = 'data:image/png;base64,'
 const PNG_BASE64_SIGNATURE = 'iVBORw0KGgo'

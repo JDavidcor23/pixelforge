@@ -1,7 +1,5 @@
-'use client'
-
 import { Search, Music, ArrowUpDown } from 'lucide-react'
-import type { AudioAssetTag, SortField } from '@/app/editor/types/audio'
+import type { AudioAssetTag, SortField } from '@/types/audio'
 import { AssetCard } from '../AssetCard/AssetCard'
 import { useLibraryPanel } from './useLibraryPanel.hook'
 

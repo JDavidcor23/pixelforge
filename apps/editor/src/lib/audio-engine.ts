@@ -1,4 +1,4 @@
-import type { SynthParameters, FilterType } from '@/app/editor/types/audio'
+import type { SynthParameters, FilterType } from '@/types/audio'
 
 const ANALYSER_FFT_SIZE = 2048
 const ANALYSER_SMOOTHING = 0.8

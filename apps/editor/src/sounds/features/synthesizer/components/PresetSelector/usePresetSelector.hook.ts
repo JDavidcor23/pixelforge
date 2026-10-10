@@ -1,11 +1,9 @@
-'use client'
-
 import { useCallback } from 'react'
 
-import { useSoundsStore } from '@/app/editor/stores/sounds.store'
-import { audioEngine } from '@/app/editor/lib/audio-engine'
-import { getAllPresets } from '@/app/editor/lib/audio-presets'
-import type { SynthPreset } from '@/app/editor/types/audio'
+import { useSoundsStore } from '@/stores/sounds.store'
+import { audioEngine } from '@/lib/audio-engine'
+import { getAllPresets } from '@/lib/audio-presets'
+import type { SynthPreset } from '@/types/audio'
 
 const PREVIEW_DURATION = 0.4
 

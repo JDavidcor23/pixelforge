@@ -1,7 +1,5 @@
-'use client'
-
 import { Music, Mic, Wand2 } from 'lucide-react'
-import type { ElevenLabsMode } from '@/app/editor/types/audio'
+import type { ElevenLabsMode } from '@/types/audio'
 import { useModelSelector } from './useModelSelector.hook'
 
 interface ModelSelectorProps {

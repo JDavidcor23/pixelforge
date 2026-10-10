@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase'
-import type { AudioAsset } from '@/app/editor/types/audio'
-import { AUDIO_STORAGE_BUCKET } from '@/app/editor/constants/audio'
+import type { AudioAsset } from '@/types/audio'
+import { AUDIO_STORAGE_BUCKET } from '@/constants/audio'
 
 interface UploadResult {
   url: string

@@ -1,5 +1,5 @@
-import type { PixelBuffer, RgbaColor } from '@/app/editor/types'
-import { createEmptyBuffer } from './pixel-buffer'
+import type { PixelBuffer } from '@/types'
+import { createEmptyBuffer, getPixel, putPixel } from './pixel-buffer'
 
 /**
  * Applies affine transformation to a floating pixel buffer and bakes it into a new buffer.
@@ -16,12 +16,12 @@ export function transformPixels(
   destOffsetY: number
 ): PixelBuffer {
   const result = createEmptyBuffer(destWidth, destHeight)
-  const sourceH = sourcePixels.length
-  const sourceW = sourcePixels[0].length
+  const sourceH = sourcePixels.h
+  const sourceW = sourcePixels.w
 
   // Konva rotates around the top-left of the group by default unless offset is changed.
   // Our SelectionOverlay doesn't change the offset, so pivot is (0,0) relative to the group bounds.
-  
+
   const rad = (sourceRotation * Math.PI) / 180
   const cos = Math.cos(rad)
   const sin = Math.sin(rad)
@@ -42,9 +42,9 @@ export function transformPixels(
 
       // 4. Sample
       if (sy >= 0 && sy < sourceH && sx >= 0 && sx < sourceW) {
-        const color = sourcePixels[sy][sx]
+        const color = getPixel(sourcePixels, sx, sy)
         if (color.a > 0) {
-          result[destY][destX] = color
+          putPixel(result, destX, destY, color)
         }
       }
     }

@@ -1,4 +1,4 @@
-import type { OscillatorType, FilterType, FilterParameters, OscillatorParameters, EnvelopeParameters } from '@/app/editor/types/audio'
+import type { OscillatorType, FilterType, FilterParameters, OscillatorParameters, EnvelopeParameters } from '@/types/audio'
 
 // ── Oscillator & Filter Type Arrays ──────────────────────────────────────────
 

@@ -1,4 +1,4 @@
-import type { PixelBuffer, RgbaColor } from '@/app/editor/types'
+import type { PixelBuffer } from '@/types'
 
 /**
  * Decodes a base64 PNG at its NATIVE resolution into a PixelBuffer.
@@ -24,17 +24,8 @@ export async function base64ToNativePixels(base64: string): Promise<PixelBuffer>
         return
       }
       ctx.drawImage(img, 0, 0)
-      const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data
-      const pixels: PixelBuffer = []
-      for (let y = 0; y < canvas.height; y++) {
-        const row: RgbaColor[] = []
-        for (let x = 0; x < canvas.width; x++) {
-          const i = (y * canvas.width + x) * 4
-          row.push({ r: data[i], g: data[i + 1], b: data[i + 2], a: data[i + 3] })
-        }
-        pixels.push(row)
-      }
-      resolve(pixels)
+      const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height)
+      resolve({ w: canvas.width, h: canvas.height, data: new Uint8ClampedArray(data) })
     }
 
     img.onerror = () => reject(new Error('Failed to load image from base64'))

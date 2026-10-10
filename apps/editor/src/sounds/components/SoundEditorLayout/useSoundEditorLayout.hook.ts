@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { audioEngine } from '@/app/editor/lib/audio-engine'
+import { audioEngine } from '@/lib/audio-engine'
 
 type LeftTab = 'synth' | 'ai'
 

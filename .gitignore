@@ -1,7 +1,8 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# dependencies
-/node_modules
+# dependencies (monorepo: node_modules exists at the root AND inside every
+# apps/*, packages/* workspace package — do not anchor this to root only)
+node_modules
 /.pnp
 .pnp.*
 .yarn/*
@@ -13,12 +14,25 @@
 # testing
 /coverage
 
-# next.js
-/.next/
-/out/
+# vitest bench raw output (machine-local absolute paths; see
+# openspec/changes/migrate-to-rust-core/baseline-bench.md for the recorded
+# phase-0 baseline numbers)
+/bench/results.json
+/bench/core-results.json
+
+# Rust build artifacts (packages/core) — NOT packages/core/pkg, which is the
+# wasm-pack OUTPUT and is committed on purpose (design D9: CI rebuilds it and
+# diffs against what's checked in).
+packages/core/target/
+
+# next.js (apps/landing today; unanchored since a future Next app could live
+# anywhere under apps/*)
+.next/
+out/
 
 # production
-/build
+build/
+dist/
 
 # misc
 .DS_Store
@@ -33,7 +47,7 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
-# vercel
+# vercel (per-app, e.g. apps/landing/.vercel, apps/editor/.vercel)
 .vercel
 
 # typescript

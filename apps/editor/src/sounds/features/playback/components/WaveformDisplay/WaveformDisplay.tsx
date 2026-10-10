@@ -1,5 +1,3 @@
-'use client'
-
 import { useWaveformDisplay } from './useWaveformDisplay.hook'
 
 export function WaveformDisplay() {

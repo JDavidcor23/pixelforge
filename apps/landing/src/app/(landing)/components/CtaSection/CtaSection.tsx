@@ -1,7 +1,5 @@
-import Link from 'next/link'
-
 import { LANDING_CTA } from '../../constants'
-import { ROUTES } from '@/constants/ROUTES'
+import { EDITOR_APP_URL } from '@/constants/env'
 
 export const CtaSection = () =>
 {
@@ -18,12 +16,12 @@ export const CtaSection = () =>
           { LANDING_CTA.SUBTITLE }
         </p>
 
-        <Link
-          href={ ROUTES.EDITOR }
+        <a
+          href={ EDITOR_APP_URL }
           className="relative z-10 mt-10 inline-block rounded-lg bg-accent px-10 py-4 text-lg font-bold text-black shadow-[0_0_40px_rgba(0,251,251,0.3)] transition-all hover:scale-105 hover:bg-white"
         >
           { LANDING_CTA.BUTTON }
-        </Link>
+        </a>
       </div>
 
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,251,251,0.15)_0%,transparent_70%)]" />
