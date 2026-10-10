@@ -36,6 +36,13 @@ export const COLORS = {
 
   /** Violet is reserved for AI-assisted surfaces and nothing else. */
   AI: '#7c3aed',
+  /** Light violet for AI marks/links on dark surfaces. */
+  AI_INK: {
+    DEFAULT: '#a78bfa',
+    STRONG: '#c4b5fd',
+  },
+  /** Text and icons on solid accent fills. */
+  ON_ACCENT: '#000000',
   SUCCESS: '#10b981',
   DANGER: '#ff4d4d',
 

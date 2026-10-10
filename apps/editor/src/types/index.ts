@@ -1,3 +1,5 @@
+import type { LucideIcon } from 'lucide-react'
+
 export * from './ai-generation'
 
 import type { Command, DispatchResult } from '@/lib/core/commands'
@@ -93,8 +95,6 @@ export interface ViewportState {
   readonly offsetX: number
   readonly offsetY: number
 }
-
-export type LeftSidebarTab = 'layers' | 'assets' | 'code'
 
 /**
  * Local-draft lifecycle gate (phase 1, D8). `'loading'` until
@@ -211,7 +211,8 @@ export type SpriteEditorStore = SpriteEditorState & SpriteEditorActions
 // ── UI Store ─────────────────────────────────────────────────────────────────
 
 export interface EditorUIState {
-  readonly leftSidebarTab: LeftSidebarTab
+  /** Shell-level Settings modal. Session only — not persisted. */
+  readonly settingsOpen: boolean
   readonly ui: {
     readonly leftSidebarOpen: boolean
     readonly rightSidebarOpen: boolean
@@ -222,7 +223,8 @@ export interface EditorUIState {
 }
 
 export interface EditorUIActions {
-  setLeftSidebarTab: (tab: LeftSidebarTab) => void
+  openSettings: () => void
+  closeSettings: () => void
   toggleLeftSidebar: () => void
   toggleRightSidebar: () => void
   toggleTimeline: () => void
@@ -256,3 +258,11 @@ export interface EditorPrefsActions {
 }
 
 export type EditorPrefsStore = EditorPrefsState & EditorPrefsActions
+
+// ── Editor shell ─────────────────────────────────────────────────────────────
+
+export interface EditorNavItem {
+  href: string
+  label: string
+  icon: LucideIcon
+}

@@ -2,10 +2,14 @@ import { useCallback } from 'react'
 
 import { useSoundsStore } from '@/stores/sounds.store'
 import { audioEngine } from '@/lib/audio-engine'
-import { OSCILLATOR_TYPES, OSCILLATOR_LIMITS } from '@/constants/audio'
+import {
+  HZ_PER_KHZ,
+  OSCILLATOR_LIMITS,
+  OSCILLATOR_TYPES,
+  SYNTH_CONTROL_STEP,
+  SYNTH_PREVIEW_DURATION_S,
+} from '@/constants/audio'
 import type { OscillatorType, SynthParameters } from '@/types/audio'
-
-const PREVIEW_DURATION = 0.3
 
 export function useOscillatorControls() {
   const oscillator = useSoundsStore((state) => state.synthParams.oscillator)
@@ -15,7 +19,7 @@ export function useOscillatorControls() {
   const playPreview = useCallback(
     (params: SynthParameters) => {
       void audioEngine.resume()
-      audioEngine.playSynth(params, PREVIEW_DURATION)
+      audioEngine.playSynth(params, SYNTH_PREVIEW_DURATION_S.OSCILLATOR)
     },
     []
   )
@@ -69,8 +73,8 @@ export function useOscillatorControls() {
   )
 
   const formatFrequency = useCallback((freq: number): string => {
-    if (freq >= 1000) {
-      return `${(freq / 1000).toFixed(1)}kHz`
+    if (freq >= HZ_PER_KHZ) {
+      return `${(freq / HZ_PER_KHZ).toFixed(1)}kHz`
     }
     return `${Math.round(freq)}Hz`
   }, [])
@@ -80,6 +84,8 @@ export function useOscillatorControls() {
     oscillatorTypes: OSCILLATOR_TYPES,
     frequencyLimits: OSCILLATOR_LIMITS.frequency,
     detuneLimits: OSCILLATOR_LIMITS.detune,
+    frequencyStep: SYNTH_CONTROL_STEP.FREQUENCY_HZ,
+    detuneStep: SYNTH_CONTROL_STEP.DETUNE_CENTS,
     handleTypeChange,
     handleFrequencyChange,
     handleFrequencyCommit,

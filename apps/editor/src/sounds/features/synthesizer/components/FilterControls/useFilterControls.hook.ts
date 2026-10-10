@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 
 import { useSoundsStore } from '@/stores/sounds.store'
-import { FILTER_TYPES, FILTER_LIMITS } from '@/constants/audio'
+import { FILTER_LIMITS, FILTER_TYPES, HZ_PER_KHZ, SYNTH_CONTROL_STEP } from '@/constants/audio'
 import type { FilterType } from '@/types/audio'
 
 export function useFilterControls() {
@@ -30,8 +30,8 @@ export function useFilterControls() {
   )
 
   const formatFrequency = useCallback((freq: number): string => {
-    if (freq >= 1000) {
-      return `${(freq / 1000).toFixed(1)}kHz`
+    if (freq >= HZ_PER_KHZ) {
+      return `${(freq / HZ_PER_KHZ).toFixed(1)}kHz`
     }
     return `${Math.round(freq)}Hz`
   }, [])
@@ -45,6 +45,8 @@ export function useFilterControls() {
     filterTypes: FILTER_TYPES,
     frequencyLimits: FILTER_LIMITS.frequency,
     qLimits: FILTER_LIMITS.q,
+    frequencyStep: SYNTH_CONTROL_STEP.FREQUENCY_HZ,
+    qStep: SYNTH_CONTROL_STEP.Q,
     handleTypeChange,
     handleFrequencyChange,
     handleQChange,

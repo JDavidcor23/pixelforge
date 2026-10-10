@@ -2,7 +2,6 @@ import type {
   AnimationFrame,
   DocStatus,
   Layer,
-  LeftSidebarTab,
   PixelBuffer,
   PixelCoord,
   RgbaColor,
@@ -114,7 +113,7 @@ export interface ClipboardSlice {
 // ── UI Slice ─────────────────────────────────────────────────────────────────
 
 export interface UISlice {
-  leftSidebarTab: LeftSidebarTab
+  settingsOpen: boolean
   ui: {
     leftSidebarOpen: boolean
     rightSidebarOpen: boolean
@@ -122,13 +121,14 @@ export interface UISlice {
     toolbarOpen: boolean
     toolbarPosition: { x: number; y: number } | null
   }
-  setLeftSidebarTab: (tab: LeftSidebarTab) => void
   toggleLeftSidebar: () => void
   toggleRightSidebar: () => void
   toggleTimeline: () => void
   toggleToolbar: () => void
   toggleZenMode: () => void
   setToolbarPosition: (position: { x: number; y: number } | null) => void
+  openSettings: () => void
+  closeSettings: () => void
 }
 
 // ── View Prefs Slice ─────────────────────────────────────────────────────────

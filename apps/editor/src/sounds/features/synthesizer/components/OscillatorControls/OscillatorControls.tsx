@@ -1,6 +1,7 @@
 import { Waves, Square, Triangle, Activity, Radio } from 'lucide-react'
 import type { OscillatorType } from '@/types/audio'
 import { useOscillatorControls } from './useOscillatorControls.hook'
+import { FOCUS_RING } from '@/constants/focus-ring'
 
 const WAVEFORM_ICONS: Record<OscillatorType, { icon: React.ComponentType<{ className?: string }>; label: string }> = {
   sine: { icon: Waves, label: 'Sine' },
@@ -16,6 +17,8 @@ export function OscillatorControls() {
     oscillatorTypes,
     frequencyLimits,
     detuneLimits,
+    frequencyStep,
+    detuneStep,
     handleTypeChange,
     handleFrequencyChange,
     handleFrequencyCommit,
@@ -25,8 +28,8 @@ export function OscillatorControls() {
   } = useOscillatorControls()
 
   return (
-    <section className="flex flex-col gap-4 rounded-lg bg-gray-800 p-4">
-      <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-400">
+    <section className="flex flex-col gap-4 rounded border border-line bg-surface p-4">
+      <h3 className="text-ui font-semibold text-ink">
         Oscillator
       </h3>
 
@@ -34,20 +37,14 @@ export function OscillatorControls() {
       <div className="flex gap-2">
         {oscillatorTypes.map((type) => {
           const { icon: Icon, label } = WAVEFORM_ICONS[type]
-          const isActive = oscillator.type === type
-
           return (
             <button
               key={type}
               type="button"
               onClick={() => handleTypeChange(type)}
               aria-label={`Waveform: ${label}`}
-              aria-pressed={isActive}
-              className={`flex flex-1 flex-col items-center gap-1 rounded-md px-2 py-2 text-xs transition-colors ${
-                isActive
-                  ? 'bg-violet-600 text-white'
-                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-              }`}
+              aria-pressed={oscillator.type === type}
+              className={`flex flex-1 flex-col items-center gap-1 rounded border border-line px-2 py-2 text-xs text-subtle hover:text-muted aria-pressed:bg-hover aria-pressed:text-accent ${FOCUS_RING.SURFACE}`}
             >
               <Icon className="h-4 w-4" />
               <span>{label}</span>
@@ -59,10 +56,10 @@ export function OscillatorControls() {
       {/* Frequency Slider */}
       <div className="flex flex-col gap-1">
         <div className="flex items-center justify-between">
-          <label htmlFor="osc-frequency" className="text-xs text-gray-400">
+          <label htmlFor="osc-frequency" className="text-xs text-muted">
             Frequency
           </label>
-          <span className="text-xs font-mono text-violet-400">
+          <span className="font-mono text-xs text-accent tabular-nums">
             {formatFrequency(oscillator.frequency)}
           </span>
         </div>
@@ -71,23 +68,23 @@ export function OscillatorControls() {
           type="range"
           min={frequencyLimits.min}
           max={frequencyLimits.max}
-          step={1}
+          step={frequencyStep}
           value={oscillator.frequency}
           onChange={(e) => handleFrequencyChange(Number(e.target.value))}
-          onMouseUp={(e) => handleFrequencyCommit(Number((e.target as HTMLInputElement).value))}
-          onTouchEnd={(e) => handleFrequencyCommit(Number((e.target as HTMLInputElement).value))}
+          onMouseUp={(e) => handleFrequencyCommit(Number(e.currentTarget.value))}
+          onTouchEnd={(e) => handleFrequencyCommit(Number(e.currentTarget.value))}
           aria-label="Oscillator frequency"
-          className="h-2 w-full cursor-pointer appearance-none rounded-full bg-gray-700 accent-violet-500"
+          className="h-1.5 w-full cursor-pointer accent-accent"
         />
       </div>
 
       {/* Detune Slider */}
       <div className="flex flex-col gap-1">
         <div className="flex items-center justify-between">
-          <label htmlFor="osc-detune" className="text-xs text-gray-400">
+          <label htmlFor="osc-detune" className="text-xs text-muted">
             Detune
           </label>
-          <span className="text-xs font-mono text-violet-400">
+          <span className="font-mono text-xs text-accent tabular-nums">
             {oscillator.detune > 0 ? '+' : ''}{oscillator.detune} cents
           </span>
         </div>
@@ -96,13 +93,13 @@ export function OscillatorControls() {
           type="range"
           min={detuneLimits.min}
           max={detuneLimits.max}
-          step={1}
+          step={detuneStep}
           value={oscillator.detune}
           onChange={(e) => handleDetuneChange(Number(e.target.value))}
-          onMouseUp={(e) => handleDetuneCommit(Number((e.target as HTMLInputElement).value))}
-          onTouchEnd={(e) => handleDetuneCommit(Number((e.target as HTMLInputElement).value))}
+          onMouseUp={(e) => handleDetuneCommit(Number(e.currentTarget.value))}
+          onTouchEnd={(e) => handleDetuneCommit(Number(e.currentTarget.value))}
           aria-label="Oscillator detune in cents"
-          className="h-2 w-full cursor-pointer appearance-none rounded-full bg-gray-700 accent-violet-500"
+          className="h-1.5 w-full cursor-pointer accent-accent"
         />
       </div>
     </section>

@@ -1,5 +1,2 @@
-export { SynthPanel } from './components/SynthPanel/SynthPanel'
-export { OscillatorControls } from './components/OscillatorControls/OscillatorControls'
-export { EnvelopeControls } from './components/EnvelopeControls/EnvelopeControls'
-export { FilterControls } from './components/FilterControls/FilterControls'
-export { PresetSelector } from './components/PresetSelector/PresetSelector'
+export { TweakPanel } from './components/TweakPanel/TweakPanel'
+export { TweakSlider } from './components/TweakSlider/TweakSlider'

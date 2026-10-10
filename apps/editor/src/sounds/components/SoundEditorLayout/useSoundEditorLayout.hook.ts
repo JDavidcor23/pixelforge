@@ -1,15 +1,12 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+
 import { audioEngine } from '@/lib/audio-engine'
 
-type LeftTab = 'synth' | 'ai'
-
 export function useSoundEditorLayout() {
-  const [activeLeftTab, setActiveLeftTab] = useState<LeftTab>('synth')
   const [showAudioOverlay, setShowAudioOverlay] = useState(false)
 
   useEffect(() => {
-    const suspended = audioEngine.isSuspended()
-    setShowAudioOverlay(suspended)
+    setShowAudioOverlay(audioEngine.isSuspended())
   }, [])
 
   const handleEnableAudio = useCallback(async () => {
@@ -17,14 +14,5 @@ export function useSoundEditorLayout() {
     setShowAudioOverlay(false)
   }, [])
 
-  const handleTabChange = useCallback((tab: LeftTab) => {
-    setActiveLeftTab(tab)
-  }, [])
-
-  return {
-    activeLeftTab,
-    showAudioOverlay,
-    handleEnableAudio,
-    handleTabChange,
-  }
+  return { showAudioOverlay, handleEnableAudio }
 }

@@ -378,19 +378,9 @@ export const useLastAIReferenceBase64 = () => useSpriteEditorStore((s) => s.last
  */
 
 /**
- * Returns the active tab in the left sidebar.
- */
-export const useLeftSidebarTab = () => useEditorUIStore((s) => s.leftSidebarTab)
-
-/**
  * Returns the full UI state (visibilities, positions).
  */
 export const useUIState = () => useEditorUIStore((s) => s.ui)
-
-/**
- * Action to change the active tab in the left sidebar.
- */
-export const useSetLeftSidebarTab = () => useEditorUIStore((s) => s.setLeftSidebarTab)
 
 /**
  * Action to toggle the visibility of the left sidebar.

@@ -2,10 +2,26 @@ import { useCallback } from 'react'
 
 import { useSoundsStore } from '@/stores/sounds.store'
 import { audioEngine } from '@/lib/audio-engine'
-import { ADSR_LIMITS } from '@/constants/audio'
+import {
+  ADSR_LIMITS,
+  ADSR_VIEW,
+  PERCENT_SCALE,
+  SUSTAIN_HOLD_MS,
+  SYNTH_CONTROL_STEP,
+  SYNTH_PREVIEW_DURATION_S,
+} from '@/constants/audio'
 import type { EnvelopeParameters, SynthParameters } from '@/types/audio'
 
-const PREVIEW_DURATION = 0.5
+const VIEW_BOX = `0 0 ${ADSR_VIEW.WIDTH} ${ADSR_VIEW.HEIGHT}`
+const BASELINE = {
+  x1: ADSR_VIEW.PADDING,
+  y1: ADSR_VIEW.HEIGHT - ADSR_VIEW.PADDING,
+  x2: ADSR_VIEW.WIDTH - ADSR_VIEW.PADDING,
+  y2: ADSR_VIEW.HEIGHT - ADSR_VIEW.PADDING,
+} as const
+
+const getStep = (key: keyof EnvelopeParameters): number =>
+  key === 'sustain' ? SYNTH_CONTROL_STEP.LEVEL : SYNTH_CONTROL_STEP.TIME_MS
 
 export function useEnvelopeControls() {
   const envelope = useSoundsStore((state) => state.synthParams.envelope)
@@ -15,7 +31,7 @@ export function useEnvelopeControls() {
   const playPreview = useCallback(
     (params: SynthParameters) => {
       void audioEngine.resume()
-      audioEngine.playSynth(params, PREVIEW_DURATION)
+      audioEngine.playSynth(params, SYNTH_PREVIEW_DURATION_S.ENVELOPE)
     },
     []
   )
@@ -40,24 +56,22 @@ export function useEnvelopeControls() {
 
   const formatValue = useCallback((key: keyof EnvelopeParameters, value: number): string => {
     if (key === 'sustain') {
-      return `${Math.round(value * 100)}%`
+      return `${Math.round(value * PERCENT_SCALE)}%`
     }
     return `${Math.round(value)}ms`
   }, [])
 
   const generateAdsrPath = useCallback(
     (env: EnvelopeParameters): string => {
-      const width = 200
-      const height = 60
-      const padding = 4
+      const { WIDTH: width, HEIGHT: height, PADDING: padding } = ADSR_VIEW
 
-      const totalTime = env.attack + env.decay + 500 + env.release
+      const totalTime = env.attack + env.decay + SUSTAIN_HOLD_MS + env.release
       const scaleX = (ms: number) => padding + (ms / totalTime) * (width - padding * 2)
       const scaleY = (level: number) => padding + (1 - level) * (height - padding * 2)
 
       const attackEnd = scaleX(env.attack)
       const decayEnd = scaleX(env.attack + env.decay)
-      const sustainEnd = scaleX(env.attack + env.decay + 500)
+      const sustainEnd = scaleX(env.attack + env.decay + SUSTAIN_HOLD_MS)
       const releaseEnd = scaleX(totalTime)
 
       return [
@@ -74,6 +88,9 @@ export function useEnvelopeControls() {
   return {
     envelope,
     limits: ADSR_LIMITS,
+    viewBox: VIEW_BOX,
+    baseline: BASELINE,
+    getStep,
     handleParamChange,
     handleParamCommit,
     formatValue,

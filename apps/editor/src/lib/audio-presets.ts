@@ -1,4 +1,4 @@
-import type { SynthPreset, PresetCategory } from '@/types/audio'
+import type { SynthPreset } from '@/types/audio'
 
 export const SYNTH_PRESETS: SynthPreset[] = [
   {
@@ -56,16 +56,19 @@ export const SYNTH_PRESETS: SynthPreset[] = [
       masterGain: 0.65,
     },
   },
+  {
+    id: 'preset-hit',
+    name: 'Hit',
+    category: 'hit',
+    params: {
+      oscillator: { type: 'square', frequency: 140, detune: 0 },
+      envelope: { attack: 1, decay: 60, sustain: 0.05, release: 90 },
+      filter: { type: 'lowpass', frequency: 1800, q: 1.5 },
+      masterGain: 0.8,
+    },
+  },
 ]
 
 export function getPresetById(id: string): SynthPreset | undefined {
   return SYNTH_PRESETS.find((preset) => preset.id === id)
-}
-
-export function getPresetsByCategory(category: PresetCategory): SynthPreset[] {
-  return SYNTH_PRESETS.filter((preset) => preset.category === category)
-}
-
-export function getAllPresets(): SynthPreset[] {
-  return [...SYNTH_PRESETS]
 }
