@@ -8,11 +8,18 @@
 //! - `flood_fill` — phase 5's compute-heavy kernel (4-connected, stack-based
 //!   flood fill), built on top of `pixels`' validated-buffer primitives.
 //!   Same hexagonal rule: no wasm-bindgen import.
+//! - `quantize` — phase 6's weighted k-means-style palette reducer. Same
+//!   hexagonal rule: no wasm-bindgen import.
+//! - `downscale` — phase 6's majority-vote downscale (with anti-alias
+//!   defringing). Same hexagonal rule: no wasm-bindgen import.
 //! - `bindings` — the ONLY module that imports `wasm_bindgen`. A thin
-//!   pass-through to `pixels`/`flood_fill`, never business logic of its own.
+//!   pass-through to `pixels`/`flood_fill`/`quantize`/`downscale`, never
+//!   business logic of its own.
 
+mod downscale;
 mod flood_fill;
 mod pixels;
+mod quantize;
 
 pub mod bindings;
 

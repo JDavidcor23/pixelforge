@@ -409,3 +409,81 @@ truncates/wraps these exact inputs via `ToUint32` instead of rejecting
 them) is never reached for an invalid number. 33 new parity cases in
 `pixel-parity.test.ts` assert ts and wasm reject identically (verified to
 fail on the wasm side before this fix, confirmed via a temporary revert).
+
+## Phase 6 — quantize + downscale
+
+Ported `apps/editor/src/lib/quantize.ts`'s `quantizePixels` (weighted
+k-means-style palette reduction) and `apps/editor/src/lib/downscale.ts`'s
+`downscaleTo` (majority-vote downscale with anti-alias defringing) to Rust
+(`packages/core/src/{quantize,downscale}.rs`), wired into `PixelKernels` as
+two new flat-buffer calls: `quantize(data, colors, weightBySaturation,
+iterations, alphaThreshold)` and `downscale(data, srcW, srcH, targetW,
+targetH)`, both returning a FRESH buffer (`undefined` on an invalid shape or
+a boundary-rejected numeric argument) rather than mutating in place —
+`resizeNearest` (the other function in `downscale.ts`) is intentionally
+NOT ported; out of this phase's scope (see `downscale.rs`'s module doc).
+
+**Bench** (`pnpm run bench`, warm pools, construction excluded from the
+timed loop — same methodology as phase 5f's flood-fill bench):
+
+| Case | ts mean | wasm mean | wasm/ts ratio |
+|------|---------|-----------|----------------|
+| quantize 64x64 -> 16 colors | 5.5124 ms | 1.5089 ms | **0.27x** (3.65x faster) |
+| quantize 64x64 -> 32 colors | 14.0980 ms | 3.9900 ms | **0.28x** (3.53x faster) |
+| downscale 512x512 -> 64x64 | 3.8131 ms | 4.5081 ms | **1.18x** (Wasm slower) |
+
+quantize is COMPUTE-HEAVY (nested loops over points x centroids x
+iterations for the k-means seeding/refinement) and Wasm wins decisively —
+well past the honest "is this worth it" bar, not just a marginal win.
+downscale's per-call cost is dominated by the FFI copy of the WHOLE 512x512
+(1 MB) source buffer into Wasm memory (same cost class as `extractRect`/
+`writeRect`/batched `put_points` — see `LEARNING.md` §4), while the actual
+per-cell majority-vote work is comparatively cheap (a 64x64 target has only
+4,096 cells) — so the fixed FFI copy cost is NOT amortized over enough
+compute to win here, same pattern as phase 4's near-memcpy kernels. This is
+recorded honestly, not hidden: the pixel-core spec's performance budgets
+name only flood-fill's 3x/5ms target (not quantize/downscale), so no
+requirement is violated by downscale's ratio.
+
+`packages/core/bench/thresholds.json` updated: `maxWasmToTsRatio` 0.4 for
+both quantize cases (measured ~0.27-0.28, margin for CI noise) and 1.4 for
+downscale (measured ~1.18, same honest-gate-above-reality philosophy as
+every other threshold in this file).
+
+**Tests**: `packages/core` 4,244 total (Vitest) after this phase — 20 new
+`cargo test` cases (9 quantize + 11 downscale, 50/50 passing), plus
+TS-side: `pixel-parity.test.ts` gained 14
+new ts/wasm parity cases (quantize + downscale, including boundary-number-
+validation), and a new `quantize-downscale.fuzz.test.ts` runs 2,000
+randomized cases EACH for quantize and downscale (4,000+ total `it.each`
+cases) comparing ts vs wasm byte-for-byte, deterministic LCG seeds, 0
+failures. `apps/editor` gained two oracle-parity suites
+(`quantize.oracle-parity.test.ts`, `downscale.oracle-parity.test.ts`,
+mirroring `flood-fill.oracle-parity.test.ts`'s pattern): 2,000 randomized
+cases EACH compared against the ORIGINAL, never-touched oracle files, plus
+dedicated edge-case tests (1x1, non-divisible sizes, fully transparent,
+alpha-threshold boundary at 127/128, palette sizes 1/2/256) and boundary-
+number-validation tests (NaN/fractional/huge rejected identically by both
+kernels) — 0 failures. Full monorepo `pnpm run typecheck`/`test` green
+(`packages/core` 4,244 tests, `apps/editor` 289 tests, `packages/tokens` 5
+tests).
+
+**`cargo test`**: 50/50 passing (30 prior + 20 new). `cargo fmt --check`/
+`cargo clippy --all-targets -- -D warnings`: both clean.
+
+**Reproducibility + size**: two consecutive `build:wasm` runs produced a
+byte-identical `.wasm` (confirmed via `cmp`); the post-build host-path scan
+is clean. Gzip'd `.wasm`: 14,647 bytes (~9.8% of the 150 KB budget), up from
+10,273 bytes at the end of phase 5f (the two new kernels' compiled code).
+
+**Editor wiring**: `apps/editor/src/lib/sprite-pipeline.ts`'s
+`quantizeIfNeeded`/`downscaleViaKernels` now route through
+`resolveKernels()` (the same `pf:core`/`VITE_PIXEL_CORE` override chain and
+automatic TS-fallback-on-load-failure-or-trap every other kernel caller
+uses), with the original oracle function kept as a defensive fallback for
+the (never actually triggered, parity-tested) "kernel rejected a
+seemingly-valid call" case. This covers every caller of `decodeToPixels`/
+`decodeSheetToFrames` — the file import pipeline AND the AI sprite pipeline
+(`retro-diffusion-utils.ts`'s `decodeGeneratedSprite` calls `decodeToPixels`
+directly) — without changing any output (proven by the oracle-parity
+suites above).

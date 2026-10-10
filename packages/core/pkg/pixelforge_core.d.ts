@@ -19,6 +19,14 @@ export function clone_buffer(data: Uint8Array): Uint8Array;
 export function diff_rect(before: Uint8Array, after: Uint8Array, w: number, h: number): Uint32Array | undefined;
 
 /**
+ * Majority-vote downscale from `src_w x src_h` to `target_w x target_h`
+ * (phase 6, design.md "Lossless Pixel Round-Trip"). `None` (JS: `undefined`)
+ * if `data`'s length doesn't match `src_w*src_h*4`, or any dimension is
+ * zero. See `crate::downscale` for the algorithm.
+ */
+export function downscale(data: Uint8Array, src_w: number, src_h: number, target_w: number, target_h: number): Uint8Array | undefined;
+
+/**
  * Copies `rect` (`rx, ry, rw, rh`) out of `data` as a tightly-packed RGBA
  * byte vec. `None` if the rect doesn't fit the buffer.
  */
@@ -61,6 +69,17 @@ export function put_pixel(data: Uint8Array, w: number, h: number, x: number, y: 
 export function put_points(data: Uint8Array, w: number, h: number, points: Int32Array, rgba: number): number;
 
 /**
+ * Reduces `data`'s RGB palette to at most `colors` colors (phase 6, design.md
+ * "Lossless Pixel Round-Trip"). A `Vec<u8>` return is always a fresh copy
+ * back to JS (see `LEARNING.md`'s note on owned returns) — unlike the
+ * in-place `&mut [u8]` kernels above, this always allocates a brand new
+ * buffer, mirroring `quantizePixels`'s `cloneBuffer` + recolor shape.
+ * `None` (JS: `undefined`) if `data`'s length isn't a whole number of RGBA
+ * pixels. See `crate::quantize` for the algorithm.
+ */
+export function quantize(data: Uint8Array, colors: number, weight_by_saturation: boolean, iterations: number, alpha_threshold: number): Uint8Array | undefined;
+
+/**
  * Writes `patch` into `rect` of `data`, in place. `false` (no-op) if the
  * rect doesn't fit the buffer or `patch`'s length doesn't match `rw*rh*4`.
  */
@@ -73,11 +92,13 @@ export interface InitOutput {
     readonly bytes_equal: (a: number, b: number, c: number, d: number) => number;
     readonly clone_buffer: (a: number, b: number) => [number, number];
     readonly diff_rect: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];
+    readonly downscale: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];
     readonly extract_rect: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => [number, number];
     readonly flood_fill: (a: number, b: number, c: any, d: number, e: number, f: number, g: number, h: number) => [number, number];
     readonly get_pixel: (a: number, b: number, c: number, d: number, e: number, f: number) => number;
     readonly put_pixel: (a: number, b: number, c: any, d: number, e: number, f: number, g: number, h: number) => number;
     readonly put_points: (a: number, b: number, c: any, d: number, e: number, f: number, g: number, h: number) => number;
+    readonly quantize: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];
     readonly write_rect: (a: number, b: number, c: any, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number) => number;
     readonly __wbindgen_externrefs: WebAssembly.Table;
     readonly __wbindgen_malloc: (a: number, b: number) => number;

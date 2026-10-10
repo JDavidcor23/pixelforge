@@ -1,5 +1,6 @@
 import type { PixelBuffer } from '@/types'
 import { ALPHA_TRANSPARENT_THRESHOLD, QUANTIZE_DEFAULTS } from '@/constants'
+import { resolveKernels } from '@pixelforge/core'
 import { base64ToNativePixels } from './image-decode'
 import { downscaleTo, resizeNearest } from './downscale'
 import { quantizePixels } from './quantize'
@@ -82,21 +83,49 @@ const composeCentered = (scaled: PixelBuffer, size: number): PixelBuffer => {
   return buffer
 }
 
-const quantizeIfNeeded = (pixels: PixelBuffer, quantize: boolean): PixelBuffer =>
-  quantize
-    ? quantizePixels(pixels, {
-        colors: QUANTIZE_DEFAULTS.COLORS,
-        weightBySaturation: true,
-        iterations: QUANTIZE_DEFAULTS.ITERATIONS,
-        alphaThreshold: QUANTIZE_DEFAULTS.ALPHA_THRESHOLD,
-      })
-    : pixels
+const QUANTIZE_OPTS = {
+  colors: QUANTIZE_DEFAULTS.COLORS,
+  weightBySaturation: true,
+  iterations: QUANTIZE_DEFAULTS.ITERATIONS,
+  alphaThreshold: QUANTIZE_DEFAULTS.ALPHA_THRESHOLD,
+} as const
+
+/**
+ * Phase 6: routes through `@pixelforge/core`'s resolved `PixelKernels`
+ * (`pf:core` localStorage override -> `VITE_PIXEL_CORE` -> default `'ts'`,
+ * with an automatic TS fallback on Wasm load failure or a runtime trap —
+ * `resolveKernels()` already implements the whole chain). Both functions
+ * below keep their ORIGINAL editor implementation (`quantizePixels`/
+ * `downscaleTo`) as a defensive fallback for the "kernel rejected a
+ * seemingly-valid call" case, which parity testing
+ * (`quantize.oracle-parity.test.ts`/`downscale.oracle-parity.test.ts`) never
+ * actually exercises in production use — outputs are unchanged either way,
+ * since the kernel and the oracle are proven byte-identical.
+ */
+const quantizeIfNeeded = async (pixels: PixelBuffer, quantize: boolean): Promise<PixelBuffer> => {
+  if (!quantize) return pixels
+  const kernels = await resolveKernels()
+  const flat = new Uint8Array(pixels.data)
+  const result = kernels.quantize(flat, QUANTIZE_OPTS.colors, QUANTIZE_OPTS.weightBySaturation, QUANTIZE_OPTS.iterations, QUANTIZE_OPTS.alphaThreshold)
+  if (!result) return quantizePixels(pixels, QUANTIZE_OPTS) // defensive — should never trigger for a valid in-memory buffer
+  return { w: pixels.w, h: pixels.h, data: new Uint8ClampedArray(result) }
+}
+
+/** Kernel-backed counterpart to {@link downscaleTo} — same contract (see this file's module doc on kernel routing). */
+const downscaleViaKernels = async (source: PixelBuffer, targetW: number, targetH: number): Promise<PixelBuffer> => {
+  if (source.h === 0 || source.w === 0 || targetW <= 0 || targetH <= 0) return EMPTY_BUFFER
+  const kernels = await resolveKernels()
+  const flat = new Uint8Array(source.data)
+  const result = kernels.downscale(flat, source.w, source.h, targetW, targetH)
+  if (!result) return downscaleTo(source, targetW, targetH) // defensive — should never trigger for valid dimensions
+  return { w: targetW, h: targetH, data: new Uint8ClampedArray(result) }
+}
 
 /**
  * Fits a sprite into a transparent size x size buffer WITHOUT distorting its
  * aspect ratio: crop to content, scale so the longer side fills `size`, center.
  */
-const fitSpriteCentered = (pixels: PixelBuffer, size: number): PixelBuffer => {
+const fitSpriteCentered = async (pixels: PixelBuffer, size: number): Promise<PixelBuffer> => {
   const box = contentBox(pixels)
   if (!box) return composeCentered(EMPTY_BUFFER, size)
   const [x0, y0, x1, y1] = box
@@ -106,13 +135,14 @@ const fitSpriteCentered = (pixels: PixelBuffer, size: number): PixelBuffer => {
   const targetWidth = Math.max(1, Math.min(size, Math.round(boxWidth * scale)))
   const targetHeight = Math.max(1, Math.min(size, Math.round(boxHeight * scale)))
   const cropped = cropRegion(pixels, x0, x1, y0, y1)
-  return composeCentered(downscaleTo(cropped, targetWidth, targetHeight), size)
+  const scaled = await downscaleViaKernels(cropped, targetWidth, targetHeight)
+  return composeCentered(scaled, size)
 }
 
 /** Decodes an imported image to the target grid size, aspect preserved. */
 export async function decodeToPixels(base64: string, size: number, quantize: boolean): Promise<PixelBuffer> {
   const native: PixelBuffer = await base64ToNativePixels(base64)
-  return quantizeIfNeeded(fitSpriteCentered(native, size), quantize)
+  return quantizeIfNeeded(await fitSpriteCentered(native, size), quantize)
 }
 
 /**
@@ -150,7 +180,7 @@ export async function decodeSheetToFrames(
     const region = cropRegion(sheet, x0, x0 + cellWidth - 1, 0, sheetHeight - 1)
     // Nearest-neighbour keeps hard pixel edges and the source palette intact.
     const scaled = resizeNearest(region, targetWidth, targetHeight)
-    frames.push(quantizeIfNeeded(composeCentered(scaled, size), quantize))
+    frames.push(await quantizeIfNeeded(composeCentered(scaled, size), quantize))
   }
   return frames
 }

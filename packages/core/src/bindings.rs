@@ -114,3 +114,43 @@ pub fn flood_fill(
     crate::flood_fill::flood_fill(data, w, h, x, y, rgba)
         .map(|(fx, fy, fw, fh)| vec![fx, fy, fw, fh].into_boxed_slice())
 }
+
+/// Reduces `data`'s RGB palette to at most `colors` colors (phase 6, design.md
+/// "Lossless Pixel Round-Trip"). A `Vec<u8>` return is always a fresh copy
+/// back to JS (see `LEARNING.md`'s note on owned returns) — unlike the
+/// in-place `&mut [u8]` kernels above, this always allocates a brand new
+/// buffer, mirroring `quantizePixels`'s `cloneBuffer` + recolor shape.
+/// `None` (JS: `undefined`) if `data`'s length isn't a whole number of RGBA
+/// pixels. See `crate::quantize` for the algorithm.
+#[wasm_bindgen]
+pub fn quantize(
+    data: &[u8],
+    colors: u32,
+    weight_by_saturation: bool,
+    iterations: u32,
+    alpha_threshold: u32,
+) -> Option<Vec<u8>> {
+    crate::quantize::quantize(
+        data,
+        colors,
+        weight_by_saturation,
+        iterations,
+        alpha_threshold,
+    )
+}
+
+/// Majority-vote downscale from `src_w x src_h` to `target_w x target_h`
+/// (phase 6, design.md "Lossless Pixel Round-Trip"). `None` (JS: `undefined`)
+/// if `data`'s length doesn't match `src_w*src_h*4`, or any dimension is
+/// zero. See `crate::downscale` for the algorithm.
+#[allow(clippy::too_many_arguments)] // flat FFI args by design — see pixels::write_rect's precedent
+#[wasm_bindgen]
+pub fn downscale(
+    data: &[u8],
+    src_w: u32,
+    src_h: u32,
+    target_w: u32,
+    target_h: u32,
+) -> Option<Vec<u8>> {
+    crate::downscale::downscale(data, src_w, src_h, target_w, target_h)
+}

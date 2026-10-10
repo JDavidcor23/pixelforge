@@ -342,6 +342,253 @@ function floodFill(
   return [minX, minY, maxX - minX + 1, maxY - minY + 1]
 }
 
+// ── Phase 6: quantize (weighted k-means-style palette reduction) ───────────
+// Self-contained mirror of `apps/editor/src/lib/quantize.ts`'s
+// `quantizePixels` (this file's module doc: packages/core never depends on
+// apps/editor). `SATURATION_WEIGHT` duplicates
+// `QUANTIZE_DEFAULTS.SATURATION_WEIGHT` (apps/editor/src/constants) on
+// purpose — see `quantize.rs`'s matching doc for the full "why" and the
+// floating-point parity reasoning (every computation here is a JS `number`,
+// i.e. an IEEE 754 double, matching Rust's `f64` bit for bit).
+
+const SATURATION_WEIGHT = 6
+
+interface QPoint {
+  r: number
+  g: number
+  b: number
+  w: number
+}
+interface QCentroid {
+  r: number
+  g: number
+  b: number
+}
+
+function saturation(r: number, g: number, b: number): number {
+  const mx = Math.max(r, g, b)
+  const mn = Math.min(r, g, b)
+  return mx === 0 ? 0 : (mx - mn) / mx
+}
+
+function dist2(a: QCentroid, b: QCentroid): number {
+  return (a.r - b.r) ** 2 + (a.g - b.g) ** 2 + (a.b - b.b) ** 2
+}
+
+/** Nearest centroid by squared distance — ties go to the FIRST centroid found (strict `<`). `undefined` only if `palette` is empty (see `quantize`'s doc: the real caller never hits this). */
+function nearest(palette: readonly QCentroid[], p: QCentroid): QCentroid | undefined {
+  let best = palette[0]
+  let bestD = Infinity
+  for (const c of palette) {
+    const d = dist2(c, p)
+    if (d < bestD) {
+      bestD = d
+      best = c
+    }
+  }
+  return best
+}
+
+/**
+ * Mirrors `quantize.ts`'s `buildPalette` exactly, including its quirks: `k
+ * === 0` still yields ONE centroid (the initial highest-weight seed is
+ * pushed unconditionally, before the `while centroids.length < k` check ever
+ * runs), and a `k` larger than the number of distinct colors may push
+ * duplicate centroids.
+ */
+function buildPalette(points: readonly QPoint[], k: number, iterations: number): QCentroid[] {
+  if (points.length === 0) return []
+  const centroids: QCentroid[] = []
+  let first = points[0]
+  for (const p of points) if (p.w > first.w) first = p
+  centroids.push({ r: first.r, g: first.g, b: first.b })
+
+  while (centroids.length < k) {
+    let best: QPoint | null = null
+    let bestScore = -1
+    for (const p of points) {
+      let dmin = Infinity
+      for (const c of centroids) {
+        const d = dist2(c, p)
+        if (d < dmin) dmin = d
+      }
+      const score = dmin * p.w
+      if (score > bestScore) {
+        bestScore = score
+        best = p
+      }
+    }
+    if (!best) break
+    centroids.push({ r: best.r, g: best.g, b: best.b })
+  }
+
+  for (let it = 0; it < iterations; it++) {
+    const sums = centroids.map(() => ({ r: 0, g: 0, b: 0, w: 0 }))
+    for (const p of points) {
+      let bi = 0
+      let bd = Infinity
+      for (let i = 0; i < centroids.length; i++) {
+        const d = dist2(centroids[i], p)
+        if (d < bd) {
+          bd = d
+          bi = i
+        }
+      }
+      const s = sums[bi]
+      s.r += p.r * p.w
+      s.g += p.g * p.w
+      s.b += p.b * p.w
+      s.w += p.w
+    }
+    for (let i = 0; i < centroids.length; i++) {
+      if (sums[i].w > 0) {
+        centroids[i] = {
+          r: Math.round(sums[i].r / sums[i].w),
+          g: Math.round(sums[i].g / sums[i].w),
+          b: Math.round(sums[i].b / sums[i].w),
+        }
+      }
+    }
+  }
+
+  return centroids
+}
+
+/**
+ * Reduces `data`'s RGB palette to at most `colors` colors, leaving alpha
+ * untouched. `undefined` if `data`'s length isn't a whole number of RGBA
+ * pixels, or `colors`/`iterations`/`alphaThreshold` fail `isValidU32` (phase
+ * 6: the same boundary-number-validation convention every other kernel
+ * argument gets — design.md "Boundary number validation").
+ */
+function quantize(data: Uint8Array, colors: number, weightBySaturation: boolean, iterations: number, alphaThreshold: number): Uint8Array | undefined {
+  if (data.length % CHANNELS !== 0 || !isValidU32(colors) || !isValidU32(iterations) || !isValidU32(alphaThreshold)) return undefined
+
+  const points: QPoint[] = []
+  for (let i = 0; i < data.length; i += CHANNELS) {
+    const a = data[i + 3]
+    if (a < alphaThreshold) continue
+    const r = data[i]
+    const g = data[i + 1]
+    const b = data[i + 2]
+    const w = weightBySaturation ? 1 + SATURATION_WEIGHT * saturation(r, g, b) : 1
+    points.push({ r, g, b, w })
+  }
+
+  const palette = buildPalette(points, colors, iterations)
+  const out = new Uint8Array(data)
+  for (let i = 0; i < out.length; i += CHANNELS) {
+    const a = out[i + 3]
+    if (a < alphaThreshold) continue
+    const c = nearest(palette, { r: out[i], g: out[i + 1], b: out[i + 2] })
+    if (!c) continue // defensive — never reached, see this function's doc
+    out[i] = c.r
+    out[i + 1] = c.g
+    out[i + 2] = c.b
+  }
+  return out
+}
+
+// ── Phase 6: downscale (majority-vote, defringed) ──────────────────────────
+// Self-contained mirror of `apps/editor/src/lib/downscale.ts`'s
+// `downscaleTo` (NOT `resizeNearest` — out of this phase's scope, see
+// `downscale.rs`'s module doc). The `ALPHA_OPAQUE / 2` fallback threshold is
+// deliberately kept as the exact float `127.5`, never rounded — see
+// `downscale.rs`'s doc for why that half-integer changes which side `alpha
+// === 127`/`128` falls on.
+
+const DOWNSCALE_ALPHA_OPAQUE = 255
+const DOWNSCALE_OPAQUE_TRANSPARENT_SPLIT = DOWNSCALE_ALPHA_OPAQUE / 2 // 127.5, exact — never round this
+const DOWNSCALE_BUCKET_SHIFT = 3
+const DOWNSCALE_CORE_ALPHA_THRESHOLD = 200
+
+interface DownscaleBucket {
+  count: number
+  r: number
+  g: number
+  b: number
+}
+
+function hasSolidCore(data: Uint8Array): boolean {
+  for (let i = 3; i < data.length; i += CHANNELS) {
+    if (data[i] >= DOWNSCALE_CORE_ALPHA_THRESHOLD) return true
+  }
+  return false
+}
+
+function dominantColor(data: Uint8Array, srcW: number, x0: number, x1: number, y0: number, y1: number, coreAlpha: number): [number, number, number, number] {
+  const buckets = new Map<number, DownscaleBucket>()
+  let opaque = 0
+  let transparent = 0
+  let core = 0
+
+  for (let y = y0; y < y1; y++) {
+    for (let x = x0; x < x1; x++) {
+      const i = (y * srcW + x) * CHANNELS
+      const a = data[i + 3]
+      if (a < DOWNSCALE_OPAQUE_TRANSPARENT_SPLIT) {
+        transparent++
+        continue
+      }
+      opaque++
+      if (a < coreAlpha) continue
+      core++
+      const r = data[i]
+      const g = data[i + 1]
+      const b = data[i + 2]
+      const key = ((r >> DOWNSCALE_BUCKET_SHIFT) << 10) | ((g >> DOWNSCALE_BUCKET_SHIFT) << 5) | (b >> DOWNSCALE_BUCKET_SHIFT)
+      const bucket = buckets.get(key)
+      if (bucket) {
+        bucket.count++
+        bucket.r += r
+        bucket.g += g
+        bucket.b += b
+      } else {
+        buckets.set(key, { count: 1, r, g, b })
+      }
+    }
+  }
+
+  if (transparent >= opaque || core === 0) return [0, 0, 0, 0]
+
+  let best: DownscaleBucket | null = null
+  for (const bucket of buckets.values()) {
+    if (!best || bucket.count > best.count) best = bucket
+  }
+  if (!best) return [0, 0, 0, 0]
+  return [Math.round(best.r / best.count), Math.round(best.g / best.count), Math.round(best.b / best.count), DOWNSCALE_ALPHA_OPAQUE]
+}
+
+/**
+ * Majority-vote downscale from `srcW x srcH` to `targetW x targetH`.
+ * `undefined` if `data`'s length doesn't match `srcW*srcH*4`, any dimension
+ * is zero, or any numeric argument fails `isValidU32`.
+ */
+function downscale(data: Uint8Array, srcW: number, srcH: number, targetW: number, targetH: number): Uint8Array | undefined {
+  if (!isValidU32(srcW) || !isValidU32(srcH) || !isValidU32(targetW) || !isValidU32(targetH) || !validBuffer(data, srcW, srcH) || srcW === 0 || srcH === 0 || targetW === 0 || targetH === 0) {
+    return undefined
+  }
+
+  const coreAlpha = hasSolidCore(data) ? DOWNSCALE_CORE_ALPHA_THRESHOLD : DOWNSCALE_OPAQUE_TRANSPARENT_SPLIT
+  const out = new Uint8Array(targetW * targetH * CHANNELS)
+
+  for (let ty = 0; ty < targetH; ty++) {
+    const y0 = Math.floor((ty * srcH) / targetH)
+    const y1 = Math.max(y0 + 1, Math.floor(((ty + 1) * srcH) / targetH))
+    for (let tx = 0; tx < targetW; tx++) {
+      const x0 = Math.floor((tx * srcW) / targetW)
+      const x1 = Math.max(x0 + 1, Math.floor(((tx + 1) * srcW) / targetW))
+      const [r, g, b, a] = dominantColor(data, srcW, x0, x1, y0, y1, coreAlpha)
+      const o = (ty * targetW + tx) * CHANNELS
+      out[o] = r
+      out[o + 1] = g
+      out[o + 2] = b
+      out[o + 3] = a
+    }
+  }
+  return out
+}
+
 export const tsKernels: PixelKernels = {
   impl: 'ts',
   putPoints,
@@ -351,4 +598,6 @@ export const tsKernels: PixelKernels = {
   extractRect,
   writeRect,
   bytesEqual,
+  quantize,
+  downscale,
 }

@@ -38,4 +38,23 @@ export interface PixelKernels {
   extractRect(data: Uint8Array, w: number, h: number, rx: number, ry: number, rw: number, rh: number): Uint8Array | undefined
   writeRect(data: Uint8Array, w: number, h: number, rx: number, ry: number, rw: number, rh: number, patch: Uint8Array): boolean
   bytesEqual(a: Uint8Array, b: Uint8Array): boolean
+  /**
+   * Phase 6: reduces `data`'s RGB palette to at most `colors` colors (alpha
+   * is left byte-for-byte untouched). Unlike every kernel above, this
+   * returns a FRESH buffer rather than mutating in place (mirrors
+   * `apps/editor/src/lib/quantize.ts`'s `cloneBuffer`-then-recolor shape) —
+   * `undefined` if `data`'s length isn't a whole number of RGBA pixels, or
+   * `colors`/`iterations`/`alphaThreshold` fail the same `isValidU32`
+   * boundary check every other numeric kernel argument gets (design.md
+   * "Boundary number validation").
+   */
+  quantize(data: Uint8Array, colors: number, weightBySaturation: boolean, iterations: number, alphaThreshold: number): Uint8Array | undefined
+  /**
+   * Phase 6: majority-vote downscale from `srcW x srcH` to `targetW x
+   * targetH`, defringing anti-aliased edges (see `crate::downscale`'s doc).
+   * Returns a FRESH `targetW*targetH*4`-byte buffer, or `undefined` if
+   * `data`'s length doesn't match `srcW*srcH*4`, any dimension is zero, or
+   * any numeric argument fails `isValidU32`.
+   */
+  downscale(data: Uint8Array, srcW: number, srcH: number, targetW: number, targetH: number): Uint8Array | undefined
 }

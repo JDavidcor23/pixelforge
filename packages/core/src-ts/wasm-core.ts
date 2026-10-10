@@ -142,5 +142,18 @@ export function makeWasmKernels(mod: WasmExports): PixelKernels {
       return mod.write_rect(data, w, h, rx, ry, rw, rh, patch)
     },
     bytesEqual: (a, b) => mod.bytes_equal(a, b),
+    // Phase 6: same `isValidU32` boundary guard as every other numeric
+    // kernel argument (see `ts-core.ts`'s `quantize`/`isValidU32` docs) —
+    // applied BEFORE calling into Wasm, so a wasm-bindgen `u32` param never
+    // silently coerces a NaN/fractional/out-of-range `colors`/`iterations`/
+    // `alphaThreshold` into a "valid-looking" different number.
+    quantize: (data, colors, weightBySaturation, iterations, alphaThreshold) => {
+      if (data.length % CHANNELS !== 0 || !isValidU32(colors) || !isValidU32(iterations) || !isValidU32(alphaThreshold)) return undefined
+      return mod.quantize(data, colors, weightBySaturation, iterations, alphaThreshold) ?? undefined
+    },
+    downscale: (data, srcW, srcH, targetW, targetH) => {
+      if (!isValidU32(srcW) || !isValidU32(srcH) || !isValidU32(targetW) || !isValidU32(targetH) || !validBuffer(data, srcW, srcH)) return undefined
+      return mod.downscale(data, srcW, srcH, targetW, targetH) ?? undefined
+    },
   }
 }

@@ -308,6 +308,133 @@ describe('pixel kernels parity (ts vs wasm)', () => {
     expect(wasm.kernels.bytesEqual(tsData, wasmData)).toBe(true)
   })
 
+  // ── Phase 6: quantize parity ───────────────────────────────────────────
+
+  it.each(cases.map((c) => [c.name, c.kernels] as const))('%s: quantize reduces the palette to at most `colors` opaque colors', (_name, k) => {
+    // 2x4 buffer: two near-red, two near-green, two near-blue clusters plus one transparent and one near-white pixel.
+    const px = (r: number, g: number, b: number, a = 255) => [r, g, b, a]
+    const rows = [
+      [px(200, 10, 10), px(198, 12, 9), px(12, 200, 14), px(10, 198, 16)],
+      [px(15, 12, 205), px(13, 14, 200), px(0, 0, 0, 0), px(250, 250, 250)],
+    ]
+    const data = new Uint8Array(rows.flat().flat())
+    const out = k.quantize(data, 4, true, 12, 128)
+    expect(out).toBeDefined()
+    const palette = new Set<string>()
+    for (let i = 0; i < out!.length; i += 4) {
+      if (out![i + 3] > 0) palette.add(`${out![i]},${out![i + 1]},${out![i + 2]}`)
+    }
+    expect(palette.size).toBeLessThanOrEqual(4)
+  })
+
+  it.each(cases.map((c) => [c.name, c.kernels] as const))('%s: quantize keeps fully transparent pixels transparent', (_name, k) => {
+    const data = new Uint8Array([0, 0, 0, 0, 200, 10, 10, 255])
+    const out = k.quantize(data, 2, true, 6, 128)
+    expect(out).toBeDefined()
+    expect(out![3]).toBe(0)
+  })
+
+  it.each(cases.map((c) => [c.name, c.kernels] as const))('%s: quantize rejects a buffer length not a multiple of 4', (_name, k) => {
+    expect(k.quantize(new Uint8Array(3), 2, true, 1, 0)).toBeUndefined()
+  })
+
+  it.each(cases.map((c) => [c.name, c.kernels] as const))('%s: quantize colors=0 still yields one shared centroid, not zero', (_name, k) => {
+    const data = new Uint8Array([10, 20, 30, 255, 200, 100, 50, 255])
+    const out = k.quantize(data, 0, true, 4, 0)
+    expect(out).toBeDefined()
+    expect([out![0], out![1], out![2]]).toEqual([out![4], out![5], out![6]])
+  })
+
+  it('quantize: ts and wasm agree byte-for-byte on a non-trivial buffer', () => {
+    const wasm = cases.find((c) => c.name === 'wasm')
+    if (!wasm) {
+      console.warn('[pixel-parity.test] wasm row unavailable — skipping the cross-implementation comparison.')
+      return
+    }
+    const w = 8
+    const h = 8
+    const data = new Uint8Array(w * h * 4)
+    for (let i = 0; i < data.length; i++) data[i] = (i * 37 + 11) % 256
+    const tsOut = tsKernels.quantize(data, 6, true, 8, 32)
+    const wasmOut = wasm.kernels.quantize(data, 6, true, 8, 32)
+    expect(tsOut).toBeDefined()
+    expect(wasmOut).toBeDefined()
+    expect(wasm.kernels.bytesEqual(tsOut!, wasmOut!)).toBe(true)
+  })
+
+  // ── Phase 6: downscale parity ───────────────────────────────────────────
+
+  it.each(cases.map((c) => [c.name, c.kernels] as const))('%s: downscale picks the dominant color of each cell', (_name, k) => {
+    const size = 8
+    const data = new Uint8Array(size * size * 4)
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        const i = (y * size + x) * 4
+        const isBlack = x % 4 === 0 && y % 4 === 0
+        data.set(isBlack ? [0, 0, 0, 255] : [200, 10, 10, 255], i)
+      }
+    }
+    const out = k.downscale(data, size, size, 2, 2)
+    expect(out).toBeDefined()
+    for (let i = 0; i < out!.length; i += 4) {
+      expect(out![i]).toBeGreaterThan(150)
+      expect(out![i + 1]).toBeLessThan(60)
+    }
+  })
+
+  it.each(cases.map((c) => [c.name, c.kernels] as const))('%s: downscale handles a 1x1 source and target', (_name, k) => {
+    const data = new Uint8Array([9, 8, 7, 255])
+    const out = k.downscale(data, 1, 1, 1, 1)
+    expect(out).toEqual(new Uint8Array([9, 8, 7, 255]))
+  })
+
+  it.each(cases.map((c) => [c.name, c.kernels] as const))('%s: downscale rejects zero dimensions and mismatched buffer length', (_name, k) => {
+    expect(k.downscale(new Uint8Array(0), 0, 0, 4, 4)).toBeUndefined()
+    expect(k.downscale(new Uint8Array(4), 1, 1, 4, 0)).toBeUndefined()
+    expect(k.downscale(new Uint8Array(4), 4, 4, 1, 1)).toBeUndefined() // declares 4x4, only 4 bytes
+  })
+
+  it('downscale: ts and wasm agree byte-for-byte on a non-divisible, non-square resize', () => {
+    const wasm = cases.find((c) => c.name === 'wasm')
+    if (!wasm) {
+      console.warn('[pixel-parity.test] wasm row unavailable — skipping the cross-implementation comparison.')
+      return
+    }
+    const srcW = 13
+    const srcH = 7
+    const data = new Uint8Array(srcW * srcH * 4)
+    for (let i = 0; i < data.length; i++) data[i] = (i * 53 + 3) % 256
+    const tsOut = tsKernels.downscale(data, srcW, srcH, 4, 3)
+    const wasmOut = wasm.kernels.downscale(data, srcW, srcH, 4, 3)
+    expect(tsOut).toBeDefined()
+    expect(wasmOut).toBeDefined()
+    expect(wasm.kernels.bytesEqual(tsOut!, wasmOut!)).toBe(true)
+  })
+
+  // ── Phase 6: boundary number validation (NaN/fractional/huge — ts vs wasm agree) ──
+
+  it.each([NaN, 1.5, -1, 2 ** 32 + 1, Infinity, -Infinity])('quantize(colors=%s) — ts and wasm both reject (undefined), never throw', (badColors) => {
+    const data = new Uint8Array(16)
+    expect(() => tsKernels.quantize(data, badColors, true, 4, 0)).not.toThrow()
+    expect(tsKernels.quantize(data, badColors, true, 4, 0)).toBeUndefined()
+    const wasm = cases.find((c) => c.name === 'wasm')
+    if (wasm) {
+      expect(() => wasm.kernels.quantize(data, badColors, true, 4, 0)).not.toThrow()
+      expect(wasm.kernels.quantize(data, badColors, true, 4, 0)).toBeUndefined()
+    }
+  })
+
+  it.each([NaN, 1.5, -1, 2 ** 32 + 1, Infinity, -Infinity])('downscale(targetW=%s) — ts and wasm both reject (undefined), never throw', (badW) => {
+    const data = new Uint8Array(16)
+    expect(() => tsKernels.downscale(data, 2, 2, badW, 2)).not.toThrow()
+    expect(tsKernels.downscale(data, 2, 2, badW, 2)).toBeUndefined()
+    const wasm = cases.find((c) => c.name === 'wasm')
+    if (wasm) {
+      expect(() => wasm.kernels.downscale(data, 2, 2, badW, 2)).not.toThrow()
+      expect(wasm.kernels.downscale(data, 2, 2, badW, 2)).toBeUndefined()
+    }
+  })
+
   it('ts and wasm agree byte-for-byte on a non-trivial buffer (byte-identical result)', () => {
     const wasm = cases.find((c) => c.name === 'wasm')
     if (!wasm) {

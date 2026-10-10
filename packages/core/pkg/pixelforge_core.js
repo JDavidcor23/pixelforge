@@ -54,6 +54,30 @@ export function diff_rect(before, after, w, h) {
 }
 
 /**
+ * Majority-vote downscale from `src_w x src_h` to `target_w x target_h`
+ * (phase 6, design.md "Lossless Pixel Round-Trip"). `None` (JS: `undefined`)
+ * if `data`'s length doesn't match `src_w*src_h*4`, or any dimension is
+ * zero. See `crate::downscale` for the algorithm.
+ * @param {Uint8Array} data
+ * @param {number} src_w
+ * @param {number} src_h
+ * @param {number} target_w
+ * @param {number} target_h
+ * @returns {Uint8Array | undefined}
+ */
+export function downscale(data, src_w, src_h, target_w, target_h) {
+    const ptr0 = passArray8ToWasm0(data, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.downscale(ptr0, len0, src_w, src_h, target_w, target_h);
+    let v2;
+    if (ret[0] !== 0) {
+        v2 = getArrayU8FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
+    }
+    return v2;
+}
+
+/**
  * Copies `rect` (`rx, ry, rw, rh`) out of `data` as a tightly-packed RGBA
  * byte vec. `None` if the rect doesn't fit the buffer.
  * @param {Uint8Array} data
@@ -164,6 +188,33 @@ export function put_points(data, w, h, points, rgba) {
     const len1 = WASM_VECTOR_LEN;
     const ret = wasm.put_points(ptr0, len0, data, w, h, ptr1, len1, rgba);
     return ret >>> 0;
+}
+
+/**
+ * Reduces `data`'s RGB palette to at most `colors` colors (phase 6, design.md
+ * "Lossless Pixel Round-Trip"). A `Vec<u8>` return is always a fresh copy
+ * back to JS (see `LEARNING.md`'s note on owned returns) — unlike the
+ * in-place `&mut [u8]` kernels above, this always allocates a brand new
+ * buffer, mirroring `quantizePixels`'s `cloneBuffer` + recolor shape.
+ * `None` (JS: `undefined`) if `data`'s length isn't a whole number of RGBA
+ * pixels. See `crate::quantize` for the algorithm.
+ * @param {Uint8Array} data
+ * @param {number} colors
+ * @param {boolean} weight_by_saturation
+ * @param {number} iterations
+ * @param {number} alpha_threshold
+ * @returns {Uint8Array | undefined}
+ */
+export function quantize(data, colors, weight_by_saturation, iterations, alpha_threshold) {
+    const ptr0 = passArray8ToWasm0(data, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.quantize(ptr0, len0, colors, weight_by_saturation, iterations, alpha_threshold);
+    let v2;
+    if (ret[0] !== 0) {
+        v2 = getArrayU8FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
+    }
+    return v2;
 }
 
 /**

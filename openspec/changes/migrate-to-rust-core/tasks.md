@@ -244,17 +244,17 @@ Each item below: a permanent regression test ported from the judge's throwaway s
 ## Phase 6: Rust quantize/downscale
 Depends on: Phase 4 (not on Phase 5 — can run in parallel with phase 5 if a second reviewer is available). Exit: parity passes, bench recorded, learning note, PR <300 LOC. Satisfies pixel-core "Lossless Pixel Round-Trip" (both scenarios).
 
-- [ ] 6.1 Bench baseline check: confirm phase-0 TS quantize/downscale baselines exist.
-- [ ] 6.2 **Rust step (≤300 LOC)**: `packages/core/src/quantize.rs` — port `quantize(buf, opts) -> PixelBuffer`, preserving integer 0-255 channel range.
-  - [ ] 6.2a Learning note: ownership transfer on return — why returning an owned `PixelBuffer`/`Vec` from Rust means a full copy back to JS, unlike the in-place `&mut [u8]` flood-fill call.
-- [ ] 6.3 **Rust step (≤300 LOC)**: `packages/core/src/downscale.rs` — port `downscale(buf, w, h) -> PixelBuffer`, target dims + valid RGBA channels only.
-  - [ ] 6.3a Learning note: generic numeric casts (`u8` vs `f32` interpolation) — where precision must be clamped back to `u8` to avoid channel drift.
-- [ ] 6.4 Wire both into `PixelKernels` in `src-ts/wasm-core.ts`.
-- [ ] 6.5 Test (parity): quantize output — every channel integer in 0-255 (pixel-core "Quantize preserves channel range").
-- [ ] 6.6 Test (parity): downscale output — target dimensions, valid RGBA channels (pixel-core "Downscale preserves canvas content intent").
-- [ ] 6.7 Bench: quantize/downscale timings recorded vs TS baseline.
-- [ ] 6.8 `cargo clippy -D warnings` + `cargo fmt --check` pass; CI drift check green.
-- [ ] 6.9 Commit: `feat(core): port quantize and downscale to Rust/Wasm`.
+- [x] 6.1 Bench baseline check: confirm phase-0 TS quantize/downscale baselines exist. — confirmed: `apps/editor/src/lib/quantize.test.ts`/`downscale.test.ts` are the existing oracle test suites; kept untouched as oracles (per phase convention).
+- [x] 6.2 **Rust step (≤300 LOC)**: `packages/core/src/quantize.rs` — port `quantize(buf, opts) -> PixelBuffer`, preserving integer 0-255 channel range. — ported as a flat-buffer call (`quantize(data, colors, weightBySaturation, iterations, alphaThreshold) -> Option<Vec<u8>>`, no `w`/`h` needed — the algorithm is spatially agnostic); 271 LOC excl. tests (within the ≤300 LOC budget; the `#[cfg(test)]` module below it is additional, not counted against the step budget per prior phases' convention).
+  - [x] 6.2a Learning note: ownership transfer on return — `LEARNING.md` §22 ("The simplest possible wasm-bindgen return") plus `bindings.rs`'s doc comment on `quantize`/`clone_buffer`.
+- [x] 6.3 **Rust step (≤300 LOC)**: `packages/core/src/downscale.rs` — port `downscale(buf, w, h) -> PixelBuffer`, target dims + valid RGBA channels only. — ported `downscaleTo` (majority-vote + defringe) only; `resizeNearest` intentionally out of scope (see `downscale.rs`'s module doc — not named by this task, not covered by the pixel-core spec scenario, apps/editor keeps calling it directly). 215 LOC excl. tests.
+  - [x] 6.3a Learning note: `LEARNING.md` §17 (the `127.5` fallback-threshold float, NOT rounded to an integer) covers the "precision must not drift" concern this task names; §16 covers `f64`/JS `number` parity generally.
+- [x] 6.4 Wire both into `PixelKernels` in `src-ts/wasm-core.ts`. — also added to `src-ts/types.ts` (interface), `src-ts/ts-core.ts` (TS reference impl), and `src-ts/resolve-core.ts` (`withRuntimeTrapFallback`, so a Wasm trap on `quantize`/`downscale` demotes to TS like every other kernel).
+- [x] 6.5 Test (parity): quantize output — every channel integer in 0-255 (pixel-core "Quantize preserves channel range"). — `cargo test` (9 cases), `pixel-parity.test.ts` (ts/wasm parity + boundary validation), `quantize-downscale.fuzz.test.ts` (2,000 randomized ts/wasm cases), `apps/editor/src/lib/quantize.oracle-parity.test.ts` (2,000 randomized cases vs the untouched oracle + edge cases).
+- [x] 6.6 Test (parity): downscale output — target dimensions, valid RGBA channels (pixel-core "Downscale preserves canvas content intent"). — same pattern: `cargo test` (11 cases), `pixel-parity.test.ts`, `quantize-downscale.fuzz.test.ts` (2,000 randomized ts/wasm cases), `apps/editor/src/lib/downscale.oracle-parity.test.ts` (2,000 randomized cases vs the untouched oracle + edge cases).
+- [x] 6.7 Bench: quantize/downscale timings recorded vs TS baseline. — `bench/quantize.bench.ts`, `bench/downscale.bench.ts`; see `baseline-bench.md`'s "Phase 6" section. quantize: Wasm ~3.4x-3.65x FASTER than TS (16/32 colors on 64x64). downscale: Wasm ~1.17x-1.18x SLOWER than TS (512x512 -> 64x64, FFI-copy-dominated, same cost class as `extractRect`/`writeRect`) — recorded honestly; no spec requirement is violated (the 3x/5ms performance budget names only flood-fill).
+- [x] 6.8 `cargo clippy -D warnings` + `cargo fmt --check` pass; CI drift check green. — both clean; two consecutive `build:wasm` runs byte-identical, post-build host-path scan clean, gzip `.wasm` 14,647 bytes (<150KB budget).
+- [ ] 6.9 Commit: `feat(core): port quantize and downscale to Rust/Wasm`. — left for the user/orchestrator per every prior phase's convention in this file (no commits from an apply pass without explicit instruction).
 
 ## Phase 7: Rust history (Document)
 Depends on: Phase 5 AND Phase 6 (hardest port — lands last per D5). Exit: parity passes (buffers + undo state byte-identical), PR <300 LOC per step, learning notes recorded.

@@ -56,6 +56,8 @@ export function withRuntimeTrapFallback(wasm: PixelKernels): PixelKernels {
     extractRect: guard(wasm.extractRect.bind(wasm), tsKernels.extractRect),
     writeRect: guard(wasm.writeRect.bind(wasm), tsKernels.writeRect),
     bytesEqual: guard(wasm.bytesEqual.bind(wasm), tsKernels.bytesEqual),
+    quantize: guard(wasm.quantize.bind(wasm), tsKernels.quantize),
+    downscale: guard(wasm.downscale.bind(wasm), tsKernels.downscale),
   }
 }
 

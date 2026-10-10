@@ -416,3 +416,141 @@ BOTH a faster and a smaller binary from the switch, not a size-for-speed
 tradeoff. This is a result specific to this crate's current size and shape,
 not a universal "opt-level 3 is always smaller" rule — re-measure if this
 crate grows substantially (phases 6-7 add real surface area).
+
+## Phase 6 — quantize + downscale: `f64` vs JS `number`, iterators, `Vec::with_capacity`, why NOT sorting, and the simplest possible wasm-bindgen return
+
+Written while porting `quantize.rs`/`downscale.rs` — this package's first
+kernels that return a brand NEW owned buffer (not mutate in place) and the
+first that do real floating-point math, not just integer byte-shuffling.
+
+### 17. `f64` IS a JS `number` — not "close enough", bit-identical
+
+A JS background teaches you to be suspicious of floating point across
+languages ("floats never match exactly"). That caution does NOT apply here:
+JS has exactly ONE numeric type for everything that isn't a `BigInt`, and
+that type is defined by the ECMAScript spec as IEEE 754 double-precision —
+the EXACT SAME 64-bit format as Rust's `f64`. `(mx - mn) / mx` on a JS
+`number` and `(mx - mn) / mx` on a Rust `f64` are the same hardware
+operation, not an approximation of one. `quantize.rs:73-82`'s `saturation`
+casts its `u8` inputs to `f64` BEFORE doing any arithmetic
+(`let (r, g, b) = (r as f64, g as f64, b as f64);`, line 74) specifically so
+every later operation runs in that exact format — casting to `f32` instead
+(a tempting "we only need 0-255 precision" shortcut) would have rounded
+differently than the JS oracle at the very first subtraction, and every
+downstream centroid computation would have silently drifted from it. The
+module doc at the top of `quantize.rs` (lines 13-34) explains the one place
+this parity needs a human decision anyway: `Math.round` and `f64::round`
+actually DISAGREE for negative half-values (JS rounds toward +Infinity,
+Rust rounds away from zero) — irrelevant here only because every value
+either language ever rounds in this file is a weighted mean of non-negative
+channel bytes, never negative.
+
+### 18. `127.5`: a constant that is NOT allowed to become an integer
+
+`downscale.rs`'s module doc (lines 17-27) documents the one spot where
+"just use an integer, it's basically the same" would have silently changed
+behavior: the oracle's fallback core-alpha threshold is `ALPHA_OPAQUE / 2`
+= `255 / 2`, which is the EXACT floating-point value `127.5` in JS, not the
+truncated integer `127`. `OPAQUE_TRANSPARENT_SPLIT: f64 = 127.5` (line 36)
+and `core_alpha: f64` (never `u8`/`u32`) throughout `dominant_color`
+(`a as f64) < core_alpha`, line 100) keep that half-integer alive end to
+end — an alpha byte of exactly `127` must compare LESS than it (excluded
+from "core") while `128` must compare GREATER (included), and a rounded
+integer constant of `127` would flip which side `127` itself falls on.
+`alpha_127_vs_128_falls_on_opposite_sides_of_the_fallback_core_threshold`
+(`downscale.rs:337-351`) is a permanent regression test for exactly this —
+it would fail immediately if that constant were ever "simplified" to `127`.
+
+### 19. Iterators vs index loops — same algorithm, different idiom, same order
+
+The oracle (`quantize.ts`) uses classic `for (let i = 0; i < n; i++)`
+index loops almost everywhere Lloyd's algorithm needs to track WHICH
+centroid is closest. Rust CAN write that same index loop (and
+`downscale.rs`'s `has_solid_core`, lines 50-60, does — a manual
+`while i < data.len() { ...; i += channels; }`, because it needs to stride
+by `CHANNELS` through a flat byte buffer, which an iterator over bytes
+doesn't naturally express). But wherever the Rust port ALSO needs the
+index (not just the value) alongside idiomatic iteration, `.iter().
+enumerate()` is the standard replacement — see `build_palette`
+(`quantize.rs:139`, `for (pi, p) in points.iter().enumerate()`, and line
+171, `for (ci, c) in centroids.iter().enumerate()`): `enumerate()` pairs
+each element with its position, so the loop body reads almost identically
+to the JS `for (let i = 0; i < centroids.length; i++)` version while the
+compiler still proves `c`/`p` can never be an out-of-bounds access (no
+separate `centroids[i]` indexing that COULD panic if the index were ever
+wrong — the iterator can only ever hand out valid elements it actually
+holds). Importantly, this change of IDIOM never changes the ORDER of
+iteration — both forms visit `points`/`centroids` in exactly the same
+left-to-right sequence the oracle does, which matters for this algorithm's
+tie-breaking rules (see note 21).
+
+### 20. `Vec::with_capacity` — telling Rust how big a `Vec` will get, ahead of time
+
+A JS `Array` (or `push`) never asks you to think about this — V8 handles
+growing the backing storage invisibly. Rust's `Vec<T>` does the same thing
+automatically (`Vec::new()` starts empty and grows/reallocates as you
+`push`), but every reallocation COPIES every existing element into the new,
+bigger backing memory — wasted work if you already know the final size (or
+a safe upper bound). `quantize.rs:225` (`let mut points: Vec<Point> =
+Vec::with_capacity(data.len() / channels);`) reserves space for the
+WORST CASE up front — "at most one point per pixel" is knowable the
+instant you know `data.len()`, even though the ACTUAL count will usually be
+smaller (pixels below `alpha_threshold` are skipped) — so the loop that
+follows (lines 226-241) never reallocates even once. This is the exact
+same optimization `flood_fill.rs`'s `pending: Vec<(usize, usize)>` uses
+(`LEARNING.md` §7, `Vec::with_capacity(height.max(1))`) for a different
+reason (a provable upper bound on outstanding seeds, not buffer size) —
+the lesson generalizes: wherever you can state an upper bound on a `Vec`'s
+final length BEFORE the loop that fills it starts, `with_capacity` turns
+"maybe several reallocating copies" into "exactly one allocation, zero
+copies."
+
+### 21. Why this phase does NOT sort or dedup its buckets (and what it does instead)
+
+A natural instinct on seeing `downscale.rs`'s `dominant_color` collect
+pixels into per-color buckets (`buckets: HashMap<u32, BucketStats>`, line
+86) is "sort them by count, take the first" — `Vec::sort`/`sort_by_key`
+would do that in one line. This port deliberately does NOT do that,
+because the oracle's tie-break rule (`downscale.ts`'s `dominantColor`) is
+"the FIRST bucket a JS `Map` encounters, among those sharing the max
+count" — and a JS `Map`'s iteration order is INSERTION order, which has
+nothing to do with sorted order. Sorting by count would silently change
+WHICH bucket wins a tie whenever two colors have the same pixel count but
+were discovered in a different relative order than a sort would put them
+in — a real, observable behavior change, not a performance-neutral
+rewrite. The fix: `order: Vec<u32>` (line 85) is a second, parallel
+collection that records each NEW key's position the first time it's seen
+(`order.push(key)`, line 126, inside the `None =>` branch only — an
+EXISTING key never gets pushed again), so the tie-break loop at lines
+136-144 walks keys in the exact order the oracle's `Map` would — a
+`HashMap` alone has no defined iteration order at all, so this "order"
+vec is not an optimization, it is the ONLY thing making the tie-break
+deterministic and oracle-correct. `Vec::dedup` doesn't apply here either,
+for a related reason: it only removes ADJACENT duplicate elements (it
+assumes you already sorted, or don't care about ties), while this
+algorithm needs to accumulate stats across entries that were never
+adjacent and never gets "duplicates" to remove in the first place (each
+key appears in `buckets` exactly once, by construction of `get_mut`/
+`insert` at lines 109-128).
+
+### 22. The simplest possible wasm-bindgen return: when you DON'T need the tuple trick
+
+§11 of this file explained why `flood_fill`'s Rust-side `Option<(u32, u32,
+u32, u32)>` needs a manual `.map(|(fx,fy,fw,fh)| vec![...].into_boxed_
+slice())` in `bindings.rs` (lines 113-116 today) — wasm-bindgen cannot
+export a function that returns a raw tuple. `quantize`/`downscale`'s
+bindings (`bindings.rs:125-140` and `147-156`) need NONE of that
+machinery: both already return `Option<Vec<u8>>` from their pure-Rust
+functions (`quantize.rs:208-214`, `downscale.rs:165-179`), and `Vec<u8>` —
+unlike a tuple — IS one of the types wasm-bindgen knows how to convert
+directly (into a JS `Uint8Array`), so the `#[wasm_bindgen]` wrapper
+functions are pure one-line pass-throughs with no reshaping at all. Note
+that MULTIPLE values absolutely still flow through this code — `nearest`
+(`quantize.rs:95`) returns `Option<(f64, f64, f64)>`, and `dominant_color`
+(`downscale.rs:75-83`) returns a plain `(u8, u8, u8, u8)` tuple — but
+NEITHER of these crosses the wasm-bindgen boundary: they are Rust-calling-
+Rust, where a tuple is just an ordinary, zero-ceremony type (no `#[wasm_
+bindgen]` macro ever sees them). The lesson: the "tuples need packing"
+rule from §11 is specifically an FFI-boundary rule, not a general Rust
+rule — the moment a multi-value return stays on the Rust side of
+`crate::bindings`, plain tuples are the normal, idiomatic choice again.

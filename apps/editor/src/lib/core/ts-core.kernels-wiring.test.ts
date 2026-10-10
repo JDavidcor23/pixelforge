@@ -37,6 +37,8 @@ vi.mock('./kernels', () => ({
     extractRect: () => undefined,
     writeRect: () => false,
     bytesEqual: (a, b) => a.length === b.length,
+    quantize: () => undefined,
+    downscale: () => undefined,
   }),
 }))
 
