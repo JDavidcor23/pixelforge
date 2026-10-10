@@ -1,36 +1,89 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useId, useRef } from 'react'
+import type { KeyboardEvent, MouseEvent, RefObject } from 'react'
 import { useEditorPrefsStore } from '@/stores/prefs.store'
 import {
   getElevenLabsApiKey,
   setElevenLabsApiKey,
   removeElevenLabsApiKey,
 } from '@/sounds/features/ai-generate/services/elevenlabs.service'
+import { API_KEY_PROVIDER, API_KEY_SAVED_FEEDBACK_MS } from '@/constants/settings'
+import type { ApiKeyProvider } from '@/types/settings'
 
-export const useSettingsPanel = (onClose: () => void) => {
+interface UseSettingsPanelResult {
+  retroKey: string
+  setRetroKey: (value: string) => void
+  showRetroKey: boolean
+  toggleShowRetroKey: () => void
+  hasRetroKey: boolean
+  isRetroSaved: boolean
+  handleSaveRetroKey: () => void
+  handleRemoveRetroKey: () => void
+  elevenLabsKey: string
+  setElevenLabsKey: (value: string) => void
+  showElevenLabsKey: boolean
+  toggleShowElevenLabsKey: () => void
+  hasElevenLabsKey: boolean
+  isElevenLabsSaved: boolean
+  handleSaveElevenLabsKey: () => void
+  handleRemoveElevenLabsKey: () => void
+  handleClose: () => void
+  dialogRef: RefObject<HTMLDivElement | null>
+  titleId: string
+  handleKeyDown: (event: KeyboardEvent<HTMLDivElement>) => void
+  handlePanelClick: (event: MouseEvent<HTMLDivElement>) => void
+}
+
+export const useSettingsPanel = (onClose: () => void): UseSettingsPanelResult => {
   const retroDiffusionApiKey = useEditorPrefsStore((s) => s.retroDiffusionApiKey)
   const setRetroDiffusionApiKey = useEditorPrefsStore((s) => s.setRetroDiffusionApiKey)
 
   const [retroKey, setRetroKey] = useState(retroDiffusionApiKey ?? '')
   const [elevenLabsKey, setElevenLabsKey] = useState('')
+  const [hasElevenLabsKey, setHasElevenLabsKey] = useState(false)
   const [showRetroKey, setShowRetroKey] = useState(false)
   const [showElevenLabsKey, setShowElevenLabsKey] = useState(false)
-  const [savedFeedback, setSavedFeedback] = useState<string | null>(null)
+  const [savedFeedback, setSavedFeedback] = useState<ApiKeyProvider | null>(null)
+  const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const titleId = useId()
 
   useEffect(() => {
     const stored = getElevenLabsApiKey()
     if (stored) setElevenLabsKey(stored)
+    setHasElevenLabsKey(!!stored)
   }, [])
 
   useEffect(() => {
     setRetroKey(retroDiffusionApiKey ?? '')
   }, [retroDiffusionApiKey])
 
+  // Move focus into the dialog on open so Escape and Tab land inside it.
+  useEffect(() => {
+    dialogRef.current?.focus()
+  }, [])
+
+  // Clear any pending "saved" feedback timer on unmount.
+  useEffect(
+    () => () => {
+      if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current)
+    },
+    []
+  )
+
+  const flashSaved = useCallback((provider: ApiKeyProvider) => {
+    if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current)
+    setSavedFeedback(provider)
+    feedbackTimerRef.current = setTimeout(() => {
+      setSavedFeedback(null)
+      feedbackTimerRef.current = null
+    }, API_KEY_SAVED_FEEDBACK_MS)
+  }, [])
+
   const handleSaveRetroKey = useCallback(() => {
     const trimmed = retroKey.trim()
     setRetroDiffusionApiKey(trimmed || null)
-    setSavedFeedback('retro')
-    setTimeout(() => setSavedFeedback(null), 2000)
-  }, [retroKey, setRetroDiffusionApiKey])
+    flashSaved(API_KEY_PROVIDER.RETRO_DIFFUSION)
+  }, [retroKey, setRetroDiffusionApiKey, flashSaved])
 
   const handleRemoveRetroKey = useCallback(() => {
     setRetroKey('')
@@ -44,35 +97,57 @@ export const useSettingsPanel = (onClose: () => void) => {
     } else {
       removeElevenLabsApiKey()
     }
-    setSavedFeedback('elevenlabs')
-    setTimeout(() => setSavedFeedback(null), 2000)
-  }, [elevenLabsKey])
+    setHasElevenLabsKey(!!trimmed)
+    flashSaved(API_KEY_PROVIDER.ELEVENLABS)
+  }, [elevenLabsKey, flashSaved])
 
   const handleRemoveElevenLabsKey = useCallback(() => {
     setElevenLabsKey('')
     removeElevenLabsApiKey()
+    setHasElevenLabsKey(false)
   }, [])
+
+  const toggleShowRetroKey = useCallback(() => setShowRetroKey((v) => !v), [])
+  const toggleShowElevenLabsKey = useCallback(() => setShowElevenLabsKey((v) => !v), [])
 
   const handleClose = useCallback(() => {
     onClose()
   }, [onClose])
 
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLDivElement>) => {
+      if (event.key !== 'Escape') return
+      event.stopPropagation()
+      onClose()
+    },
+    [onClose]
+  )
+
+  const handlePanelClick = useCallback((event: MouseEvent<HTMLDivElement>) => {
+    event.stopPropagation()
+  }, [])
+
   return {
     retroKey,
     setRetroKey,
     showRetroKey,
-    toggleShowRetroKey: () => setShowRetroKey((v) => !v),
+    toggleShowRetroKey,
     hasRetroKey: !!retroDiffusionApiKey,
+    isRetroSaved: savedFeedback === API_KEY_PROVIDER.RETRO_DIFFUSION,
     handleSaveRetroKey,
     handleRemoveRetroKey,
     elevenLabsKey,
     setElevenLabsKey,
     showElevenLabsKey,
-    toggleShowElevenLabsKey: () => setShowElevenLabsKey((v) => !v),
-    hasElevenLabsKey: !!getElevenLabsApiKey(),
+    toggleShowElevenLabsKey,
+    hasElevenLabsKey,
+    isElevenLabsSaved: savedFeedback === API_KEY_PROVIDER.ELEVENLABS,
     handleSaveElevenLabsKey,
     handleRemoveElevenLabsKey,
-    savedFeedback,
     handleClose,
+    dialogRef,
+    titleId,
+    handleKeyDown,
+    handlePanelClick,
   }
 }
