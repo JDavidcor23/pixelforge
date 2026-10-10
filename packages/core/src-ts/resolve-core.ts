@@ -67,14 +67,31 @@ export function resetRuntimeTrapDemotionForTests(): void {
 }
 
 /**
+ * Fix-agent 6f.2 (verify-report-phase-6.md W-B): `loadWasmModule` now caches
+ * a failed load for the whole session (no retry storm) — which means EVERY
+ * later `resolveKernels()` call reaches this `catch` with the SAME cached
+ * error. Without this flag, that would log one `console.error` per call
+ * (e.g. once per frame of a multi-frame AI animation decode) instead of once
+ * total.
+ */
+let hasLoggedLoadFailure = false
+
+/** Test-only: resets the once-per-session load-failure log flag between test cases. */
+export function resetLoadFailureLogForTests(): void {
+  hasLoggedLoadFailure = false
+}
+
+/**
  * Builds the active `PixelKernels` implementation. Tries Wasm first; falls
  * back to the TS reference kernels (always correct, always available) if the
- * Wasm module fails to LOAD for any reason — logged via `console.error`,
- * never thrown (matches `apps/editor/src/lib/core/core-config.ts`'s
- * `resolveCore` fallback philosophy for the full `PixelCore`). Once loaded,
- * every call is wrapped so a RUNTIME trap (not a load failure) ALSO falls
- * back to TS, for the rest of the session (W6) — see
- * `withRuntimeTrapFallback`.
+ * Wasm module fails to LOAD for any reason — logged via `console.error`
+ * ONCE per session (fix-agent 6f.2; was: once per call, since
+ * `loadWasmModule` never used to cache a failure and so retried, and failed,
+ * on every call), never thrown (matches `apps/editor/src/lib/core/
+ * core-config.ts`'s `resolveCore` fallback philosophy for the full
+ * `PixelCore`). Once loaded, every call is wrapped so a RUNTIME trap (not a
+ * load failure) ALSO falls back to TS, for the rest of the session (W6) —
+ * see `withRuntimeTrapFallback`.
  */
 export async function resolveKernels(): Promise<PixelKernels> {
   if (demotedToTsForSession) return tsKernels
@@ -82,7 +99,10 @@ export async function resolveKernels(): Promise<PixelKernels> {
     const mod = await loadWasmModule()
     return withRuntimeTrapFallback(makeWasmKernels(mod))
   } catch (error) {
-    console.error('[pixelforge-core] Wasm kernels failed to load — falling back to the TS reference implementation.', error)
+    if (!hasLoggedLoadFailure) {
+      hasLoggedLoadFailure = true
+      console.error('[pixelforge-core] Wasm kernels failed to load — falling back to the TS reference implementation.', error)
+    }
     return tsKernels
   }
 }

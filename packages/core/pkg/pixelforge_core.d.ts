@@ -21,8 +21,12 @@ export function diff_rect(before: Uint8Array, after: Uint8Array, w: number, h: n
 /**
  * Majority-vote downscale from `src_w x src_h` to `target_w x target_h`
  * (phase 6, design.md "Lossless Pixel Round-Trip"). `None` (JS: `undefined`)
- * if `data`'s length doesn't match `src_w*src_h*4`, or any dimension is
- * zero. See `crate::downscale` for the algorithm.
+ * if `data`'s length doesn't match `src_w*src_h*4`, any dimension is zero,
+ * or `target_w`/`target_h` exceeds `crate::downscale::
+ * MAX_DOWNSCALE_TARGET_DIMENSION` (phase 6f boundary hardening — closes an
+ * allocation-size overflow that used to trap the Wasm instance for an
+ * individually-"valid" `u32` target, verify-report-phase-6.md W-A). See
+ * `crate::downscale` for the algorithm.
  */
 export function downscale(data: Uint8Array, src_w: number, src_h: number, target_w: number, target_h: number): Uint8Array | undefined;
 
@@ -75,7 +79,9 @@ export function put_points(data: Uint8Array, w: number, h: number, points: Int32
  * in-place `&mut [u8]` kernels above, this always allocates a brand new
  * buffer, mirroring `quantizePixels`'s `cloneBuffer` + recolor shape.
  * `None` (JS: `undefined`) if `data`'s length isn't a whole number of RGBA
- * pixels. See `crate::quantize` for the algorithm.
+ * pixels, or `colors` exceeds `crate::quantize::MAX_QUANTIZE_COLORS` (phase
+ * 6f boundary hardening — same convention `downscale` below documents). See
+ * `crate::quantize` for the algorithm.
  */
 export function quantize(data: Uint8Array, colors: number, weight_by_saturation: boolean, iterations: number, alpha_threshold: number): Uint8Array | undefined;
 

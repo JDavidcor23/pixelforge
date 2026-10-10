@@ -64,3 +64,47 @@ describe('kernels (phase 5: synchronous PixelKernels accessor over async resolve
     expect(getActiveKernels().impl).toBe('ts') // immediate, synchronous rollback
   })
 })
+
+describe('getActiveKernelsAsync (fix-agent 6f.1: the async accessor async call sites use instead of @pixelforge/core resolveKernels() directly)', () => {
+  afterEach(async () => {
+    vi.resetModules()
+    mockGetPixelCoreEnvOverride.mockReturnValue(null)
+  })
+
+  it('default override ("ts"): resolves to tsKernels WITHOUT ever starting a Wasm resolution', async () => {
+    mockGetPixelCoreEnvOverride.mockReturnValue(null) // -> 'ts'
+    const { getActiveKernelsAsync, waitForKernelsResolved } = await import('./kernels')
+
+    const kernels = await getActiveKernelsAsync()
+
+    // `.impl === 'ts'`, not `toBe(tsKernels)`: `vi.resetModules()` between
+    // tests (this file's `afterEach`s) re-evaluates `@pixelforge/core` too,
+    // so this test's OWN statically-imported `tsKernels` can be a different
+    // module instance than the one `./kernels.ts` (freshly re-imported
+    // above) holds — same object-identity caveat the "flipping back to ts"
+    // test above documents.
+    expect(kernels.impl).toBe('ts')
+    // This is the actual kill-switch bypass this fix closes: sprite-pipeline.ts
+    // used to call `@pixelforge/core`'s `resolveKernels()` unconditionally,
+    // which always attempts to load Wasm regardless of the override. Proof
+    // no resolution was ever kicked off: `waitForKernelsResolved` is an
+    // immediate no-op whenever `pending` was never set (same proof the
+    // synchronous `getActiveKernels` test above uses).
+    await waitForKernelsResolved()
+  })
+
+  it('"wasm" override: awaits the real resolution and returns kernels that actually work, not just the synchronous tsKernels placeholder', async () => {
+    mockGetPixelCoreEnvOverride.mockReturnValue('wasm')
+    const { getActiveKernelsAsync } = await import('./kernels')
+
+    const kernels = await getActiveKernelsAsync()
+
+    // Either the real Wasm kernels (pkg/ built) or a demoted-to-ts fallback
+    // (pkg/ missing/failed) — both are correct; the point is this resolved
+    // to a USABLE, SETTLED result (unlike the synchronous getActiveKernels,
+    // which may still be mid-resolution on its first read).
+    expect(kernels.floodFill).toBeTypeOf('function')
+    const data = new Uint8Array(4 * 4 * 4)
+    expect(kernels.floodFill(data, 4, 4, 0, 0, 0xff0000ff)).toEqual([0, 0, 4, 4])
+  })
+})

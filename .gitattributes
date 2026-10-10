@@ -1,0 +1,19 @@
+# Fix-agent phase 6f (verify-report-phase-6.md SUGGESTION #2): makes the
+# packages/core/pkg/ CRLF/LF contract explicit and version-controlled instead
+# of resting entirely on every contributor's local `core.autocrlf` setting —
+# the same reproducibility philosophy that motivated build-wasm.mjs's own
+# host-path normalization (phase 4f, W1). `pkg/` is always fully REGENERATED
+# by `pnpm run build:wasm` (never hand-edited), and wasm-pack's JS/TS codegen
+# always emits LF regardless of host OS — these rules just make that an
+# explicit, auditable guarantee so a Windows checkout's line endings can never
+# silently diverge from what CI's drift check (`git diff --exit-code
+# packages/core/pkg`) compares against on Linux.
+
+# The compiled Wasm binary: never text-diffed, never line-ending-converted.
+packages/core/pkg/*.wasm binary
+
+# wasm-bindgen's generated JS/TS glue and its package.json: always LF, text
+# diffable (useful for reviewing a pkg/ regeneration diff).
+packages/core/pkg/*.js text eol=lf
+packages/core/pkg/*.d.ts text eol=lf
+packages/core/pkg/package.json text eol=lf

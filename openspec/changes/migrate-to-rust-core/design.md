@@ -155,10 +155,23 @@ export interface PixelCore {
   exportDocument(): DocumentPayload; importDocument(doc: DocumentPayload): void // copies, not views
   readonly canUndo: boolean; readonly canRedo: boolean
 }
-export interface PixelKernels { // phases 4–6; operates in place and returns the dirty rect
-  floodFill(buf: PixelBuffer, x: number, y: number, rgba: number): Rect | null
-  quantize(buf: PixelBuffer, opts: QuantizeOptions): PixelBuffer
-  downscale(buf: PixelBuffer, w: number, h: number): PixelBuffer
+// Fix-agent 6f (phases 4f/5/6 staleness, verify-report-phase-6.md Coherence
+// table): the sketch above was never updated once phase 4f's boundary-
+// validation convention landed. The REAL, as-shipped `PixelKernels`
+// (`packages/core/src-ts/types.ts`) is a flat-buffer-call facade — every
+// numeric argument is validated with `isValidU32` (phases 4f/5f) BEFORE any
+// arithmetic or a Wasm call, identically in `tsKernels` and `makeWasmKernels`
+// — not the `PixelBuffer`/`QuantizeOptions`-object shape sketched here:
+export interface PixelKernels { // phases 4–6; stateless, flat `Uint8Array` buffers in/out
+  putPoints(data: Uint8Array, w: number, h: number, points: Int32Array, rgba: number): number
+  floodFill(data: Uint8Array, w: number, h: number, x: number, y: number, rgba: number): [number, number, number, number] | undefined
+  cloneBuffer(data: Uint8Array): Uint8Array
+  diffRect(before: Uint8Array, after: Uint8Array, w: number, h: number): [number, number, number, number] | undefined
+  extractRect(data: Uint8Array, w: number, h: number, rx: number, ry: number, rw: number, rh: number): Uint8Array | undefined
+  writeRect(data: Uint8Array, w: number, h: number, rx: number, ry: number, rw: number, rh: number, patch: Uint8Array): boolean
+  bytesEqual(a: Uint8Array, b: Uint8Array): boolean
+  quantize(data: Uint8Array, colors: number, weightBySaturation: boolean, iterations: number, alphaThreshold: number): Uint8Array | undefined
+  downscale(data: Uint8Array, srcW: number, srcH: number, targetW: number, targetH: number): Uint8Array | undefined
 }
 ```
 

@@ -20,7 +20,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, it, expect } from 'vitest'
-import { tsKernels } from './ts-core'
+import { tsKernels, MAX_DOWNSCALE_DIMENSION, MAX_QUANTIZE_COLORS } from './ts-core'
 import { makeWasmKernels } from './wasm-core'
 import type { PixelKernels } from './types'
 
@@ -432,6 +432,52 @@ describe('pixel kernels parity (ts vs wasm)', () => {
     if (wasm) {
       expect(() => wasm.kernels.downscale(data, 2, 2, badW, 2)).not.toThrow()
       expect(wasm.kernels.downscale(data, 2, 2, badW, 2)).toBeUndefined()
+    }
+  })
+
+  // ── Fix-agent phase 6f: MAX_DOWNSCALE_DIMENSION / MAX_QUANTIZE_COLORS parity (W-A) ──
+  // An individually-"valid" u32 target can still overflow the allocation-size
+  // math (verify-report-phase-6.md W-A: `downscale(data, 1, 1, 32768, 32768)`
+  // trapped the real .wasm). Both implementations must reject identically.
+
+  it('downscale: ts and wasm both reject a target dimension above MAX_DOWNSCALE_DIMENSION, and both still accept the bound itself', () => {
+    const data = new Uint8Array(4) // 1x1 source
+    const wasm = cases.find((c) => c.name === 'wasm')
+
+    expect(tsKernels.downscale(data, 1, 1, MAX_DOWNSCALE_DIMENSION + 1, 1)).toBeUndefined()
+    expect(tsKernels.downscale(data, 1, 1, 1, MAX_DOWNSCALE_DIMENSION + 1)).toBeUndefined()
+    expect(tsKernels.downscale(data, 1, 1, MAX_DOWNSCALE_DIMENSION, 1)).toBeDefined()
+
+    if (wasm) {
+      expect(wasm.kernels.downscale(data, 1, 1, MAX_DOWNSCALE_DIMENSION + 1, 1)).toBeUndefined()
+      expect(wasm.kernels.downscale(data, 1, 1, 1, MAX_DOWNSCALE_DIMENSION + 1)).toBeUndefined()
+      expect(wasm.kernels.downscale(data, 1, 1, MAX_DOWNSCALE_DIMENSION, 1)).toBeDefined()
+    }
+  })
+
+  it('downscale: the exact adversarial overflow input (32768x32768) that used to trap the real Wasm instance is now a clean, consistent reject on both sides', () => {
+    const data = new Uint8Array(4)
+    const wasm = cases.find((c) => c.name === 'wasm')
+
+    expect(tsKernels.downscale(data, 1, 1, 32768, 32768)).toBeUndefined()
+    if (wasm) {
+      expect(() => wasm.kernels.downscale(data, 1, 1, 32768, 32768)).not.toThrow()
+      expect(wasm.kernels.downscale(data, 1, 1, 32768, 32768)).toBeUndefined()
+      // the same Wasm instance must stay usable afterward — no corrupted state from the rejection
+      expect(wasm.kernels.downscale(data, 1, 1, 1, 1)).toEqual(data)
+    }
+  })
+
+  it('quantize: ts and wasm both reject colors above MAX_QUANTIZE_COLORS, and both still accept the bound itself', () => {
+    const data = new Uint8Array(16)
+    const wasm = cases.find((c) => c.name === 'wasm')
+
+    expect(tsKernels.quantize(data, MAX_QUANTIZE_COLORS + 1, true, 1, 0)).toBeUndefined()
+    expect(tsKernels.quantize(data, MAX_QUANTIZE_COLORS, true, 0, 0)).toBeDefined()
+
+    if (wasm) {
+      expect(wasm.kernels.quantize(data, MAX_QUANTIZE_COLORS + 1, true, 1, 0)).toBeUndefined()
+      expect(wasm.kernels.quantize(data, MAX_QUANTIZE_COLORS, true, 0, 0)).toBeDefined()
     }
   })
 

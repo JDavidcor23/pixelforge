@@ -55,6 +55,20 @@ use crate::pixels::CHANNELS;
 
 const SATURATION_WEIGHT: f64 = 6.0;
 
+/// Fix-agent 6f.4 (verify-report-phase-6.md, bundled with W-A's
+/// `downscale` target-dimension bound): `colors` has no upper bound today,
+/// so a technically-valid-but-absurd value (e.g. `colors = 4_000_000_000`)
+/// would run `build_palette`'s `O(points * centroids)` seeding/refinement
+/// loops against a palette size with no realistic ceiling — a hang, not a
+/// correctness bug, but the same class of "individually valid `u32`, globally
+/// absurd" input `MAX_DOWNSCALE_TARGET_DIMENSION` closes for `downscale`.
+/// Mirrors `src-ts/ts-core.ts`'s `MAX_QUANTIZE_COLORS` exactly (kept as a
+/// separate Rust constant — `packages/core` never depends on `apps/editor`/
+/// `src-ts` — but MUST stay numerically identical so both implementations
+/// reject exactly the same inputs). Chosen far above the app's real usage
+/// (`SPRITE_EDITOR_PALETTE.MAX_COLORS` is 32).
+pub const MAX_QUANTIZE_COLORS: u32 = 4096;
+
 #[derive(Clone, Copy)]
 struct Point {
     r: f64,
@@ -213,7 +227,7 @@ pub fn quantize(
     alpha_threshold: u32,
 ) -> Option<Vec<u8>> {
     let channels = CHANNELS as usize;
-    if !data.len().is_multiple_of(channels) {
+    if !data.len().is_multiple_of(channels) || colors > MAX_QUANTIZE_COLORS {
         return None;
     }
 
@@ -362,6 +376,13 @@ mod tests {
     #[test]
     fn rejects_a_buffer_whose_length_is_not_a_multiple_of_four() {
         assert_eq!(quantize(&[0u8; 3], 2, true, 1, 0), None);
+    }
+
+    #[test]
+    fn rejects_colors_above_the_max_bound_but_accepts_the_bound_itself() {
+        let data = build(&[&[px(200, 10, 10, 255), px(12, 200, 14, 255)]]);
+        assert_eq!(quantize(&data, MAX_QUANTIZE_COLORS + 1, true, 1, 0), None);
+        assert!(quantize(&data, MAX_QUANTIZE_COLORS, true, 0, 0).is_some());
     }
 
     #[test]

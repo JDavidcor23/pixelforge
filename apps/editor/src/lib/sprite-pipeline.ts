@@ -1,6 +1,6 @@
 import type { PixelBuffer } from '@/types'
 import { ALPHA_TRANSPARENT_THRESHOLD, QUANTIZE_DEFAULTS } from '@/constants'
-import { resolveKernels } from '@pixelforge/core'
+import { getActiveKernelsAsync } from './core/kernels'
 import { base64ToNativePixels } from './image-decode'
 import { downscaleTo, resizeNearest } from './downscale'
 import { quantizePixels } from './quantize'
@@ -91,33 +91,64 @@ const QUANTIZE_OPTS = {
 } as const
 
 /**
- * Phase 6: routes through `@pixelforge/core`'s resolved `PixelKernels`
- * (`pf:core` localStorage override -> `VITE_PIXEL_CORE` -> default `'ts'`,
- * with an automatic TS fallback on Wasm load failure or a runtime trap —
- * `resolveKernels()` already implements the whole chain). Both functions
- * below keep their ORIGINAL editor implementation (`quantizePixels`/
- * `downscaleTo`) as a defensive fallback for the "kernel rejected a
- * seemingly-valid call" case, which parity testing
- * (`quantize.oracle-parity.test.ts`/`downscale.oracle-parity.test.ts`) never
- * actually exercises in production use — outputs are unchanged either way,
- * since the kernel and the oracle are proven byte-identical.
+ * Phase 6 (fix-agent 6f.1 update): routes through `lib/core/kernels.ts`'s
+ * `getActiveKernelsAsync()` — NOT `@pixelforge/core`'s `resolveKernels()`
+ * directly. `resolveKernels()` has no knowledge of the `pf:core`/
+ * `VITE_PIXEL_CORE` kill switch (it always tries to load Wasm); calling it
+ * straight from here used to bypass that switch entirely for every
+ * quantize/downscale call. `getActiveKernelsAsync()` honors the SAME chain
+ * every other kernel call site in this app does (`pf:core` localStorage
+ * override -> `VITE_PIXEL_CORE` -> default `'ts'`), with the same automatic
+ * TS fallback on Wasm load failure or a runtime trap baked into
+ * `resolveKernels()` underneath it. Both functions below keep their ORIGINAL
+ * editor implementation (`quantizePixels`/`downscaleTo`) as a defensive
+ * fallback for the "kernel rejected a seemingly-valid call" case, which
+ * parity testing (`quantize.oracle-parity.test.ts`/
+ * `downscale.oracle-parity.test.ts`) never actually exercises in production
+ * use — outputs are unchanged either way, since the kernel and the oracle are
+ * proven byte-identical. That fallback is logged once per session (never
+ * silent) — see {@link logKernelFallbackOnce} — since it should never
+ * actually trigger for a valid in-memory buffer.
  */
+let hasLoggedKernelFallback = false
+function logKernelFallbackOnce(kernelName: 'quantize' | 'downscale'): void {
+  if (hasLoggedKernelFallback) return
+  hasLoggedKernelFallback = true
+  console.error(
+    `[sprite-pipeline] kernels.${kernelName}() rejected an in-memory buffer unexpectedly — falling back to the original TS implementation. This should never happen for a valid buffer produced by this pipeline; investigate if seen in production. (Logged once per session.)`
+  )
+}
+
+/** Zero-copy `Uint8Array` view over a `Uint8ClampedArray`'s SAME underlying buffer (fix-agent 6f.3) — every kernel here takes `data` read-only, so a view is safe and avoids an `O(buffer size)` copy `new Uint8Array(clampedArray)` would otherwise pay on every call. */
+const asKernelView = (data: Uint8ClampedArray): Uint8Array => new Uint8Array(data.buffer, data.byteOffset, data.byteLength)
+
+/** Test-only: resets the once-per-session kernel-fallback log flag between test cases. */
+export function resetKernelFallbackLogForTests(): void {
+  hasLoggedKernelFallback = false
+}
+
 const quantizeIfNeeded = async (pixels: PixelBuffer, quantize: boolean): Promise<PixelBuffer> => {
   if (!quantize) return pixels
-  const kernels = await resolveKernels()
-  const flat = new Uint8Array(pixels.data)
+  const kernels = await getActiveKernelsAsync()
+  const flat = asKernelView(pixels.data)
   const result = kernels.quantize(flat, QUANTIZE_OPTS.colors, QUANTIZE_OPTS.weightBySaturation, QUANTIZE_OPTS.iterations, QUANTIZE_OPTS.alphaThreshold)
-  if (!result) return quantizePixels(pixels, QUANTIZE_OPTS) // defensive — should never trigger for a valid in-memory buffer
+  if (!result) {
+    logKernelFallbackOnce('quantize')
+    return quantizePixels(pixels, QUANTIZE_OPTS) // defensive — should never trigger for a valid in-memory buffer
+  }
   return { w: pixels.w, h: pixels.h, data: new Uint8ClampedArray(result) }
 }
 
 /** Kernel-backed counterpart to {@link downscaleTo} — same contract (see this file's module doc on kernel routing). */
 const downscaleViaKernels = async (source: PixelBuffer, targetW: number, targetH: number): Promise<PixelBuffer> => {
   if (source.h === 0 || source.w === 0 || targetW <= 0 || targetH <= 0) return EMPTY_BUFFER
-  const kernels = await resolveKernels()
-  const flat = new Uint8Array(source.data)
+  const kernels = await getActiveKernelsAsync()
+  const flat = asKernelView(source.data)
   const result = kernels.downscale(flat, source.w, source.h, targetW, targetH)
-  if (!result) return downscaleTo(source, targetW, targetH) // defensive — should never trigger for valid dimensions
+  if (!result) {
+    logKernelFallbackOnce('downscale')
+    return downscaleTo(source, targetW, targetH) // defensive — should never trigger for valid dimensions
+  }
   return { w: targetW, h: targetH, data: new Uint8ClampedArray(result) }
 }
 

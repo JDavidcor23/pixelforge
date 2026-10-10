@@ -60,6 +60,31 @@ export function waitForKernelsResolved(): Promise<void> {
   return pending ?? Promise.resolve()
 }
 
+/**
+ * Fix-agent 6f.1: the async counterpart to {@link getActiveKernels}, for
+ * ASYNC call sites. `apps/editor/src/lib/sprite-pipeline.ts` used to import
+ * `resolveKernels()` directly from `@pixelforge/core` and call it
+ * unconditionally — `resolveKernels()` has NO knowledge of `pf:core`/
+ * `VITE_PIXEL_CORE`, so every quantize/downscale call attempted to load the
+ * Wasm module regardless of the override, bypassing the one kill switch this
+ * module exists to enforce for the rest of the app.
+ *
+ * This function honors the SAME chain `getActiveKernels` does: returns
+ * `tsKernels` immediately (no Wasm `import()`, no fetch, no network/module
+ * work at all) whenever the override isn't `'wasm'`. When it IS `'wasm'`,
+ * unlike the synchronous accessor (which must return `active` immediately,
+ * before resolution can possibly finish), this one AWAITS the shared,
+ * memoized resolution before returning — an async caller can afford to wait,
+ * so it actually gets the Wasm kernels once ready instead of racing past them
+ * to `tsKernels` every single call.
+ */
+export async function getActiveKernelsAsync(): Promise<PixelKernels> {
+  if (resolveCoreImpl() !== 'wasm') return tsKernels
+  ensureWasmResolving()
+  await pending
+  return active
+}
+
 /** Test-only: resets the module-level cache between test cases. */
 export function resetActiveKernelsForTests(): void {
   active = tsKernels

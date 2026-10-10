@@ -554,3 +554,70 @@ bindgen]` macro ever sees them). The lesson: the "tuples need packing"
 rule from §11 is specifically an FFI-boundary rule, not a general Rust
 rule — the moment a multi-value return stays on the Rust side of
 `crate::bindings`, plain tuples are the normal, idiomatic choice again.
+
+## Phase 6f (fix-agent pass — judges A6/B6)
+
+### 23. Why the `HashMap` per cell in §21 was actually slow — and what replaced it
+
+§21 above is now a description of OLD code, kept for its explanation of
+*why* an insertion-order tie-break matters — but `downscale.rs`'s
+`dominant_color` no longer uses a `HashMap` at all. Judge B6's adversarial
+bench pass found the REAL cost phase 6's handoff mis-diagnosed as "FFI-copy
+dominated" (same mistake §15 already warns about for flood-fill — always
+measure the actual bottleneck, never guess from the shape of the problem):
+a fresh `HashMap<u32, BucketStats>` allocated PER CELL. Two separate taxes,
+both paid `target_w * target_h` times per call: (1) **hashing** — `HashMap`
+defaults to SipHash, a cryptographically-strong but comparatively slow
+hash function, to resist hash-flooding attacks the crate has no attacker
+model for (this key is a plain `u32` derived from pixel data, not untrusted
+request routing); (2) **heap allocation** — every NEW bucket key triggers
+at least one allocation (the map's internal table growing), and a typical
+64x64-target downscale of a photographic-noise source creates many
+distinct buckets per cell.
+
+The fix: two buffers, each allocated ONCE per `downscale` call (not once
+per cell) and reused: `slot: Vec<u32>` (`1 << 15` entries — every possible
+bucket key, since 3 channels x 5 bits each = 15 bits) as a direct array
+index (`slot[key]`, zero hashing) mapping a key to its 1-based position in
+`stats: Vec<BucketStats>` (0 means "not seen this cell"). `stats.clear()`
+between cells is O(1) (keeps its allocated capacity — the SAME
+`Vec::with_capacity`-adjacent lesson as §20, just via `clear` instead of
+`with_capacity` up front, since a cell's bucket count isn't knowable in
+advance). Resetting `slot` back to empty after a cell is done loops over
+`stats` (the buckets THIS cell actually touched), not the whole 32K-entry
+table — so the reset cost scales with "how many distinct colors appeared",
+not with the table's total size. Result: ~2.8x FASTER than TS where phase
+6 measured ~1.18x SLOWER — a correctness-neutral (byte-identical, fuzzed to
+40,007 cases) rewrite of the DATA STRUCTURE, not the algorithm.
+
+### 24. `wasm32`'s `usize` is 32 bits — your `cargo test` host's is probably not
+
+`target_w as usize * target_h as usize * CHANNELS` (and similarly `ty *
+src_h`, `tx * src_w`) looks like ordinary, safe arithmetic when you write
+and test it on a 64-bit development machine, where `usize` is 64 bits and
+the numbers involved (bounded by `u32`) can never realistically overflow.
+But this crate COMPILES to `wasm32-unknown-unknown`, where `usize` is only
+32 bits — exactly the same width as the `u32` dimensions themselves. Two
+individually-"valid" `u32` values (e.g. `target_w = target_h = 32768`) can
+have a PRODUCT that overflows a 32-bit `usize` even though neither factor
+is anywhere near `u32::MAX` — `32768 * 32768 * 4 == 2**32`, which wraps to
+`0` on a 32-bit `usize`, confirmed to trap the real compiled `.wasm`
+(`RuntimeError: unreachable`) via direct execution. A `cargo test` run on
+the development machine would NEVER catch this: the identical Rust source,
+compiled for the host's 64-bit target, computes the "same" multiplication
+without wrapping, because the host's `usize` is simply wider. The fix
+(`downscale.rs`'s `cell_range` helper and the allocation-size check)
+widens every such product to `u64` BEFORE multiplying — `u32::MAX as u64
+* u32::MAX as u64` (~1.8e19) never overflows `u64` (~1.8446e19), so this
+is unconditionally safe for any two `u32`-range inputs regardless of which
+target the code eventually runs on — and the result is range-checked back
+into `usize` (`checked_mul`/`try_from`) rather than assumed to fit. The
+test suite proves this WITHOUT needing an actual `wasm32` test runner or
+a multi-gigabyte allocation: `cell_range` is called directly with
+`u32::MAX`-scale inputs, which stays cheap (no buffer, just arithmetic) and
+genuinely exercises the overflow-prone code path regardless of the test
+host's own pointer width — the LESSON generalizes to any `usize` math in a
+crate that targets `wasm32`: trusting "it worked when I ran `cargo test`"
+is not evidence it is safe on the actual deployment target, if the
+computation's magnitude is anywhere near `u32::MAX` on a target where
+`usize` is narrower than the host that ran the test.

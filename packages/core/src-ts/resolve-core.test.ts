@@ -17,7 +17,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { resolveKernels, resetRuntimeTrapDemotionForTests, withRuntimeTrapFallback } from './resolve-core'
+import { resolveKernels, resetLoadFailureLogForTests, resetRuntimeTrapDemotionForTests, withRuntimeTrapFallback } from './resolve-core'
 import { loadWasmModule, resetWasmModuleForTests } from './wasm-core'
 import { tsKernels } from './ts-core'
 
@@ -28,10 +28,12 @@ const pkgAvailable = existsSync(wasmPath)
 beforeEach(() => {
   resetWasmModuleForTests()
   resetRuntimeTrapDemotionForTests()
+  resetLoadFailureLogForTests()
 })
 afterEach(() => {
   resetWasmModuleForTests()
   resetRuntimeTrapDemotionForTests()
+  resetLoadFailureLogForTests()
   vi.restoreAllMocks()
 })
 
@@ -61,6 +63,39 @@ describe('fallback to TS on load failure (W6)', () => {
     expect(kernels.impl).toBe('ts')
     expect(kernels).toBe(tsKernels)
     expect(errorSpy).toHaveBeenCalled()
+  })
+
+  it('fix-agent 6f.2 (W-B): a second resolveKernels() call after a failed load does not retry the load or log again — no retry storm, log once', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const first = await resolveKernels()
+    const second = await resolveKernels()
+
+    expect(first).toBe(tsKernels)
+    expect(second).toBe(tsKernels)
+    // Before this fix, `loadWasmModule` never cached a failure, so EVERY
+    // call re-attempted the (failing) production fetch and `resolveKernels`
+    // logged once PER CALL — confirmed this would be `2` without the fix.
+    expect(errorSpy).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe.skipIf(!pkgAvailable)('loadWasmModule concurrency (fix-agent 6f.2, verify-report-phase-6.md W-B)', () => {
+  it('two concurrent first callers share ONE in-flight instantiation, not a separate one each', async () => {
+    let initCalls = 0
+    const countingInit: Parameters<typeof loadWasmModule>[0] = (mod) => {
+      initCalls += 1
+      return mod.initSync({ module: readFileSync(wasmPath) })
+    }
+
+    // Before this fix, `loadWasmModule`'s `if (!wasmModule)` check and its
+    // `wasmModule = mod` write straddled two `await`s with no in-flight-
+    // promise guard — two callers that both start before either finishes
+    // each independently re-imported/re-initialized the module.
+    const [a, b] = await Promise.all([loadWasmModule(countingInit), loadWasmModule(countingInit)])
+
+    expect(a).toBe(b)
+    expect(initCalls).toBe(1)
   })
 })
 

@@ -487,3 +487,79 @@ seemingly-valid call" case. This covers every caller of `decodeToPixels`/
 (`retro-diffusion-utils.ts`'s `decodeGeneratedSprite` calls `decodeToPixels`
 directly) — without changing any output (proven by the oracle-parity
 suites above).
+
+**UPDATE (phase 6f, fix-agent pass)**: the wiring above is CORRECTED, not
+just re-benched — see below.
+
+## Phase 6f — fix-agent pass: downscale's false "FFI-copy dominated" diagnosis corrected, kill-switch bypass closed
+
+Two blind judges (A6/B6) adversarially reviewed phase 6 (`verify-report-
+phase-6.md`). This pass fixes both real findings (W-A overflow, W-B loader
+race) plus three additional issues the orchestrator's fix list named: the
+kill-switch bypass, an avoidable JS-side copy, and downscale's genuinely
+wrong perf diagnosis.
+
+**The `downscale` perf finding was WRONG, not just suboptimal.** Phase 6's
+handoff claimed downscale was "FFI-copy-dominated" — same mistake phase 5's
+flood-fill handoff note made before phase 5f corrected it (see
+`LEARNING.md`'s correction there). The REAL cost: `dominant_color` allocated
+a fresh `HashMap<u32, BucketStats>` (plus an `order: Vec<u32>` for the
+tie-break) PER CELL — SipHash hashing and a heap allocation for every unique
+color bucket, repeated for every one of `target_w * target_h` cells. Fixed
+by reusing a flat `slot: Vec<u32>` (one entry per possible bucket key) +
+`stats: Vec<BucketStats>` pair across the WHOLE call, cleared only for the
+entries a cell actually touched — see `downscale.rs`'s module doc for the
+full mechanism. Verified byte-identical output (not just "looks right"):
+the existing 2,000-case fuzz suite, both oracle-parity suites, AND a
+one-off 20,000-case run of `quantize-downscale.fuzz.test.ts` (seeds bumped
+locally, run once, reverted to 2,000 for the committed file — 40,007 cases,
+0 failures) all pass unchanged against the rewritten implementation.
+
+**Bench** (`pnpm run bench`, same warm-pool methodology, this machine, 2
+consecutive runs):
+
+| Case | ts mean | wasm mean | wasm/ts ratio | phase 6 ratio |
+|------|---------|-----------|----------------|----------------|
+| downscale 512x512 -> 64x64 | 3.73-3.77 ms | 1.33 ms | **0.35x** (2.8x FASTER) | 1.18x (slower) |
+
+`packages/core/bench/thresholds.json`'s downscale gate tightened from `1.4`
+(the old, wrong "Wasm is slower" reality) to `0.45` (margin above the new
+measured ~0.35x) — the false "FFI-copy dominated" claim is removed from
+every doc it appeared in (this file, `HANDOFF.md`, `tasks.md`).
+
+**Other fixes in this pass** (full detail in `tasks.md`'s "Phase 6f"
+section and `HANDOFF.md`):
+1. `sprite-pipeline.ts` bypassed the `pf:core`/`VITE_PIXEL_CORE` kill switch
+   by calling `@pixelforge/core`'s `resolveKernels()` directly — fixed to
+   route through `lib/core/kernels.ts`'s new `getActiveKernelsAsync()`.
+2. `resolveKernels()`/`loadWasmModule()`'s check-then-await-then-set race
+   (W-B) — fixed via a memoized in-flight promise plus a cached, logged-once
+   session-wide load failure (no retry storm).
+3. Overflow safety (W-A) — `MAX_DOWNSCALE_TARGET_DIMENSION`/
+   `MAX_QUANTIZE_COLORS` bounds (TS + Rust, identical), plus `u64`-widened
+   checked arithmetic in `downscale.rs` for the allocation size and the
+   per-cell `ty*src_h`/`tx*src_w` range math.
+4. Removed an unnecessary `new Uint8Array(source.data)` JS-side copy in
+   `sprite-pipeline.ts` — replaced with a zero-copy `Uint8Array` view over
+   the same `Uint8ClampedArray` buffer (both kernels take `data` read-only).
+5. `.gitattributes` added (`packages/core/pkg/*.wasm binary`, LF for the
+   generated JS/TS/`package.json` sidecars).
+
+**Tests**: `packages/core` 4,249 (4,244 + 2 new `resolve-core.test.ts`
+concurrency/no-retry cases + 3 new `pixel-parity.test.ts` MAX-bound parity
+cases), plus 5 new `cargo test` cases (55 total:
+50 + 1 MAX-bound rejection + 1 adversarial-overflow-input reject + 1
+`cell_range` simulated-wasm32-width case + 1 flat-table regression case +
+1 quantize MAX-bound case). `apps/editor` 294 (289 + 5: 2 new
+`kernels.test.ts` cases for `getActiveKernelsAsync`, 3 new
+`sprite-pipeline.test.ts` cases for kill-switch routing + once-per-session
+fallback logging). Full monorepo `pnpm run typecheck`/`test`/`bench`/
+`check-bench` all green; `cargo fmt --check`/`cargo clippy --all-targets --
+-D warnings`/`cargo test` (55/55)/`cargo deny check` all clean.
+
+**Reproducibility + size**: two consecutive `build:wasm` runs produced a
+byte-identical `.wasm` (confirmed via `cmp`, all 5 `pkg/` files). Gzip'd
+`.wasm`: 12,619 bytes (~8.4% of the 150 KB budget) — SMALLER than phase 6's
+14,647 bytes, despite adding the two new bound checks, because the
+flat-table rewrite replaces `HashMap`'s generic machinery with plain array
+indexing (less generic code to compile into Wasm).

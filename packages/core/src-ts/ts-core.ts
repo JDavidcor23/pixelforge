@@ -57,6 +57,29 @@ function isValidU32(n: number): boolean {
   return Number.isInteger(n) && n >= 0 && n <= 0xffffffff
 }
 
+/**
+ * Fix-agent 6f.4 (verify-report-phase-6.md W-A): `isValidU32` alone lets
+ * through numbers that are individually "valid" `u32`s but whose PRODUCT
+ * (`target_w * target_h * 4`) overflows a 32-bit `usize` on the `wasm32`
+ * target — e.g. `downscale(data, 1, 1, 32768, 32768)`, where
+ * `32768 * 32768 * 4 == 2**32`, wraps to `0`, and traps the Wasm instance
+ * (confirmed by direct execution against the real `.wasm`). Neither the TS
+ * oracle nor the TS reference kernel has any upper bound either — a
+ * technically-valid-looking huge target would instead attempt a multi-
+ * gigabyte `new Uint8Array` allocation and a billion-cell loop, risking a tab
+ * hang/OOM rather than a clean rejection.
+ *
+ * DECISION: a generous but finite cap, applied identically here, in
+ * `wasm-core.ts`'s boundary guard, and in `downscale.rs`/`quantize.rs` (same
+ * "reject on both sides before coercion" convention `isValidU32`/5f.5
+ * established) — chosen far above any real editor use (sprites top out in the
+ * low thousands of px; `colors` never exceeds `SPRITE_EDITOR_PALETTE.
+ * MAX_COLORS` (32) in the app) while keeping worst-case allocation/compute
+ * bounded (`MAX_DOWNSCALE_DIMENSION`^2 * 4 bytes <= 256 MiB).
+ */
+export const MAX_DOWNSCALE_DIMENSION = 8192
+export const MAX_QUANTIZE_COLORS = 4096
+
 function inBounds(w: number, h: number, x: number, y: number): boolean {
   return Number.isInteger(x) && Number.isInteger(y) && x >= 0 && x < w && y >= 0 && y < h
 }
@@ -462,7 +485,7 @@ function buildPalette(points: readonly QPoint[], k: number, iterations: number):
  * argument gets — design.md "Boundary number validation").
  */
 function quantize(data: Uint8Array, colors: number, weightBySaturation: boolean, iterations: number, alphaThreshold: number): Uint8Array | undefined {
-  if (data.length % CHANNELS !== 0 || !isValidU32(colors) || !isValidU32(iterations) || !isValidU32(alphaThreshold)) return undefined
+  if (data.length % CHANNELS !== 0 || !isValidU32(colors) || !isValidU32(iterations) || !isValidU32(alphaThreshold) || colors > MAX_QUANTIZE_COLORS) return undefined
 
   const points: QPoint[] = []
   for (let i = 0; i < data.length; i += CHANNELS) {
@@ -565,7 +588,19 @@ function dominantColor(data: Uint8Array, srcW: number, x0: number, x1: number, y
  * is zero, or any numeric argument fails `isValidU32`.
  */
 function downscale(data: Uint8Array, srcW: number, srcH: number, targetW: number, targetH: number): Uint8Array | undefined {
-  if (!isValidU32(srcW) || !isValidU32(srcH) || !isValidU32(targetW) || !isValidU32(targetH) || !validBuffer(data, srcW, srcH) || srcW === 0 || srcH === 0 || targetW === 0 || targetH === 0) {
+  if (
+    !isValidU32(srcW) ||
+    !isValidU32(srcH) ||
+    !isValidU32(targetW) ||
+    !isValidU32(targetH) ||
+    !validBuffer(data, srcW, srcH) ||
+    srcW === 0 ||
+    srcH === 0 ||
+    targetW === 0 ||
+    targetH === 0 ||
+    targetW > MAX_DOWNSCALE_DIMENSION ||
+    targetH > MAX_DOWNSCALE_DIMENSION
+  ) {
     return undefined
   }
 
