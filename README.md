@@ -31,11 +31,12 @@ prompt (Retro Diffusion), then drop results straight onto the canvas.
   <img src="docs/images/ai-generation.png" alt="PixelForge AI sprite generation panel with recent generations" width="100%">
 </p>
 
-**Sound editor** — a synthesizer (oscillator, envelope, filter, presets), an
-asset library and playback/transport, plus AI-generated sound effects.
+**Sound editor** — a searchable sound library, one-click presets, a big
+waveform with transport, plain-language tweaks (pitch, length, punch, tone),
+random variations, and AI-generated effects, music and voice.
 
 <p align="center">
-  <img src="docs/images/sound-editor.png" alt="PixelForge sound editor: synth controls, waveform view and asset library" width="100%">
+  <img src="docs/images/sound-editor.png" alt="PixelForge sound editor: sound library, waveform with transport, tweak sliders and variations" width="100%">
 </p>
 
 ## What works today
@@ -44,9 +45,10 @@ asset library and playback/transport, plus AI-generated sound effects.
   onion skinning, frame-by-frame animation, palette management, multi-format
   export. Manual drawing **and** AI-generated sprites (Retro Diffusion) and
   AI animation cycles from a single reference frame.
-- **Sound editor** — a synthesizer (oscillator, envelope, filter, presets),
-  an asset library, playback/transport, and AI-generated sound effects
-  (ElevenLabs).
+- **Sound editor** — a sound library with search and filters, presets, a
+  waveform with transport, simple tweak sliders on top of the synthesizer
+  (oscillator, envelope, filter), variations, WAV export, and AI-generated
+  sounds (ElevenLabs).
 - **Local-first persistence** — drafts autosave to IndexedDB; nothing is lost
   on reload, no account required.
 - **A Rust/Wasm core migration, mid-flight** — the pixel engine is being moved
