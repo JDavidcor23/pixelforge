@@ -76,11 +76,29 @@ export function resetWasmPixelCoreFallbackLogForTests(): void {
  * override or `VITE_PIXEL_CORE` env var; flipping the default is a decision
  * for AFTER full manual browser testing (see `HANDOFF.md`'s Phase 7
  * section), not something this function does on its own.
+ *
+ * Phase 7f CRITICAL #1 fix: this function being synchronous used to mean the
+ * Wasm module was NEVER loaded by the time the very first `ensureCore()`
+ * call in a session happened, so `'wasm'` silently never activated. The fix
+ * lives OUTSIDE this function — `services/document-persistence.controller.ts`
+ * now `await`s `wasm-pixel-core-resolver.ts`'s `waitForWasmModule()` during
+ * the existing `docStatus: 'loading'` gate, BEFORE the canvas becomes
+ * interactive and before the restored draft is imported — so by the time
+ * anything calls `resolveCore()`, the module has already finished loading
+ * (or failed) and `tryResolveWasmPixelCore` can return a real decision
+ * instead of a guaranteed `null`. This function itself is unchanged for the
+ * `'ts'` path (still synchronous, still zero overhead).
+ *
+ * `getRecoverySnapshot` (phase 7f CRITICAL #2) is forwarded to
+ * `tryResolveWasmPixelCore` so a mid-session Wasm trap can rebuild a
+ * `TsPixelCore` from the caller's own last-good state instead of calling
+ * back into the poisoned Wasm instance — see `wasm-pixel-core-resolver.ts`'s
+ * `TrapSafePixelCore` doc.
  */
-export function resolveCore(doc: DocSnapshot): PixelCore {
+export function resolveCore(doc: DocSnapshot, getRecoverySnapshot: () => DocSnapshot): PixelCore {
   const impl = resolveCoreImpl()
   if (impl === 'wasm') {
-    const wasmCore = tryResolveWasmPixelCore(doc)
+    const wasmCore = tryResolveWasmPixelCore(doc, getRecoverySnapshot)
     if (wasmCore) return wasmCore
     if (!loggedWasmPixelCoreFallback) {
       loggedWasmPixelCoreFallback = true

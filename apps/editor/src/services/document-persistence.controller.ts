@@ -2,6 +2,8 @@ import type { DocStatus, RgbaColor } from '@/types'
 import type { DocumentPayload, DocumentRepository } from '@/types/document'
 import { migrateLegacyDraft } from './legacy-draft-migration.service'
 import { LOCAL_DRAFT_DOCUMENT_ID } from '@/constants/persistence'
+import { resolveCoreImpl } from '@/lib/core/core-config'
+import { waitForWasmModule } from '@/lib/core/wasm-pixel-core-resolver'
 
 /**
  * Framework-agnostic slice of the zustand store API this controller needs —
@@ -177,6 +179,20 @@ export async function startDocumentPersistence(
 
     const stored = await repository.load(LOCAL_DRAFT_DOCUMENT_ID)
     if (bailedOut()) return NOOP_CONTROLLER
+
+    // Phase 7f (CRITICAL #1 — "the flag is dead"): `core.slice.ts`'s `core`
+    // is bootstrapped lazily, exactly once, the FIRST time anything touches
+    // it — either `store.importDocument` right below (when a draft exists)
+    // or the user's first `dispatch` after `docStatus` flips to `'ready'`
+    // (when it doesn't). Awaiting the Wasm module HERE, before either of
+    // those can happen, is what makes `pf:core=wasm`/`VITE_PIXEL_CORE=wasm`
+    // actually take effect: without this, that first bootstrap always races
+    // ahead of the background `loadWasmModule()` and permanently falls back
+    // to `TsPixelCore` for the whole session. The `'ts'` default path is
+    // untouched — `waitForWasmModule()` is never even called.
+    if (resolveCoreImpl() === 'wasm') await waitForWasmModule()
+    if (bailedOut()) return NOOP_CONTROLLER
+
     if (stored) {
       sessionRevision = Math.max(sessionRevision, stored.revision)
       store.importDocument(stored.payload)

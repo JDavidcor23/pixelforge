@@ -8,6 +8,7 @@ import {
   type DocumentPersistenceController,
   type DocumentPersistenceStoreApi,
 } from '@/services/document-persistence.controller'
+import { registerDocumentPersistenceFlush } from '@/services/document-persistence-flush-bus.service'
 import { DOCUMENT_AUTOSAVE_DEBOUNCE_MS } from '@/constants/persistence'
 import type { DocStatus, RgbaColor } from '@/types'
 import type { DocumentPayload } from '@/types/document'
@@ -71,6 +72,10 @@ export function useDocumentPersistence(): UseDocumentPersistenceResult {
         return
       }
       controller = resolvedController
+      // Phase 7f (CRITICAL #2): lets `core.slice.ts` request an immediate
+      // flush (bypassing the debounce) right after a Wasm trap demotes to
+      // TsPixelCore — see `document-persistence-flush-bus.service.ts`.
+      registerDocumentPersistenceFlush(() => controller?.flush())
     }
 
     startDocumentPersistence({
@@ -114,6 +119,7 @@ export function useDocumentPersistence(): UseDocumentPersistenceResult {
     return () => {
       cancelled = true
       document.removeEventListener('visibilitychange', handleVisibilityChange)
+      registerDocumentPersistenceFlush(null)
       controller?.stop()
     }
   }, [])

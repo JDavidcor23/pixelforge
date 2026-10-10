@@ -24,9 +24,11 @@ const pkgAvailable = existsSync(wasmPath)
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let mod: any = null
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let wasmExports: any = null
 if (pkgAvailable) {
   mod = await import('../pkg/pixelforge_core.js')
-  mod.initSync({ module: readFileSync(wasmPath) })
+  wasmExports = mod.initSync({ module: readFileSync(wasmPath) })
 } else {
   console.warn(`[wasm-document-core.test] ${wasmPath} not found — run "pnpm run build:wasm" first. Skipping this suite.`)
 }
@@ -221,6 +223,49 @@ describe.runIf(pkgAvailable)('WasmPixelCore', () => {
     const r2 = core2.dispatch({ type: 'layer.add' })
 
     expect(r1.dirty[0].layerId).toBe(r2.dirty[0].layerId)
+  })
+})
+
+describe.runIf(pkgAvailable)('WasmPixelCore memory — importDocument frees the PREVIOUS WasmDocument (phase 7f WARNING #6)', () => {
+  it('repeated importDocument on the SAME instance does not grow Wasm linear memory without bound', () => {
+    // Reproduces judges' `mem.jb.test.ts` (scratchpad `judgeB7`), which found
+    // 300 sequential `importDocument` calls of a ~1MB document on the SAME
+    // `WasmPixelCore` grew `memory.buffer.byteLength` by ~1MB EACH call
+    // (300MB+ for 300 calls) — before this fix, the OLD `WasmDocument` was
+    // simply dropped by reference, relying entirely on wasm-bindgen's
+    // `FinalizationRegistry` (not deterministic, and in a tight synchronous
+    // loop with no `await`, V8 gets no chance to run it at all).
+    const pageSize = 65536
+    const w = 256
+    const h = 256
+    const docBytes = w * h * 4 // ~256KB per layer
+    function bigPayload() {
+      return {
+        schemaVersion: 1,
+        w,
+        h,
+        frameMs: [83],
+        frames: [{ id: 'f0', activeLayerId: 'l0', layers: [{ id: 'l0', name: 'a', visible: true, locked: false, opacity: 100, data: new Uint8Array(docBytes) }] }],
+      }
+    }
+
+    const core = new WasmPixelCore(mod, freshDoc(w, h))
+    const startPages = wasmExports.memory.buffer.byteLength / pageSize
+
+    const N = 80
+    for (let i = 0; i < N; i++) core.importDocument(bigPayload())
+
+    const endPages = wasmExports.memory.buffer.byteLength / pageSize
+    const grownBytes = (endPages - startPages) * pageSize
+
+    // A bound, not zero: Wasm memory only grows in whole 64KB pages and never
+    // shrinks (no `memory.grow` reversal in wasm), so some residual growth
+    // from allocator fragmentation across 80 calls is expected. The DEFECT
+    // this guards against is LINEAR growth proportional to `N * docBytes`
+    // (~20MB for 80 calls at this size, confirmed reproducible before this
+    // fix) — bounding at 4x ONE document's size catches that class of bug
+    // while tolerating normal allocator overhead.
+    expect(grownBytes).toBeLessThan(docBytes * 4)
   })
 })
 

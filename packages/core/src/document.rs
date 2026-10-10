@@ -382,14 +382,34 @@ impl Document {
 
     /// Fresh document: one frame, one default layer, same shape
     /// `createEmptyDocSnapshot` builds. Ids start at 1.
+    ///
+    /// Phase 7f (verify-report-phase-7, WARNING #1): `canvas_w * canvas_h *
+    /// CHANNELS` is `checked_mul`'d exactly like every sibling constructor in
+    /// this crate (`from_payload`, `doc_replace`) — the same overflow class
+    /// phase 6f's W-A fixed for `downscale`/`quantize` (on wasm32's 32-bit
+    /// `usize`, `canvas_w * canvas_h * 4 >= 2^32` wraps to a small number,
+    /// under-allocating `data` so a later write indexes past the real buffer
+    /// and traps). This constructor is `pub` FFI surface
+    /// (`#[wasm_bindgen(constructor)]` in `bindings.rs`) and infallible by
+    /// signature, so an overflowing request degrades to a safe 1x1 canvas
+    /// instead of panicking — never reachable today (the only call site,
+    /// `wasm-document-core.ts`'s `importDocument` corruption fallback, uses a
+    /// hardcoded `32x32`), but closes the defect for any future/external caller.
     pub fn new(canvas_w: u32, canvas_h: u32) -> Self {
+        let data_len = (canvas_w as usize)
+            .checked_mul(canvas_h as usize)
+            .and_then(|px| px.checked_mul(CHANNELS as usize));
+        let (canvas_w, canvas_h, data_len) = match data_len {
+            Some(len) => (canvas_w, canvas_h, len),
+            None => (1, 1, CHANNELS as usize),
+        };
         let layer = Layer {
             id: 1,
             name: format!("{LAYER_NAME_PREFIX} 1"),
             visible: true,
             locked: false,
             opacity: DEFAULT_OPACITY,
-            data: vec![0u8; (canvas_w as usize) * (canvas_h as usize) * CHANNELS as usize],
+            data: vec![0u8; data_len],
         };
         let frame = Frame {
             id: 1,
@@ -2010,6 +2030,21 @@ mod tests {
         let doc = Document::new(4, 4);
         assert_eq!(doc.meta_doc()[6], 1); // frame_count
         assert_eq!(doc.read_layer(1, 1).len(), 4 * 4 * 4);
+    }
+
+    #[test]
+    fn new_degrades_to_a_safe_1x1_canvas_instead_of_overflowing_the_allocation() {
+        // Phase 7f WARNING #1: `canvas_w * canvas_h * CHANNELS` must never
+        // wrap on a 32-bit `usize` (wasm32) and under-allocate `data`. On a
+        // 64-bit test host `usize` is 64-bit, so this exact pair doesn't
+        // overflow THERE — the point of this test is the `checked_mul` chain
+        // itself (same one `from_payload`/`doc_replace` use), proven here
+        // with a pair that overflows on ANY width: `u32::MAX` for both
+        // dimensions overflows even 64-bit usize (u32::MAX^2 * 4 > u64::MAX).
+        let doc = Document::new(u32::MAX, u32::MAX);
+        assert_eq!(doc.canvas_w, 1);
+        assert_eq!(doc.canvas_h, 1);
+        assert_eq!(doc.read_layer(1, 1).len(), CHANNELS as usize);
     }
 
     #[test]

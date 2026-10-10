@@ -298,6 +298,24 @@ impl WasmDocument {
         self.inner.history_bytes()
     }
 
+    /// TEST-ONLY (phase 7f). Deliberately panics — with this crate's
+    /// `panic = "abort"` release profile, that compiles to a Wasm
+    /// `unreachable` trap, i.e. a REAL `WebAssembly.RuntimeError`, not a
+    /// simulated one. Exists purely so JS-side tests can reproduce the
+    /// actual wasm-bindgen post-trap behavior (the generated glue sets a
+    /// "this object is currently borrowed" flag before entering any `&self`/
+    /// `&mut self` method and only clears it on a NORMAL return — a trap
+    /// skips that cleanup, so the flag is stuck forever and every later call
+    /// on the SAME JS handle throws a plain `Error: recursive use of an
+    /// object detected which is already borrowed`, never another
+    /// `RuntimeError`) without relying on a slow/flaky genuine OOM. Never
+    /// called by production TS (`rg`-verified: only
+    /// `wasm-pixel-core-resolver.*.test.ts` and `wasm-document-core.test.ts`
+    /// reference it).
+    pub fn debug_force_trap(&mut self) {
+        panic!("WasmDocument.debug_force_trap: intentional test-only panic")
+    }
+
     // ── Commands (each returns the flat `DispatchResult` encoding above) ───
 
     pub fn stroke_begin(&mut self, layer_id: u32) -> Vec<u32> {

@@ -1,6 +1,6 @@
 import { loadWasmModule, WasmPixelCore } from '@pixelforge/core'
 import type { Command, DispatchResult } from './commands'
-import { payloadToDoc, type DocSnapshot } from './ts-core'
+import type { DocSnapshot } from './ts-core'
 import { TsPixelCore, type DocMetaSnapshot, type PixelCore } from './pixel-core'
 import type { DocumentPayload } from '@/types/document'
 
@@ -33,58 +33,102 @@ export function resetWasmPixelCoreResolverForTests(): void {
   pending = null
 }
 
-function isWasmRuntimeError(error: unknown): boolean {
+/**
+ * Phase 7f (CRITICAL #1 — "the flag is dead"): `resolveCore()` must stay
+ * SYNCHRONOUS (every `core.slice.ts` caller depends on it), but `core` is
+ * bootstrapped exactly ONCE, lazily, the first time the store is touched
+ * (`ensureCore()`). Without this, that FIRST call always lands before the
+ * background `loadWasmModule()` kicked off by `ensureModuleLoading()` has a
+ * chance to resolve, so `tryResolveWasmPixelCore` always returns `null` the
+ * one time it's ever asked, and the store permanently falls back to
+ * `TsPixelCore` for the rest of the session even with `pf:core=wasm` set —
+ * no LATER call ever re-checks.
+ *
+ * The fix is NOT to make `resolveCore()` async — it's to await THIS function
+ * once, earlier, during the existing `docStatus: 'loading'` gate
+ * (`services/document-persistence.controller.ts`), before the canvas becomes
+ * interactive and before the restored draft is imported into the core. By
+ * the time `docStatus` flips to `'ready'`, `cachedModule` is already
+ * populated (success OR failure) and the FIRST `ensureCore()` call — whether
+ * triggered by `importDocument` during restore or by the user's first
+ * `dispatch` afterward — gets a real decision instead of a guaranteed `null`.
+ *
+ * Resolves immediately (no microtask delay beyond what's already pending) if
+ * the module is already cached; never rejects (a load failure is already
+ * caught and logged by `ensureModuleLoading`).
+ */
+export async function waitForWasmModule(): Promise<void> {
+  if (cachedModule) return
+  ensureModuleLoading()
+  if (pending) await pending
+}
+
+function describeTrap(error: unknown): string {
   return typeof WebAssembly !== 'undefined' && error instanceof WebAssembly.RuntimeError
+    ? 'a genuine WebAssembly.RuntimeError (the instance trapped)'
+    : 'a non-RuntimeError exception (phase 7f: treated as fatal-poison too — see class doc)'
 }
 
 /**
- * Wraps a live `WasmPixelCore` so a `WebAssembly.RuntimeError` thrown by ANY
- * method (not just a stateless kernel call — this is the STATEFUL document,
- * so a trap here is a bigger deal) demotes this instance to `TsPixelCore`
- * for the rest of the session, recovering the last-good document content via
- * `exportDocument()` BEFORE abandoning the trapped Wasm instance (verified by
- * `wasm-pixel-core-resolver.test.ts`: a simulated trap mid-session, followed
- * by a successful `exportDocument()` on the recovered `TsPixelCore`
- * containing the pre-trap content).
+ * Wraps a live `WasmPixelCore` so ANY exception thrown by ANY method (not
+ * just a stateless kernel call — this is the STATEFUL document, so a trap
+ * here is a bigger deal) demotes this instance to `TsPixelCore` for the rest
+ * of the session.
  *
- * KNOWN LIMITATION (documented, not hidden): the ONE command whose call
- * actually trapped is NOT retried against the recovered `TsPixelCore` — its
- * effect is lost, not replayed (replaying it would mean re-deriving the
- * exact `Command` that was in flight, which this wrapper does not retain).
- * Every document mutation BEFORE the trap is preserved (via the recovered
- * export); the trapped command's own caller sees the exception and should
- * treat it as "that one edit did not apply" (e.g. the store's existing
- * command-dispatch error handling), not as silent data loss across the rest
- * of the document. The design doc's "else from the store's pixel cache"
- * secondary fallback (for the case where `exportDocument()` ALSO fails after
- * the trap — a Wasm instance whose memory is corrupted beyond its own
- * metadata) is NOT implemented in this phase: `core.slice.ts` would need to
- * supply its pixel cache into this module, which is out of this phase's
- * scope/risk budget — tracked in `HANDOFF.md`.
+ * Phase 7f (CRITICAL #2, rewritten from the phase 7 design):
+ * - **Any exception is poison, not just `WebAssembly.RuntimeError`.** A real
+ *   trap leaves wasm-bindgen's generated glue with its "this object is
+ *   currently borrowed" flag stuck (a trap skips the normal call-return
+ *   bookkeeping that clears it) — EVERY subsequent call on the SAME JS
+ *   handle then throws a plain `Error: recursive use of an object detected
+ *   which is already borrowed`, never another `RuntimeError`. Gating
+ *   recovery on `instanceof WebAssembly.RuntimeError` missed this entirely:
+ *   the FIRST call after a trap (frequently the recovery attempt itself)
+ *   would see a plain `Error` and skip demotion, leaving the caller stuck
+ *   calling a permanently-dead object forever.
+ * - **Recovery never calls into the dead core.** The old design recovered
+ *   via `this.wasm.exportDocument()` — itself a call into the poisoned
+ *   object, guaranteed to throw too. Recovery now rebuilds a `TsPixelCore`
+ *   from a caller-supplied snapshot of the LAST SUCCESSFUL dispatch
+ *   (`getRecoverySnapshot`, backed by `core.slice.ts`'s own zustand state —
+ *   the metadata + pixel cache written back after every prior `dispatch`),
+ *   never touching `this.wasm` again after the trap.
+ * - **Undo history is dropped.** `getRecoverySnapshot()` returns a
+ *   `DocSnapshot` (no history), so the rebuilt `TsPixelCore` starts with
+ *   `canUndo`/`canRedo` both `false` — the pre-trap undo stack lived only
+ *   inside the now-abandoned Wasm instance and cannot be recovered. This is
+ *   an intentional, documented tradeoff (see `HANDOFF.md`), not a bug.
+ * - **The failing command is not applied.** The trapped call still rethrows
+ *   (see `guard` below) — the caller's `dispatch(cmd)` for that ONE command
+ *   throws and no content/history change from it is observable anywhere.
+ *   `core.slice.ts` catches this, syncs the UI from the recovered core, and
+ *   requests an immediate autosave flush so the pre-trap content (which IS
+ *   fully preserved) hits the repository right away instead of waiting for
+ *   the debounce.
  */
 class TrapSafePixelCore implements PixelCore {
   readonly impl = 'wasm' as const
   private active: PixelCore
   private demoted = false
 
-  constructor(private readonly wasm: PixelCore) {
+  constructor(
+    private readonly wasm: PixelCore,
+    private readonly getRecoverySnapshot: () => DocSnapshot
+  ) {
     this.active = wasm
   }
 
   private demoteToTs(error: unknown): void {
     if (this.demoted) return
     this.demoted = true
-    console.error('[pixel-core] a Wasm PixelCore call trapped (WebAssembly.RuntimeError) — switching to the TS reference implementation for the rest of this session.', error)
-    let recovered: DocumentPayload | null = null
-    try {
-      recovered = this.wasm.exportDocument()
-    } catch (exportError) {
-      console.error(
-        '[pixel-core] WasmPixelCore trapped AND its own exportDocument() also failed afterward — no last-good Wasm state to recover from this session. The document in memory may now be stale; the user should save/reopen.',
-        exportError
-      )
-    }
-    this.active = recovered ? new TsPixelCore(payloadToDoc(recovered)) : this.active
+    console.error(
+      `[pixel-core] a Wasm PixelCore call threw ${describeTrap(error)} — switching to the TS reference implementation for the rest of this session. Undo history is reset; all document content up to the last successful dispatch is preserved.`,
+      error
+    )
+    // Never call back into `this.wasm` here — it is poisoned and every
+    // method on it now throws (see class doc). The recovery source is the
+    // CALLER's own last-good state, not this trapped instance.
+    this.active = new TsPixelCore(this.getRecoverySnapshot())
   }
 
   private guard<R>(fn: (core: PixelCore) => R): R {
@@ -92,7 +136,7 @@ class TrapSafePixelCore implements PixelCore {
     try {
       return fn(core)
     } catch (error) {
-      if (!isWasmRuntimeError(error)) throw error
+      if (this.demoted) throw error // already recovered — this is a genuine TsPixelCore error, not a new trap; propagate as-is.
       this.demoteToTs(error)
       throw error // this ONE call's command is lost (see class doc) — the caller's NEXT call reaches `this.active`, now TsPixelCore, trap-free.
     }
@@ -137,20 +181,27 @@ class TrapSafePixelCore implements PixelCore {
 
 /**
  * Synchronous: returns a trap-safe `PixelCore` backed by `WasmPixelCore`
- * ONLY if the Wasm module happens to already be loaded this session (e.g.
- * `lib/core/kernels.ts` warmed it earlier, or a previous `resolveCore()`
- * call did). Otherwise returns `null` and kicks off a background load so a
- * LATER `resolveCore()` call in this session can use it — `resolveCore()`
- * itself must stay synchronous (every `core.slice.ts` caller depends on
- * this), so a cold Wasm load can never block opening a document.
+ * ONLY if the Wasm module happens to already be loaded this session — thanks
+ * to {@link waitForWasmModule} being awaited during the `docStatus:
+ * 'loading'` gate (phase 7f CRITICAL #1), that's true by the time anything
+ * can call this in practice. Otherwise returns `null` and kicks off a
+ * background load so a LATER `resolveCore()` call in this session can use it
+ * — `resolveCore()` itself must stay synchronous (every `core.slice.ts`
+ * caller depends on this), so a cold Wasm load can never block opening a
+ * document.
+ *
+ * `getRecoverySnapshot` (phase 7f CRITICAL #2) is threaded into the returned
+ * `TrapSafePixelCore` so a mid-session trap can rebuild a `TsPixelCore`
+ * WITHOUT calling back into the now-poisoned Wasm instance — see that
+ * class's doc.
  */
-export function tryResolveWasmPixelCore(doc: DocSnapshot): PixelCore | null {
+export function tryResolveWasmPixelCore(doc: DocSnapshot, getRecoverySnapshot: () => DocSnapshot): PixelCore | null {
   if (!cachedModule) {
     ensureModuleLoading()
     return null
   }
   try {
-    return new TrapSafePixelCore(new WasmPixelCore(cachedModule, doc))
+    return new TrapSafePixelCore(new WasmPixelCore(cachedModule, doc), getRecoverySnapshot)
   } catch (error) {
     console.error('[pixel-core] WasmPixelCore construction failed — falling back to TsPixelCore for this session.', error)
     return null

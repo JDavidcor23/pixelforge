@@ -1,6 +1,6 @@
 # Handoff — migrate-to-rust-core
 
-Last updated: 2026-10-09 (Phase 7 session). Branch: `feat/migrate-to-rust-core` (nothing committed yet — user commits manually).
+Last updated: 2026-10-09 (Phase 7f session). Branch: `feat/migrate-to-rust-core` (nothing committed yet — user commits manually).
 
 ## How to resume
 1. Read this file, then `tasks.md` (checkboxes are the source of truth), `design.md`, `baseline-bench.md`, and the `verify-report-*.md` files in this folder.
@@ -37,7 +37,7 @@ Last updated: 2026-10-09 (Phase 7 session). Branch: `feat/migrate-to-rust-core` 
 ## Next steps
 ~~Phase 7 (Rust Document/history, full `PixelCore`)~~ — **IMPLEMENTED this session** (see "Phase 7" section below). DEFAULT STAYS `ts` — flipping it is the user's call after manual browser testing, not something this session did. Remaining before the final non-technical summary + `/gp-init`:
 1. **Manual browser testing of `pf:core = 'wasm'`** (this agent had no browser) — open the editor with `localStorage.setItem('pf:core','wasm')`, exercise draw/undo/redo/layers/frames/save-reload, confirm it feels right, THEN decide whether to flip the default (`tasks.md` 7.9) and remove the override dance. This is the one thing that genuinely could not be verified by an agent without a browser.
-2. Phase 7 follow-ups (`tasks.md` 7.11-7.15, all documented deviations, none blocking, none affecting the default `ts` experience): `frame.paste`'s pasted-frame active-layer default (always first layer, not the original selection); `importDocument`'s coarser corrupted-payload recovery (one fallback empty doc, not per-layer repair); the trap-safety wrapper's secondary ("else the store's pixel cache") fallback; hoisting `Command`/`DispatchResult`/`PixelCore` into `@pixelforge/core` as a true shared type (currently a structural duplicate, see `document-types.ts`); wiring a bench gate for `wasm-pixel-core.bench.ts`'s numbers.
+2. Phase 7 follow-ups, UPDATED after phase 7f (`tasks.md` 7.11-7.15): `frame.paste`'s pasted-frame active-layer default (always first layer, not the original selection) — still open; `importDocument`'s coarser corrupted-payload recovery (one fallback empty doc, not per-layer repair) — still open; the trap-safety wrapper's secondary fallback — CLOSED in 7f, but by replacing the whole recovery design (see "Phase 7f" section below), not by building the originally-planned "else the store's pixel cache" branch; hoisting `Command`/`DispatchResult`/`PixelCore` into `@pixelforge/core` as a true shared type — still open; wiring a bench gate for `wasm-pixel-core.bench.ts`'s numbers — still open (now also needs a STORE-LOOP-level gate, not just a `PixelCore`-level one — see "Phase 7f" section's open items).
 3. Remaining follow-ups from phase 4f: `.env.example` per app (blocked by sandbox permissions this session — try again in an unrestricted environment); confirm whether `vite-plugin-wasm`/`vite-plugin-top-level-await` are actually removable for `--target web` by running a real `vite build`/`vite dev` (this agent could not — no app builds allowed).
 4. Then final non-technical summary + `/gp-init` with the user.
 
@@ -270,3 +270,118 @@ verified by a 300-seed x 60-step differential fuzz (found and fixed one real
 bug on its first run — see the "Phase 7" section above). `cargo test`
 87/87, `packages/core` 4,265/4,265, `apps/editor` 303/303, gzip `.wasm`
 41,234 bytes. No commits made (per instruction).
+
+## Phase 7f (fix-agent pass — verify-report-phase-7 (Judge A) + judges' A7/B7 repro material)
+
+Full detail: `verify-report-phase-7f.md`. Priority order worked:
+CRITICAL #1 → CRITICAL #2 → (partial) #5 → #6, then stopped at a coherent
+green point — WARNING #3/#4/#7/#8 (remainder) were NOT reached this session.
+
+### How to try the Wasm core now (unchanged mechanism, now actually works)
+
+1. Browser console: `localStorage.setItem('pf:core', 'wasm')` and reload —
+   OR set `VITE_PIXEL_CORE=wasm` in `apps/editor`'s env.
+2. As of this session, the editor's existing "Restoring your draft…" /
+   `docStatus: 'loading'` screen now genuinely waits for the Wasm module to
+   finish loading (or fail) BEFORE the canvas becomes interactive — so by the
+   time you can draw, `pf:core=wasm` has either taken effect or cleanly
+   fallen back to `ts` with one `console.error`. Before this session, setting
+   the flag did NOTHING OBSERVABLE, ever (see CRITICAL #1 below) — this is
+   the first session where manual browser testing of `pf:core=wasm` is
+   actually meaningful to do.
+3. If the Wasm core traps mid-session (should be rare — the parity fuzz is
+   clean — but possible on inputs it hasn't seen), the editor keeps working:
+   the failing action is silently dropped, undo history resets, and
+   everything drawn before the trap is safe and gets saved immediately. The
+   ONLY signal today is a `console.error` in devtools — there is no toast/
+   banner (tracked as a follow-up, no `ErrorBoundary` exists anywhere in
+   `apps/editor` yet).
+
+### What changed (CRITICAL, confirmed and fixed)
+
+1. **"The flag was dead."** Re-reading the actual code path (not assumed)
+   showed `core.slice.ts`'s `core` is memoized once per session, and the
+   FIRST time anything ever touched it always ran before the background
+   `loadWasmModule()` had a chance to resolve — so `pf:core=wasm` never
+   constructed a real `WasmPixelCore`, in ANY session, ever, before this fix.
+   Fixed by awaiting a new `waitForWasmModule()` inside the EXISTING
+   `docStatus: 'loading'` startup gate (`services/
+   document-persistence.controller.ts`) — only on the `'wasm'` path; `'ts'`
+   is byte-for-byte unchanged. Proven against the real built `.wasm` end to
+   end: `stores/slices/core.slice.real-trap.test.ts`.
+2. **Trap bricks the core, including its own recovery path.** A real trap
+   (reproduced with a new test-only `WasmDocument::debug_force_trap()` /
+   `WasmPixelCore.debugForceTrap()` — a genuine Rust panic, which this
+   crate's `panic = "abort"` profile turns into a real `unreachable` Wasm
+   trap) leaves wasm-bindgen's "this object is borrowed" flag stuck forever —
+   EVERY later call on that same instance throws a plain `Error`, not another
+   `RuntimeError`. Phase 7's recovery design called `exportDocument()` on the
+   TRAPPED instance to recover — which, per the above, was ALSO guaranteed to
+   throw. Rewritten: `TrapSafePixelCore` treats any exception as fatal-poison
+   and rebuilds a `TsPixelCore` from `core.slice.ts`'s OWN last-good state,
+   never touching the dead instance again. Undo history is dropped (stated
+   plainly, not hidden); the document content itself is NOT lost. `core.
+   slice.ts`'s `dispatch` now has a try/catch and requests an immediate
+   autosave flush (new `services/document-persistence-flush-bus.service.ts`)
+   instead of letting the exception escape uncaught (there is still no
+   `ErrorBoundary` anywhere in this app).
+
+### What changed (WARNING, partial)
+
+3. `Document::new`/`WasmDocument::new` now `checked_mul`s its canvas-size
+   allocation like every sibling constructor (was the one unchecked one in
+   the crate — never reachable today, defense-in-depth).
+4. `WasmPixelCore.importDocument` now `.free()`s the OUTGOING `WasmDocument`
+   before replacing it — judges' `mem.jb.test.ts` re-run against this
+   session's rebuilt `pkg/` confirmed ~1MB of Wasm linear memory leaked PER
+   `importDocument` call on a long-lived core (300 calls -> ~303MB, zero
+   reclamation in a tight synchronous loop). Fixed and regression-tested
+   (verified the new test actually fails without the fix: 21.3MB growth over
+   80 calls vs a 1MB budget).
+
+### What's still open (honest list, in the priority order given)
+
+- **WARNING #3** (`importDocument` robustness parity with `TsPixelCore`):
+  the NUL-in-layer-name corruption is CONFIRMED real (judges'
+  `nul.jb.test.ts`, re-run this session) — `layerNames.join('\u0000')`/
+  `.split('\u0000')` desyncs every layer's reported name after one whose name
+  contains `\u0000`. Needs a real escaping scheme (e.g. JSON) for the wire
+  format — a cross-cutting Rust+TS change, not attempted this session.
+  `frameMs` length mismatch / duplicate frame-layer ids on malformed drafts
+  were not separately re-audited this session either.
+- **WARNING #4** (numeric command-field validation parity, `frame.paste`
+  clamping, the pre-existing fractional-index no-op bug in BOTH cores,
+  extended differential fuzz ≥400 seeds) — not attempted this session.
+- **WARNING #7** (store-loop performance: the real store calls `snapshot()`
+  and copies dirty layers after every dispatch; prior sessions measured Wasm
+  end-to-end ~1.95x SLOWER than TS through that loop even though the raw
+  `PixelCore`-level bench shows Wasm faster) — not attempted this session.
+  `wasm-pixel-core.bench.ts` (existing) still only measures the raw core
+  call, not the store's per-dispatch `snapshot()`/cache-copy overhead judges'
+  `store-loop.bench.ts` targets. **This is the single most important
+  remaining item before any default-flip conversation**, since it directly
+  contradicts the "Wasm is faster" headline if confirmed in the real loop.
+- **WARNING #5** (remainder): checked math elsewhere in `document.rs`
+  (`layer_add`, `frame_add`, paste counts, other `Vec::with_capacity` sums)
+  was not audited this session beyond `Document::new` (item 3 above).
+- **WARNING #6** (remainder): no explicit dispose/teardown path exists for
+  the FIRST `WasmDocument` a `WasmPixelCore` ever holds — still relies on GC +
+  `FinalizationRegistry`, which verify-report-phase-7 confirmed is fine for
+  today's "one long-lived core per session" usage pattern, but would need
+  revisiting if a caller starts discarding whole `WasmPixelCore` instances at
+  a high rate.
+- **WARNING #8** (`layer_revisions`/handle-id-map eviction for
+  removed layers/frames) — not attempted this session; still the documented,
+  intentional-but-unbounded tradeoff from phase 7 (`LEARNING.md` §29).
+
+### Results this session
+
+`pnpm run typecheck`/`test` all green: `packages/core` 4,266/4,266 (+1),
+`apps/editor` 311/311 (+8), `packages/tokens` 5/5. `pnpm run bench`/
+`check-bench` green, no regressions (store-LOOP bench not added — see
+WARNING #7 above). `cargo fmt --check`/`clippy --all-targets -D warnings`/
+`cargo test` 88/88 (+1)/`cargo deny check` all clean. Two consecutive
+`build:wasm` runs byte-identical (SHA-256, all 5 `pkg/` files); host-path
+scan clean. Gzip `.wasm`: 41,364 bytes (~27.6% of the 150KB budget, was
+41,234 — the one-method `debug_force_trap` addition). No commits made (per
+instruction).

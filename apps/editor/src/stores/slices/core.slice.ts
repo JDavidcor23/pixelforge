@@ -3,11 +3,12 @@ import type { StateCreator } from 'zustand'
 import type { Layer, Timeline } from '@/types'
 import type { SpriteEditorStore } from '@/types'
 import type { DocumentPayload } from '@/types/document'
-import type { Command } from '@/lib/core/commands'
+import type { Command, DispatchResult } from '@/lib/core/commands'
 import { createEmptyBuffer } from '@/lib/pixel-buffer'
 import type { DocSnapshot } from '@/lib/core/ts-core'
 import { resolveCore } from '@/lib/core/core-config'
 import type { DocMetaSnapshot, FrameMeta, LayerMeta, PixelCore } from '@/lib/core/pixel-core'
+import { requestImmediateFlush } from '@/services/document-persistence-flush-bus.service'
 
 import type { CoreSlice } from '../types/slices'
 
@@ -142,6 +143,20 @@ export const createCoreSlice: StateCreator<
     })),
   })
 
+  /**
+   * Phase 7f (CRITICAL #2): a `DocSnapshot` built from whatever the store
+   * CURRENTLY holds — the metadata + pixel cache written back after the last
+   * successful `dispatch`/`importDocument`. This is the recovery source a
+   * mid-session Wasm trap rebuilds a `TsPixelCore` from (never the trapped
+   * Wasm instance itself — see `wasm-pixel-core-resolver.ts`'s
+   * `TrapSafePixelCore` doc). Safe to call at any time, not just during a
+   * trap: it never reads from `core`, only from zustand state.
+   */
+  const getRecoverySnapshot = (): DocSnapshot => {
+    const s = get()
+    return { canvasWidth: s.canvasWidth, canvasHeight: s.canvasHeight, timeline: s.timeline }
+  }
+
   /** Lazily bootstraps `core` ONCE from the store's state at first use — never re-reads zustand state again after that (see module doc). */
   const ensureCore = (): PixelCore => {
     if (!core) {
@@ -151,7 +166,7 @@ export const createCoreSlice: StateCreator<
         canvasHeight: s.canvasHeight,
         timeline: s.timeline,
       }
-      core = resolveCore(doc)
+      core = resolveCore(doc, getRecoverySnapshot)
       // Warm the pixel cache straight from the SAME zustand state `doc` was
       // just seeded with — these are the live `Layer.pixels` objects already
       // in hand, so no `readLayer` round-trip is needed at bootstrap.
@@ -172,7 +187,50 @@ export const createCoreSlice: StateCreator<
 
     dispatch: (cmd: Command) => {
       const c = ensureCore()
-      const result = c.dispatch(cmd)
+      let result: DispatchResult
+      try {
+        result = c.dispatch(cmd)
+      } catch (error) {
+        // Phase 7f (CRITICAL #2): `c` is a trap-safe wrapper — ANY exception
+        // means it already demoted itself to a recovered `TsPixelCore`
+        // internally (see `wasm-pixel-core-resolver.ts`) before rethrowing.
+        // THIS command is not applied (its effect is lost, not replayed),
+        // but everything dispatched successfully before it is preserved —
+        // the recovered core was rebuilt from exactly that content. Sync the
+        // store from the recovered core, flush autosave immediately (undo
+        // history was just dropped; don't wait out the debounce), and
+        // degrade gracefully instead of throwing further (there is no
+        // `ErrorBoundary` anywhere in this app to catch it).
+        console.error('[core.slice] dispatch failed and the core recovered — this command was not applied; undo history was reset.', error)
+        requestImmediateFlush()
+        const meta = c.snapshot()
+        const timeline = buildTimeline(meta)
+        const frame = timeline.frames[timeline.currentFrameIndex]
+        set({
+          canvasWidth: meta.canvasWidth,
+          canvasHeight: meta.canvasHeight,
+          layers: frame.layers,
+          activeLayerId: frame.activeLayerId,
+          timeline,
+          canUndo: c.canUndo,
+          canRedo: c.canRedo,
+          isStrokeOpen: false,
+          layerRevisions: {},
+        })
+        return {
+          changed: false,
+          contentChanged: false,
+          historyChanged: true,
+          canUndo: c.canUndo,
+          canRedo: c.canRedo,
+          strokeOpen: false,
+          revision: get().docRevision,
+          contentRevision: get().docRevision,
+          dirty: [],
+          evicted: [],
+          layerRevisions: {},
+        }
+      }
 
       // Phase 2e (task "stop detecting commits by `core.history !== prev.history`
       // reference comparison"): `result.historyChanged` is the explicit

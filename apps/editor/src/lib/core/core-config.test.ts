@@ -24,9 +24,9 @@ vi.mock('@/config/env', () => ({
   getPixelCoreEnvOverride: () => mockGetPixelCoreEnvOverride(),
 }))
 
-const mockTryResolveWasmPixelCore = vi.fn<(doc: DocSnapshot) => PixelCore | null>(() => null)
+const mockTryResolveWasmPixelCore = vi.fn<(doc: DocSnapshot, getRecoverySnapshot: () => DocSnapshot) => PixelCore | null>(() => null)
 vi.mock('./wasm-pixel-core-resolver', () => ({
-  tryResolveWasmPixelCore: (doc: DocSnapshot) => mockTryResolveWasmPixelCore(doc),
+  tryResolveWasmPixelCore: (doc: DocSnapshot, getRecoverySnapshot: () => DocSnapshot) => mockTryResolveWasmPixelCore(doc, getRecoverySnapshot),
 }))
 
 function makeDoc(): DocSnapshot {
@@ -59,8 +59,8 @@ describe('resolveCore', () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     mockGetPixelCoreEnvOverride.mockReturnValue(null)
     const { resolveCore } = await import('./core-config')
-    resolveCore(makeDoc())
-    resolveCore(makeDoc())
+    resolveCore(makeDoc(), makeDoc)
+    resolveCore(makeDoc(), makeDoc)
     expect(errorSpy).not.toHaveBeenCalled()
     expect(mockTryResolveWasmPixelCore).not.toHaveBeenCalled()
   })
@@ -72,9 +72,9 @@ describe('resolveCore', () => {
     const { resolveCore, resetWasmPixelCoreFallbackLogForTests } = await import('./core-config')
     resetWasmPixelCoreFallbackLogForTests()
 
-    const core1 = resolveCore(makeDoc())
-    const core2 = resolveCore(makeDoc())
-    resolveCore(makeDoc())
+    const core1 = resolveCore(makeDoc(), makeDoc)
+    const core2 = resolveCore(makeDoc(), makeDoc)
+    resolveCore(makeDoc(), makeDoc)
 
     expect(core1.impl).toBe('ts')
     expect(core2.impl).toBe('ts')
@@ -113,7 +113,7 @@ describe('resolveCore', () => {
     mockTryResolveWasmPixelCore.mockReturnValue(fakeWasmCore)
     const { resolveCore } = await import('./core-config')
 
-    const core = resolveCore(makeDoc())
+    const core = resolveCore(makeDoc(), makeDoc)
     expect(core.impl).toBe('wasm')
     expect(core).toBe(fakeWasmCore)
     expect(errorSpy).not.toHaveBeenCalled()

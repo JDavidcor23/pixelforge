@@ -775,3 +775,39 @@ capture that value BEFORE the equivalent of a React/Redux-style "new state"
 starts getting built in place, because Rust's mutation-in-place has no
 separate "old object" lying around to fall back on the way TS's `{...prev,
 ...patch}` spread always does.
+
+### 33. Phase 7f: a trap doesn't just fail ONE call — it poisons the whole object, and the poison doesn't look like a trap
+
+wasm-bindgen's generated JS wrapper for a `#[wasm_bindgen]` struct (e.g.
+`WasmDocument`) implements Rust's borrow rules at the FFI boundary with a
+plain flag: before calling into any `&self`/`&mut self` method, the glue
+sets "this instance is currently borrowed"; on a NORMAL return, it clears
+the flag. This is why calling a method recursively (re-entrantly, from
+within a callback the first call triggered) correctly throws `Error:
+recursive use of an object detected which is already borrowed` instead of
+Rust's aliasing rules silently breaking — the usual case this mechanism is
+FOR. The lesson this phase learned the hard way: a Rust **panic** (which,
+with this crate's `panic = "abort"` profile, compiles to a Wasm
+`unreachable` trap — a `WebAssembly.RuntimeError` the FIRST time) is NOT a
+normal return. It aborts the call mid-flight, so the "clear the borrowed
+flag" bookkeeping never runs. The flag is then stuck set FOREVER for that
+JS object. Every call on it after that — including, critically, the
+object's OWN `exportDocument()`/`snapshot()`/any read method you might reach
+for to "recover" what you can before giving up on it — throws the SAME
+`Error: recursive use of an object...`, which is a completely different
+error TYPE from the original `WebAssembly.RuntimeError` that caused it.
+Two concrete mistakes this caused in phase 7's original design, both fixed
+in 7f: (1) gating trap DETECTION on `instanceof WebAssembly.RuntimeError`
+missed every one of these follow-on calls — only the very first trap looks
+like a `RuntimeError`, everything after looks like an ordinary
+programming-error `Error`, so a recovery path that only reacts to
+`RuntimeError` simply never fires for the calls that matter most; (2) the
+recovery strategy itself (phase 7: call `exportDocument()` on the trapped
+object one last time to salvage its last-good content) was guaranteed to
+ALSO throw, for the exact same reason — there is no "one last call" you can
+make on a poisoned wasm-bindgen object, not even a read-only one. The fix
+that generalizes: treat ANY exception from a call on a live Wasm object as
+"this object may now be permanently unusable," and make sure your recovery
+path's data source is something OTHER than that object (phase 7f: the
+caller's own independently-tracked last-good state), never "one more call"
+on the thing that just broke.
