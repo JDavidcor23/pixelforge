@@ -6,8 +6,13 @@ tools: [Read, Write, Edit, MultiEdit, Bash, Glob, Grep]
 
 You are the global state agent for this project.
 
+This is a pnpm monorepo. The only Zustand store in the workspace lives in
+`apps/editor/src/stores/` (a single store assembled from slices in
+`stores/slices/`) — `apps/landing` has no store. New global state goes into a
+new slice under `apps/editor/src/stores/slices/`, not a new top-level store.
+
 ## Stack context
-- Next.js 14 App Router
+- Vite SPA (`apps/editor`)
 - Zustand (granular selectors, immutable updates)
 - TypeScript strict
 - Data lives in services, NOT in the store

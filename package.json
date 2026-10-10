@@ -1,36 +1,24 @@
 {
-  "name": "game-builder",
+  "name": "pixelforge",
   "version": "0.1.0",
   "private": true,
+  "license": "Apache-2.0",
+  "type": "module",
+  "packageManager": "pnpm@10.6.5",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
-  },
-  "dependencies": {
-    "@supabase/supabase-js": "^2.112.3",
-    "colord": "^2.9.3",
-    "konva": "^10.2.5",
-    "lucide-react": "^1.8.0",
-    "next": "16.2.3",
-    "react": "19.2.4",
-    "react-dom": "19.2.4",
-    "react-konva": "^19.2.3",
-    "use-image": "^1.1.4",
-    "zustand": "^5.0.12"
+    "dev": "pnpm -r --parallel dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test",
+    "test:watch": "pnpm -r test:watch",
+    "bench": "pnpm -r --workspace-concurrency=1 bench",
+    "typecheck": "pnpm -r typecheck",
+    "check-bench": "node --experimental-strip-types scripts/check-bench.ts bench/core-results.json packages/core/bench/thresholds.json && node --experimental-strip-types scripts/check-bench.ts bench/results.json apps/editor/bench/thresholds.json",
+    "changeset": "changeset",
+    "changeset:version": "changeset version"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "@vitest/ui": "^4.1.4",
-    "babel-plugin-react-compiler": "1.0.0",
-    "eslint": "^9",
-    "eslint-config-next": "16.2.3",
-    "tailwindcss": "^4",
-    "typescript": "^5",
-    "vitest": "^4.1.4"
+    "@changesets/cli": "^2.27.1",
+    "typescript": "^5"
   }
 }

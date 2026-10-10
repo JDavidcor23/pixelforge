@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="300" viewBox="0 0 1400 300">
+  <defs>
+    <style>
+      text { font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif; fill: #ededed; }
+      .brand   { font-size: 16px; font-weight: 800; letter-spacing: 2px; fill: #00fbfb; }
+      .tagline { font-size: 12px; fill: #a1a1aa; }
+      .name    { font-size: 13px; font-weight: 700; }
+      .muted   { font-size: 10.5px; fill: #a1a1aa; }
+      .badgeAvailable { fill: #10b981; }
+      .badgePlanned   { fill: #71717a; }
+      .stepAvailable { fill: #121419; stroke: #00d4db; stroke-width: 1.6; }
+      .stepPlanned   { fill: #0f1115; stroke: #71717a; stroke-width: 1.3; stroke-dasharray: 5 5; }
+      .flow { fill: none; stroke: #3a404b; stroke-width: 1.6; marker-end: url(#arrow); }
+    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#3a404b"/>
+    </marker>
+  </defs>
+
+  <rect width="1400" height="300" rx="16" fill="#0a0c10"/>
+
+  <text class="brand" x="30" y="34">PIXELFORGE — VISION</text>
+  <text class="tagline" x="30" y="54">where the product is going: one studio, the whole lifecycle of a 2D game. Only two stages are real code today.</text>
+
+  <!-- connecting spine -->
+  <line x1="60" y1="170" x2="1298" y2="170" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+
+  <!-- 7 stages, evenly spaced -->
+  <!-- 1. Concept -->
+  <rect class="stepPlanned" x="40" y="115" width="150" height="110" rx="8"/>
+  <circle class="badgePlanned" cx="60" cy="148" r="5"/>
+  <text class="name" x="72" y="152">1. Concept</text>
+  <text class="muted" x="56" y="172">sketches / boceto</text>
+  <text class="muted" x="56" y="187">of the game idea</text>
+  <text class="muted" x="56" y="202" font-style="italic">planned</text>
+
+  <path class="flow" d="M190,170 L218,170"/>
+
+  <!-- 2. Characters & animation -->
+  <rect class="stepAvailable" x="218" y="115" width="160" height="110" rx="8"/>
+  <circle class="badgeAvailable" cx="238" cy="148" r="5"/>
+  <text class="name" x="250" y="152">2. Characters</text>
+  <text class="muted" x="234" y="172">sprite editor —</text>
+  <text class="muted" x="234" y="187">manual + AI sprites</text>
+  <text class="muted" x="234" y="202">&amp; animation</text>
+
+  <path class="flow" d="M378,170 L406,170"/>
+
+  <!-- 3. Audio -->
+  <rect class="stepAvailable" x="406" y="115" width="150" height="110" rx="8"/>
+  <circle class="badgeAvailable" cx="426" cy="148" r="5"/>
+  <text class="name" x="438" y="152">3. Audio</text>
+  <text class="muted" x="422" y="172">sound editor —</text>
+  <text class="muted" x="422" y="187">synth + AI +</text>
+  <text class="muted" x="422" y="202">library</text>
+
+  <path class="flow" d="M556,170 L584,170"/>
+
+  <!-- 4. Assets -->
+  <rect class="stepPlanned" x="584" y="115" width="150" height="110" rx="8"/>
+  <circle class="badgePlanned" cx="604" cy="148" r="5"/>
+  <text class="name" x="616" y="152">4. Assets</text>
+  <text class="muted" x="600" y="172">full asset library</text>
+  <text class="muted" x="600" y="187">management across</text>
+  <text class="muted" x="600" y="202" font-style="italic">sprites &amp; sounds —</text>
+  <text class="muted" x="600" y="217" font-style="italic">planned</text>
+
+  <path class="flow" d="M734,170 L762,170"/>
+
+  <!-- 5. Game building -->
+  <rect class="stepPlanned" x="762" y="115" width="160" height="110" rx="8"/>
+  <circle class="badgePlanned" cx="782" cy="148" r="5"/>
+  <text class="name" x="794" y="152">5. Game building</text>
+  <text class="muted" x="778" y="172">visual scene / game</text>
+  <text class="muted" x="778" y="187">builder, game runtime</text>
+  <text class="muted" x="778" y="202" font-style="italic">planned</text>
+
+  <path class="flow" d="M922,170 L950,170"/>
+
+  <!-- 6. Publishing -->
+  <rect class="stepPlanned" x="950" y="115" width="150" height="110" rx="8"/>
+  <circle class="badgePlanned" cx="970" cy="148" r="5"/>
+  <text class="name" x="982" y="152">6. Publishing</text>
+  <text class="muted" x="966" y="172">one-click publish</text>
+  <text class="muted" x="966" y="187">to AWS</text>
+  <text class="muted" x="966" y="202" font-style="italic">planned</text>
+
+  <path class="flow" d="M1100,170 L1128,170"/>
+
+  <!-- 7. Operations -->
+  <rect class="stepPlanned" x="1128" y="115" width="170" height="110" rx="8"/>
+  <circle class="badgePlanned" cx="1148" cy="148" r="5"/>
+  <text class="name" x="1160" y="152">7. Operations</text>
+  <text class="muted" x="1144" y="172">manage &amp; maintain the</text>
+  <text class="muted" x="1144" y="187">published game after</text>
+  <text class="muted" x="1144" y="202" font-style="italic">launch — planned</text>
+
+  <!-- legend -->
+  <circle class="badgeAvailable" cx="60" cy="250" r="5"/>
+  <text class="muted" x="72" y="254">available today — real code, verified</text>
+  <circle class="badgePlanned" cx="320" cy="250" r="5"/>
+  <text class="muted" x="332" y="254">planned — not implemented yet</text>
+  <text class="muted" x="1340" y="254" text-anchor="end">Publishing targets AWS (not Vercel — Vercel only hosts this landing site + editor today)</text>
+</svg>

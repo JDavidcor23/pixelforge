@@ -1,0 +1,17 @@
+{
+  "name": "pixelforge-core",
+  "type": "module",
+  "description": "PixelForge's Rust/Wasm pixel-buffer kernels (design.md D5/D6: stateless PixelKernels under PixelCore).",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "files": [
+    "pixelforge_core_bg.wasm",
+    "pixelforge_core.js",
+    "pixelforge_core.d.ts"
+  ],
+  "main": "pixelforge_core.js",
+  "types": "pixelforge_core.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}

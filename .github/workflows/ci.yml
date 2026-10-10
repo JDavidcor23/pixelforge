@@ -1,0 +1,138 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+jobs:
+  gates:
+    name: test / bench / typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm run typecheck
+
+      - name: Test
+        run: pnpm run test
+
+      - name: Bench
+        run: pnpm run bench
+
+  rust-core:
+    name: packages/core (Rust/Wasm)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      # rustup auto-installs the pinned toolchain from `packages/core/rust-toolchain.toml`
+      # the first time cargo/rustc runs with a cwd under that directory — explicit here
+      # anyway so the components/target are present before the first cargo invocation.
+      - name: Install pinned Rust toolchain
+        working-directory: packages/core
+        run: |
+          rustup toolchain install 1.99.0 --target wasm32-unknown-unknown --component rustfmt --component clippy
+          rustup show
+
+      - name: cargo fmt --check
+        working-directory: packages/core
+        run: cargo fmt --check
+
+      - name: cargo clippy -D warnings
+        working-directory: packages/core
+        run: cargo clippy --all-targets -- -D warnings
+
+      - name: cargo test
+        working-directory: packages/core
+        run: cargo test
+
+      # W1 (phase 4f, judgment-day): pinned, matching the toolchain/wasm-pack
+      # pinning this same job already does for "non-deterministic wasm" —
+      # unpinned (`--locked` alone only pins cargo-deny's OWN dependency
+      # tree, not which cargo-deny release gets installed) risked a future
+      # cargo-deny release changing the config schema and breaking this job
+      # non-deterministically.
+      - name: Install cargo-deny (pinned)
+        run: cargo install cargo-deny --version 0.20.2 --locked
+
+      # advisories/bans/sources (not just licenses) — verified locally to
+      # pass clean with this crate's dependency tree before enabling.
+      - name: cargo deny check (advisories, bans, licenses, sources)
+        working-directory: packages/core
+        run: cargo deny check
+
+      - name: Install wasm-pack (pinned)
+        run: cargo install wasm-pack --version 0.15.0 --locked
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build wasm
+        working-directory: packages/core
+        run: pnpm run build:wasm
+
+      # D9 / "Migration / Rollout": pkg/ is committed, CI rebuilds it and
+      # diffs against what's checked in — a mismatch means someone edited
+      # Rust without rebuilding pkg/ (or vice versa), and the PR is rejected.
+      #
+      # W1 (phase 4f, judgment-day): `git diff --exit-code` ALONE only
+      # catches changes to files git already tracks — it is silently blind
+      # to a NEW file the rebuild produced that nobody committed (e.g. a
+      # future wasm-pack version emitting an extra generated file in `pkg/`).
+      # `git status --porcelain` lists untracked files too, so this step now
+      # fails on either a tracked-file diff OR any untracked file appearing
+      # under `packages/core/pkg`.
+      - name: Drift check — packages/core/pkg must match the committed output
+        run: |
+          git diff --exit-code packages/core/pkg
+          untracked="$(git status --porcelain packages/core/pkg)"
+          if [ -n "$untracked" ]; then
+            echo "::error::rebuilding packages/core produced untracked file(s) under pkg/ — commit them or fix the build to stop generating them:"
+            echo "$untracked"
+            exit 1
+          fi
+
+      # workspace-build "Wasm Artifact Size Budget": gzip size of the .wasm, not a build artifact size.
+      - name: Check .wasm gzip size budget (<150KB)
+        working-directory: packages/core
+        run: |
+          size=$(gzip -c pkg/pixelforge_core_bg.wasm | wc -c)
+          echo "pixelforge_core_bg.wasm gzip size: $size bytes (budget: 153600 bytes / 150KB)"
+          if [ "$size" -gt 153600 ]; then
+            echo "::error::Wasm gzip size $size bytes exceeds the 150KB budget"
+            exit 1
+          fi
+
+      - name: TS<->Wasm parity + bench (packages/core)
+        working-directory: packages/core
+        run: |
+          pnpm run test
+          pnpm run bench
+
+      - name: Check Wasm/TS bench ratio budgets
+        run: pnpm run check-bench

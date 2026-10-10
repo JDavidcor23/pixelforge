@@ -1,107 +1,130 @@
-# PixelForge 🚀
+<h1 align="center">PixelForge</h1>
 
-PixelForge is a state-of-the-art, browser-based 2D game builder designed for professional game developers and artists. It combines traditional pixel art precision with cutting-edge AI workflows, allowing you to create, animate, and deploy game assets with unprecedented speed.
+<p align="center">
+  <strong>A browser-based 2D game studio in the making.</strong><br>
+  Today: draw and animate sprites (by hand or with AI) and design sound
+  effects, all from the browser. The goal: take a game from first sketch to
+  a published, maintained release on AWS.
+</p>
 
-![PixelForge Presentation](./src/assets/presentation.png)
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue.svg" alt="License: Apache-2.0"></a>
+  <a href="https://github.com/JDavidcor23/pixelforge/actions/workflows/ci.yml"><img src="https://github.com/JDavidcor23/pixelforge/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+</p>
 
-## ✨ Core Features
+---
 
-### 🎨 Professional Sprite Studio
-- **Infinite Canvas Pattern**: GPU-accelerated rendering using Konva.js with support for large-scale pixel art.
-- **Advanced Layer System**: Multi-layer compositing with opacity control, visibility toggles, and locking mechanisms.
-- **Pixel-Perfect Tools**: Precision Pencil, Eraser, Flood Fill, and Selection tools designed for high-end pixel art.
-- **Real-time Performance**: Optimized to maintain 60 FPS even with complex multi-layer sprites.
+## See it in action
 
-### 🤖 AI Generation
-- **Retro Diffusion Integration**: Generate production-ready pixel art directly from natural language prompts, returned as true RGBA at the exact grid size.
-- **AI Animation**: Turn any frame into a full animation cycle (idle, walk, run, attack, jump) from a single reference sprite.
-- **Cost Transparency**: Prices are checked for free before any generation is billed.
-- **Smart History**: Track and manage AI-generated assets with local caching and one-click application to the canvas.
-- **Metadata Aware**: AI-generated sprites automatically sync with canvas dimensions and layer metadata.
+**Sprite editor** — layered pixel canvas (Konva), pencil/eraser/fill/select,
+onion skinning, frame-by-frame animation and export, built on an infinite,
+zoomable canvas.
 
-### 🎞️ Animation & Timeline
-- **Frame-by-Frame Animation**: Traditional animation workflow with a dedicated timeline bar.
-- **Onion Skinning**: Visualize previous and next frames for smooth motion transitions.
-- **Playback Control**: Real-time animation preview with adjustable FPS and looping options.
-- **Frame Clipboard**: Batch copy, paste, and reorder frames to speed up animation cycles.
+<p align="center">
+  <img src="docs/images/sprite-editor.png" alt="PixelForge sprite editor: layer panel, pixel canvas and color picker" width="100%">
+</p>
 
-### 📦 Asset Management & Export
-- **Smart Palette**: Save and manage custom color palettes with local persistence.
-- **Multi-Format Export**: Export individual frames or full sprite sheets (atlas) optimized for game engines.
-- **Source Integrity**: Export raw JSON data of your sprites for programmatic use or further editing.
+**AI-assisted sprites** — generate pixel art and animation cycles from a text
+prompt (Retro Diffusion), then drop results straight onto the canvas.
 
-## 🏗️ Technical Architecture
+<p align="center">
+  <img src="docs/images/ai-generation.png" alt="PixelForge AI sprite generation panel with recent generations" width="100%">
+</p>
 
-PixelForge is built with a **Screaming Architecture** (Feature-based) to ensure maximum maintainability and scalability.
+**Sound editor** — a synthesizer (oscillator, envelope, filter, presets), an
+asset library and playback/transport, plus AI-generated sound effects.
 
-- **Frontend**: [Next.js 14](https://nextjs.org/) (App Router) + [TypeScript](https://www.typescriptlang.org/)
-- **State Management**: [Zustand](https://zustand-demo.pmnd.rs/) with a **Modular Slice Pattern**.
-- **Rendering**: [Konva.js](https://konvajs.org/) for the high-performance 2D canvas.
-- **Styling**: [Tailwind CSS](https://tailwindcss.com/) for a utility-first, performant UI.
-- **Backend/Auth**: [Supabase](https://supabase.com/) for cloud storage and user synchronization.
-- **Local Persistence**: Integrated browser `localStorage` for API keys and UI preferences, prioritizing security and privacy.
+<p align="center">
+  <img src="docs/images/sound-editor.png" alt="PixelForge sound editor: synth controls, waveform view and asset library" width="100%">
+</p>
 
-### Project Structure Breakdown
+## What works today
 
+- **Sprite editor** — layered pixel canvas (Konva), pencil/eraser/fill/select,
+  onion skinning, frame-by-frame animation, palette management, multi-format
+  export. Manual drawing **and** AI-generated sprites (Retro Diffusion) and
+  AI animation cycles from a single reference frame.
+- **Sound editor** — a synthesizer (oscillator, envelope, filter, presets),
+  an asset library, playback/transport, and AI-generated sound effects
+  (ElevenLabs).
+- **Local-first persistence** — drafts autosave to IndexedDB; nothing is lost
+  on reload, no account required.
+- **A Rust/Wasm core migration, mid-flight** — the pixel engine is being moved
+  from plain TypeScript to Rust compiled to WebAssembly, behind a runtime
+  flag, with the TS implementation kept as the reference and default (see
+  [Architecture & system design](#architecture--system-design) below).
+
+## Vision — where PixelForge is going
+
+The aim is one app covering the whole lifecycle of making a 2D game, not just
+a sprite tool. Seven stages; today only two are real code — the rest is
+roadmap, marked honestly below and in [`docs/lifecycle.svg`](docs/lifecycle.svg).
+
+<p align="center">
+  <img src="docs/lifecycle.svg" alt="PixelForge product lifecycle: concept, characters, audio, assets, game building, publishing, operations" width="100%">
+</p>
+
+| # | Stage | Status |
+|---|-------|--------|
+| 1 | Concept — sketches / *boceto* of the game | Planned |
+| 2 | Characters & animation — sprite editor, manual + AI | **Available** |
+| 3 | Audio — sound effects & music, synth + AI | **Available** |
+| 4 | Assets — full asset library management | Planned |
+| 5 | Game building — visual scene/game builder + runtime | Planned |
+| 6 | Publishing — one-click deploy of the finished game to AWS | Planned |
+| 7 | Operations — managing/maintaining the game after launch on AWS | Planned |
+
+Vercel only hosts PixelForge's own `apps/landing` and `apps/editor` today.
+The games built with PixelForge are meant to be published and operated on
+AWS — that's a future stage, not something that exists yet.
+
+## Made with PixelForge
+
+Games built with PixelForge will be showcased here.
+
+## Architecture & system design
+
+Hexagonal ports & adapters, not a framework default: `PixelCore` and
+`DocumentRepository` are interfaces first, with TS and Rust/Wasm adapters
+plugging into the same seam. The Wasm core is validated against a TypeScript
+reference with parity tests and 300-seed × 60-step differential fuzzing
+before it's trusted — and measured honestly: the stateful document/history
+core is currently *slower* on Wasm, so TS stays the default. Undo history
+went from 576 KB to 8 bytes per stroke with a dirty-rect redesign.
+
+→ Read [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full breakdown,
+the monorepo layout, testing setup and the ADRs behind each decision.
+
+## Getting started
+
+```bash
+git clone https://github.com/JDavidcor23/pixelforge.git
+cd pixelforge
+pnpm install
+
+pnpm --filter @pixelforge/editor dev   # editor — http://localhost:5173
+pnpm --filter @pixelforge/landing dev  # landing — http://localhost:3000
+pnpm dev                               # both, in parallel
 ```
-src/
-├── app/                        # Next.js App Router (Features & Routing)
-│   ├── editor/                 # Core Editor implementation
-│   │   ├── sprites/            # Sprite creation module
-│   │   │   ├── features/       # Feature-specific components (Layers, Tools, AI)
-│   │   │   ├── hooks/          # Custom hooks for canvas and state interaction
-│   │   │   └── types/          # Module-specific type definitions
-│   │   └── stores/             # Modular Zustand slices (Compound, Pixel, Tool, etc.)
-├── components/                 # Shared UI components (Atomic Design)
-├── constants/                  # Global immutable constants (UPPER_SNAKE_CASE)
-└── lib/                        # Infrastructure-level utilities and API clients
+
+The Rust toolchain is **only** needed if you're changing `packages/core`'s
+Rust source — the compiled `pkg/` is committed, so `pnpm install` + `pnpm dev`
+works with Node alone. To rebuild it:
+
+```bash
+cd packages/core
+pnpm run build:wasm   # wasm-pack build, then strips the .gitignore it writes into pkg/
 ```
 
-## 🚀 Getting Started
+## Roadmap
 
-### Prerequisites
+- Supabase adapter for `DocumentRepository` (cloud sync, conflict resolution).
+- Visual scene/game builder with a Phaser.js runtime (stages 1, 4–7 above).
+- Batch `stroke.points` per animation frame to amortize the Wasm marshalling
+  cost enough to flip the document core's default from `ts` to `wasm`.
+- One-click publish to AWS for games built in the (future) scene builder,
+  plus post-launch operations and maintenance.
 
-- **Node.js**: 18.x or higher
-- **Package Manager**: pnpm (recommended), npm, or bun
-- **Supabase Account**: For authentication and cloud storage
-- **AI Keys**: Retro Diffusion (sprites/animation) and ElevenLabs (audio) API keys (Optional)
+## License
 
-### Installation
-
-1. **Clone & Enter**:
-   ```bash
-   git clone https://github.com/JDavidcor23/pixelforge.git
-   cd pixelforge
-   ```
-
-2. **Install Dependencies**:
-   ```bash
-   npm install
-   ```
-
-3. **Environment Setup**:
-   Configure `.env.local` with your Supabase credentials:
-   ```env
-   NEXT_PUBLIC_SUPABASE_URL=your_project_url
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
-   ```
-
-4. **Launch Development**:
-   ```bash
-   npm run dev
-   ```
-
-## 📖 Feature Documentation
-
-For detailed technical guides on specific modules:
-- [AI Setup & Usage](./docs/ai-setup.md)
-- [Architecture Deep Dive](./docs/architecture.md)
-- [Custom Tools Development](./docs/tools-guide.md)
-
-## 🛡️ Security & Privacy
-
-We take developer privacy seriously. **All sensitive API keys are stored exclusively in your browser's `localStorage`.** They are never sent to or stored on our servers, ensuring your tokens remain under your control.
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Apache License 2.0 — see [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).

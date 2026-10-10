@@ -1,0 +1,22 @@
+{
+  "name": "@pixelforge/core",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": "./src-ts/index.ts"
+  },
+  "scripts": {
+    "build:wasm": "node scripts/build-wasm.mjs && node scripts/clean-pkg-gitignore.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "bench": "vitest bench --run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "typescript": "^5",
+    "vitest": "^4.1.4"
+  }
+}

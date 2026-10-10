@@ -1,0 +1,89 @@
+@import "tailwindcss";
+@import "@pixelforge/tokens/tokens.css";
+
+/* Geist is loaded in `app/layout.tsx`. Do NOT reintroduce a hardcoded
+ * font-family here — it silently overrides the loaded font for every element
+ * that does not carry an explicit `font-sans` / `font-mono` utility. */
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--pf-base);
+  color: var(--pf-ink);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+/* -- Scrollbars ------------------------------------------------------------ */
+:root {
+  --scrollbar-bg: var(--pf-surface);
+  --scrollbar-thumb: rgba(255, 255, 255, 0.15);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.25);
+  --scrollbar-accent: var(--pf-accent);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-bg);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 20px;
+  border: 2px solid var(--scrollbar-bg); /* Creates a padding effect around the thumb */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: var(--scrollbar-accent);
+}
+
+@layer utilities {
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Technical blueprint grid — used behind hero sections and canvas areas. */
+  .bg-grid {
+    background-size: 40px 40px;
+    background-image:
+      linear-gradient(to right, rgb(var(--pf-accent-rgb) / 0.07) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(var(--pf-accent-rgb) / 0.07) 1px, transparent 1px);
+  }
+
+  .bg-grid-fade {
+    mask-image: radial-gradient(circle at center, black, transparent 80%);
+  }
+
+  /* Emissive-screen effect. Reserve for high-emphasis accent text. */
+  .text-shadow-accent {
+    text-shadow: 0 0 20px rgb(var(--pf-accent-rgb) / 0.3);
+  }
+
+  /* Accent glow on solid fills — the primary button treatment. */
+  .glow-accent {
+    box-shadow: 0 0 30px rgb(var(--pf-accent-rgb) / 0.2);
+  }
+
+  /* AI-assisted surfaces. Violet is reserved for this and nothing else. */
+  .glow-ai {
+    box-shadow: 0 0 30px rgb(var(--pf-ai-rgb) / 0.25);
+  }
+}
