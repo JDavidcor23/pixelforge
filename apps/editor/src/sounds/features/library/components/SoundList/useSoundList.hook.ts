@@ -1,8 +1,12 @@
 import { useCallback, useMemo, useRef } from 'react'
 
 import { useSoundsStore } from '@/stores/sounds.store'
+import { useAddToTimeline } from '@/sounds/hooks/useAddToTimeline.hook'
+import { useDeleteSound } from '@/sounds/hooks/useDeleteSound.hook'
+import { useSoundEditorView } from '@/sounds/hooks/useSoundEditorView.hook'
 import { getAssetSource } from '@/lib/sound-assets'
-import { SOUND_KIND_LABELS } from '@/constants/sound-library'
+import { DELETE_SOUND_KEYS, SOUND_KIND_LABELS } from '@/constants/sound-library'
+import { ADD_TO_TIMELINE_KEY, OPEN_SOUND_KEY } from '@/constants/timeline-view'
 import type {
   AudioAsset,
   AudioAssetTag,
@@ -16,6 +20,23 @@ type NavigationKey = (typeof NAVIGATION_KEYS)[number]
 
 const isNavigationKey = (key: string): key is NavigationKey =>
   (NAVIGATION_KEYS as readonly string[]).includes(key)
+
+const SOUND_ROW_SELECTOR = '[data-sound-row]'
+
+/** Never hijack Backspace/Delete while the user is editing text. */
+function isTextEntry(target: EventTarget): boolean {
+  return (
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLTextAreaElement ||
+    (target instanceof HTMLElement && target.isContentEditable)
+  )
+}
+
+/** The sound whose row (option or its trash button) owns the event target. */
+function getRowAssetId(target: EventTarget): string | null {
+  if (!(target instanceof HTMLElement)) return null
+  return target.closest<HTMLElement>(SOUND_ROW_SELECTOR)?.dataset.soundRow ?? null
+}
 
 function filterAssets(assets: AudioAsset[], query: string, tag: AudioAssetTag | null): AudioAsset[] {
   const lowerQuery = query.trim().toLowerCase()
@@ -68,6 +89,9 @@ export function useSoundList() {
   const setSearchQuery = useSoundsStore((state) => state.setSearchQuery)
   const setFilterTag = useSoundsStore((state) => state.setFilterTag)
   const openNewSound = useSoundsStore((state) => state.openNewSound)
+  const { requestDelete } = useDeleteSound()
+  const { addToTimeline } = useAddToTimeline()
+  const { openSound } = useSoundEditorView()
 
   const visibleAssets = useMemo(
     () => sortAssets(filterAssets(assets, searchQuery, filterTag), sortBy, sortDirection),
@@ -93,6 +117,27 @@ export function useSoundList() {
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
+      const hasModifier = event.altKey || event.ctrlKey || event.metaKey
+      const isRowCommand =
+        event.key === OPEN_SOUND_KEY || event.key.toLowerCase() === ADD_TO_TIMELINE_KEY
+      // Only on the option itself: Enter on a clicked trash/plus button keeps its own meaning.
+      const isOption = event.target instanceof HTMLElement && event.target.dataset.assetId !== undefined
+      if (isRowCommand && isOption && !hasModifier) {
+        const assetId = getRowAssetId(event.target)
+        if (!assetId) return
+        event.preventDefault()
+        if (event.key === OPEN_SOUND_KEY) openSound(assetId)
+        else addToTimeline(assetId)
+        return
+      }
+      if (DELETE_SOUND_KEYS.includes(event.key)) {
+        if (event.altKey || event.ctrlKey || event.metaKey || isTextEntry(event.target)) return
+        const assetId = getRowAssetId(event.target)
+        if (!assetId) return
+        event.preventDefault()
+        requestDelete(assetId)
+        return
+      }
       if (!isNavigationKey(event.key) || visibleAssets.length === 0) return
       event.preventDefault()
 
@@ -103,7 +148,7 @@ export function useSoundList() {
         ?.querySelector<HTMLElement>(`[data-asset-id="${target.id}"]`)
         ?.focus()
     },
-    [visibleAssets, selectedAssetId, setSelectedAsset]
+    [visibleAssets, selectedAssetId, setSelectedAsset, requestDelete, openSound, addToTimeline]
   )
 
   const handleClearSearch = useCallback(() => {

@@ -97,7 +97,7 @@ Three rules, and they are not negotiable:
 
 ## Brand & Style
 
-PixelForge is a professional 2D game engine that lives in the browser. The
+PixelForge IA is a professional 2D game engine that lives in the browser. The
 aesthetic, **Synthetic Architect**, is studio software first and cyberpunk
 second: dense, precise, high-contrast — with a single electric accent that marks
 where the machine is listening.
@@ -167,7 +167,7 @@ headings use heavy weights with tight negative tracking, which reads as
 
 **Geist Mono** is functional, not decorative. It marks **machine data**:
 coordinate readouts, hex values, frame counts, module IDs, and the uppercase
-`label-caps` used above input fields and panel sections. If a string is
+`label-caps` (Tailwind `text-3xs`, 10px) used above input fields and panel sections. If a string is
 something the engine computed, it is mono. If it is something a human wrote, it
 is sans.
 

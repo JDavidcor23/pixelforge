@@ -66,7 +66,7 @@ async function proxyToElevenLabs(
  * Vercel Function (Node.js runtime, Web-standard Request/Response — see
  * design.md "Monorepo specifics"). Replaces the former Next.js route handler
  * `src/app/api/ai/elevenlabs/route.ts`. The caller's own ElevenLabs key is
- * forwarded via a request header (BYOK) — PixelForge holds no ElevenLabs key
+ * forwarded via a request header (BYOK) — PixelForge IA holds no ElevenLabs key
  * of its own server-side.
  */
 export default async function handler(request: Request): Promise<Response> {

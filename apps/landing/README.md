@@ -1,6 +1,6 @@
 # @pixelforge/landing
 
-The PixelForge marketing/landing page. Next.js 16 App Router. Deployed as its
+The PixelForge IA marketing/landing page. Next.js 16 App Router. Deployed as its
 own Vercel project (Root Directory: `apps/landing`).
 
 ## Environment variables

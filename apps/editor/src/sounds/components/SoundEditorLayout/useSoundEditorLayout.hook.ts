@@ -1,9 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
 
+import { useSoundsStore } from '@/stores/sounds.store'
+import { useSoundEditorView } from '@/sounds/hooks/useSoundEditorView.hook'
 import { audioEngine } from '@/lib/audio-engine'
 
 export function useSoundEditorLayout() {
   const [showAudioOverlay, setShowAudioOverlay] = useState(false)
+  const editorView = useSoundsStore((state) => state.editorView)
+  const { backToTimeline } = useSoundEditorView()
 
   useEffect(() => {
     setShowAudioOverlay(audioEngine.isSuspended())
@@ -14,5 +18,10 @@ export function useSoundEditorLayout() {
     setShowAudioOverlay(false)
   }, [])
 
-  return { showAudioOverlay, handleEnableAudio }
+  return {
+    showAudioOverlay,
+    isTimelineView: editorView === 'timeline',
+    handleEnableAudio,
+    handleBackToTimeline: backToTimeline,
+  }
 }

@@ -24,3 +24,7 @@ export interface FooterLink {
   readonly href: string
   readonly isExternal: boolean
 }
+
+export interface WordmarkProps {
+  readonly className?: string
+}

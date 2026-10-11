@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { useSoundsStore } from '@/stores/sounds.store'
 import { useCreateSound } from '@/sounds/hooks/useCreateSound.hook'
+import { useDeleteSound } from '@/sounds/hooks/useDeleteSound.hook'
 import { audioBufferCache } from '@/lib/audio-buffer-cache'
 import { encodeWav } from '@/lib/audio-encoder'
 import { downloadBlob } from '@/lib/export-utils'
@@ -9,11 +10,9 @@ import {
   buildUniqueName,
   formatDuration,
   getAssetKindLabel,
-  releaseObjectUrl,
   splitNameForTruncation,
 } from '@/lib/sound-assets'
 import {
-  DELETE_CONFIRM_TIMEOUT_MS,
   NAME_VISIBLE_TAIL_LENGTH,
   PRESET_TILES,
   SOUND_LIBRARY_ERRORS,
@@ -47,13 +46,11 @@ export function useSoundDetailHeader(asset: AudioAsset, source: AudioAssetSource
   const [draftName, setDraftName] = useState(asset.name)
   const [isExporting, setIsExporting] = useState(false)
   const [exportError, setExportError] = useState<string | null>(null)
-  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false)
 
   const assets = useSoundsStore((state) => state.assets)
   const updateAsset = useSoundsStore((state) => state.updateAsset)
-  const removeAsset = useSoundsStore((state) => state.removeAsset)
-  const setSelectedAsset = useSoundsStore((state) => state.setSelectedAsset)
   const { duplicate } = useCreateSound()
+  const { requestDelete } = useDeleteSound()
 
   // A different sound cancels any rename in progress.
   useEffect(() => {
@@ -61,18 +58,10 @@ export function useSoundDetailHeader(asset: AudioAsset, source: AudioAssetSource
     setDraftName(asset.name)
   }, [asset.id, asset.name])
 
-  // A different sound also disarms delete and clears a stale export error.
+  // A different sound also clears a stale export error.
   useEffect(() => {
-    setIsConfirmingDelete(false)
     setExportError(null)
   }, [asset.id])
-
-  // An armed delete disarms itself if the user walks away.
-  useEffect(() => {
-    if (!isConfirmingDelete) return
-    const timer = window.setTimeout(() => setIsConfirmingDelete(false), DELETE_CONFIRM_TIMEOUT_MS)
-    return () => window.clearTimeout(timer)
-  }, [isConfirmingDelete])
 
   // Hand focus back to the pencil once the inline input goes away.
   useEffect(() => {
@@ -144,21 +133,7 @@ export function useSoundDetailHeader(asset: AudioAsset, source: AudioAssetSource
     }
   }, [asset])
 
-  const handleDelete = useCallback(() => {
-    // First click arms; only a second click while armed deletes.
-    if (!isConfirmingDelete) {
-      setIsConfirmingDelete(true)
-      return
-    }
-    const index = assets.findIndex((item) => item.id === asset.id)
-    const neighbor = assets[index + 1] ?? assets[index - 1] ?? null
-    removeAsset(asset.id)
-    audioBufferCache.delete(asset.id)
-    releaseObjectUrl(asset.localObjectUrl, useSoundsStore.getState().assets)
-    setSelectedAsset(neighbor?.id ?? null)
-  }, [isConfirmingDelete, assets, asset.id, asset.localObjectUrl, removeAsset, setSelectedAsset])
-
-  const handleDeleteBlur = useCallback(() => setIsConfirmingDelete(false), [])
+  const handleDelete = useCallback(() => requestDelete(asset.id), [requestDelete, asset.id])
 
   return {
     renameButtonRef,
@@ -166,7 +141,6 @@ export function useSoundDetailHeader(asset: AudioAsset, source: AudioAssetSource
     draftName,
     isExporting,
     exportError,
-    isConfirmingDelete,
     nameMaxLength: SOUND_NAME_MAX_LENGTH,
     nameParts: splitNameForTruncation(asset.name, NAME_VISIBLE_TAIL_LENGTH),
     kindLabel: getAssetKindLabel(asset),
@@ -180,6 +154,5 @@ export function useSoundDetailHeader(asset: AudioAsset, source: AudioAssetSource
     handleDuplicate,
     handleExport,
     handleDelete,
-    handleDeleteBlur,
   }
 }

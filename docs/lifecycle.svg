@@ -19,7 +19,7 @@
 
   <rect width="1400" height="300" rx="16" fill="#0a0c10"/>
 
-  <text class="brand" x="30" y="34">PIXELFORGE — VISION</text>
+  <text class="brand" x="30" y="34">PIXELFORGE IA — VISION</text>
   <text class="tagline" x="30" y="54">where the product is going: one studio, the whole lifecycle of a 2D game. Only two stages are real code today.</text>
 
   <!-- connecting spine -->

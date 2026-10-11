@@ -57,6 +57,12 @@ describe('colors.ts <-> tokens.css parity', () => {
     expect(COLORS.DANGER).toBe(readCssVar('pf-danger'))
   })
 
+  it('track hues match', () => {
+    expect(COLORS.TRACK.SFX).toBe(readCssVar('pf-track-sfx'))
+    expect(COLORS.TRACK.MUSIC).toBe(readCssVar('pf-track-music'))
+    expect(COLORS.TRACK.VOICE).toBe(readCssVar('pf-track-voice'))
+  })
+
   it('canvas chrome matches', () => {
     expect(COLORS.CANVAS.GRID_LINE).toBe(readCssVar('pf-grid-line'))
     expect(COLORS.CANVAS.CHECKER_A).toBe(readCssVar('pf-checker-a'))

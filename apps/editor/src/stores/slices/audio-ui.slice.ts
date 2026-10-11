@@ -15,6 +15,7 @@ export const createAudioUISlice: StateCreator<
   newSoundMode: 'sfx',
   pendingGenerations: [],
   generationError: null,
+  pendingDeleteId: null,
 
   openNewSound: (request) =>
     set((state) => ({
@@ -40,4 +41,8 @@ export const createAudioUISlice: StateCreator<
     })),
 
   setGenerationError: (error) => set({ generationError: error }),
+
+  requestDelete: (id) => set({ pendingDeleteId: id }),
+
+  cancelDelete: () => set({ pendingDeleteId: null }),
 })

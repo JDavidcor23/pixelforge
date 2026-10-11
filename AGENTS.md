@@ -1,4 +1,4 @@
-# PixelForge
+# PixelForge IA
 
 Browser-based 2D game builder. Users create sprites manually or with AI, build game scenes visually, and publish directly to Vercel with a single click.
 
@@ -124,6 +124,15 @@ Use for: creating or refactoring any Zustand store.
 ```
 .claude/agents/zustand-agent.md
 ```
+
+## Architecture decisions
+
+Anything that affects scale, performance, persistence, runtime or module
+boundaries goes through the **architecture-decision** skill
+(`.claude/skills/architecture-decision/SKILL.md`) before any code: measured
+problem → prior art → options with tradeoffs → the owner decides → ADR in
+`docs/adr/` → phased plan → learning-log entry in `docs/learning-log/`.
+Research notes live in `docs/architecture/`.
 
 ## Core rules (summary)
 

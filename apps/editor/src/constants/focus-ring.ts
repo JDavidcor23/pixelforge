@@ -14,6 +14,9 @@ export const FOCUS_RING = {
     'outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-base',
   /** Ring sits inside the element — for full-bleed rows that touch an edge. */
   INSET: 'outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent',
+  /** Outline-based ring for elements that already draw a box-shadow ring of their own (selected timeline clips). */
+  OUTLINE:
+    'outline-hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-solid focus-visible:outline-accent',
   INPUT: 'outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/30',
 } as const
 

@@ -11,6 +11,14 @@ import type {
   SortField,
   SynthParameters,
 } from '@/types/audio'
+import type {
+  AddClipOptions,
+  SoundEditorView,
+  TimelineClip,
+  TimelineClipPatch,
+  TimelineSnapshot,
+  TimelineTrack,
+} from '@/types/timeline'
 
 // ── Audio Synth Slice ────────────────────────────────────────────────────────
 
@@ -83,6 +91,8 @@ export interface AudioUISlice {
   newSoundMode: ElevenLabsMode
   pendingGenerations: PendingGeneration[]
   generationError: string | null
+  /** Sound awaiting delete confirmation; drives the single shared dialog. */
+  pendingDeleteId: string | null
   openNewSound: (request?: Partial<NewSoundRequest>) => void
   closeNewSound: () => void
   setNewSoundPrompt: (prompt: string) => void
@@ -90,8 +100,69 @@ export interface AudioUISlice {
   addPendingGeneration: (generation: PendingGeneration) => void
   removePendingGeneration: (id: string) => void
   setGenerationError: (error: string | null) => void
+  requestDelete: (id: string) => void
+  cancelDelete: () => void
+}
+
+// ── Sound Timeline Slice (multi-track mixer, session only) ───────────────────
+
+export interface SoundTimelineSlice {
+  projectName: string
+  tracks: TimelineTrack[]
+  clips: TimelineClip[]
+  selectedClipId: string | null
+  /** Seconds. */
+  playheadTime: number
+  pxPerSecond: number
+  snapEnabled: boolean
+  editorView: SoundEditorView
+  /** Undo stack (oldest first), capped at HISTORY_LIMIT. */
+  timelinePast: TimelineSnapshot[]
+  /** Redo stack (next first). */
+  timelineFuture: TimelineSnapshot[]
+  /** State at `beginGesture`; while set, edits do not record history. */
+  timelineGestureSnapshot: TimelineSnapshot | null
+
+  /** Adds a clip for a library asset and selects it. Returns the clip id. */
+  addClip: (assetId: string, options?: AddClipOptions) => string | null
+  moveClip: (clipId: string, start: number, trackId?: string) => void
+  trimStart: (clipId: string, newStart: number) => void
+  trimEnd: (clipId: string, newEnd: number) => void
+  /** Returns the id of the new right-hand clip, or null if nothing was split. */
+  split: (clipId: string, time: number) => string | null
+  splitAtPlayhead: () => void
+  /** Returns the copy's id (the copy becomes selected). */
+  duplicate: (clipId: string) => string | null
+  deleteClip: (clipId: string) => void
+  updateClip: (clipId: string, patch: TimelineClipPatch) => void
+  addTrack: (kind: AudioAssetTag, name?: string) => string
+  renameTrack: (trackId: string, name: string) => void
+  toggleMute: (trackId: string) => void
+  toggleSolo: (trackId: string) => void
+  setTrackVolume: (trackId: string, volume: number) => void
+  setProjectName: (name: string) => void
+  selectClip: (clipId: string | null) => void
+  setPlayhead: (time: number) => void
+  zoomIn: () => void
+  zoomOut: () => void
+  setZoom: (pxPerSecond: number) => void
+  toggleSnap: () => void
+  setEditorView: (view: SoundEditorView) => void
+  /** Start of a continuous edit (drag, slider): the edits until `endGesture` form ONE undo step. */
+  beginGesture: () => void
+  endGesture: () => void
+  /** Reverts to the state at `beginGesture` without recording history (e.g. Escape mid-drag). */
+  cancelGesture: () => void
+  undo: () => void
+  redo: () => void
+  /** Drops every clip of a deleted asset, from the live state AND the history. */
+  removeAssetFromTimeline: (assetId: string) => void
 }
 
 // ── Composed Store ───────────────────────────────────────────────────────────
 
-export type SoundsStore = AudioSynthSlice & AudioLibrarySlice & AudioPlaybackSlice & AudioUISlice
+export type SoundsStore = AudioSynthSlice &
+  AudioLibrarySlice &
+  AudioPlaybackSlice &
+  AudioUISlice &
+  SoundTimelineSlice
