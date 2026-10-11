@@ -1,7 +1,7 @@
 # 2026-10-11 — Scaling the sound editor to thousands of assets
 
 **Area**: sound editor (pattern reusable in the sprite/character editor)
-**Status**: deciding
+**Status**: deferred (2026-10-11) — the editor must be functional first. Plan and triggers: `docs/ai-notes/deferred-audio-asset-scalability.md`
 **Related**: ADR 0008 (draft), `docs/architecture/scalable-assets-research.md`
 
 ## The problem (no jargon)
