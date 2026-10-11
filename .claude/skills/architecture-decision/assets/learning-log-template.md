@@ -29,8 +29,3 @@
 ## What I learned
 
 - <Lesson that would surprise a junior dev>
-
-## Post draft (optional, ≤ 150 words)
-
-<Hook line. Problem. What I researched. Decision + tradeoff. Result or next step.
-One question to the reader.>

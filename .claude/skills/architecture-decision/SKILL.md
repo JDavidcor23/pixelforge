@@ -4,8 +4,7 @@ description: >
   Guides an architecture decision end to end in PixelForge: define and measure the
   problem, research prior art, compare options with tradeoffs, let the owner decide
   one decision at a time, record an ADR, plan phased work with performance budgets,
-  and write a plain-language learning-log entry the owner can turn into a LinkedIn
-  or blog post.
+  and write plain-language study notes (learning log) for the owner.
   Trigger: scalability or performance work, "how should we architect X", choosing a
   storage/streaming/caching/runtime approach, migrating a subsystem, any change that
   deserves an ADR, or when the owner wants to learn/explain why a decision was made.
@@ -42,13 +41,20 @@ Not for: pure UI tweaks, bug fixes with one obvious fix, renames.
 7. **Record it.** Accepted decision → `docs/adr/NNNN-<slug>.md` (format of 0006/0007,
    template in [assets/adr-template.md](assets/adr-template.md)). Multi-phase work →
    `docs/<topic>-implementation-plan.md` with a performance budget per phase.
-8. **Teach and share.** After the decision (and again after shipping, with real
-   measurements) add an entry to `docs/learning-log/` using
+8. **Teach.** After the decision (and again after shipping, with real measurements)
+   add study notes to `docs/learning-log/` using
    [assets/learning-log-template.md](assets/learning-log-template.md): simple, honest,
-   post-ready. Update `docs/architecture/` research notes when new concepts appear.
-9. **Reuse across editors.** Note in the ADR where else the pattern applies (sound,
+   factual. Update `docs/architecture/` research notes when new concepts appear.
+   **Never write posts, articles or first-person texts in the owner's voice into the
+   repo, and never commit or publish them.** If asked for a draft, give it in chat
+   only; the owner writes and publishes his own words.
+9. **Authorship layers.** Any reader-facing explanation the AI writes is a SOURCE
+   note: put it in `docs/ai-notes/` with the "AI-generated source notes" header and
+   never link it from READMEs or indexes. Featured docs (`docs/architecture/`
+   narratives, website, posts) are the owner's text; AI only fixes spelling.
+10. **Reuse across editors.** Note in the ADR where else the pattern applies (sound,
    sprite/character, scene builder). Extract shared code only at the second real use.
-10. **Build pipeline is unchanged.** Implementation still follows AGENTS.md
+11. **Build pipeline is unchanged.** Implementation still follows AGENTS.md
     (design-agent → frontend-agent → cleancode-agent), on its own feature branch.
 
 ## Workflow
@@ -61,7 +67,7 @@ Not for: pure UI tweaks, bug fixes with one obvious fix, renames.
 | 4. Record | ADR (Status: Accepted) + research notes update | No |
 | 5. Plan | Phases, each shippable, with acceptance metrics | Show summary |
 | 6. Build | Pipeline per phase, tests, measured before/after | No |
-| 7. Share | Learning-log entry (+ optional post draft) | Show draft |
+| 7. Teach | Learning-log study notes (facts, numbers, sources) | Show summary |
 
 ## Options table shape
 
