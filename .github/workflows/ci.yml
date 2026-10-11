@@ -34,6 +34,10 @@ jobs:
       - name: Bench
         run: pnpm run bench
 
+      # bench/results.json (apps/editor bench output) only exists in this job.
+      - name: Check editor Wasm/TS bench ratio budgets
+        run: pnpm run check-bench:editor
+
   rust-core:
     name: packages/core (Rust/Wasm)
     runs-on: ubuntu-latest
@@ -135,4 +139,4 @@ jobs:
           pnpm run bench
 
       - name: Check Wasm/TS bench ratio budgets
-        run: pnpm run check-bench
+        run: pnpm run check-bench:core
