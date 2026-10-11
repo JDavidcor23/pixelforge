@@ -83,6 +83,8 @@ export interface AudioUISlice {
   newSoundMode: ElevenLabsMode
   pendingGenerations: PendingGeneration[]
   generationError: string | null
+  /** Sound awaiting delete confirmation; drives the single shared dialog. */
+  pendingDeleteId: string | null
   openNewSound: (request?: Partial<NewSoundRequest>) => void
   closeNewSound: () => void
   setNewSoundPrompt: (prompt: string) => void
@@ -90,6 +92,8 @@ export interface AudioUISlice {
   addPendingGeneration: (generation: PendingGeneration) => void
   removePendingGeneration: (id: string) => void
   setGenerationError: (error: string | null) => void
+  requestDelete: (id: string) => void
+  cancelDelete: () => void
 }
 
 // ── Composed Store ───────────────────────────────────────────────────────────

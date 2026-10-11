@@ -1,7 +1,7 @@
 import { AudioLines } from 'lucide-react'
 
 import { SoundDetail } from '@/sounds/features/detail'
-import { LibrarySidebar } from '@/sounds/features/library'
+import { DeleteSoundDialog, LibrarySidebar } from '@/sounds/features/library'
 import { useSoundEditorLayout } from './useSoundEditorLayout.hook'
 import { FOCUS_RING } from '@/constants/focus-ring'
 
@@ -26,6 +26,7 @@ export function SoundEditorLayout() {
 
       <LibrarySidebar />
       <SoundDetail />
+      <DeleteSoundDialog />
     </div>
   )
 }

@@ -13,6 +13,8 @@ export const MOTION = {
     'origin-top-left transition duration-200 ease-out-strong starting:-translate-y-1 starting:scale-97 starting:opacity-0 motion-reduce:starting:translate-y-0 motion-reduce:starting:scale-100',
   /** Opacity-only entrance (modal scrims) — no movement, so no reduced-motion variant. */
   FADE_ENTER: 'transition-opacity duration-200 ease-out-strong starting:opacity-0',
-  /** State colour changes (e.g. delete arming). */
+  /** State colour changes (e.g. hover tints). */
   COLORS: 'transition-colors duration-150 ease-out-strong',
+  /** Hover/focus reveal of secondary row actions: opacity + colour, no movement. */
+  REVEAL: 'transition-[opacity,color,background-color] duration-150 ease-out-strong',
 } as const

@@ -19,7 +19,6 @@ export function SoundDetailHeader({ asset, source }: SoundDetailHeaderProps) {
     draftName,
     isExporting,
     exportError,
-    isConfirmingDelete,
     nameMaxLength,
     nameParts,
     kindLabel,
@@ -33,7 +32,6 @@ export function SoundDetailHeader({ asset, source }: SoundDetailHeaderProps) {
     handleDuplicate,
     handleExport,
     handleDelete,
-    handleDeleteBlur,
   } = useSoundDetailHeader(asset, source)
 
   return (
@@ -114,14 +112,11 @@ export function SoundDetailHeader({ asset, source }: SoundDetailHeaderProps) {
         <button
           type="button"
           onClick={handleDelete}
-          onBlur={handleDeleteBlur}
-          aria-label={isConfirmingDelete ? 'Confirm delete' : 'Delete sound'}
-          title={isConfirmingDelete ? undefined : 'Delete sound'}
-          data-armed={isConfirmingDelete || undefined}
-          className={`flex h-8.5 min-w-8.5 items-center justify-center gap-1.5 rounded border border-line-strong px-2.5 text-ui text-muted hover:border-danger/40 hover:bg-danger/10 hover:text-danger data-armed:border-danger/40 data-armed:bg-danger/10 data-armed:text-danger ${MOTION.PRESS} ${FOCUS_RING.BASE}`}
+          aria-label="Delete sound"
+          title="Delete sound"
+          className={`flex size-8.5 items-center justify-center rounded border border-line-strong text-muted hover:border-danger/40 hover:bg-danger/10 hover:text-danger ${MOTION.PRESS} ${FOCUS_RING.BASE}`}
         >
           <Trash2 className="size-3.5" aria-hidden />
-          {isConfirmingDelete && <span aria-hidden>Delete?</span>}
         </button>
       </div>
     </header>

@@ -1,8 +1,9 @@
 import { useCallback, useMemo, useRef } from 'react'
 
 import { useSoundsStore } from '@/stores/sounds.store'
+import { useDeleteSound } from '@/sounds/hooks/useDeleteSound.hook'
 import { getAssetSource } from '@/lib/sound-assets'
-import { SOUND_KIND_LABELS } from '@/constants/sound-library'
+import { DELETE_SOUND_KEYS, SOUND_KIND_LABELS } from '@/constants/sound-library'
 import type {
   AudioAsset,
   AudioAssetTag,
@@ -16,6 +17,23 @@ type NavigationKey = (typeof NAVIGATION_KEYS)[number]
 
 const isNavigationKey = (key: string): key is NavigationKey =>
   (NAVIGATION_KEYS as readonly string[]).includes(key)
+
+const SOUND_ROW_SELECTOR = '[data-sound-row]'
+
+/** Never hijack Backspace/Delete while the user is editing text. */
+function isTextEntry(target: EventTarget): boolean {
+  return (
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLTextAreaElement ||
+    (target instanceof HTMLElement && target.isContentEditable)
+  )
+}
+
+/** The sound whose row (option or its trash button) owns the event target. */
+function getRowAssetId(target: EventTarget): string | null {
+  if (!(target instanceof HTMLElement)) return null
+  return target.closest<HTMLElement>(SOUND_ROW_SELECTOR)?.dataset.soundRow ?? null
+}
 
 function filterAssets(assets: AudioAsset[], query: string, tag: AudioAssetTag | null): AudioAsset[] {
   const lowerQuery = query.trim().toLowerCase()
@@ -68,6 +86,7 @@ export function useSoundList() {
   const setSearchQuery = useSoundsStore((state) => state.setSearchQuery)
   const setFilterTag = useSoundsStore((state) => state.setFilterTag)
   const openNewSound = useSoundsStore((state) => state.openNewSound)
+  const { requestDelete } = useDeleteSound()
 
   const visibleAssets = useMemo(
     () => sortAssets(filterAssets(assets, searchQuery, filterTag), sortBy, sortDirection),
@@ -93,6 +112,14 @@ export function useSoundList() {
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
+      if (DELETE_SOUND_KEYS.includes(event.key)) {
+        if (event.altKey || event.ctrlKey || event.metaKey || isTextEntry(event.target)) return
+        const assetId = getRowAssetId(event.target)
+        if (!assetId) return
+        event.preventDefault()
+        requestDelete(assetId)
+        return
+      }
       if (!isNavigationKey(event.key) || visibleAssets.length === 0) return
       event.preventDefault()
 
@@ -103,7 +130,7 @@ export function useSoundList() {
         ?.querySelector<HTMLElement>(`[data-asset-id="${target.id}"]`)
         ?.focus()
     },
-    [visibleAssets, selectedAssetId, setSelectedAsset]
+    [visibleAssets, selectedAssetId, setSelectedAsset, requestDelete]
   )
 
   const handleClearSearch = useCallback(() => {

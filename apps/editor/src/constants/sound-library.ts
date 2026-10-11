@@ -171,8 +171,8 @@ export const SOUND_NAME_MAX_LENGTH = 64
  * stay visible, so "_v2" / "_copy" / "_3" siblings never look identical.
  */
 export const NAME_VISIBLE_TAIL_LENGTH = 6
-/** A first click on Delete arms it; it disarms on its own after this long. */
-export const DELETE_CONFIRM_TIMEOUT_MS = 3000
+/** Keys that ask to delete the focused sound row (opens the confirm dialog). */
+export const DELETE_SOUND_KEYS: readonly string[] = ['Delete', 'Backspace'] as const
 export const FALLBACK_SOUND_NAME = 'sound'
 
 export const IMPORT_ACCEPT = '.wav,.mp3,audio/wav,audio/mpeg'
