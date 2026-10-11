@@ -9,5 +9,4 @@ Template: `.claude/skills/architecture-decision/assets/learning-log-template.md`
 
 | Date | Entry | Status |
 |---|---|---|
-| 2026-10-09 | [Monorepo + Rust/Wasm migration, explained simply](../architecture/rust-wasm-and-monorepo-explained.md) | shipped |
 | 2026-10-11 | [Scaling the sound editor to thousands of assets](2026-10-11-scalable-audio-assets.md) | deciding |

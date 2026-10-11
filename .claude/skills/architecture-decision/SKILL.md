@@ -48,9 +48,13 @@ Not for: pure UI tweaks, bug fixes with one obvious fix, renames.
    **Never write posts, articles or first-person texts in the owner's voice into the
    repo, and never commit or publish them.** If asked for a draft, give it in chat
    only; the owner writes and publishes his own words.
-9. **Reuse across editors.** Note in the ADR where else the pattern applies (sound,
+9. **Authorship layers.** Any reader-facing explanation the AI writes is a SOURCE
+   note: put it in `docs/ai-notes/` with the "AI-generated source notes" header and
+   never link it from READMEs or indexes. Featured docs (`docs/architecture/`
+   narratives, website, posts) are the owner's text; AI only fixes spelling.
+10. **Reuse across editors.** Note in the ADR where else the pattern applies (sound,
    sprite/character, scene builder). Extract shared code only at the second real use.
-10. **Build pipeline is unchanged.** Implementation still follows AGENTS.md
+11. **Build pipeline is unchanged.** Implementation still follows AGENTS.md
     (design-agent → frontend-agent → cleancode-agent), on its own feature branch.
 
 ## Workflow

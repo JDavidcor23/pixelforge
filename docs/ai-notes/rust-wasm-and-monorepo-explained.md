@@ -1,3 +1,6 @@
+> AI-generated source notes. Reference material, not the owner's writing.
+> The owner's version lives in `docs/architecture/` (not written yet).
+
 # The monorepo and Rust/WebAssembly migration, explained simply
 
 This page explains what changed in October 2026, why, and what the

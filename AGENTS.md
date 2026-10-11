@@ -134,6 +134,18 @@ problem → prior art → options with tradeoffs → the owner decides → ADR i
 `docs/adr/` → phased plan → learning-log entry in `docs/learning-log/`.
 Research notes live in `docs/architecture/`.
 
+## Authorship of documents
+
+Two layers, never mixed:
+
+- **AI source notes** (specs, research summaries, base explanations) go in
+  `docs/ai-notes/`, start with an "AI-generated source notes" line, and are
+  never linked from the README, indexes, articles or posts.
+- **Featured documents** (`docs/architecture/`, `docs/adr/` narratives, the
+  owner's website, LinkedIn) are written by the owner. AI may only fix spelling
+  and grammar. AI never writes, commits or publishes text in the owner's voice;
+  drafts are given in chat only.
+
 ## Core rules (summary)
 
 - **Canvas: Use Infinite Canvas pattern.** The `<canvas>` must track its parent container size (100%) using `ResizeObserver`. All drawing logic must use centered offsets instead of CSS centering to allow stable zooming.
