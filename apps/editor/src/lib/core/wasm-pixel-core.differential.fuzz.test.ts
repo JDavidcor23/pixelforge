@@ -141,6 +141,9 @@ function assertResultsMatch(seed: number, step: number, cmd: Command, ts: Return
 
 const SEEDS = pkgAvailable ? 300 : 0
 const STEPS = 60
+// 300 x 60 dispatches through both cores takes ~5s on CI runners — well past
+// vitest's 5s default, so it timed out intermittently.
+const FUZZ_TIMEOUT_MS = 30_000
 
 describe.runIf(pkgAvailable)('WasmPixelCore vs TsPixelCore (differential fuzz)', () => {
   it(`produces identical DispatchResult fields and exportDocument() across ${SEEDS} seeds x ${STEPS} steps`, () => {
@@ -180,7 +183,7 @@ describe.runIf(pkgAvailable)('WasmPixelCore vs TsPixelCore (differential fuzz)',
         }
       }
     }
-  })
+  }, FUZZ_TIMEOUT_MS)
 })
 
 describe.runIf(pkgAvailable)('WasmPixelCore vs TsPixelCore — fractional numeric command fields are a clean no-op on BOTH cores (fix-agent 7g, item 3)', () => {
