@@ -125,6 +125,15 @@ Use for: creating or refactoring any Zustand store.
 .claude/agents/zustand-agent.md
 ```
 
+## Architecture decisions
+
+Anything that affects scale, performance, persistence, runtime or module
+boundaries goes through the **architecture-decision** skill
+(`.claude/skills/architecture-decision/SKILL.md`) before any code: measured
+problem → prior art → options with tradeoffs → the owner decides → ADR in
+`docs/adr/` → phased plan → learning-log entry in `docs/learning-log/`.
+Research notes live in `docs/architecture/`.
+
 ## Core rules (summary)
 
 - **Canvas: Use Infinite Canvas pattern.** The `<canvas>` must track its parent container size (100%) using `ResizeObserver`. All drawing logic must use centered offsets instead of CSS centering to allow stable zooming.
