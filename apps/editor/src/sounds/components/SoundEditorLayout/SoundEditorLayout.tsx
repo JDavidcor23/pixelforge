@@ -1,12 +1,15 @@
-import { AudioLines } from 'lucide-react'
+import { ArrowLeft, AudioLines } from 'lucide-react'
 
 import { SoundDetail } from '@/sounds/features/detail'
 import { DeleteSoundDialog, LibrarySidebar } from '@/sounds/features/library'
+import { TimelineEditor } from '@/sounds/features/timeline'
 import { useSoundEditorLayout } from './useSoundEditorLayout.hook'
 import { FOCUS_RING } from '@/constants/focus-ring'
+import { MOTION } from '@/constants/motion'
 
 export function SoundEditorLayout() {
-  const { showAudioOverlay, handleEnableAudio } = useSoundEditorLayout()
+  const { showAudioOverlay, isTimelineView, handleEnableAudio, handleBackToTimeline } =
+    useSoundEditorLayout()
 
   return (
     <div className="relative flex h-full w-full overflow-hidden bg-base text-ink">
@@ -25,7 +28,23 @@ export function SoundEditorLayout() {
       )}
 
       <LibrarySidebar />
-      <SoundDetail />
+      {isTimelineView ? (
+        <TimelineEditor />
+      ) : (
+        <div className="flex min-w-0 flex-1 flex-col">
+          <div className="shrink-0 px-6 pt-4">
+            <button
+              type="button"
+              onClick={handleBackToTimeline}
+              className={`flex items-center gap-1.5 rounded px-2 py-1 text-xs text-muted hover:bg-hover hover:text-ink ${MOTION.COLORS} ${FOCUS_RING.BASE}`}
+            >
+              <ArrowLeft className="size-3.5" aria-hidden />
+              Back to timeline
+            </button>
+          </div>
+          <SoundDetail />
+        </div>
+      )}
       <DeleteSoundDialog />
     </div>
   )

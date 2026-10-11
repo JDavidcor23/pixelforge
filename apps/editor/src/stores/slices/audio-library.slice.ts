@@ -9,7 +9,7 @@ export const createAudioLibrarySlice: StateCreator<
   [['zustand/persist', unknown]],
   [],
   AudioLibrarySlice
-> = (set) => ({
+> = (set, get) => ({
   assets: [],
   selectedAssetId: null,
   searchQuery: '',
@@ -23,11 +23,14 @@ export const createAudioLibrarySlice: StateCreator<
       assets: [asset, ...state.assets],
     })),
 
-  removeAsset: (id: string) =>
+  removeAsset: (id: string) => {
     set((state) => ({
       assets: state.assets.filter((a) => a.id !== id),
       selectedAssetId: state.selectedAssetId === id ? null : state.selectedAssetId,
-    })),
+    }))
+    // A clip without its source cannot play — drop it from the mix and its history.
+    get().removeAssetFromTimeline(id)
+  },
 
   updateAsset: (id: string, updates: Partial<AudioAsset>) =>
     set((state) => ({

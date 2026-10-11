@@ -1,4 +1,4 @@
-import { Sparkles, Trash2 } from 'lucide-react'
+import { Plus, Sparkles, Trash2 } from 'lucide-react'
 
 import { MiniWave } from '../MiniWave/MiniWave'
 import { useSoundListItem } from './useSoundListItem.hook'
@@ -15,14 +15,25 @@ interface SoundListItemProps {
 }
 
 export function SoundListItem({ asset, isSelected, isAI, tabIndex, onSelect }: SoundListItemProps) {
-  const { meta, nameParts, handleClick, handleDeleteClick } = useSoundListItem(asset, onSelect)
+  const {
+    meta,
+    nameParts,
+    isDragging,
+    handleClick,
+    handleDoubleClick,
+    handleDeleteClick,
+    handleAddClick,
+    handleDragStart,
+    handleDragEnd,
+  } = useSoundListItem(asset, onSelect)
 
   return (
     <div
       role="none"
       data-sound-row={asset.id}
       data-selected={isSelected || undefined}
-      className="group relative shrink-0"
+      data-dragging={isDragging || undefined}
+      className="group relative shrink-0 data-dragging:opacity-50"
     >
       <button
         type="button"
@@ -30,9 +41,13 @@ export function SoundListItem({ asset, isSelected, isAI, tabIndex, onSelect }: S
         aria-selected={isSelected}
         tabIndex={tabIndex}
         data-asset-id={asset.id}
-        aria-keyshortcuts="Delete Backspace"
+        aria-keyshortcuts="Delete Backspace A Enter"
+        draggable
         onClick={handleClick}
-        className={`flex h-12 w-full items-center gap-2.5 rounded border border-transparent px-2.5 py-2 text-left group-hover:bg-hover aria-selected:border-accent/25 aria-selected:bg-hover ${FOCUS_RING.SURFACE}`}
+        onDoubleClick={handleDoubleClick}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        className={`flex h-12 w-full cursor-grab active:cursor-grabbing items-center gap-2.5 rounded border border-transparent px-2.5 py-2 text-left group-hover:bg-hover aria-selected:border-accent/25 aria-selected:bg-hover ${FOCUS_RING.SURFACE}`}
       >
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="flex items-center gap-1.5">
@@ -47,11 +62,21 @@ export function SoundListItem({ asset, isSelected, isAI, tabIndex, onSelect }: S
           <span className="text-2xs text-subtle">{meta}</span>
         </span>
         <MiniWave peaks={asset.peaks} isActive={isSelected} />
-        {/* Reserved slot for the trash so revealing it never shifts the row. */}
-        <span className="size-6 shrink-0" aria-hidden />
+        {/* Reserved slot for add + trash so revealing them never shifts the row. */}
+        <span className="h-6 w-13.5 shrink-0" aria-hidden />
       </button>
-      {/* Pointer-only affordance: kept out of the tab order so the listbox only
-          exposes options; keyboard users delete with Delete/Backspace on the row. */}
+      {/* Pointer-only affordances: kept out of the tab order so the listbox only
+          exposes options; keyboard users press A (add) or Delete/Backspace on the row. */}
+      <button
+        type="button"
+        tabIndex={-1}
+        onClick={handleAddClick}
+        aria-label={`Add ${asset.name} to timeline`}
+        title="Add to timeline (A)"
+        className={`absolute right-10 top-1/2 flex size-6 -translate-y-1/2 items-center justify-center rounded-sm text-subtle opacity-0 hover:bg-hover hover:text-accent focus-visible:opacity-100 group-hover:opacity-100 group-focus-within:opacity-100 group-data-selected:opacity-100 ${MOTION.REVEAL} ${FOCUS_RING.SURFACE}`}
+      >
+        <Plus className="size-3.5" aria-hidden />
+      </button>
       <button
         type="button"
         tabIndex={-1}

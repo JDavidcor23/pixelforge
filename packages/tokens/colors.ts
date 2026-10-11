@@ -46,6 +46,13 @@ export const COLORS = {
   SUCCESS: '#10b981',
   DANGER: '#ff4d4d',
 
+  /** Timeline track hues, one per track kind. */
+  TRACK: {
+    SFX: '#00fbfb',
+    MUSIC: '#10b981',
+    VOICE: '#f59e0b',
+  },
+
   /** Chrome drawn onto the sprite canvas itself. */
   CANVAS: {
     GRID_LINE: '#171a21',

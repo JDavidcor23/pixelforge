@@ -7,6 +7,7 @@ import { createAudioSynthSlice } from './slices/audio-synth.slice'
 import { createAudioLibrarySlice } from './slices/audio-library.slice'
 import { createAudioPlaybackSlice } from './slices/audio-playback.slice'
 import { createAudioUISlice } from './slices/audio-ui.slice'
+import { createSoundTimelineSlice } from './slices/sound-timeline.slice'
 
 export const useSoundsStore = create<SoundsStore>()(
   persist(
@@ -15,9 +16,12 @@ export const useSoundsStore = create<SoundsStore>()(
       ...createAudioLibrarySlice(...a),
       ...createAudioPlaybackSlice(...a),
       ...createAudioUISlice(...a),
+      ...createSoundTimelineSlice(...a),
     }),
     {
       name: SOUNDS_STORE_KEY,
+      // The timeline is session-only: library assets are not persisted either,
+      // so persisted clips would point at sources that no longer exist.
       partialize: (state) => ({
         synthParams: state.synthParams,
         volume: state.volume,

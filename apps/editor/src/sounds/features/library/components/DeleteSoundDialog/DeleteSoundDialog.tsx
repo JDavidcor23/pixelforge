@@ -7,6 +7,7 @@ export function DeleteSoundDialog() {
     isOpen,
     assetName,
     nameParts,
+    clipUsage,
     cancelRef,
     confirmRef,
     titleId,
@@ -40,6 +41,7 @@ export function DeleteSoundDialog() {
         </h2>
         <p id={descriptionId} className="mt-2 text-xs text-muted">
           This removes the sound from your library. This can’t be undone.
+          {clipUsage && <span className="mt-1 block">{clipUsage}</span>}
         </p>
         <div className="mt-5 flex justify-end gap-2">
           <button

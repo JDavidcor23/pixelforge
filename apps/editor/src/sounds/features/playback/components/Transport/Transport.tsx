@@ -10,6 +10,10 @@ interface TransportProps {
   loop: boolean
   volume: number
   timeLabel: string
+  /** Timeline style: "current / total" at `text-ui`, total in subtle ink. */
+  totalLabel?: string
+  /** Small caption before the volume icon (e.g. "Master"). */
+  volumeLabel?: string
   onTogglePlay: () => void
   onStop: () => void
   onLoopToggle: () => void
@@ -23,6 +27,8 @@ export function Transport({
   loop,
   volume,
   timeLabel,
+  totalLabel,
+  volumeLabel,
   onTogglePlay,
   onStop,
   onLoopToggle,
@@ -54,9 +60,18 @@ export function Transport({
       >
         <Repeat className="size-3.5" aria-hidden />
       </button>
-      <span className="font-mono text-xs text-muted tabular-nums">{timeLabel}</span>
+      {totalLabel === undefined ? (
+        <span className="font-mono text-xs text-muted tabular-nums">{timeLabel}</span>
+      ) : (
+        <span className="font-mono text-ui text-ink tabular-nums">
+          {timeLabel}
+          <span className="text-subtle"> / {totalLabel}</span>
+        </span>
+      )}
 
       <span className="flex-1" />
+
+      {volumeLabel && <span className="text-2xs text-subtle">{volumeLabel}</span>}
 
       {volume > VOLUME_RANGE.MIN ? (
         <Volume2 className="size-3.5 text-muted" aria-hidden />

@@ -51,6 +51,12 @@
   --pf-success: #10b981;
   --pf-danger: #ff4d4d;
 
+  /* -- Timeline track hues: identify a track's kind (sound editor mixer).
+   *    Voice is amber on purpose — violet would read as "made by AI". ----- */
+  --pf-track-sfx: #00fbfb; /* Effects — same hue as the accent            */
+  --pf-track-music: #10b981; /* Music                                       */
+  --pf-track-voice: #f59e0b; /* Voice                                       */
+
   /* -- Elevation: floating overlays only (popovers, menus). Panels stay flat. */
   --pf-shadow-popover: 0 16px 40px rgb(0 0 0 / 0.6);
 
@@ -100,6 +106,11 @@
   --color-success: var(--pf-success);
   --color-danger: var(--pf-danger);
 
+  /* Tracks    → bg-track-sfx/8, border-track-music/35, fill-track-voice/60 */
+  --color-track-sfx: var(--pf-track-sfx);
+  --color-track-music: var(--pf-track-music);
+  --color-track-voice: var(--pf-track-voice);
+
   /* Elevation → shadow-popover */
   --shadow-popover: var(--pf-shadow-popover);
 
@@ -107,7 +118,10 @@
   --ease-out-strong: var(--pf-ease-out-strong);
 
   /* Dense UI type steps missing from Tailwind's scale
-   * → text-2xs (11px meta), text-ui (13px controls), text-title (22px detail title) */
+   * → text-3xs (10px label-caps, key chips, ruler labels), text-2xs (11px meta),
+   *   text-ui (13px controls), text-title (22px detail title) */
+  --text-3xs: 0.625rem;
+  --text-3xs--line-height: 0.75rem;
   --text-2xs: 0.6875rem;
   --text-2xs--line-height: 0.875rem;
   --text-ui: 0.8125rem;

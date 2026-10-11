@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useId, useRef } from 'react'
 
 import { useSoundsStore } from '@/stores/sounds.store'
+import { selectClipCountForAsset } from '@/stores/selectors/sound-timeline.selectors'
 import { useDeleteSound } from '@/sounds/hooks/useDeleteSound.hook'
 import { splitNameForTruncation } from '@/lib/sound-assets'
+import { clipUsageMessage } from '@/lib/timeline-view'
 import { NAME_VISIBLE_TAIL_LENGTH } from '@/constants/sound-library'
 
 const selectedRowSelector = (id: string): string => `[data-asset-id="${id}"]`
@@ -19,6 +21,7 @@ export function useDeleteSoundDialog() {
   const pendingDeleteId = useSoundsStore((state) => state.pendingDeleteId)
   const assets = useSoundsStore((state) => state.assets)
   const cancelDelete = useSoundsStore((state) => state.cancelDelete)
+  const clipCount = useSoundsStore(selectClipCountForAsset(pendingDeleteId))
   const { deleteSound } = useDeleteSound()
 
   const asset = pendingDeleteId ? (assets.find((item) => item.id === pendingDeleteId) ?? null) : null
@@ -84,6 +87,7 @@ export function useDeleteSoundDialog() {
     isOpen,
     assetName: asset?.name ?? '',
     nameParts: splitNameForTruncation(asset?.name ?? '', NAME_VISIBLE_TAIL_LENGTH),
+    clipUsage: clipUsageMessage(clipCount),
     cancelRef,
     confirmRef,
     titleId,

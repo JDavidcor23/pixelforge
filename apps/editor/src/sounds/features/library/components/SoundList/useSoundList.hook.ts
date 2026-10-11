@@ -1,9 +1,12 @@
 import { useCallback, useMemo, useRef } from 'react'
 
 import { useSoundsStore } from '@/stores/sounds.store'
+import { useAddToTimeline } from '@/sounds/hooks/useAddToTimeline.hook'
 import { useDeleteSound } from '@/sounds/hooks/useDeleteSound.hook'
+import { useSoundEditorView } from '@/sounds/hooks/useSoundEditorView.hook'
 import { getAssetSource } from '@/lib/sound-assets'
 import { DELETE_SOUND_KEYS, SOUND_KIND_LABELS } from '@/constants/sound-library'
+import { ADD_TO_TIMELINE_KEY, OPEN_SOUND_KEY } from '@/constants/timeline-view'
 import type {
   AudioAsset,
   AudioAssetTag,
@@ -87,6 +90,8 @@ export function useSoundList() {
   const setFilterTag = useSoundsStore((state) => state.setFilterTag)
   const openNewSound = useSoundsStore((state) => state.openNewSound)
   const { requestDelete } = useDeleteSound()
+  const { addToTimeline } = useAddToTimeline()
+  const { openSound } = useSoundEditorView()
 
   const visibleAssets = useMemo(
     () => sortAssets(filterAssets(assets, searchQuery, filterTag), sortBy, sortDirection),
@@ -112,6 +117,19 @@ export function useSoundList() {
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
+      const hasModifier = event.altKey || event.ctrlKey || event.metaKey
+      const isRowCommand =
+        event.key === OPEN_SOUND_KEY || event.key.toLowerCase() === ADD_TO_TIMELINE_KEY
+      // Only on the option itself: Enter on a clicked trash/plus button keeps its own meaning.
+      const isOption = event.target instanceof HTMLElement && event.target.dataset.assetId !== undefined
+      if (isRowCommand && isOption && !hasModifier) {
+        const assetId = getRowAssetId(event.target)
+        if (!assetId) return
+        event.preventDefault()
+        if (event.key === OPEN_SOUND_KEY) openSound(assetId)
+        else addToTimeline(assetId)
+        return
+      }
       if (DELETE_SOUND_KEYS.includes(event.key)) {
         if (event.altKey || event.ctrlKey || event.metaKey || isTextEntry(event.target)) return
         const assetId = getRowAssetId(event.target)
@@ -130,7 +148,7 @@ export function useSoundList() {
         ?.querySelector<HTMLElement>(`[data-asset-id="${target.id}"]`)
         ?.focus()
     },
-    [visibleAssets, selectedAssetId, setSelectedAsset, requestDelete]
+    [visibleAssets, selectedAssetId, setSelectedAsset, requestDelete, openSound, addToTimeline]
   )
 
   const handleClearSearch = useCallback(() => {
