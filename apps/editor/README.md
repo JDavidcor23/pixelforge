@@ -1,6 +1,6 @@
 # @pixelforge/editor
 
-The PixelForge sprite/sound editor. Vite + React 19 SPA (react-router), Konva
+The PixelForge IA sprite/sound editor. Vite + React 19 SPA (react-router), Konva
 canvas, local-first IndexedDB persistence. Deployed as its own Vercel project
 (Root Directory: `apps/editor`); `api/` holds its Vercel Functions.
 

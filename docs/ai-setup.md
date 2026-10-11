@@ -1,10 +1,10 @@
 # AI Setup & Usage
 
-PixelForge integrates AI services to accelerate your game development workflow. This guide explains how to configure and use them.
+PixelForge IA integrates AI services to accelerate your game development workflow. This guide explains how to configure and use them.
 
 ## 🔑 API Configuration
 
-PixelForge prioritizes your privacy. **All API keys are stored exclusively in your browser's `localStorage`.** They are never sent to our servers.
+PixelForge IA prioritizes your privacy. **All API keys are stored exclusively in your browser's `localStorage`.** They are never sent to our servers.
 
 Open the editor and click the gear icon ⚙️ to open the **Settings** panel. Two keys can be configured there:
 

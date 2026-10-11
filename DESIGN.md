@@ -97,7 +97,7 @@ Three rules, and they are not negotiable:
 
 ## Brand & Style
 
-PixelForge is a professional 2D game engine that lives in the browser. The
+PixelForge IA is a professional 2D game engine that lives in the browser. The
 aesthetic, **Synthetic Architect**, is studio software first and cyberpunk
 second: dense, precise, high-contrast — with a single electric accent that marks
 where the machine is listening.

@@ -1,5 +1,6 @@
 import Link from 'next/link'
 
+import { Wordmark } from '../Wordmark/Wordmark'
 import { LANDING_NAV, LANDING_NAV_LINKS } from '../../constants'
 import { ROUTES } from '@/constants/ROUTES'
 import { EDITOR_APP_URL } from '@/constants/env'
@@ -9,8 +10,8 @@ export const Navbar = () =>
   return (
     <nav className="fixed top-0 z-50 w-full border-b border-white/5 bg-[#121419]/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-        <Link href={ ROUTES.HOME } className="text-xl font-bold tracking-widest text-white">
-          { LANDING_NAV.LOGO }
+        <Link href={ ROUTES.HOME } aria-label={ LANDING_NAV.LOGO_LABEL }>
+          <Wordmark className="text-xl font-bold uppercase tracking-widest text-white" />
         </Link>
 
         <div className="flex items-center gap-8">

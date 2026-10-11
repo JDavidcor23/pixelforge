@@ -1,5 +1,6 @@
 import Link from 'next/link'
 
+import { Wordmark } from '../Wordmark/Wordmark'
 import { LANDING_FOOTER, LANDING_FOOTER_LINKS } from '../../constants'
 import { ROUTES } from '@/constants/ROUTES'
 
@@ -9,8 +10,8 @@ export const Footer = () =>
     <footer className="border-t border-white/5 bg-[#0a0c10] py-12">
       <div className="mx-auto max-w-7xl px-6">
         <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
-          <Link href={ ROUTES.HOME } className="text-lg font-bold tracking-widest text-white">
-            { LANDING_FOOTER.LOGO }
+          <Link href={ ROUTES.HOME } aria-label={ LANDING_FOOTER.LOGO_LABEL }>
+            <Wordmark className="text-lg font-bold tracking-widest text-white" />
           </Link>
 
           <div className="flex items-center gap-6">

@@ -1,10 +1,10 @@
 # Architecture
 
-How PixelForge is built: hexagonal ports & adapters, a Rust/Wasm core with a
+How PixelForge IA is built: hexagonal ports & adapters, a Rust/Wasm core with a
 TypeScript reference, local-first persistence.
 
 <p align="center">
-  <img src="architecture.svg" alt="PixelForge architecture: landing links to the editor SPA, which drives a hexagonal PixelCore port with TS and Wasm adapters, IndexedDB persistence, and AI proxies (server key or bring-your-own key)" width="100%">
+  <img src="architecture.svg" alt="PixelForge IA architecture: landing links to the editor SPA, which drives a hexagonal PixelCore port with TS and Wasm adapters, IndexedDB persistence, and AI proxies (server key or bring-your-own key)" width="100%">
 </p>
 
 ## The ideas behind it

@@ -1,8 +1,9 @@
 import { Palette, Bot, Boxes, Library, Music, Rocket } from 'lucide-react'
 import type { FeatureCardProps, PipelineStepProps, NavLink, FooterLink } from '../types'
+import { BRAND } from '@/constants/BRAND'
 
 export const LANDING_NAV = {
-  LOGO: 'PIXELFORGE',
+  LOGO_LABEL: BRAND.FULL_NAME,
   CTA_BUTTON: 'Launch Editor',
 } as const
 
@@ -15,7 +16,7 @@ export const LANDING_HERO = {
   HEADLINE_WHITE: 'BUILD WORLDS',
   HEADLINE_ACCENT: 'BIT BY BIT.',
   SUBTITLE:
-    'Create, animate, and publish 2D games directly from your browser. PixelForge combines a powerful sprite editor, AI-assisted asset generation, and one-click deployment.',
+    `Create, animate, and publish 2D games directly from your browser. ${BRAND.FULL_NAME} combines a powerful sprite editor, AI-assisted asset generation, and one-click deployment.`,
   CTA_PRIMARY: 'Start Building',
   CTA_SECONDARY: 'Watch Demo',
 } as const
@@ -117,8 +118,8 @@ export const LANDING_CTA = {
 } as const
 
 export const LANDING_FOOTER = {
-  LOGO: 'PixelForge',
-  COPYRIGHT: `\u00A9 ${new Date().getFullYear()} PixelForge. All rights reserved.`,
+  LOGO_LABEL: BRAND.FULL_NAME,
+  COPYRIGHT: `\u00A9 ${new Date().getFullYear()} ${BRAND.FULL_NAME}. All rights reserved.`,
 } as const
 
 export const LANDING_FOOTER_LINKS: readonly FooterLink[] = [

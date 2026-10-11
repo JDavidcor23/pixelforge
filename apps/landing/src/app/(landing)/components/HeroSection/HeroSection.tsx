@@ -4,6 +4,7 @@ import Link from 'next/link'
 import EditorImage from '@/assets/editor.jpeg'
 import { LANDING_HERO, LANDING_HERO_LABELS } from '../../constants'
 import { EDITOR_APP_URL } from '@/constants/env'
+import { BRAND } from '@/constants/BRAND'
 
 export const HeroSection = () =>
 {
@@ -54,12 +55,12 @@ export const HeroSection = () =>
                 <span className="h-3 w-3 rounded-full bg-red-500/60" />
                 <span className="h-3 w-3 rounded-full bg-yellow-500/60" />
                 <span className="h-3 w-3 rounded-full bg-green-500/60" />
-                <span className="ml-4 text-xs text-zinc-500">PixelForge Editor</span>
+                <span className="ml-4 text-xs text-zinc-500">{ `${BRAND.FULL_NAME} Editor` }</span>
               </div>
               <div className="relative h-64 overflow-hidden sm:h-80">
                 <Image
                   src={ EditorImage }
-                  alt="PixelForge Editor Preview"
+                  alt={ `${BRAND.FULL_NAME} Editor Preview` }
                   fill
                   className="object-cover transition-transform duration-700 hover:scale-105"
                   priority

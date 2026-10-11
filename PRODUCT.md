@@ -16,7 +16,7 @@ who has never opened an audio tool.
 
 ## Product Purpose
 
-PixelForge lets a creator make game assets (sprites manually or with AI, sounds
+PixelForge IA lets a creator make game assets (sprites manually or with AI, sounds
 with a synthesizer or with AI), build scenes visually and publish to Vercel in
 one click. Success is a creator getting a usable asset into their game without
 learning the underlying craft first.
@@ -47,7 +47,7 @@ generation as a first-class path next to manual creation, not a separate app.
 
 ## Brand Commitments
 
-Name: PixelForge. Visual language is documented in `DESIGN.md`.
+Name: PixelForge IA. Visual language is documented in `DESIGN.md`.
 
 ## Product Principles
 

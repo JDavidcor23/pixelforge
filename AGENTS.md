@@ -1,4 +1,4 @@
-# PixelForge
+# PixelForge IA
 
 Browser-based 2D game builder. Users create sprites manually or with AI, build game scenes visually, and publish directly to Vercel with a single click.
 

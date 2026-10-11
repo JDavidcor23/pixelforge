@@ -1,10 +1,14 @@
-<h1 align="center">PixelForge</h1>
+<h1 align="center">PixelForge IA</h1>
 
 <p align="center">
   <strong>A browser-based 2D game studio in the making.</strong><br>
   Today: draw and animate sprites (by hand or with AI) and design sound
   effects, all from the browser. The goal: take a game from first sketch to
   a published, maintained release on AWS.
+</p>
+
+<p align="center">
+  <a href="https://www.pixelforgeia.com">pixelforgeia.com</a>
 </p>
 
 <p align="center">
@@ -21,14 +25,14 @@ onion skinning, frame-by-frame animation and export, built on an infinite,
 zoomable canvas.
 
 <p align="center">
-  <img src="docs/images/sprite-editor.png" alt="PixelForge sprite editor: layer panel, pixel canvas and color picker" width="100%">
+  <img src="docs/images/sprite-editor.png" alt="PixelForge IA sprite editor: layer panel, pixel canvas and color picker" width="100%">
 </p>
 
 **AI-assisted sprites** — generate pixel art and animation cycles from a text
 prompt (Retro Diffusion), then drop results straight onto the canvas.
 
 <p align="center">
-  <img src="docs/images/ai-generation.png" alt="PixelForge AI sprite generation panel with recent generations" width="100%">
+  <img src="docs/images/ai-generation.png" alt="PixelForge IA sprite generation panel with recent generations" width="100%">
 </p>
 
 **Sound editor** — a searchable sound library, one-click presets, a big
@@ -36,7 +40,7 @@ waveform with transport, plain-language tweaks (pitch, length, punch, tone),
 random variations, and AI-generated effects, music and voice.
 
 <p align="center">
-  <img src="docs/images/sound-editor.png" alt="PixelForge sound editor: sound library, waveform with transport, tweak sliders and variations" width="100%">
+  <img src="docs/images/sound-editor.png" alt="PixelForge IA sound editor: sound library, waveform with transport, tweak sliders and variations" width="100%">
 </p>
 
 ## What works today
@@ -56,14 +60,14 @@ random variations, and AI-generated effects, music and voice.
   flag, with the TS implementation kept as the reference and default (see
   [Architecture & system design](#architecture--system-design) below).
 
-## Vision — where PixelForge is going
+## Vision — where PixelForge IA is going
 
 The aim is one app covering the whole lifecycle of making a 2D game, not just
 a sprite tool. Seven stages; today only two are real code — the rest is
 roadmap, marked honestly below and in [`docs/lifecycle.svg`](docs/lifecycle.svg).
 
 <p align="center">
-  <img src="docs/lifecycle.svg" alt="PixelForge product lifecycle: concept, characters, audio, assets, game building, publishing, operations" width="100%">
+  <img src="docs/lifecycle.svg" alt="PixelForge IA product lifecycle: concept, characters, audio, assets, game building, publishing, operations" width="100%">
 </p>
 
 | # | Stage | Status |
@@ -76,13 +80,13 @@ roadmap, marked honestly below and in [`docs/lifecycle.svg`](docs/lifecycle.svg)
 | 6 | Publishing — one-click deploy of the finished game to AWS | Planned |
 | 7 | Operations — managing/maintaining the game after launch on AWS | Planned |
 
-Vercel only hosts PixelForge's own `apps/landing` and `apps/editor` today.
-The games built with PixelForge are meant to be published and operated on
+Vercel only hosts PixelForge IA's own `apps/landing` and `apps/editor` today.
+The games built with PixelForge IA are meant to be published and operated on
 AWS — that's a future stage, not something that exists yet.
 
-## Made with PixelForge
+## Made with PixelForge IA
 
-Games built with PixelForge will be showcased here.
+Games built with PixelForge IA will be showcased here.
 
 ## Architecture & system design
 
