@@ -1,135 +1,136 @@
 > AI-generated source notes. Study guide for the owner, not the owner's writing.
 > The owner's article lives on his website.
 
-# Guía de estudio: separar el editor de Next.js a Vite
+# Study guide: moving the editor from Next.js to Vite
 
-Objetivo: entender lo que se hizo para escribir tu artículo con tus palabras.
-Lee de arriba hacia abajo. Cada concepto tiene una explicación simple y **un solo
-enlace** para leer. Tiempo total estimado: unas 2 horas.
+Goal: understand what was done so you can write your article in your own words.
+Read from top to bottom. Each concept has a simple explanation and **one link**
+to read. Estimated total time: about 2 hours.
 
 ---
 
-## Parte 1 — Qué se hizo (la historia completa, en simple)
+## Part 1 — What was done (the full story, simply)
 
-**Antes.** PixelForge era **una sola app de Next.js**. Esa app tenía dos partes
-muy distintas:
+**Before.** PixelForge was **one single Next.js app**. That app had two very
+different parts:
 
-- **La landing** (la página de presentación del producto): texto, imágenes,
-  botones. La tiene que encontrar Google y debe cargar rápido la primera vez.
-- **El editor** (donde dibujas sprites y editas sonidos): un canvas, herramientas,
-  atajos de teclado. Todo pasa en el navegador del usuario. No hay nada que
-  Google tenga que leer adentro.
+- **The landing page** (the product presentation): text, images, buttons.
+  Google needs to find it, and it must load fast the first time.
+- **The editor** (where you draw sprites and edit sounds): a canvas, tools,
+  keyboard shortcuts. Everything happens in the user's browser. There is nothing
+  inside it that Google needs to read.
 
-**El problema.** Next.js es muy bueno haciendo trabajo **en el servidor**:
-prepara el HTML antes de enviarlo, lo que ayuda a Google (SEO) y a que la
-primera pantalla aparezca rápido. La landing aprovecha eso. **El editor no**:
-el canvas solo funciona en el navegador, así que todo ese trabajo de servidor no
-le servía de nada, pero igual tenía que convivir con las reglas de Next
-(componentes de servidor y de cliente, `'use client'`, etc.).
+**The problem.** Next.js is very good at doing work **on the server**: it
+prepares the HTML before sending it, which helps Google (SEO) and makes the
+first screen appear fast. The landing page benefits from that. **The editor
+does not**: the canvas only works in the browser, so all that server work was
+useless for it, but it still had to live with Next's rules (server and client
+components, `'use client'`, etc.).
 
-**La decisión.** Separar el proyecto en un **monorepo** con pnpm:
+**The decision.** Split the project into a **monorepo** with pnpm:
 
 ```text
-apps/landing     → se queda en Next.js 16 (aquí Next brilla: SEO, carga inicial)
-apps/editor      → pasa a Vite + React (una SPA: todo en el navegador)
-packages/tokens  → colores y estilos compartidos por las dos apps
-packages/core    → el motor de píxeles (Rust → WebAssembly), en su propio paquete
+apps/landing     → stays on Next.js 16 (Next shines here: SEO, first load)
+apps/editor      → moves to Vite + React (an SPA: everything in the browser)
+packages/tokens  → colors and styles shared by both apps
+packages/core    → the pixel engine (Rust → WebAssembly), in its own package
 ```
 
-**Importante para tu artículo:** no dejaste Next. **Lo usaste donde tiene
-sentido** y sacaste solo la parte que no lo necesitaba.
+**Important for your article:** you did not leave Next. **You used it where it
+makes sense** and moved out only the part that did not need it.
 
-**Cómo se despliega.** Son dos proyectos de Vercel, uno por app. Cada uno solo
-se vuelve a desplegar si cambió su propio código (Vercel "Ignored Build Step").
+**How it deploys.** There are two Vercel projects, one per app. Each one only
+redeploys when its own code changed (Vercel "Ignored Build Step").
 
-**Qué se ganó**
-- El editor ya no carga con reglas de servidor que no usa.
-- Cada app se despliega por separado.
-- El motor en Rust vive en su propio paquete, con su propio build y sus tests.
+**What was gained**
+- The editor no longer carries server rules it does not use.
+- Each app deploys separately.
+- The Rust engine lives in its own package, with its own build and tests.
 
-**Qué se perdió (dilo en el artículo, da credibilidad)**
-- En el editor ya no hay `next/image` ni `next/font` (optimización automática de
-  imágenes y fuentes). Ahora se usa `<img>` normal y la fuente con un `<link>`.
-- Hubo que reescribir la navegación del editor con `react-router-dom`.
-- Ahora hay **dos stacks con reglas distintas** (por ejemplo, las variables de
-  entorno se llaman `NEXT_PUBLIC_*` en una y `VITE_*` en la otra).
+**What was lost (say it in the article — it builds credibility)**
+- The editor no longer has `next/image` or `next/font` (automatic image and
+  font optimization). It now uses a plain `<img>` and loads the font with a
+  `<link>` tag.
+- The editor's navigation had to be rewritten with `react-router-dom`.
+- There are now **two stacks with different rules** (for example, environment
+  variables are called `NEXT_PUBLIC_*` in one and `VITE_*` in the other).
 
-**Las claves de la IA (ElevenLabs, Retro Diffusion).** Las llamadas a la IA
-pasan por **Vercel Functions** (pequeñas funciones de servidor) para que la
-clave del servidor nunca llegue al navegador.
+**The AI keys (ElevenLabs, Retro Diffusion).** Calls to the AI go through
+**Vercel Functions** (small server functions) so the server's key never reaches
+the browser.
 
-**Lo que se midió**
-- El editor en Vite arranca en desarrollo en **337–663 ms** (meta: menos de 2 s).
-  Fuente: `openspec/changes/migrate-to-rust-core/baseline-bench.md`, Fase 3.
+**What was measured**
+- The Vite editor starts in development in **337–663 ms** (target: under 2 s).
+  Source: `openspec/changes/migrate-to-rust-core/baseline-bench.md`, Phase 3.
 
-**Lo que NO se midió (no lo afirmes)**
-- Que la página cargue más rápido en producción.
-- El tamaño final del bundle.
+**What was NOT measured (do not claim it)**
+- That the page loads faster in production.
+- The final bundle size.
 
 ---
 
-## Parte 2 — Conceptos que tienes que entender (en este orden)
+## Part 2 — Concepts you need to understand (in this order)
 
-### 1. SSR vs CSR (dónde se arma la página)
-- **SSR (Server-Side Rendering):** el servidor arma el HTML y lo manda listo.
-  Bueno para SEO y para que la primera pantalla aparezca rápido.
-- **CSR (Client-Side Rendering):** el navegador recibe JavaScript y arma la
-  página él mismo. Bueno para apps muy interactivas.
-- **Leer:** "Rendering on the Web" — https://web.dev/articles/rendering-on-the-web
-  (el artículo clave de todo este tema; lee hasta "Static rendering").
+### 1. SSR vs CSR (where the page is built)
+- **SSR (Server-Side Rendering):** the server builds the HTML and sends it
+  ready. Good for SEO and for a fast first screen.
+- **CSR (Client-Side Rendering):** the browser receives JavaScript and builds
+  the page itself. Good for very interactive apps.
+- **Read:** "Rendering on the Web" — https://web.dev/articles/rendering-on-the-web
+  (the key article on this topic; read up to "Static rendering").
 
 ### 2. SPA (Single Page Application)
-- Una app que carga una vez y luego cambia de pantalla sin recargar. Tu editor
-  es una SPA.
-- **Leer:** https://developer.mozilla.org/en-US/docs/Glossary/SPA (2 minutos).
+- An app that loads once and then changes screens without reloading. Your
+  editor is an SPA.
+- **Read:** https://developer.mozilla.org/en-US/docs/Glossary/SPA (2 minutes).
 
-### 3. React Server Components y `'use client'`
-- En Next moderno, los componentes corren **en el servidor por defecto**. Si
-  necesitan el navegador (canvas, eventos, `useState`), llevan `'use client'`.
-  Un editor que es todo canvas termina con `'use client'` en todas partes: es la
-  señal de que no necesitaba el servidor.
-- **Leer:** https://nextjs.org/docs/app/getting-started/server-and-client-components
+### 3. React Server Components and `'use client'`
+- In modern Next, components run **on the server by default**. If they need the
+  browser (canvas, events, `useState`), they need `'use client'`. An editor that
+  is all canvas ends up with `'use client'` everywhere: a sign it did not need
+  the server.
+- **Read:** https://nextjs.org/docs/app/getting-started/server-and-client-components
 
-### 4. Qué es Vite
-- Una herramienta que sirve y empaqueta apps de frontend. Arranca muy rápido en
-  desarrollo y no trae servidor de render: perfecta para una SPA.
-- **Leer:** en vite.dev, la sección "Guide → Why Vite".
+### 4. What Vite is
+- A tool that serves and bundles frontend apps. It starts very fast in
+  development and has no server rendering built in: a good fit for an SPA.
+- **Read:** on vite.dev, the "Guide → Why Vite" section.
 
-### 5. Monorepo con pnpm workspaces
-- Un solo repositorio con varios proyectos que comparten código (tus tokens de
-  diseño) pero se construyen y despliegan por separado.
-- **Leer:** https://pnpm.io/workspaces
+### 5. Monorepo with pnpm workspaces
+- One repository with several projects that share code (your design tokens) but
+  are built and deployed separately.
+- **Read:** https://pnpm.io/workspaces
 
-### 6. Monorepos en Vercel
-- Cada app es un proyecto de Vercel con su "Root Directory". El "Ignored Build
-  Step" evita redesplegar si esa app no cambió.
-- **Leer:** https://vercel.com/docs/monorepos
+### 6. Monorepos on Vercel
+- Each app is a Vercel project with its own "Root Directory". The "Ignored
+  Build Step" skips a redeploy when that app did not change.
+- **Read:** https://vercel.com/docs/monorepos
 
-### 7. Vercel Functions (por qué las claves no van en el navegador)
-- Todo lo que empieza con `VITE_` o `NEXT_PUBLIC_` termina **dentro del
-  JavaScript del navegador**: cualquiera lo puede ver. Las claves secretas van
-  en una función de servidor que hace de intermediario.
-- **Leer:** https://vercel.com/docs/functions
-
----
-
-## Parte 3 — Preguntas para responderte antes de escribir
-
-Responderlas con tus palabras es lo que hace que el artículo sea tuyo:
-
-1. ¿Qué te hizo pensar en migrar? (el hype, lo que viste en LinkedIn)
-2. ¿Qué parte de tu app **no** usaba lo que ofrece Next? ¿Cómo te diste cuenta?
-3. ¿Por qué la landing se quedó en Next?
-4. ¿Qué perdiste y qué te costó?
-5. Si un amigo te pregunta "¿entonces Next es malo?", ¿qué le respondes?
-6. ¿Qué aprendiste que no sabías antes de empezar?
+### 7. Vercel Functions (why keys don't go in the browser)
+- Anything that starts with `VITE_` or `NEXT_PUBLIC_` ends up **inside the
+  browser's JavaScript**: anyone can see it. Secret keys go in a server function
+  that acts as a middleman.
+- **Read:** https://vercel.com/docs/functions
 
 ---
 
-## Parte 4 — Fuentes dentro del repo (si quieres profundizar)
+## Part 3 — Questions to answer before writing
 
-| Tema | Archivo |
+Answering them in your own words is what makes the article yours:
+
+1. What made you think about migrating? (the hype, what you saw on LinkedIn)
+2. Which part of your app did **not** use what Next offers? How did you notice?
+3. Why did the landing page stay on Next?
+4. What did you lose, and what did it cost you?
+5. If a friend asks "so is Next bad?", what do you answer?
+6. What did you learn that you didn't know before starting?
+
+---
+
+## Part 4 — Sources inside the repo (to go deeper)
+
+| Topic | File |
 |---|---|
-| Decisión del monorepo y del editor en Vite | `docs/adr/0005-monorepo-split.md` |
-| Mediciones | `openspec/changes/migrate-to-rust-core/baseline-bench.md` |
-| Reglas de cada app | `AGENTS.md` (sección "Stack") |
+| Monorepo decision and the editor on Vite | `docs/adr/0005-monorepo-split.md` |
+| Measurements | `openspec/changes/migrate-to-rust-core/baseline-bench.md` |
+| Rules for each app | `AGENTS.md` ("Stack" section) |
