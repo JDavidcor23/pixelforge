@@ -1,9 +1,9 @@
 # Learning log
 
-A build-in-public journal: one entry per architecture decision, written in plain
-language. Each entry records the problem, what I researched, the options and their
-tradeoffs, what I chose, and what I learned — measured results included once the
-work ships. Entries are the raw material for posts and talks.
+Study notes: one entry per architecture decision, in plain language. Each entry
+records the problem, what was researched, the options and their tradeoffs, the
+decision, and measured results once the work ships. These are reference notes for
+the owner; posts and articles are written by the owner in his own words.
 
 Template: `.claude/skills/architecture-decision/assets/learning-log-template.md`
 
