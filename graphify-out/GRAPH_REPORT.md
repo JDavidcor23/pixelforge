@@ -1,138 +1,128 @@
 # Graph Report - game-builder  (2026-10-11)
 
 ## Corpus Check
-- 529 files · ~287,353 words
+- 541 files · ~294,709 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 3290 nodes · 8480 edges · 210 communities (135 shown, 71 thin omitted)
-- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 118 edges (avg confidence: 0.85)
+- 3377 nodes · 8759 edges · 201 communities (125 shown, 72 thin omitted)
+- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 124 edges (avg confidence: 0.84)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `765386be`
+- Built from commit: `fe38ae1c`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - document.rs
-- auth.service.ts
+- PropertiesTab.tsx
 - core/ts-core.ts
-- useTimelineClip.hook.ts
-- lib/index.ts
+- sprite-pipeline.ts
+- useTopBar.hook.ts
 - focus-ring.ts
-- constants/audio.ts
+- types/audio.ts
 - mod.rs
 - WasmDocument
-- src/types/index.ts
+- useTimelineClip.hook.ts
 - sound-library.ts
-- useTimelinePlayback.hook.ts
+- useEditorPrefsStore
 - index.tsx
 - useCreateSound.hook.ts
 - pixel-core.ts
 - timeline-ops.ts
 - devDependencies
 - mascot-scene-state.ts
-- useCanvasInteraction.hook.ts
+- useKeyboardShortcuts.hook.ts
 - sound-timeline.slice.ts
 - history.rs
 - wasm-document-core.ts
-- BottomPanel.tsx
+- AssetGrid.tsx
 - constants/index.ts
-- useAuthForm.hook.ts
-- pixel-parity.test.ts
-- types/audio.ts
-- useMixExport.hook.ts
+- types/timeline-view.ts
+- ts-core.judgment-day-round2.test.ts
+- useVariationsPanel.hook.ts
+- src/types/index.ts
 - src-ts/ts-core.ts
 - PixelForge IA (AGENTS.md overview)
-- clipEnd
+- src-ts/index.ts
 - useSoundDetailHeader.hook.ts
 - downscale.rs
-- audio-engine.ts
-- useDeleteAccountDialog.hook.ts
+- AudioEngine
+- SettingsPanel.tsx
 - ColorPicker.tsx
 - scripts
 - mascot-scene.ts
-- persistence.ts
+- AssetType
 - timeline-shortcuts.ts
-- App.tsx
+- constants/timeline-view.ts
 - compilerOptions
 - quantize.rs
 - dependencies
 - devDependencies
-- usePositionFields.hook.ts
+- useCanvasSizePopover.hook.ts
 - AnimateTab.tsx
 - useSettingsPanel.hook.ts
-- wasm-pixel-core-resolver.ts
+- useSoundsStore
 - PixelKernels
 - core/package.json
-- useAuthStore
+- sprite-pipeline.test.ts
 - 5-phase scale-up plan (limits, persistence, segments, windowed export, virtualization)
 - compilerOptions
-- ShortcutsPopover.tsx
-- types/timeline-view.ts
-- ts-core.judgment-day-round2.test.ts
+- useQualitySamplePreview.hook.ts
+- timeline-player.ts
+- clipEnd
 - tokens/package.json
-- sound-assets.ts
+- useSoundList.hook.ts
 - WasmPixelCore (diagram node, behind flag)
 - include
 - useSpriteEditorStore.hook.ts
 - delete-account/index.ts
-- quantize.oracle-parity.test.ts
+- RgbaColor
 - audio-storage.service.ts
 - ElevenLabs AI sound generation
 - assets.store.ts
-- core.slice.real-trap.test.ts
+- index.test.ts
 - useColorPicker.hook.ts
-- document-persistence.controller.ts
 - Phase 7: Rust Document/History
 - edit-history Capability
 - build-wasm.mjs
-- wasm-core.ts
-- legacy-draft-migration.service.ts
+- resolve-core.ts
 - 2026-10-11 — Resizing a sprite without losing its layers
 - Phase 5: Rust Flood-Fill
-- color-utils.ts
-- constants/timeline-view.ts
-- core-config.ts
-- index.test.ts
+- TimelineBar.tsx
 - core/tsconfig.json
 - elevenlabs.ts
 - Rust/Wasm core migration boundary
-- useSoundList.hook.ts
-- installFakeDom
 - SpriteEditorLayout.tsx
+- useDeleteAccountDialog.hook.ts
 - wasm-document-core.test.ts
 - PixelForge Architecture Overview
-- useSoundsStore
-- WavePanel.tsx
+- installFakeDom
+- sound-assets.ts
 - quantize-downscale.fuzz.test.ts
 - pixel-core Capability
-- document.ts
 - workspace-build Capability
 - 0008 — Lossless canvas resize with a cut-strips undo entry
 - computeMascotSceneState
 - scripts
-- useDocumentPersistence.hook.ts
+- useCanvasInteraction.hook.ts
 - tokens/tsconfig.json
 - check-bench.ts
 - useSaveIndicator.hook.ts
-- src-ts/index.ts
 - useEditorUIStore
 - Zustand store (diagram node)
 - audio-engine.test.ts
 - D6: Flat Rust API, No Serde Decision
-- motion.ts
-- AuthForm.tsx
-- FakeWasmPixelCore
+- types/timeline.ts
+- persistence.ts
 - Granular selector golden rule
 - editor/package.json
-- BottomToolbar.tsx
-- LoginPage.tsx
 - mascot-city.ts
 - --pf-* CSS custom properties
 - /implementar command
 - D6: flat Rust API surface, u32 handles, no serde
+- auth.service.ts
 - zustand-agent definition
 - createEmptyBuffer
 - clean-pkg-gitignore.mjs
@@ -207,30 +197,31 @@
 - pnpm workspace packages config
 - Product principles (intent-first, equal AI/manual paths)
 - Sprite editor feature (Konva, AI gen)
-- sprite-pipeline.ts
-- mascot-font.ts
-- MOTION
+- useAnimateTab.hook.ts
+- LibrarySidebar.tsx
 - bindings.rs (diagram node, only wasm-bindgen boundary)
-- LeftSidebar.tsx
 - Phase 1: Flatten Buffer + IndexedDB Persistence
-- bench/flood-fill.bench.ts
+- tsKernels
+- useAssetsPanel.hook.ts
 - DocumentRepository port (load/save/remove)
-- ApiKeyField.tsx
+- LeftSidebar.tsx
 - ADR 0002: Single dispatch(cmd) seam; core owns the document
 - wasm-bindgen Copy-In/Copy-Out Mechanism
 - Phased Migration Approach (0-7)
 - colors.test.ts
 - Stage 6: Publishing to AWS (planned)
+- bench/flood-fill.bench.ts
+- ui.store.ts
 
 ## God Nodes (most connected - your core abstractions)
-1. `useSpriteEditorStore` - 96 edges
+1. `useSpriteEditorStore` - 97 edges
 2. `useSoundsStore` - 89 edges
 3. `createEmptyBuffer()` - 83 edges
-4. `FOCUS_RING` - 65 edges
-5. `MOTION` - 57 edges
+4. `FOCUS_RING` - 67 edges
+5. `MOTION` - 59 edges
 6. `Document` - 52 edges
-7. `putPixel()` - 40 edges
-8. `useEditorUIStore` - 40 edges
+7. `useEditorUIStore` - 46 edges
+8. `putPixel()` - 40 edges
 9. `WasmDocument` - 38 edges
 10. `dispatchCommandSwitch()` - 36 edges
 
@@ -239,12 +230,12 @@
   .claude/skills/architecture-decision/SKILL.md → AGENTS.md
 - `KernelRow` --references--> `tsKernels`  [EXTRACTED]
   apps/editor/src/lib/downscale.oracle-parity.test.ts → packages/core/src-ts/ts-core.ts
+- `KernelRow` --references--> `tsKernels`  [EXTRACTED]
+  apps/editor/src/lib/quantize.oracle-parity.test.ts → packages/core/src-ts/ts-core.ts
 - `Phase 7: Rust Document/History` --references--> `Owning Data in Wasm Memory vs Copying Out`  [EXTRACTED]
   openspec/changes/migrate-to-rust-core/tasks.md → packages/core/LEARNING.md
 - `Phase 4: packages/core Rust Scaffold` --references--> `Ownership & Borrowing (&[u8] vs Vec<u8>)`  [EXTRACTED]
   openspec/changes/migrate-to-rust-core/tasks.md → packages/core/LEARNING.md
-- `src-ts/ts-core.ts module` --conceptually_related_to--> `TsPixelCore (diagram node, DEFAULT)`  [INFERRED]
-  docs/architecture/code-map.md → docs/architecture.svg
 
 ## Import Cycles
 - 4-file cycle: `apps/editor/src/lib/core/core-config.ts -> apps/editor/src/lib/core/pixel-core.ts -> apps/editor/src/lib/core/ts-core.ts -> apps/editor/src/lib/core/kernels.ts -> apps/editor/src/lib/core/core-config.ts`
@@ -261,35 +252,35 @@
 - **Discovering the Real Wasm Boundary Performance Cost** — packages_core_learning_wasm_bindgen_copy_mechanism, packages_core_learning_scanline_rewrite_note, openspec_changes_migrate_to_rust_core_baseline_bench_phase5f_scanline_result [INFERRED 0.85]
 - **Granular Zustand selector convention enforced across agents** — _claude_agents_frontend_agent_zustand_granular_selectors, _claude_agents_clean_code_agent_zustand_granular_selectors, _claude_agents_zustand_agent_granular_selector_pattern, _claude_agents_rules_agent_core_rules [INFERRED 0.85]
 
-## Communities (210 total, 71 thin omitted)
+## Communities (201 total, 72 thin omitted)
 
 ### Community 0 - "document.rs"
 Cohesion: 0.06
 Nodes (73): HashMap, History, HistoryEntry, bounded_capacity(), clamp_rect_to_buffer(), decode_names(), Direction, dirty_and_evicted_of() (+65 more)
 
-### Community 1 - "auth.service.ts"
-Cohesion: 0.15
-Nodes (13): ACCOUNT_DELETED_NOTICE_AUTO_DISMISS_MS, DELETE_ACCOUNT_DEFAULT_ERROR_MESSAGE, DELETE_ACCOUNT_ERROR_CODE, DELETE_ACCOUNT_ERROR_MESSAGES, deleteAccount(), DeleteAccountEnvelope, GoogleUserMetadata, ProfileRow (+5 more)
+### Community 1 - "PropertiesTab.tsx"
+Cohesion: 0.11
+Nodes (21): CURSOR_POSITION_FALLBACK, SPRITE_EDITOR_VIEWPORT, CanvasOverlay(), useCanvasOverlay(), CollapsibleSection(), CollapsibleSectionProps, useCollapsibleSection(), ColorPicker (+13 more)
 
 ### Community 2 - "core/ts-core.ts"
-Cohesion: 0.06
-Nodes (66): SPRITE_EDITOR_HISTORY, unpackRgba(), DirtyRect, LayerRef, bytesOfFrame(), bytesOfSnapshot(), canRedo(), canUndo() (+58 more)
+Cohesion: 0.07
+Nodes (65): SPRITE_EDITOR_HISTORY, RenderPixelsToCanvasOptions, unpackRgba(), DirtyRect, LayerRef, bytesOfFrame(), bytesOfSnapshot(), canRedo() (+57 more)
 
-### Community 3 - "useTimelineClip.hook.ts"
-Cohesion: 0.10
-Nodes (33): SNAP_GRID_SECONDS, PLAYHEAD_LARGE_STEP_MULTIPLIER, formatSeconds(), getAssetKind(), soundDragSession, collectSnapEdges(), snapThresholdSeconds(), snapTime() (+25 more)
+### Community 3 - "sprite-pipeline.ts"
+Cohesion: 0.15
+Nodes (24): AI_SPRITE_DEFAULT_SIZE, SPRITE_ANIMATION, SPRITE_IMPORT_DEFAULT_FRAMES, base64ToNativePixels(), decodeGeneratedSprite(), asKernelView(), composeCentered(), contentBox() (+16 more)
 
-### Community 4 - "lib/index.ts"
-Cohesion: 0.13
-Nodes (25): getDrawOffset(), renderPixelsToCanvas(), RenderPixelsToCanvasOptions, screenToPixel(), snapshotStructural(), downloadCanvasAsPng(), exportFrameAsPng(), exportSpriteSheetAsPng() (+17 more)
+### Community 4 - "useTopBar.hook.ts"
+Cohesion: 0.43
+Nodes (7): SPRITE_DOCUMENT_DEFAULT_NAME, useTopBar(), useCanRedo(), useCanUndo(), useRedo(), useResetPanelSizes(), useUndo()
 
 ### Community 5 - "focus-ring.ts"
-Cohesion: 0.14
-Nodes (17): GoogleButtonProps, GoogleIcon(), DISABLED_STATE, FOCUS_RING, TONE_CLASSES, VariationCardProps, DescribeWithAISection(), ImportRow() (+9 more)
+Cohesion: 0.07
+Nodes (40): GoogleButtonProps, GoogleIcon(), DISABLED_STATE, FOCUS_RING, MOTION, TONE_CLASSES, VariationCard(), VariationCardProps (+32 more)
 
-### Community 6 - "constants/audio.ts"
+### Community 6 - "types/audio.ts"
 Cohesion: 0.06
-Nodes (45): ADSR_DEFAULTS, ADSR_LIMITS, ADSR_VIEW, ELEVENLABS_API_TIMEOUT, FILTER_DEFAULTS, FILTER_LIMITS, FILTER_TYPES, GENERATION_HISTORY_LIMIT (+37 more)
+Nodes (61): ADSR_DEFAULTS, ADSR_LIMITS, ADSR_VIEW, DEFAULT_VOLUME, ELEVENLABS_API_TIMEOUT, FILTER_DEFAULTS, FILTER_LIMITS, FILTER_TYPES (+53 more)
 
 ### Community 7 - "mod.rs"
 Cohesion: 0.08
@@ -299,49 +290,49 @@ Nodes (48): bounded_stack_handles_a_large_fully_connected_canvas_without_overflo
 Cohesion: 0.08
 Nodes (13): Box, DispatchResult, clone_buffer(), diff_rect(), downscale(), encode_dispatch_result(), extract_rect(), flood_fill() (+5 more)
 
-### Community 9 - "src/types/index.ts"
-Cohesion: 0.07
-Nodes (44): SPRITE_EDITOR_CANVAS, SPRITE_EDITOR_DEFAULTS, SPRITE_EDITOR_TIMELINE, rgbaToHex(), getDrawOffset(), GridOverlay(), GridOverlayProps, ColorPalette() (+36 more)
+### Community 9 - "useTimelineClip.hook.ts"
+Cohesion: 0.12
+Nodes (27): SNAP_GRID_SECONDS, soundDragSession, collectSnapEdges(), snapThresholdSeconds(), snapTime(), clipAriaLabel(), laneWidthPx(), snapClipMove() (+19 more)
 
 ### Community 10 - "sound-library.ts"
-Cohesion: 0.10
-Nodes (32): DEFAULT_DECAY_SHARE, MINI_WAVE, MINI_WAVE_BAR_COUNT, PLACEHOLDER_PEAKS, SEEK_STEP_S, TWEAK_PARAMS, TWEAK_RANGES, TWEAK_SLIDER (+24 more)
+Cohesion: 0.12
+Nodes (28): DEFAULT_DECAY_SHARE, MINI_WAVE, MINI_WAVE_BAR_COUNT, PLACEHOLDER_PEAKS, SEEK_STEP_S, TWEAK_PARAMS, TWEAK_RANGES, TWEAK_SLIDER (+20 more)
 
-### Community 11 - "useTimelinePlayback.hook.ts"
-Cohesion: 0.20
-Nodes (11): timelineDuration(), formatClock(), pad2(), TimelineEditor(), useTimelineEditor(), TimelineTopBar(), TimelineTransport(), TimelineTransportProps (+3 more)
+### Community 11 - "useEditorPrefsStore"
+Cohesion: 0.18
+Nodes (13): PREFS_STORAGE_KEY, useColorInputs(), UseColorInputsParams, useSaveColor(), useSetRetroDiffusionApiKey(), useEditorPrefsStore, createIntegrationsSlice(), IntegrationsSlice (+5 more)
 
 ### Community 12 - "index.tsx"
 Cohesion: 0.07
 Nodes (39): CtaSection(), FeatureCard(), FeaturesSection(), Footer(), HeroSection(), LegalDocument(), Navbar(), PipelineSection() (+31 more)
 
 ### Community 13 - "useCreateSound.hook.ts"
-Cohesion: 0.08
-Nodes (38): DEFAULT_SOUND_KIND, DUPLICATE_NAME_SUFFIX, ELEVENLABS_DEFAULT_VOICE_ID, IMPORT_ACCEPT, IMPORT_ALLOWED_EXTENSIONS, IMPORT_ALLOWED_MIME_TYPES, MODE_TO_TAG, MPEG_MIME_TYPE (+30 more)
+Cohesion: 0.09
+Nodes (35): DEFAULT_SOUND_KIND, DUPLICATE_NAME_SUFFIX, ELEVENLABS_DEFAULT_VOICE_ID, IMPORT_ACCEPT, IMPORT_ALLOWED_EXTENSIONS, IMPORT_ALLOWED_MIME_TYPES, MODE_TO_TAG, MPEG_MIME_TYPE (+27 more)
 
 ### Community 14 - "pixel-core.ts"
 Cohesion: 0.03
-Nodes (66): Command, DispatchResult, DocReplaceFrameInput, FrameId, LayerId, LayerMetaPatch, SerializedFrame, SerializedLayer (+58 more)
+Nodes (79): getPixelCoreEnvOverride(), Command, DispatchResult, FrameId, LayerId, LayerMetaPatch, ADR-0008, isPixelCoreImpl() (+71 more)
 
 ### Community 15 - "timeline-ops.ts"
 Cohesion: 0.07
-Nodes (46): DEFAULT_CLIP_GAIN_DB, DEFAULT_CLIP_SPEED, DEFAULT_PROJECT_NAME, DEFAULT_PX_PER_SECOND, DEFAULT_TRACK_ID_PREFIX, DEFAULT_TRACK_KINDS, DEFAULT_TRACK_NAMES, DEFAULT_TRACK_VOLUME (+38 more)
+Nodes (45): DEFAULT_CLIP_GAIN_DB, DEFAULT_CLIP_SPEED, DEFAULT_PROJECT_NAME, DEFAULT_PX_PER_SECOND, DEFAULT_TRACK_ID_PREFIX, DEFAULT_TRACK_KINDS, DEFAULT_TRACK_NAMES, DEFAULT_TRACK_VOLUME (+37 more)
 
 ### Community 16 - "devDependencies"
 Cohesion: 0.05
 Nodes (40): dependencies, lucide-react, next, @pixelforge/tokens, react, react-dom, devDependencies, babel-plugin-react-compiler (+32 more)
 
 ### Community 17 - "mascot-scene-state.ts"
-Cohesion: 0.10
-Nodes (33): AIR_BOLT_Y_OFFSET, CROUCH_HURTBOX_TOP_OFFSET_PX, DODGE_CLEARANCE_PX, DODGE_HOP_HEIGHT_PX, ENEMY_BOLT_OFFSCREEN_X, ENEMY_KNOCKBACK_PX, GROUND_BOLT_Y_OFFSET, GROUND_ENEMY (+25 more)
+Cohesion: 0.08
+Nodes (42): AIR_BOLT_Y_OFFSET, CROUCH_HURTBOX_TOP_OFFSET_PX, DODGE_CLEARANCE_PX, DODGE_HOP_HEIGHT_PX, ENEMY_BOLT_OFFSCREEN_X, ENEMY_KNOCKBACK_PX, GLYPH_FONT, GLYPH_SIZE (+34 more)
 
-### Community 18 - "useCanvasInteraction.hook.ts"
-Cohesion: 0.10
-Nodes (42): SPRITE_EDITOR_TOOLS, SPRITE_EDITOR_VIEWPORT, CanvasArea(), CanvasOverlay(), useCanvasOverlay(), bresenhamLine(), KonvaPointerEvent, useCanvasInteraction() (+34 more)
+### Community 18 - "useKeyboardShortcuts.hook.ts"
+Cohesion: 0.15
+Nodes (20): SPRITE_EDITOR_KEYBOARD, SPRITE_EDITOR_TOOLS, BottomToolbar(), useBottomToolbar(), ICON_MAP, ToolButton(), ToolButtonProps, useKeyboardShortcuts() (+12 more)
 
 ### Community 19 - "sound-timeline.slice.ts"
-Cohesion: 0.15
-Nodes (28): EMPTY_HISTORY, isSameSnapshot(), purgeAssetFromHistory(), pushHistory(), redoHistory(), TimelineHistory, undoHistory(), withoutAsset() (+20 more)
+Cohesion: 0.19
+Nodes (22): EMPTY_HISTORY, isSameSnapshot(), purgeAssetFromHistory(), pushHistory(), redoHistory(), TimelineHistory, undoHistory(), withoutAsset() (+14 more)
 
 ### Community 20 - "history.rs"
 Cohesion: 0.15
@@ -349,83 +340,79 @@ Nodes (25): bytes_of_frame(), bytes_of_snapshot(), DocSnapshotRecord, entry_byte
 
 ### Community 21 - "wasm-document-core.ts"
 Cohesion: 0.09
-Nodes (26): Command, DispatchResult, DocumentPayload, FrameId, LayerId, clampRectToCanvas(), concatLayerBytes(), createFallbackLayer() (+18 more)
+Nodes (27): Command, DispatchResult, DocMetaSnapshot, DocumentPayload, FrameId, LayerId, clampRectToCanvas(), concatLayerBytes() (+19 more)
 
-### Community 22 - "BottomPanel.tsx"
-Cohesion: 0.14
-Nodes (14): BottomPanel(), ICON_MAP, AssetFolderTree(), AssetGrid(), AssetGridProps, AssetsPanel(), AssetsPanelProps, AssetTile() (+6 more)
+### Community 22 - "AssetGrid.tsx"
+Cohesion: 0.26
+Nodes (8): AssetFolderTree(), AssetGrid(), AssetGridProps, AssetsPanel(), AssetsPanelProps, AssetTile(), AssetTileProps, AssetLibraryItem
 
 ### Community 23 - "constants/index.ts"
-Cohesion: 0.04
-Nodes (67): clampSize(), handler(), json(), NOTE: width/height are what was REQUESTED, which for an animation is the, RetroDiffusionApiResponse, stripDataUri(), ALPHA_TRANSPARENT_THRESHOLD, ANIMATE_CHARACTER_MOTIONS (+59 more)
+Cohesion: 0.05
+Nodes (54): clampSize(), handler(), json(), NOTE: width/height are what was REQUESTED, which for an animation is the, RetroDiffusionApiResponse, stripDataUri(), AI_QUALITY_SAMPLE_NATIVE_SIZE, AI_QUALITY_SAMPLE_SEED (+46 more)
 
-### Community 24 - "useAuthForm.hook.ts"
-Cohesion: 0.36
-Nodes (8): useResetPasswordPage(), AUTH_COPY, AUTH_DEFAULT_ERROR_MESSAGE, AUTH_ERROR_MESSAGES, RESET_PASSWORD_REDIRECT_DELAY_MS, EDITOR_ROUTES, mapAuthError(), authService
+### Community 24 - "types/timeline-view.ts"
+Cohesion: 0.18
+Nodes (13): TRACK_COLOR, TRACK_KIND_OPTIONS, AddTrackRow(), useAddTrackRow(), AudioAssetTag, ClipScheduleEntry, GainPoint, RulerTick (+5 more)
 
-### Community 25 - "pixel-parity.test.ts"
-Cohesion: 0.20
-Nodes (10): buf(), cases, here, maze(), ParityCase, pkgAvailable, readPixel(), rgba() (+2 more)
+### Community 25 - "ts-core.judgment-day-round2.test.ts"
+Cohesion: 0.05
+Nodes (58): packPoints(), packRgba(), RGBA_BYTE_SHIFT, SerializedFrame, SerializedLayer, History, frameToSerializedFrame(), layerToSerializedLayer() (+50 more)
 
-### Community 26 - "types/audio.ts"
-Cohesion: 0.13
-Nodes (25): AI_KIND_OPTIONS, TAG_TO_MODE, VARIATION_COUNT, VariationCard(), useVariationsPanel(), VariationsPanel(), VariationsPanelProps, NEXT_KEYS (+17 more)
+### Community 26 - "useVariationsPanel.hook.ts"
+Cohesion: 0.19
+Nodes (11): AI_KIND_OPTIONS, TAG_TO_MODE, VARIATION_COUNT, useVariationsPanel(), VariationsPanel(), VariationsPanelProps, NEXT_KEYS, PREVIOUS_KEYS (+3 more)
 
-### Community 27 - "useMixExport.hook.ts"
-Cohesion: 0.14
-Nodes (17): WAV_EXTENSION, MIX_EXPORT, SAVE_STATUS, TIMELINE_ERRORS, createAudioObjectUrl(), encodeWav(), floatToInt16(), MockAudioBuffer (+9 more)
+### Community 27 - "src/types/index.ts"
+Cohesion: 0.06
+Nodes (63): SPRITE_EDITOR_COLORS, SPRITE_EDITOR_DEFAULTS, SPRITE_EDITOR_TIMELINE, getDrawOffset(), renderPixelsToCanvas(), screenToPixel(), hexToHsv(), hsvToHex() (+55 more)
 
 ### Community 28 - "src-ts/ts-core.ts"
 Cohesion: 0.15
-Nodes (24): buildPalette(), diffRect(), dist2(), dominantColor(), downscale(), DownscaleBucket, extractRect(), fillSpanRow() (+16 more)
+Nodes (25): buildPalette(), diffRect(), dist2(), dominantColor(), downscale(), DownscaleBucket, extractRect(), fillSpanRow() (+17 more)
 
 ### Community 29 - "PixelForge IA (AGENTS.md overview)"
 Cohesion: 0.08
 Nodes (27): cleancode-agent definition, test-agent (referenced), cleancode-agent (invoked when done), frontend-agent definition, Reference to clean-code-agent.md, Reference to frontend-agent.md, Reference to AGENTS.md as single source of truth, Reference to AGENTS.md build pipeline (+19 more)
 
-### Community 30 - "clipEnd"
+### Community 30 - "src-ts/index.ts"
 Cohesion: 0.11
-Nodes (28): TIMELINE_TIPS, TIP_NOTICE_DURATION_MS, clamp(), clampFades(), clipEnd(), clipSourceSpan(), commitClip(), deleteClip() (+20 more)
+Nodes (16): AnimationFrame, DirtyRect, DocReplaceFrameInput, DocumentFramePayload, DocumentLayerPayload, FrameMeta, Layer, LayerMeta (+8 more)
 
 ### Community 31 - "useSoundDetailHeader.hook.ts"
-Cohesion: 0.23
-Nodes (16): NAME_VISIBLE_TAIL_LENGTH, buildUniqueName(), formatDuration(), getAssetKindLabel(), pad2(), releaseObjectUrl(), splitNameForTruncation(), clipUsageMessage() (+8 more)
+Cohesion: 0.10
+Nodes (29): WAV_EXTENSION, TIMELINE_ERRORS, audioBufferCache, createAudioObjectUrl(), encodeWav(), floatToInt16(), MockAudioBuffer, writeString() (+21 more)
 
 ### Community 32 - "downscale.rs"
 Cohesion: 0.16
 Nodes (21): FnMut, alpha_127_vs_128_falls_on_opposite_sides_of_the_fallback_core_threshold(), BucketStats, build(), cell_range(), cell_range_never_overflows_for_u32_range_inputs_even_on_a_simulated_32_bit_width(), does_not_vanish_a_uniformly_semi_transparent_image(), dominant_color() (+13 more)
 
-### Community 33 - "audio-engine.ts"
+### Community 34 - "SettingsPanel.tsx"
 Cohesion: 0.23
-Nodes (7): AudioEngine, buildSynthChain(), calculateDefaultDuration(), createWhiteNoiseBuffer(), mapFilterType(), msToSec(), getEngine()
-
-### Community 34 - "useDeleteAccountDialog.hook.ts"
-Cohesion: 0.36
-Nodes (6): getFocusable(), useDeleteAccountDialog(), UseDeleteAccountDialogProps, DELETE_ACCOUNT_CONFIRM_WORD, isDeleteAccountConfirmed(), mapDeleteAccountError()
+Nodes (8): ModalPortal(), ModalPortalProps, ApiKeyField(), ApiKeyFieldProps, useApiKeyField(), UseApiKeyFieldResult, SettingsPanel(), SettingsPanelProps
 
 ### Community 35 - "ColorPicker.tsx"
-Cohesion: 0.09
-Nodes (21): COLOR_PICKER, CollapsibleSection(), CollapsibleSectionProps, useCollapsibleSection(), ColorInputs(), ColorInputsProps, useColorInputs(), UseColorInputsParams (+13 more)
+Cohesion: 0.18
+Nodes (11): COLOR_PICKER, ColorInputs(), ColorInputsProps, HueSlider(), HueSliderProps, useHueSlider(), UseHueSliderParams, SaturationValueSquare() (+3 more)
 
 ### Community 36 - "scripts"
 Cohesion: 0.07
 Nodes (26): @changesets/cli, devDependencies, @changesets/cli, typescript, typescript, license, name, packageManager (+18 more)
 
 ### Community 37 - "mascot-scene.ts"
-Cohesion: 0.17
-Nodes (20): AIR_ENEMY, PARTICLE_BURST, PARTICLE_GRAVITY, PARTICLE_SPREAD_PX, PLATFORM, PLATFORM_Y, SQUASH_OFFSET_PX, SUBTITLE_BASELINE_Y (+12 more)
+Cohesion: 0.15
+Nodes (25): hexToRgba(), rgbaToString(), AIR_ENEMY, PARTICLE_BURST, PARTICLE_GRAVITY, PARTICLE_SPREAD_PX, PLATFORM, PLATFORM_Y (+17 more)
 
-### Community 38 - "persistence.ts"
-Cohesion: 0.14
-Nodes (12): DOCUMENT_AUTOSAVE_DEBOUNCE_MS, DOCUMENT_DB_NAME, DOCUMENT_DB_VERSION, DOCUMENT_SCHEMA_VERSION, DOCUMENT_STORE_NAME, LEGACY_SPRITE_EDITOR_STORAGE_KEY, LOCAL_DRAFT_DOCUMENT_ID, toStrokePoints (+4 more)
+### Community 38 - "AssetType"
+Cohesion: 0.15
+Nodes (16): ASSET_FOLDERS, ASSET_TYPES, QUALITY_RECOMMENDATION_BY_ASSET_TYPE, QUALITY_TIERS, AssetFolderTreeProps, AssetTypeSelector(), AssetTypeSelectorProps, ICON_MAP (+8 more)
 
 ### Community 39 - "timeline-shortcuts.ts"
-Cohesion: 0.12
-Nodes (23): ALT_KEY, ALT_KEY_LABEL, MAC_PLATFORM_PATTERN, MOD_KEY, MOD_KEY_LABEL, TIMELINE_SHORTCUTS, ALT_KEYS, isMacPlatform() (+15 more)
+Cohesion: 0.09
+Nodes (29): ALT_KEY, ALT_KEY_LABEL, MAC_PLATFORM_PATTERN, MOD_KEY, MOD_KEY_LABEL, TIMELINE_SHORTCUTS, ALT_KEYS, isMacPlatform() (+21 more)
 
-### Community 40 - "App.tsx"
-Cohesion: 0.27
-Nodes (7): App(), ResetPasswordPage(), EditorLayout(), useEditorLayout(), useAuthSession(), rootElement, SpriteEditorLayout()
+### Community 40 - "constants/timeline-view.ts"
+Cohesion: 0.12
+Nodes (28): CLIP_INSPECTOR, CLIP_WAVE, CLOCK_CENTISECONDS, FILES_DRAG_TYPE, PLAYHEAD_LARGE_STEP_MULTIPLIER, RULER_LABEL_MAX_DECIMALS, RULER_MAJOR_STEPS, RULER_MIN_MAJOR_SPACING_PX (+20 more)
 
 ### Community 41 - "compilerOptions"
 Cohesion: 0.09
@@ -443,33 +430,29 @@ Nodes (21): dependencies, colord, idb, konva, @pixelforge/core, react-dom, react
 Cohesion: 0.10
 Nodes (21): devDependencies, babel-plugin-react-compiler, fake-indexeddb, @tailwindcss/postcss, @types/node, @types/react, @types/react-dom, typescript (+13 more)
 
-### Community 45 - "usePositionFields.hook.ts"
-Cohesion: 0.43
-Nodes (5): CURSOR_POSITION_FALLBACK, PositionFields(), usePositionFields(), UsePositionFieldsReturn, useCursorPixel()
+### Community 45 - "useCanvasSizePopover.hook.ts"
+Cohesion: 0.38
+Nodes (5): ALPHA_TRANSPARENT_THRESHOLD, CANVAS_SIZE_OPTIONS, isCanvasBlank(), isLayerDataBlank(), ADR-0008
 
 ### Community 46 - "AnimateTab.tsx"
-Cohesion: 0.09
-Nodes (26): ASSET_FOLDERS, ASSET_TYPES, AssetFolderTreeProps, ICON_MAP, AiResultCard(), AiResultCardProps, AnimateTab(), capitalizeWords() (+18 more)
+Cohesion: 0.11
+Nodes (18): ASSET_LIBRARY_IMPORT_ACCEPT, AiResultCard(), AiResultCardProps, AnimateTab(), capitalizeWords(), CreateMethodToggle(), CreateMethodToggleProps, ICON_MAP (+10 more)
 
 ### Community 47 - "useSettingsPanel.hook.ts"
 Cohesion: 0.20
 Nodes (16): useSettingsPanel(), UseSettingsPanelResult, API_KEY_HELP_URL, API_KEY_PROVIDER, API_KEY_SAVED_FEEDBACK_MS, ElevenLabsError, generateMusic(), generateSFX() (+8 more)
 
-### Community 48 - "wasm-pixel-core-resolver.ts"
-Cohesion: 0.19
-Nodes (5): describeTrap(), ensureModuleLoading(), TrapSafePixelCore, tryResolveWasmPixelCore(), waitForWasmModule()
+### Community 48 - "useSoundsStore"
+Cohesion: 0.14
+Nodes (17): LIBRARY_FILTERS, NEW_SOUND_AUTOFOCUS, SOUND_NAME_MAX_LENGTH, VOLUME_RANGE, TRACK_KIND_ICON, useSoundEditorLayout(), LibraryFilters(), useLibraryFilters() (+9 more)
 
 ### Community 49 - "PixelKernels"
-Cohesion: 0.07
-Nodes (13): here, source, wasmPath, here, wasmPath, here, sourceCanvas, wasmPath (+5 more)
+Cohesion: 0.05
+Nodes (26): here, source, wasmPath, here, wasmPath, here, sourceCanvas, wasmPath (+18 more)
 
 ### Community 50 - "core/package.json"
 Cohesion: 0.10
 Nodes (19): devDependencies, @types/node, typescript, vitest, exports, @types/node, typescript, vitest (+11 more)
-
-### Community 51 - "useAuthStore"
-Cohesion: 0.42
-Nodes (6): isSupabaseConfigured(), getInitial(), useAccountMenu(), useAuthStore, createAuthSlice(), AuthStore
 
 ### Community 52 - "5-phase scale-up plan (limits, persistence, segments, windowed export, virtualization)"
 Cohesion: 0.12
@@ -479,25 +462,25 @@ Nodes (17): ADR 0006: DocumentRepository port + IndexedDB adapter, 5-phase scale
 Cohesion: 0.11
 Nodes (18): esnext, compilerOptions, allowJs, esModuleInterop, isolatedModules, jsx, lib, module (+10 more)
 
-### Community 54 - "ShortcutsPopover.tsx"
-Cohesion: 0.27
-Nodes (6): KeyChip(), KeyChipProps, ShortcutsPopover(), ShortcutsPopoverProps, TipBarProps, ToolButtonProps
+### Community 54 - "useQualitySamplePreview.hook.ts"
+Cohesion: 0.40
+Nodes (5): AI_QUALITY_SAMPLE_COPY_FEEDBACK_MS, AI_QUALITY_SAMPLE_PROMPT, QualitySamplePreviewProps, UseQualitySamplePreviewParams, QualityTierConfig
 
-### Community 55 - "types/timeline-view.ts"
-Cohesion: 0.09
-Nodes (28): GAIN_SMOOTHING_S, PLAYBACK_SCHEDULE_LEAD_S, TRACK_COLOR, TRACK_KIND_OPTIONS, dbToGain(), effectiveGain(), hasSoloTrack(), buildMixGraph() (+20 more)
+### Community 55 - "timeline-player.ts"
+Cohesion: 0.16
+Nodes (15): GAIN_SMOOTHING_S, MIX_EXPORT, PLAYBACK_SCHEDULE_LEAD_S, dbToGain(), effectiveGain(), hasSoloTrack(), buildMixGraph(), disposeMixGraph() (+7 more)
 
-### Community 56 - "ts-core.judgment-day-round2.test.ts"
-Cohesion: 0.07
-Nodes (55): packPoints(), packRgba(), RGBA_BYTE_SHIFT, frameToSerializedFrame(), layerToSerializedLayer(), CoreState, createCoreState(), currentActiveLayerId() (+47 more)
+### Community 56 - "clipEnd"
+Cohesion: 0.11
+Nodes (29): TIMELINE_TIPS, TIP_NOTICE_DURATION_MS, clamp(), clampFades(), clipEnd(), clipSourceSpan(), commitClip(), deleteClip() (+21 more)
 
 ### Community 57 - "tokens/package.json"
 Cohesion: 0.11
 Nodes (17): devDependencies, typescript, vitest, exports, ./colors, ./tokens.css, typescript, vitest (+9 more)
 
-### Community 58 - "sound-assets.ts"
-Cohesion: 0.11
-Nodes (24): FALLBACK_SOUND_NAME, LONG_DURATION_DECIMALS, LONG_DURATION_THRESHOLD_S, SECONDS_PER_HOUR, SECONDS_PER_MINUTE, TIME_DECIMALS, TWEAK_REGENERATE_DEBOUNCE_MS, VARIATION_SPREAD (+16 more)
+### Community 58 - "useSoundList.hook.ts"
+Cohesion: 0.08
+Nodes (35): DELETE_SOUND_KEYS, NAME_VISIBLE_TAIL_LENGTH, SOUND_KIND_LABELS, ADD_TO_TIMELINE_KEY, OPEN_SOUND_KEY, SAVE_STATUS, getAssetKind(), getAssetKindLabel() (+27 more)
 
 ### Community 59 - "WasmPixelCore (diagram node, behind flag)"
 Cohesion: 0.31
@@ -508,40 +491,36 @@ Cohesion: 0.12
 Nodes (15): compilerOptions, paths, plugins, target, exclude, extends, include, node_modules (+7 more)
 
 ### Community 61 - "useSpriteEditorStore.hook.ts"
-Cohesion: 0.12
-Nodes (51): SPRITE_DOCUMENT_DEFAULT_NAME, useTopBar(), useLayerPanel(), usePropertiesTab(), UsePropertiesTabReturn, getFrameAtClientX(), getFramesInViewportRange(), useTimelineBar() (+43 more)
+Cohesion: 0.14
+Nodes (42): useLeftSidebar(), useLayerPanel(), getFrameAtClientX(), getFramesInViewportRange(), useTimelineBar(), useAnimationPlayback(), useAddFrame(), useAddLayer() (+34 more)
 
 ### Community 62 - "delete-account/index.ts"
 Cohesion: 0.40
 Nodes (4): CORS_HEADERS, Envelope, fail(), respond()
 
-### Community 63 - "quantize.oracle-parity.test.ts"
+### Community 63 - "RgbaColor"
 Cohesion: 0.10
-Nodes (16): mockGetPixelCoreEnvOverride, coreEntryPath, coreRoot, KernelRow, kernelRows, pkgJsPath, require, wasmPath (+8 more)
+Nodes (25): QUANTIZE_DEFAULTS, rgbaToHex(), buildPalette(), Centroid, dist2(), nearest(), buildBuffer(), coreEntryPath (+17 more)
 
 ### Community 64 - "audio-storage.service.ts"
-Cohesion: 0.18
-Nodes (9): getSupabaseAnonKey(), getSupabaseUrl(), AUDIO_STORAGE_BUCKET, supabase, buildFilePath(), generateId(), StorageError, uploadAudio() (+1 more)
+Cohesion: 0.24
+Nodes (6): AUDIO_STORAGE_BUCKET, buildFilePath(), generateId(), StorageError, uploadAudio(), UploadResult
 
 ### Community 65 - "ElevenLabs AI sound generation"
 Cohesion: 0.15
 Nodes (14): ElevenLabs integration bugs (music endpoint, duration, TTS model, body buffering), Vercel Functions (server-side key proxy), AI Setup & Usage guide, ElevenLabs AI sound generation, Retro Diffusion sprite/animation generation, apps/editor/api/ai/ functions, Response streaming, apps/editor/api/ai Vercel Functions proxy (diagram node) (+6 more)
 
 ### Community 66 - "assets.store.ts"
-Cohesion: 0.12
-Nodes (26): ANIMATION_HISTORY_LIMIT, ANIMATION_HISTORY_STORAGE_KEY, ANIMATION_PIPELINE_VERSION, GENERATION_HISTORY_LIMIT, GENERATION_HISTORY_STORAGE_KEY, isNonEmptyString(), isPngDataUri(), isPositiveFiniteNumber() (+18 more)
+Cohesion: 0.08
+Nodes (35): ANIMATION_HISTORY_LIMIT, ANIMATION_HISTORY_STORAGE_KEY, ANIMATION_PIPELINE_VERSION, GENERATION_HISTORY_LIMIT, GENERATION_HISTORY_STORAGE_KEY, ASSET_LIBRARY_LIMIT, isNonEmptyString(), isPngDataUri() (+27 more)
 
-### Community 67 - "core.slice.real-trap.test.ts"
-Cohesion: 0.22
-Nodes (7): here, instances, pkgAvailable, pkgDir, ProbeWasmPixelCore, wasmJsPath, wasmPath
+### Community 67 - "index.test.ts"
+Cohesion: 0.08
+Nodes (21): timelineToDocumentPayload(), toStrokePoints, BLUE, GREEN, make2x2Buffer(), RED, setupWithSelection(), TRANSPARENT (+13 more)
 
 ### Community 68 - "useColorPicker.hook.ts"
 Cohesion: 0.29
 Nodes (11): useColorPalette(), ActiveColorType, hexToRgba(), rgbaToHex(), useColorPicker(), usePalette(), usePrimaryColor(), useRemoveColor() (+3 more)
-
-### Community 69 - "document-persistence.controller.ts"
-Cohesion: 0.18
-Nodes (13): DocumentPersistenceController, DocumentPersistenceDeps, DocumentPersistenceStoreApi, NOOP_CONTROLLER, emptyPayload(), fakeStorage, makeFakeStore(), mockResolveCoreImpl (+5 more)
 
 ### Community 70 - "Phase 7: Rust Document/History"
 Cohesion: 0.21
@@ -555,13 +534,9 @@ Nodes (13): Every Document Mutation Is Undoable (Phase 2c), Command Union Type, 
 Cohesion: 0.15
 Nodes (11): asLatin1, bytes, crateDir, finalBytes, here, offenders, relativeRustPaths, remapFlags (+3 more)
 
-### Community 73 - "wasm-core.ts"
-Cohesion: 0.18
-Nodes (15): isWasmRuntimeError(), resetLoadFailureLogForTests(), resetRuntimeTrapDemotionForTests(), resolveKernels(), here, pkgAvailable, wasmPath, withRuntimeTrapFallback() (+7 more)
-
-### Community 74 - "legacy-draft-migration.service.ts"
-Cohesion: 0.14
-Nodes (13): makeDoc(), startDocumentPersistence(), LegacyFrame, LegacyLayer, legacyLayerToPayload(), LegacyMigrationResult, LegacyPersistedState, legacyStateToPayload() (+5 more)
+### Community 73 - "resolve-core.ts"
+Cohesion: 0.26
+Nodes (11): isWasmRuntimeError(), resetLoadFailureLogForTests(), resetRuntimeTrapDemotionForTests(), resolveKernels(), here, pkgAvailable, wasmPath, withRuntimeTrapFallback() (+3 more)
 
 ### Community 75 - "2026-10-11 — Resizing a sprite without losing its layers"
 Cohesion: 0.18
@@ -571,21 +546,9 @@ Nodes (12): Deferred: scaling the sound editor to thousands of assets, AI notes 
 Cohesion: 0.21
 Nodes (12): Phase 5 Flood-Fill Bench Result (2.3-2.6x, Target 3x Not Met), Phase 5f Scanline Bench Result (Ratio Narrows, Absolute Faster), Phase 6 Quantize/Downscale Bench Result, Scanline Span-Fill Rewrite (Phase 5f), Flood-Fill Performance Requirement, Phase 5: Rust Flood-Fill, Flat Table Replaces Per-Cell HashMap, No Recursion in Flood-Fill (Stack Overflow Risk) (+4 more)
 
-### Community 77 - "color-utils.ts"
-Cohesion: 0.26
-Nodes (9): SPRITE_EDITOR_COLORS, hexToHsv(), hexToRgba(), hsvToHex(), getDrawOffset(), GridBackground(), GridBackgroundProps, renderCheckerboardToCanvas() (+1 more)
-
-### Community 78 - "constants/timeline-view.ts"
-Cohesion: 0.16
-Nodes (23): CLIP_INSPECTOR, CLIP_KEY_SHORTCUTS, CLIP_WAVE, CLOCK_CENTISECONDS, RULER_LABEL_MAX_DECIMALS, RULER_MAJOR_STEPS, RULER_MIN_MAJOR_SPACING_PX, RULER_MINOR_DIVISIONS (+15 more)
-
-### Community 79 - "core-config.ts"
-Cohesion: 0.23
-Nodes (10): getPixelCoreEnvOverride(), isPixelCoreImpl(), PIXEL_CORE_OVERRIDE_KEY, PixelCoreImpl, readEnvOverride(), readLocalStorageOverride(), resolveCoreImpl(), ensureWasmResolving() (+2 more)
-
-### Community 80 - "index.test.ts"
-Cohesion: 0.12
-Nodes (13): timelineToDocumentPayload(), BLUE, GREEN, make2x2Buffer(), RED, setupWithSelection(), TRANSPARENT, emptyPixels() (+5 more)
+### Community 79 - "TimelineBar.tsx"
+Cohesion: 0.43
+Nodes (4): FrameThumbnail, FrameThumbnailProps, getThumbnailBorderClass(), TimelineBar()
 
 ### Community 81 - "core/tsconfig.json"
 Cohesion: 0.18
@@ -599,17 +562,13 @@ Nodes (7): ElevenLabsMode, handler(), isValidMode(), json(), proxyToElevenLabs()
 Cohesion: 0.25
 Nodes (9): cargo-deny advisories/bans/licenses check, packages/core/pkg drift check, CI job: packages/core (Rust/Wasm), Wasm gzip size budget (<150KB), Rust/Wasm core migration boundary, VITE_PIXEL_CORE runtime flag, Hexagonal ports & adapters (PixelCore, DocumentRepository), Roadmap (Supabase, Phaser.js scene builder, AWS publish) (+1 more)
 
-### Community 84 - "useSoundList.hook.ts"
-Cohesion: 0.19
-Nodes (14): DELETE_SOUND_KEYS, SOUND_KIND_LABELS, ADD_TO_TIMELINE_KEY, OPEN_SOUND_KEY, filterAssets(), getRowAssetId(), isNavigationKey(), isTextEntry() (+6 more)
+### Community 84 - "SpriteEditorLayout.tsx"
+Cohesion: 0.18
+Nodes (13): Z_INDEX, BottomPanel(), ICON_MAP, ResizeHandle(), ResizeHandleProps, useResizeHandle(), SpriteEditorLayout(), AccountMenu() (+5 more)
 
-### Community 85 - "installFakeDom"
-Cohesion: 1.00
-Nodes (3): installFakeDom(), makeFakeCanvas(), makeFakeCanvasContext()
-
-### Community 86 - "SpriteEditorLayout.tsx"
-Cohesion: 0.14
-Nodes (17): DeleteAccountDialog(), DeleteAccountDialogProps, AccountDeletedNotice(), useAccountDeletedNotice(), ModalPortal(), ModalPortalProps, SettingsPanel(), SettingsPanelProps (+9 more)
+### Community 86 - "useDeleteAccountDialog.hook.ts"
+Cohesion: 0.16
+Nodes (16): DeleteAccountDialog(), DeleteAccountDialogProps, getFocusable(), useDeleteAccountDialog(), UseDeleteAccountDialogProps, AccountDeletedNotice(), useAccountDeletedNotice(), EditorLayout() (+8 more)
 
 ### Community 87 - "wasm-document-core.test.ts"
 Cohesion: 0.20
@@ -619,13 +578,13 @@ Nodes (8): DocSnapshot, setIdSeed(), baseDoc(), emptyBuffer(), freshDoc(), here,
 Cohesion: 0.19
 Nodes (13): ADR 0001: Flat pixel buffer, copy-on-write per batch, ADR 0003: Dirty-rect patches for undo history, ADR 0004: Rust/Wasm boundary shape, ADR 0005: pnpm monorepo split, ADR 0007: Local-first persistence model, The monorepo and Rust/WebAssembly migration, explained simply, Study guide: moving the editor from Next.js to Vite, Vercel monorepos (Root Directory, Ignored Build Step) (+5 more)
 
-### Community 89 - "useSoundsStore"
-Cohesion: 0.10
-Nodes (25): DEFAULT_VOLUME, LIBRARY_FILTERS, NEW_SOUND_AUTOFOCUS, SOUND_NAME_MAX_LENGTH, VOLUME_RANGE, TRACK_KIND_ICON, SoundEditorLayout(), useSoundEditorLayout() (+17 more)
+### Community 89 - "installFakeDom"
+Cohesion: 1.00
+Nodes (3): installFakeDom(), makeFakeCanvas(), makeFakeCanvasContext()
 
-### Community 90 - "WavePanel.tsx"
-Cohesion: 0.31
-Nodes (7): Transport(), useWaveform(), Waveform(), WaveformProps, useWavePanel(), WavePanel(), WavePanelProps
+### Community 90 - "sound-assets.ts"
+Cohesion: 0.12
+Nodes (23): FALLBACK_SOUND_NAME, LONG_DURATION_DECIMALS, LONG_DURATION_THRESHOLD_S, SECONDS_PER_HOUR, SECONDS_PER_MINUTE, TIME_DECIMALS, TWEAK_REGENERATE_DEBOUNCE_MS, VARIATION_SPREAD (+15 more)
 
 ### Community 91 - "quantize-downscale.fuzz.test.ts"
 Cohesion: 0.25
@@ -634,10 +593,6 @@ Nodes (7): DOWNSCALE_SEEDS, here, pkgAvailable, QUANTIZE_SEEDS, randInt(), rando
 ### Community 92 - "pixel-core Capability"
 Cohesion: 0.22
 Nodes (9): Phase 0 TS Baseline Benchmarks, Rust/Wasm Core Migration Intent, pixel-core Capability, Full Canvas Repaint Performance Requirement, Implementation-Agnostic Pixel Operations Requirement, Lossless Pixel Round-Trip Requirement, Judgment-Day Blind-Judge Review Process, Phase 6: Rust Quantize/Downscale (+1 more)
-
-### Community 93 - "document.ts"
-Cohesion: 0.30
-Nodes (7): emptyPayload(), fakeStorage, makeFakeStore(), PixelForgeDB, DocumentId, DocumentRepository, StoredDocument
 
 ### Community 94 - "workspace-build Capability"
 Cohesion: 0.22
@@ -648,16 +603,16 @@ Cohesion: 0.25
 Nodes (7): 0008 — Lossless canvas resize with a cut-strips undo entry, Consequences, Context, Decision, Options considered, Performance budget / acceptance, Prior art
 
 ### Community 96 - "computeMascotSceneState"
-Cohesion: 0.18
-Nodes (16): MascotScene(), useMascotScene(), UseMascotSceneResult, clamp01(), computeAirDodgeOffset(), computeBolt(), computeEnemy(), computeLevelWipeY() (+8 more)
+Cohesion: 0.16
+Nodes (17): MascotScene(), useMascotScene(), UseMascotSceneResult, MASCOT_SCENE_SIZE, clamp01(), computeAirDodgeOffset(), computeBolt(), computeEnemy() (+9 more)
 
 ### Community 97 - "scripts"
 Cohesion: 0.25
 Nodes (8): scripts, bench, build, dev, preview, test, test:watch, typecheck
 
-### Community 98 - "useDocumentPersistence.hook.ts"
-Cohesion: 0.24
-Nodes (9): useDocumentPersistence(), UseDocumentPersistenceResult, FlushFn, registerDocumentPersistenceFlush(), createInMemoryDocumentRepository(), createIndexedDbDocumentRepository(), ResolvedDocumentRepository, resolveDocumentRepository() (+1 more)
+### Community 98 - "useCanvasInteraction.hook.ts"
+Cohesion: 0.14
+Nodes (25): SPRITE_EDITOR_CANVAS, CanvasArea(), getDrawOffset(), GridOverlay(), GridOverlayProps, bresenhamLine(), KonvaPointerEvent, useCanvasInteraction() (+17 more)
 
 ### Community 99 - "tokens/tsconfig.json"
 Cohesion: 0.25
@@ -671,33 +626,29 @@ Nodes (7): Benchmark, BenchResults, findByPrefix(), Group, groupTitle(), main(),
 Cohesion: 0.39
 Nodes (6): SaveIndicator(), useSaveIndicator(), useIsPersistent(), useSaveError(), useSaveStatus(), SaveIndicator
 
-### Community 102 - "src-ts/index.ts"
-Cohesion: 0.11
-Nodes (17): AnimationFrame, DirtyRect, DocMetaSnapshot, DocReplaceFrameInput, DocumentFramePayload, DocumentLayerPayload, FrameMeta, Layer (+9 more)
-
 ### Community 103 - "useEditorUIStore"
 Cohesion: 0.10
-Nodes (37): BOTTOM_PANEL_TABS, CANVAS_MIN_SIZE, INSPECTOR_TABS, animationSheetCache, sheetsById, downloadFromHref(), downloadJson(), useBottomPanel() (+29 more)
+Nodes (39): BOTTOM_PANEL_TABS, CANVAS_MIN_SIZE, INSPECTOR_TABS, SPRITE_EDITOR_LAYOUT, useAssetLibraryPersistence(), createIndexedDbAssetLibraryRepository(), useBottomPanel(), useSpriteEditorLayout() (+31 more)
 
 ### Community 104 - "Zustand store (diagram node)"
 Cohesion: 0.25
 Nodes (9): D10: packages/tokens source-exported, no build step, packages/tokens, apps/landing (diagram node), DocumentRepository port (diagram node), Hooks layer (diagram node), packages/tokens (diagram node), Supabase project sync (diagram node, planned), UI layer (diagram node) (+1 more)
 
 ### Community 105 - "audio-engine.test.ts"
-Cohesion: 0.38
-Nodes (10): createMockAnalyserNode(), createMockAudioBuffer(), createMockBiquadFilterNode(), createMockBufferSourceNode(), createMockContextInstance(), createMockGainNode(), createMockOfflineInstance(), createMockOscillatorNode() (+2 more)
+Cohesion: 0.33
+Nodes (11): createMockAnalyserNode(), createMockAudioBuffer(), createMockBiquadFilterNode(), createMockBufferSourceNode(), createMockContextInstance(), createMockGainNode(), createMockOfflineInstance(), createMockOscillatorNode() (+3 more)
 
 ### Community 106 - "D6: Flat Rust API, No Serde Decision"
 Cohesion: 0.20
 Nodes (11): D5: Two Seams (PixelKernels/PixelCore) Decision, D6: Flat Rust API, No Serde Decision, D7: Wasm-Memory-Backed Views Decision, Rust Document Struct, PixelKernels Interface, Dirty-Pair Cache-Refresh Contract, Phase 4: packages/core Rust Scaffold, Hexagonal Split: Domain Module vs bindings.rs (+3 more)
 
-### Community 107 - "motion.ts"
-Cohesion: 0.17
-Nodes (11): TransportProps, TweakPanel(), TweakPanelProps, TweakSlider(), TweakSliderProps, TweakSliderVariant, VARIANT_CLASSES, InspectorSlider() (+3 more)
+### Community 107 - "types/timeline.ts"
+Cohesion: 0.16
+Nodes (20): CLIP_KEY_SHORTCUTS, resamplePeaks(), clipBarCount(), clipPeaks(), waveBars(), ClipWave(), ClipWaveProps, useClipWave() (+12 more)
 
-### Community 108 - "AuthForm.tsx"
-Cohesion: 0.20
-Nodes (10): AuthForm(), AuthFormProps, SUBMIT_LABEL, SUBMITTING_LABEL, useAuthForm(), AuthActions, AuthFormMode, AuthState (+2 more)
+### Community 108 - "persistence.ts"
+Cohesion: 0.06
+Nodes (58): ASSET_ANIMATIONS_STORE, ASSET_DB_NAME, ASSET_DB_VERSION, ASSET_GENERATIONS_STORE, DOCUMENT_AUTOSAVE_DEBOUNCE_MS, DOCUMENT_DB_NAME, DOCUMENT_DB_VERSION, DOCUMENT_SCHEMA_VERSION (+50 more)
 
 ### Community 110 - "Granular selector golden rule"
 Cohesion: 0.40
@@ -707,17 +658,9 @@ Nodes (5): Zustand granular selector check, Zustand granular selectors always, C
 Cohesion: 0.40
 Nodes (4): license, name, private, version
 
-### Community 112 - "BottomToolbar.tsx"
-Cohesion: 0.36
-Nodes (5): BottomToolbar(), ICON_MAP, ToolButton(), ToolButtonProps, ToolDefinition
-
-### Community 113 - "LoginPage.tsx"
-Cohesion: 0.23
-Nodes (9): GoogleButton(), HEADING, LoginPage(), SUBTEXT, useLoginPage(), getLandingUrl(), EDITOR_NAV_ITEMS, LANDING_ROUTES (+1 more)
-
 ### Community 114 - "mascot-city.ts"
-Cohesion: 0.19
-Nodes (15): computePlanePosition(), drawBuildingLayer(), drawBuildingWindows(), drawCityBackground(), drawGeometry(), drawPlane(), GEOMETRY_SHAPES, hashSeed() (+7 more)
+Cohesion: 0.21
+Nodes (14): computePlanePosition(), drawBuildingLayer(), drawBuildingWindows(), drawCityBackground(), drawGeometry(), drawPlane(), GEOMETRY_SHAPES, hashSeed() (+6 more)
 
 ### Community 115 - "--pf-* CSS custom properties"
 Cohesion: 0.67
@@ -731,57 +674,57 @@ Nodes (4): /implementar command, Reference to find-animation-opportunities skill
 Cohesion: 0.50
 Nodes (4): D6: flat Rust API surface, u32 handles, no serde, D6 elaboration: flat methods, u32 handles, rgba:u32, TsPixelCore adapter, WasmPixelCore adapter
 
+### Community 118 - "auth.service.ts"
+Cohesion: 0.06
+Nodes (48): App(), AuthForm(), AuthFormProps, SUBMIT_LABEL, SUBMITTING_LABEL, useAuthForm(), GoogleButton(), HEADING (+40 more)
+
 ### Community 119 - "zustand-agent definition"
 Cohesion: 0.67
 Nodes (3): Reference to zustand-agent.md, zustand-agent definition, zustand-agent reference
 
 ### Community 120 - "createEmptyBuffer"
 Cohesion: 0.07
-Nodes (59): TRANSPARENT_COLOR, makeFullBuffer(), px(), StrokeState, BucketStats, dominantColor(), downscalePixels(), downscaleTo() (+51 more)
+Nodes (59): TRANSPARENT_COLOR, makeFullBuffer(), DocReplaceFrameInput, makeDoc(), fakeFloodFill, makeDoc(), makeLayer(), StrokeState (+51 more)
 
 ### Community 151 - "mascot-sprite.ts"
-Cohesion: 0.12
-Nodes (17): MASCOT_ARMS, MASCOT_COLORS, MASCOT_LEGS, MASCOT_SPRITE_SIZE, drawBlaster(), drawMascot(), FillRectCall, BlasterBoltState (+9 more)
+Cohesion: 0.13
+Nodes (16): MASCOT_ARMS, MASCOT_COLORS, MASCOT_LEGS, MASCOT_SPRITE_SIZE, drawBlaster(), drawMascot(), FillRectCall, BlasterBoltState (+8 more)
 
 ### Community 165 - "vercel-functions-dev.ts"
 Cohesion: 0.32
 Nodes (5): Handler, METHODS_WITHOUT_BODY, readBody(), toWebRequest(), vercelFunctionsDev()
 
-### Community 197 - "sprite-pipeline.ts"
-Cohesion: 0.06
-Nodes (56): AI_SPRITE_DEFAULT_SIZE, AI_SPRITE_SIZES, QUANTIZE_DEFAULTS, RETRO_DIFFUSION_ANIMATION_STYLE_PREFIX, RETRO_DIFFUSION_ROUTE, SPRITE_ANIMATION, SPRITE_IMPORT_ACCEPT, SPRITE_IMPORT_DEFAULT_FRAMES (+48 more)
+### Community 197 - "useAnimateTab.hook.ts"
+Cohesion: 0.08
+Nodes (35): ANIMATE_DEFAULT_MOTION_ID, ANIMATE_MOTIONS_BY_ASSET_TYPE, RECENT_ASSETS_LIMIT, RETRO_DIFFUSION_ANIMATION_STYLE_PREFIX, RETRO_DIFFUSION_CHARACTER_ANIMATION_PROMPT(), RETRO_DIFFUSION_MOTION_REJECTED_HINT, RETRO_DIFFUSION_OBJECT_ANIMATION_PROMPT(), RETRO_DIFFUSION_ROUTE (+27 more)
 
-### Community 199 - "mascot-font.ts"
-Cohesion: 0.21
-Nodes (12): rgbaToString(), GLYPH_FONT, GLYPH_SIZE, GLYPH_SPACING, SUBTITLE_TEXT, TITLE_TEXT, drawGlyph(), drawGlyphGlow() (+4 more)
-
-### Community 200 - "MOTION"
-Cohesion: 0.15
-Nodes (13): MOTION, DeleteSoundDialog(), LibraryEmptyState(), LibraryEmptyStateProps, LibrarySidebar(), NewSoundPopover(), PendingSoundRow(), PendingSoundRowProps (+5 more)
+### Community 200 - "LibrarySidebar.tsx"
+Cohesion: 0.17
+Nodes (11): SoundEditorLayout(), DeleteSoundDialog(), LibraryEmptyState(), LibraryEmptyStateProps, LibrarySidebar(), useLibrarySidebar(), NewSoundPopover(), PendingSoundRow() (+3 more)
 
 ### Community 201 - "bindings.rs (diagram node, only wasm-bindgen boundary)"
 Cohesion: 0.22
 Nodes (9): D9: pkg/ committed, CI drift check, packages/core/src Rust modules, bindings.rs (diagram node, only wasm-bindgen boundary), document.rs (diagram node), downscale.rs (diagram node), flood_fill.rs (diagram node), history.rs (diagram node), pixels/mod.rs (diagram node) (+1 more)
 
-### Community 202 - "LeftSidebar.tsx"
-Cohesion: 0.18
-Nodes (10): LeftSidebar(), useLeftSidebar(), LayerItem(), LayerItemProps, useLayerItem(), UseLayerItemProps, LayerPanel(), DrawPanel() (+2 more)
-
 ### Community 203 - "Phase 1: Flatten Buffer + IndexedDB Persistence"
 Cohesion: 0.22
 Nodes (9): D12: Local-First Persistence ADR, D13: idb Library for IndexedDB, D1: Flat RGBA Buffer Decision, D2: Copy-on-Write Mutation Decision, D8: IndexedDB Persistence Decision, DocumentRepository Port, IndexedDbDocumentRepository Adapter, Local Draft Recovery Requirement (+1 more)
 
-### Community 205 - "bench/flood-fill.bench.ts"
-Cohesion: 0.22
-Nodes (4): here, mazePool, uniformPool, wasmPath
+### Community 205 - "tsKernels"
+Cohesion: 0.18
+Nodes (9): mockGetPixelCoreEnvOverride, coreEntryPath, coreRoot, KernelRow, kernelRows, pkgJsPath, require, wasmPath (+1 more)
+
+### Community 206 - "useAssetsPanel.hook.ts"
+Cohesion: 0.17
+Nodes (15): animationSheetCache, sheetsById, downloadFromHref(), downloadJson(), readFileAsDataUrl(), readImageDimensions(), readLibraryImageFile(), stripExtension() (+7 more)
 
 ### Community 207 - "DocumentRepository port (load/save/remove)"
 Cohesion: 0.29
 Nodes (7): DocumentRepository port (load/save/remove), D12: local-first, cloud sync deferred, document-persistence.controller.ts, indexeddb-document.repository.service.ts, DocumentRepository port, Local-first persistence, IndexedDB adapter (diagram node, DEFAULT)
 
-### Community 208 - "ApiKeyField.tsx"
-Cohesion: 0.47
-Nodes (4): ApiKeyField(), ApiKeyFieldProps, useApiKeyField(), UseApiKeyFieldResult
+### Community 208 - "LeftSidebar.tsx"
+Cohesion: 0.27
+Nodes (6): LeftSidebar(), LayerItem(), LayerItemProps, useLayerItem(), UseLayerItemProps, LayerPanel()
 
 ### Community 209 - "ADR 0002: Single dispatch(cmd) seam; core owns the document"
 Cohesion: 0.33
@@ -803,29 +746,37 @@ Nodes (3): COLORS, tokensCss, tokensCssPath
 Cohesion: 0.50
 Nodes (4): Stage 4: Assets (planned), Stage 5: Game building (planned), Stage 6: Publishing to AWS (planned), Stage 7: Operations (planned)
 
+### Community 215 - "bench/flood-fill.bench.ts"
+Cohesion: 0.22
+Nodes (4): here, mazePool, uniformPool, wasmPath
+
+### Community 218 - "ui.store.ts"
+Cohesion: 0.24
+Nodes (6): DEFAULT_ASSET_TYPE, DEFAULT_CREATE_METHOD, DEFAULT_QUALITY_TIER, RESIZABLE_PANELS, createUISlice(), EditorUIStore
+
 ## Ambiguous Edges - Review These
 - `src-ts/resolve-core.ts module` → `ADR 0004: Rust/Wasm boundary shape`  [AMBIGUOUS]
   docs/adr/0004-rust-wasm-boundary-shape.md · relation: references
 
 ## Knowledge Gaps
-- **662 isolated node(s):** `RETRO_DIFFUSION_STYLES`, `RETRO_DIFFUSION_COST_TABLE`, `RETRO_DIFFUSION_DEFAULT_STRENGTH`, `RETRO_DIFFUSION_ANIMATION_COST_USD`, `ANIMATE_CHARACTER_MOTIONS` (+657 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 873 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **71 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **664 isolated node(s):** `VALID_MODES`, `ElevenLabsMode`, `RequestBody`, `RetroDiffusionApiResponse`, `METHODS_WITHOUT_BODY` (+659 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 879 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **72 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **What is the exact relationship between `src-ts/resolve-core.ts module` and `ADR 0004: Rust/Wasm boundary shape`?**
   _Edge tagged AMBIGUOUS (relation: references) - confidence is low._
-- **Why does `FOCUS_RING` connect `focus-ring.ts` to `useTimelineClip.hook.ts`, `ColorPicker.tsx`, `sprite-pipeline.ts`, `constants/audio.ts`, `MOTION`, `LeftSidebar.tsx`, `motion.ts`, `AuthForm.tsx`, `constants/timeline-view.ts`, `AnimateTab.tsx`, `ApiKeyField.tsx`, `LoginPage.tsx`, `SpriteEditorLayout.tsx`, `ShortcutsPopover.tsx`, `BottomPanel.tsx`, `useSoundsStore`, `WavePanel.tsx`?**
-  _High betweenness centrality (0.038) - this node is a cross-community bridge._
-- **Why does `MOTION` connect `MOTION` to `ColorPicker.tsx`, `focus-ring.ts`, `sprite-pipeline.ts`, `LeftSidebar.tsx`, `motion.ts`, `AuthForm.tsx`, `constants/timeline-view.ts`, `AnimateTab.tsx`, `ApiKeyField.tsx`, `LoginPage.tsx`, `SpriteEditorLayout.tsx`, `ShortcutsPopover.tsx`, `BottomPanel.tsx`?**
-  _High betweenness centrality (0.026) - this node is a cross-community bridge._
-- **Why does `PixelKernels` connect `PixelKernels` to `src-ts/index.ts`, `wasm-core.ts`, `bench/flood-fill.bench.ts`, `core-config.ts`, `ts-core.judgment-day-round2.test.ts`, `pixel-parity.test.ts`, `quantize-downscale.fuzz.test.ts`, `src-ts/ts-core.ts`?**
-  _High betweenness centrality (0.018) - this node is a cross-community bridge._
-- **What connects `RETRO_DIFFUSION_STYLES`, `RETRO_DIFFUSION_COST_TABLE`, `RETRO_DIFFUSION_DEFAULT_STRENGTH` to the rest of the system?**
-  _662 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Why does `FOCUS_RING` connect `focus-ring.ts` to `PropertiesTab.tsx`, `SettingsPanel.tsx`, `ColorPicker.tsx`, `AssetType`, `LibrarySidebar.tsx`, `constants/timeline-view.ts`, `types/timeline.ts`, `AnimateTab.tsx`, `TimelineBar.tsx`, `useSoundsStore`, `LeftSidebar.tsx`, `SpriteEditorLayout.tsx`, `constants/index.ts`, `auth.service.ts`, `useDeleteAccountDialog.hook.ts`, `AssetGrid.tsx`, `useSoundList.hook.ts`, `useSoundDetailHeader.hook.ts`?**
+  _High betweenness centrality (0.034) - this node is a cross-community bridge._
+- **Why does `MOTION` connect `focus-ring.ts` to `SettingsPanel.tsx`, `ColorPicker.tsx`, `AssetType`, `LibrarySidebar.tsx`, `useTimelineClip.hook.ts`, `types/timeline.ts`, `AnimateTab.tsx`, `TimelineBar.tsx`, `LeftSidebar.tsx`, `SpriteEditorLayout.tsx`, `constants/index.ts`, `auth.service.ts`, `useDeleteAccountDialog.hook.ts`, `AssetGrid.tsx`, `useSoundList.hook.ts`, `useSoundDetailHeader.hook.ts`?**
+  _High betweenness centrality (0.031) - this node is a cross-community bridge._
+- **Why does `useSoundsStore` connect `useSoundsStore` to `useVariationsPanel.hook.ts`, `useSoundList.hook.ts`, `focus-ring.ts`, `types/audio.ts`, `clipEnd`, `LibrarySidebar.tsx`, `useTimelineClip.hook.ts`, `sound-library.ts`, `constants/timeline-view.ts`, `timeline-shortcuts.ts`, `useCreateSound.hook.ts`, `timeline-ops.ts`, `sound-timeline.slice.ts`, `types/timeline-view.ts`, `sound-assets.ts`, `useSoundDetailHeader.hook.ts`?**
+  _High betweenness centrality (0.023) - this node is a cross-community bridge._
+- **What connects `VALID_MODES`, `ElevenLabsMode`, `RequestBody` to the rest of the system?**
+  _664 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `document.rs` be split into smaller, more focused modules?**
   _Cohesion score 0.062291757207011446 - nodes in this community are weakly interconnected._
-- **Should `core/ts-core.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.06418219461697723 - nodes in this community are weakly interconnected._
+- **Should `PropertiesTab.tsx` be split into smaller, more focused modules?**
+  _Cohesion score 0.1053763440860215 - nodes in this community are weakly interconnected._
