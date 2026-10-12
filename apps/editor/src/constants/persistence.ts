@@ -31,6 +31,15 @@ export const SPRITE_EDITOR_STORAGE_KEY = 'sprite-editor-colors'
 export const AI_JOBS_STORAGE_KEY = 'sprite-editor-ai-jobs'
 
 /**
+ * Animation job ledger — localStorage (survives tab close), one entry per
+ * submitted PixelLab job. PixelLab cannot list jobs, so a lost id is a lost
+ * paid generation. Entries are tiny (no frames).
+ */
+export const ANIMATION_JOB_LEDGER_STORAGE_KEY = 'sprite-editor-animation-job-ledger'
+/** Settled entries (completed/recovered/failed) kept beyond this are pruned, oldest first. Unfinished ones never are. */
+export const ANIMATION_JOB_LEDGER_SETTLED_LIMIT = 50
+
+/**
  * Assets library (AI generations + animations). Its own IndexedDB database, not
  * a store inside `DOCUMENT_DB_NAME`: bumping that DB's version would block on
  * the document repository's open connection. Replaces the old localStorage

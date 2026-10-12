@@ -89,5 +89,20 @@ export const ANIMATION_DISCARD_LABEL = 'Discard'
 export const ANIMATION_DISCARD_HINT =
   'Discard stops tracking this job. PixelLab may still bill the generation.'
 
+/** "Unfinished jobs" section of the Animate tab (animation job ledger). */
+export const ANIMATION_UNFINISHED_TITLE = 'Unfinished jobs'
+export const ANIMATION_UNFINISHED_HINT =
+  'Submitted animations that never reached your Assets. Recover checks PixelLab once.'
+export const ANIMATION_RECOVER_LABEL = 'Recover'
+export const ANIMATION_RECOVERING_LABEL = 'Checking…'
+export const ANIMATION_RECOVER_DISCARDED_TAG = 'Discarded'
+export const ANIMATION_RECOVER_QUEUED_STATE = 'Still queued on PixelLab.'
+export const ANIMATION_RECOVER_PROCESSING_STATE = 'Still processing on PixelLab.'
+export const ANIMATION_RECOVER_UNREACHABLE_STATE = 'Could not reach PixelLab. Try again later.'
+export const ANIMATION_RECOVER_SUCCESS_NOTICE = 'Recovered and saved in Assets.'
+export const ANIMATION_RECOVER_FAILED_PREFIX = 'PixelLab reported this job as failed: '
+/** Submit time format of an unfinished job row. */
+export const ANIMATION_LEDGER_TIME_FORMAT: Intl.DateTimeFormatOptions = { dateStyle: 'short', timeStyle: 'short' }
+
 /** Elapsed-time formatting (m:ss) for the Generate button while a job runs. */
 export const ANIMATION_SECONDS_PER_MINUTE = 60

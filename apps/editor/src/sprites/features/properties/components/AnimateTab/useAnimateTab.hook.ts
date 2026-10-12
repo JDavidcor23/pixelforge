@@ -14,17 +14,14 @@ import {
 import { useEditorUIStore } from '@/stores/ui.store'
 import { useAssetsStore } from '@/stores/assets.store'
 import { useAIJobsStore } from '@/stores/ai-jobs.store'
+import { useAnimationJobLedgerStore } from '@/stores/animation-job-ledger.store'
+import { useFinishAnimation } from './useFinishAnimation.hook'
 import { ANIMATION_HARNESS, buildAnimationAction, findAnimationMotion } from '@/lib/animation-harness'
+import { findLedgerEntry, isLedgerEntrySaved } from '@/lib/animation-job-ledger'
 import { allowedFrameCounts, getAnimationFrameCountError, getAnimationSizeError } from '@/lib/animation-limits'
 import { formatAnimationProgressHint, pollAnimationJob } from '@/lib/animation-polling'
-import { isCanvasBlank } from '@/lib/canvas-blank'
 import { AnimationProviderError, resolveAnimationProvider } from '@/services/animation-provider.service'
-import {
-  ANIMATION_PIPELINE_VERSION,
-  MS_PER_SECOND,
-  RECENT_ASSETS_LIMIT,
-  SPRITE_ANIMATION,
-} from '@/constants'
+import { MS_PER_SECOND, RECENT_ASSETS_LIMIT } from '@/constants'
 import {
   ANIMATION_ALREADY_RUNNING_ERROR,
   ANIMATION_ELAPSED_TICK_MS,
@@ -41,7 +38,6 @@ import {
   ANIMATION_STALLED_NETWORK_MESSAGE,
 } from '@/constants/animation'
 import type {
-  AIAnimation,
   AnimateResult,
   AnimationActiveJobState,
   AnimationErrorCode,
@@ -145,14 +141,19 @@ const exportCanvasReference = async (): Promise<string> => {
  * Animate tab (ADR 0009). Talks to an `AnimationProvider` (port), never to a
  * vendor: submit returns a job id, then the job is polled until it finishes.
  * The pending job lives in `useAIJobsStore` (sessionStorage), so switching
- * tabs or reloading resumes polling instead of losing a paid generation. One
- * job at a time: the free tier allows a single concurrent job.
+ * tabs or reloading resumes polling instead of losing a paid generation. Every
+ * job id is ALSO written to the durable ledger (`useAnimationJobLedgerStore`,
+ * localStorage) right after submit, so it survives a tab close and can be
+ * recovered from "Unfinished jobs". One job at a time: the free tier allows a
+ * single concurrent job.
  */
 export const useAnimateTab = (): UseAnimateTabReturn => {
   const { applyAnimation } = useApplyAsset()
   const canvasSize = useCanvasDimensions()
   const pixelLabApiKey = usePixelLabApiKey()
-  const addAnimation = useAssetsStore((s) => s.addAnimation)
+  const presentAnimation = useFinishAnimation()
+  const recordLedgerEntry = useAnimationJobLedgerStore((s) => s.record)
+  const updateLedger = useAnimationJobLedgerStore((s) => s.update)
   const animations = useAssetsStore((s) => s.animations)
   const removeAnimation = useAssetsStore((s) => s.removeAnimation)
   const setBottomPanelTab = useSetBottomPanelTab()
@@ -225,30 +226,13 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
 
   const finishAnimation = useCallback(
     async (pending: PendingAnimationJob, frames: readonly string[]) => {
-      // Frames arrive as PNG data URIs at the canvas size — stored as-is.
-      const newAnimation: AIAnimation = {
-        pipelineVersion: ANIMATION_PIPELINE_VERSION,
-        id: crypto.randomUUID(),
-        label: pending.label,
-        frames,
-        frameDurationMs: SPRITE_ANIMATION.DEFAULT_FRAME_DURATION_MS,
-        timestamp: Date.now(),
-        assetType: pending.assetType,
-      }
-      addAnimation(newAnimation)
-
-      const canApplyAutomatically = isCanvasBlank(useSpriteEditorStore.getState().timeline.frames)
-      if (canApplyAutomatically) {
-        await applyAnimation({ frames: newAnimation.frames, frameDurationMs: newAnimation.frameDurationMs })
-      }
-      setResult({
-        frames: newAnimation.frames,
-        frameDurationMs: newAnimation.frameDurationMs,
-        label: newAnimation.label,
-        autoApplied: canApplyAutomatically,
-      })
+      // A Recover may already have saved this job — never add it to Assets twice.
+      if (isLedgerEntrySaved(findLedgerEntry(useAnimationJobLedgerStore.getState().entries, pending.jobId))) return
+      await presentAnimation(pending, frames, (animationId) =>
+        updateLedger(pending.jobId, { status: 'completed', animationId, error: null }),
+      )
     },
-    [addAnimation, applyAnimation, setResult],
+    [presentAnimation, updateLedger],
   )
 
   /**
@@ -277,9 +261,12 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
             await finishAnimation(pending, outcome.frames)
             settleAnimate()
             return
-          case 'failed':
-            settleAnimate({ error: outcome.error ?? ANIMATION_GENERIC_ERROR, errorCode: null })
+          case 'failed': {
+            const error = outcome.error ?? ANIMATION_GENERIC_ERROR
+            updateLedger(pending.jobId, { status: 'failed', error })
+            settleAnimate({ error, errorCode: null })
             return
+          }
           case 'stalled':
             stallAnimate(outcome.reason)
             return
@@ -293,7 +280,7 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
         settleAnimate({ error: errorMessage(error), errorCode: errorCode(error) })
       }
     },
-    [provider, finishAnimation, setAnimateJob, settleAnimate, stallAnimate],
+    [provider, finishAnimation, setAnimateJob, settleAnimate, stallAnimate, updateLedger],
   )
 
   // Resume: after a reload the pending job is back from sessionStorage but no
@@ -318,7 +305,12 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
     if (resumed) void pollUntilDone(resumed)
   }, [resumeAnimate, pollUntilDone])
 
-  const handleDiscardJob = useCallback(() => discardAnimatePending(), [discardAnimatePending])
+  // Discard keeps the ledger entry (`discarded`, not deleted): the paid job can still be recovered later.
+  const handleDiscardJob = useCallback(() => {
+    const discarded = useAIJobsStore.getState().animatePending
+    if (discarded) updateLedger(discarded.jobId, { status: 'discarded' })
+    discardAnimatePending()
+  }, [discardAnimatePending, updateLedger])
 
   const isStalled = stall !== null
   const stalledMessage =
@@ -375,12 +367,31 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
         driftThreshold: motion.driftThreshold,
       })
       const pending: PendingAnimationJob = { jobId, startedAt: Date.now(), label: motion.label, assetType }
+      // Durable FIRST (localStorage, synchronous): the paid job id must outlive a tab close before any poll.
+      recordLedgerEntry({
+        jobId,
+        submittedAt: pending.startedAt,
+        label: pending.label,
+        assetType,
+        frameCount: nFrames,
+        canvasSize: { width: canvasWidth, height: canvasHeight },
+      })
       setAnimatePending(pending)
       await pollUntilDone(pending)
     } catch (error) {
       setAnimateJob({ isRunning: false, error: errorMessage(error), errorCode: errorCode(error) })
     }
-  }, [motion, customText, assetType, nFrames, provider, pollUntilDone, setAnimateJob, setAnimatePending])
+  }, [
+    motion,
+    customText,
+    assetType,
+    nFrames,
+    provider,
+    pollUntilDone,
+    setAnimateJob,
+    setAnimatePending,
+    recordLedgerEntry,
+  ])
 
   const handleUseResult = useCallback(async () => {
     if (!result) return

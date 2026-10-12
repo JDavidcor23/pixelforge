@@ -2,7 +2,9 @@ import { Film, X } from 'lucide-react'
 
 import { AiResultCard } from '../AiResultCard/AiResultCard'
 import { AssetTypeSelector } from '../CreateTab/AssetTypeSelector'
+import { UnfinishedJobs } from './UnfinishedJobs'
 import { useAnimateTab } from './useAnimateTab.hook'
+import { SECONDARY_BUTTON, SECTION_LABEL } from './animate-tab.classes'
 import { ANIMATE_CUSTOM_MOTION_PLACEHOLDER } from '@/constants'
 import {
   ANIMATION_BUSY_MESSAGE,
@@ -14,9 +16,6 @@ import { FOCUS_RING } from '@/constants/focus-ring'
 import { MOTION } from '@/constants/motion'
 
 const FIELD = 'w-full rounded border border-line bg-sunken px-2 py-1.5 text-xs text-ink outline-none focus:border-accent'
-const SECTION_LABEL = 'font-mono text-3xs uppercase tracking-wider text-subtle'
-/** Same secondary button as AiResultCard. */
-const SECONDARY_BUTTON = `flex h-8 shrink-0 items-center justify-center rounded border border-line-strong px-3 text-xs text-muted hover:text-ink ${MOTION.PRESS} ${FOCUS_RING.SURFACE}`
 
 export const AnimateTab = () => {
   const {
@@ -191,6 +190,8 @@ export const AnimateTab = () => {
       </button>
 
       {isGenerating && <p className="text-center text-2xs text-subtle">{progressHint}</p>}
+
+      <UnfinishedJobs />
 
       {result && (
         <AiResultCard

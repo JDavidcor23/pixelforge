@@ -33,8 +33,15 @@ describe('persisted store keys', () => {
     const { useEditorPrefsStore } = await import('./prefs.store')
     const { useEditorUIStore } = await import('./ui.store')
     const { useAIJobsStore } = await import('./ai-jobs.store')
+    const { useAnimationJobLedgerStore } = await import('./animation-job-ledger.store')
 
-    const names = [useSpriteEditorStore, useEditorPrefsStore, useEditorUIStore, useAIJobsStore].map(
+    const names = [
+      useSpriteEditorStore,
+      useEditorPrefsStore,
+      useEditorUIStore,
+      useAIJobsStore,
+      useAnimationJobLedgerStore,
+    ].map(
       (store) => store.persist.getOptions().name,
     )
     expect(new Set(names).size).toBe(names.length)

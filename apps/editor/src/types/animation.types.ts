@@ -166,3 +166,66 @@ export interface PendingAnimationJob {
   readonly label: string
   readonly assetType: AssetType
 }
+
+// ── Animation job ledger (durable, survives tab close) ──────────────────────
+
+/**
+ * Lifecycle of a submitted animation job in the ledger. Entries are never
+ * deleted while unfinished: PixelLab has no "list my jobs" endpoint, so the
+ * ledger is the only place a paid job id lives once the tab closes.
+ * - `pending`   — submitted, no terminal answer collected yet
+ * - `completed` — the normal polling loop saved its frames to Assets
+ * - `recovered` — a later Recover (manual or on app load) saved its frames
+ * - `failed`    — PixelLab reported the job as failed
+ * - `discarded` — the user stopped tracking it; still recoverable
+ */
+export type AnimationJobLedgerStatus = 'pending' | 'completed' | 'failed' | 'recovered' | 'discarded'
+
+export interface AnimationJobLedgerEntry {
+  readonly jobId: string
+  /** `Date.now()` right after `provider.submit` returned. */
+  readonly submittedAt: number
+  readonly label: string
+  readonly assetType: AssetType
+  /** Null for jobs migrated from the pre-ledger sessionStorage pending job. */
+  readonly frameCount: number | null
+  readonly canvasSize: { readonly width: number; readonly height: number } | null
+  readonly status: AnimationJobLedgerStatus
+  /** Assets library id of the saved animation, once completed/recovered. */
+  readonly animationId: string | null
+  /** Upstream failure reason (`failed`). */
+  readonly error: string | null
+  /** PixelLab's state at the last Recover check that found the job still running. */
+  readonly lastState: AnimationActiveJobState | null
+  /** `Date.now()` of the last Recover check, or null if never checked. */
+  readonly lastCheckedAt: number | null
+  /** True when the last Recover check could not reach PixelLab. */
+  readonly lastCheckUnreachable: boolean
+}
+
+/** One row of the Animate tab's "Unfinished jobs" list, ready to render. */
+export interface UnfinishedAnimationJobItem {
+  readonly jobId: string
+  readonly label: string
+  /** Localized submit time. */
+  readonly submittedLabel: string
+  readonly isDiscarded: boolean
+  /** Result of the last Recover check (still queued/processing, unreachable), or null. */
+  readonly stateMessage: string | null
+  readonly isRecovering: boolean
+}
+
+/** Feedback of the last manual Recover that settled a job (the row itself leaves the list). */
+export interface AnimationRecoverNotice {
+  readonly tone: 'success' | 'failed'
+  readonly message: string
+}
+
+/** What one Recover attempt of a ledger entry found. */
+export type AnimationRecoverOutcome =
+  | { readonly kind: 'recovered'; readonly animationId: string }
+  | { readonly kind: 'running'; readonly state: AnimationActiveJobState }
+  | { readonly kind: 'failed'; readonly error: string }
+  | { readonly kind: 'unreachable' }
+  /** Already settled, or another check of the same job is in flight. */
+  | { readonly kind: 'skipped' }
