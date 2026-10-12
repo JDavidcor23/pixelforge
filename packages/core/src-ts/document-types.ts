@@ -136,6 +136,7 @@ export type Command =
       readonly frameDurationMs: number
       readonly label: string
     }
+  | { readonly type: 'doc.resize'; readonly canvasWidth: number; readonly canvasHeight: number; readonly label: string }
   | { readonly type: 'undo' }
   | { readonly type: 'redo' }
   | { readonly type: 'layer.add' }

@@ -167,6 +167,22 @@ describe.runIf(pkgAvailable)('WasmPixelCore', () => {
     expect(core.snapshot().canvasWidth).toBe(2)
   })
 
+  it('doc.resize (ADR 0008): resizes losslessly once pkg/ exports doc_resize, otherwise throws a clear, actionable error instead of a raw TypeError', () => {
+    const core = new WasmPixelCore(mod, freshDoc(4, 4))
+    const cmd = { type: 'doc.resize', canvasWidth: 2, canvasHeight: 2, label: 'Resize canvas' } as const
+    const wasmHasResize = typeof mod.WasmDocument?.prototype?.doc_resize === 'function'
+
+    if (wasmHasResize) {
+      const r = core.dispatch(cmd)
+      expect(r.changed).toBe(true)
+      expect(core.snapshot().canvasWidth).toBe(2)
+      core.undo()
+      expect(core.snapshot().canvasWidth).toBe(4)
+    } else {
+      expect(() => core.dispatch(cmd)).toThrow(/doc_resize/)
+    }
+  })
+
   it('frame.paste inserts fresh frames with fresh ids, never aliasing the caller id', () => {
     const core = new WasmPixelCore(mod, freshDoc(2, 2))
     const r = core.dispatch({

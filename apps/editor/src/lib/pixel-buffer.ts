@@ -180,6 +180,25 @@ export function writeRect(buffer: PixelBuffer, rect: Rect, patch: Uint8Array): P
 }
 
 /**
+ * Crops or pads `buffer` to `newWidth`×`newHeight`, anchored at the
+ * top-left corner: content that falls outside the new bounds is cropped
+ * away, and any newly added area is fully transparent. Never re-samples or
+ * scales pixel content — only changes how much of it is kept. Used by the
+ * canvas-size control (Sprite Studio v2 batch 4).
+ */
+export function resizeBuffer(buffer: PixelBuffer, newWidth: number, newHeight: number): PixelBuffer {
+  const next = createEmptyBuffer(newWidth, newHeight)
+  const copyWidth = Math.min(buffer.w, newWidth)
+  const copyHeight = Math.min(buffer.h, newHeight)
+  for (let y = 0; y < copyHeight; y++) {
+    const srcStart = y * buffer.w * CHANNELS
+    const destStart = y * newWidth * CHANNELS
+    next.data.set(buffer.data.subarray(srcStart, srcStart + copyWidth * CHANNELS), destStart)
+  }
+  return next
+}
+
+/**
  * True iff two same-length byte arrays hold identical values. Works across
  * `Uint8Array`/`Uint8ClampedArray` interchangeably (same element type, just a
  * different write-clamp behavior) — used to detect a true no-op write (e.g.

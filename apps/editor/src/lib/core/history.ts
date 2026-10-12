@@ -52,6 +52,19 @@ export interface StructuralDocSnapshot {
   readonly timeline: Timeline
 }
 
+/**
+ * One cut strip retained by a `doc.resize` entry (ADR 0008) — only the
+ * pixels a shrink actually removed, addressed by stable `(frameId,
+ * layerId)` and a rect in the OLD (`from`) coordinate space. Mirrors
+ * `history.rs`'s `ResizeStrip`.
+ */
+export interface ResizeStrip {
+  readonly frameId: string
+  readonly layerId: string
+  readonly rect: Rect
+  readonly bytes: Uint8Array
+}
+
 export interface LayerMetaSnapshot {
   readonly name: string
   readonly visible: boolean
@@ -122,6 +135,22 @@ export type HistoryEntry =
       readonly before: StructuralDocSnapshot
       readonly after: StructuralDocSnapshot
     }
+  | {
+      /**
+       * ADR 0008: a lossless canvas resize. Every layer is mutated IN PLACE
+       * (same frame/layer ids — unlike `doc.replace`), so this entry stores
+       * only the before/after SIZE plus the strips a shrink cut away, never
+       * a full document snapshot. Growing a canvas produces `strips: []`
+       * (0 bytes toward the undo budget).
+       */
+      readonly kind: 'doc.resize'
+      readonly label: string
+      readonly fromWidth: number
+      readonly fromHeight: number
+      readonly toWidth: number
+      readonly toHeight: number
+      readonly strips: readonly ResizeStrip[]
+    }
 
 export interface History {
   readonly entries: readonly HistoryEntry[]
@@ -179,6 +208,8 @@ export function entryBytes(entry: HistoryEntry): number {
     case 'layer.meta':
     case 'layer.reorder':
       return 0
+    case 'doc.resize':
+      return entry.strips.reduce((sum, s) => sum + s.bytes.byteLength, 0)
     default: {
       const _exhaustive: never = entry
       return 0

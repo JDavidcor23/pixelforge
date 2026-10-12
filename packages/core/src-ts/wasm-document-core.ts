@@ -566,6 +566,20 @@ export class WasmPixelCore implements PixelCore {
         void meta
         return this.decode(this.doc.doc_replace(cmd.canvasWidth, cmd.canvasHeight, frameCount, cmd.frameDurationMs, pixels, cmd.label))
       }
+      case 'doc.resize': {
+        // ADR 0008: `doc_resize` is wired into `WasmDocument` (`../src/
+        // bindings.rs`), but the committed `pkg/` build this file's TYPE
+        // (`WasmDocumentHandle`) is generated from predates it — the method
+        // only exists at RUNTIME once `pnpm run build:wasm` regenerates
+        // `pkg/`. Feature-detected here (never assumed from the stale type)
+        // so a Wasm-backed session gets a clear, actionable error instead of
+        // a `TypeError: doc.doc_resize is not a function` crash.
+        const withResize = this.doc as unknown as { doc_resize?: (canvasW: number, canvasH: number, label: string) => Uint32Array }
+        if (typeof withResize.doc_resize !== 'function') {
+          throw new Error('WasmPixelCore.dispatch: "doc.resize" needs a rebuilt @pixelforge/core Wasm package (doc_resize binding missing from pkg/) — run "pnpm run build:wasm" in packages/core.')
+        }
+        return this.decode(withResize.doc_resize(cmd.canvasWidth, cmd.canvasHeight, cmd.label))
+      }
       case 'frame.paste': {
         // Fix-agent 7g (item 3): a fractional `at` (e.g. `1.5`) used to
         // truncate silently at the wasm-bindgen `u32` boundary — unlike

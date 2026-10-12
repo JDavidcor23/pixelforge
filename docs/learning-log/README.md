@@ -10,3 +10,4 @@ Template: `.claude/skills/architecture-decision/assets/learning-log-template.md`
 | Date | Entry | Status |
 |---|---|---|
 | 2026-10-11 | [Scaling the sound editor to thousands of assets](2026-10-11-scalable-audio-assets.md) | deferred — see `docs/ai-notes/deferred-audio-asset-scalability.md` |
+| 2026-10-11 | [Resizing a sprite without losing its layers](2026-10-11-lossless-canvas-resize.md) | shipped — ADR 0008 |

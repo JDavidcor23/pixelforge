@@ -12,6 +12,7 @@ import {
   diffRect,
   extractRect,
   writeRect,
+  resizeBuffer,
 } from './pixel-buffer'
 
 // Characterization tests — phase 1 flat-buffer version. Same OBSERVABLE pixel
@@ -213,5 +214,62 @@ describe('isInBounds', () => {
     expect(isInBounds(buf, 3, 0)).toBe(false) // x === width is out
     expect(isInBounds(buf, 0, 2)).toBe(false) // y === height is out
     expect(isInBounds(buf, -1, 0)).toBe(false)
+  })
+})
+
+describe('resizeBuffer', () => {
+  it('pads a smaller buffer into a larger one, anchored top-left, filling new area with transparent pixels', () => {
+    const buf = createEmptyBuffer(2, 2)
+    putPixel(buf, 0, 0, RED)
+    putPixel(buf, 1, 1, GREEN)
+
+    const result = resizeBuffer(buf, 4, 3)
+
+    expect(result.w).toBe(4)
+    expect(result.h).toBe(3)
+    expect(getPixel(result, 0, 0)).toEqual(RED)
+    expect(getPixel(result, 1, 1)).toEqual(GREEN)
+    expect(getPixel(result, 3, 2)).toEqual(TRANSPARENT)
+    expect(getPixel(result, 2, 0)).toEqual(TRANSPARENT)
+  })
+
+  it('crops a larger buffer into a smaller one, anchored top-left, discarding anything outside the new bounds', () => {
+    const buf = createEmptyBuffer(4, 4)
+    putPixel(buf, 0, 0, RED)
+    putPixel(buf, 1, 1, GREEN)
+    putPixel(buf, 3, 3, RED) // outside the new 2x2 bounds — must be dropped
+
+    const result = resizeBuffer(buf, 2, 2)
+
+    expect(result.w).toBe(2)
+    expect(result.h).toBe(2)
+    expect(getPixel(result, 0, 0)).toEqual(RED)
+    expect(getPixel(result, 1, 1)).toEqual(GREEN)
+    expect(result.data).toHaveLength(2 * 2 * 4)
+  })
+
+  it('resizing to the exact same size returns an equivalent (but distinct) buffer', () => {
+    const buf = createEmptyBuffer(2, 2)
+    putPixel(buf, 0, 1, GREEN)
+
+    const result = resizeBuffer(buf, 2, 2)
+
+    expect(result).not.toBe(buf)
+    expect(result.data).not.toBe(buf.data)
+    expect([...result.data]).toEqual([...buf.data])
+  })
+
+  it('handles asymmetric resize (grow width, shrink height) in one call', () => {
+    const buf = createEmptyBuffer(2, 3)
+    putPixel(buf, 1, 0, RED)
+    putPixel(buf, 1, 2, GREEN) // row 2 — outside the new height of 2
+
+    const result = resizeBuffer(buf, 3, 2)
+
+    expect(result.w).toBe(3)
+    expect(result.h).toBe(2)
+    expect(getPixel(result, 1, 0)).toEqual(RED)
+    expect(getPixel(result, 2, 0)).toEqual(TRANSPARENT)
+    expect(getPixel(result, 1, 1)).toEqual(TRANSPARENT) // row 2's content was cropped away
   })
 })

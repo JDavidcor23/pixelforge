@@ -77,6 +77,21 @@ export class WasmDocument {
         return v3;
     }
     /**
+     * ADR 0008: lossless canvas resize — see `Document::doc_resize`'s doc.
+     * @param {number} canvas_w
+     * @param {number} canvas_h
+     * @param {string} label
+     * @returns {Uint32Array}
+     */
+    doc_resize(canvas_w, canvas_h, label) {
+        const ptr0 = passStringToWasm0(label, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.wasmdocument_doc_resize(this.__wbg_ptr, canvas_w, canvas_h, ptr0, len0);
+        var v2 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v2;
+    }
+    /**
      * @returns {Uint8Array}
      */
     export_pixels() {
