@@ -1,4 +1,4 @@
-import { Coins, Sparkles } from 'lucide-react'
+import { Check, Coins, Info, Sparkles } from 'lucide-react'
 
 import { AiResultCard } from '../AiResultCard/AiResultCard'
 import { useGeneratePanel } from './useGeneratePanel.hook'
@@ -34,10 +34,47 @@ export const GeneratePanel = ({ assetType }: GeneratePanelProps) => {
     result,
     handleUseResult,
     handleDismissResult,
+    templates,
+    templateId,
+    handleToggleTemplate,
+    templateSummary,
+    templateTooltip,
   } = useGeneratePanel({ assetType })
 
   return (
     <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-1.5">
+        <div className="flex items-center gap-1">
+          <span className={SECTION_LABEL}>Game template</span>
+          <span title={templateTooltip} aria-label={templateTooltip} className="text-subtle">
+            <Info size={12} />
+          </span>
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5">
+          {templates.map((t) => {
+            const isActive = templateId === t.id
+            return (
+              <button
+                key={t.id}
+                type="button"
+                aria-pressed={isActive}
+                onClick={() => handleToggleTemplate(t.id)}
+                title={t.summary}
+                className={`flex items-center gap-1 rounded px-1.5 py-0.5 text-2xs ${MOTION.COLORS} ${
+                  isActive
+                    ? 'border border-ai-ink bg-ai/20 text-ai-ink'
+                    : 'border border-transparent bg-hover text-muted hover:text-ink'
+                }`}
+              >
+                {isActive && <Check size={10} aria-hidden />}
+                {t.label}
+              </button>
+            )
+          })}
+        </div>
+        <p className="text-2xs text-subtle">{templateSummary}</p>
+      </div>
+
       <span className={SECTION_LABEL}>3 · Describe it</span>
 
       <div className="relative">

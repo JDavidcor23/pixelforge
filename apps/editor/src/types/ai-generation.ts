@@ -156,3 +156,19 @@ export interface AssetLibraryItem {
   readonly isAnimated: boolean
   readonly canDownloadSheet: boolean
 }
+
+/** Game genres whose sprite rules the Create tab can add to a prompt. */
+export type GameTemplateId = 'platformer'
+
+/**
+ * A game template: hidden rules appended to the user's prompt so the result is
+ * a usable game sprite (full body, side view) instead of a portrait. Rules are
+ * per asset type; an asset type without rules gets the prompt unchanged.
+ */
+export interface GameTemplate {
+  readonly id: GameTemplateId
+  readonly label: string
+  /** One-line summary shown under the chip while the template is on. */
+  readonly summary: string
+  readonly rules: Readonly<Partial<Record<AssetType, string>>>
+}

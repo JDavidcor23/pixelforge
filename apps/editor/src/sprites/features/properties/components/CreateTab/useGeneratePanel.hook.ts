@@ -10,14 +10,19 @@ import {
 import { useAssetsStore } from '@/stores/assets.store'
 import { generateSpriteWithRetroDiffusion } from '@/lib/retro-diffusion-utils'
 import { isCanvasBlank } from '@/lib/canvas-blank'
+import { buildPrompt } from '@/lib/build-prompt'
 import {
   AI_SPRITE_DEFAULT_SIZE,
   AI_SPRITE_SIZES,
   ASSET_TYPE_EXAMPLE_CHIPS,
   ASSET_TYPE_PROMPT_PLACEHOLDER,
   ASSET_TYPE_STYLE,
+  DEFAULT_GAME_TEMPLATE_ID,
+  GAME_TEMPLATES,
+  GAME_TEMPLATE_OFF_SUMMARY,
+  GAME_TEMPLATE_TOOLTIP,
 } from '@/constants'
-import type { AssetType } from '@/types'
+import type { AssetType, GameTemplateId } from '@/types'
 
 export interface UseGeneratePanelParams {
   readonly assetType: AssetType
@@ -51,6 +56,14 @@ export const useGeneratePanel = ({ assetType }: UseGeneratePanelParams) => {
   const [lastCostUsd, setLastCostUsd] = useState<number | null>(null)
   const [remainingBalanceUsd, setRemainingBalanceUsd] = useState<number | null>(null)
   const [result, setResult] = useState<GenerateResult | null>(null)
+  // Clicking the active template chip turns it off (null = prompt sent as-is).
+  const [templateId, setTemplateId] = useState<GameTemplateId | null>(DEFAULT_GAME_TEMPLATE_ID)
+  const template = templateId ? GAME_TEMPLATES[templateId] : null
+
+  const handleToggleTemplate = useCallback(
+    (id: GameTemplateId) => setTemplateId((current) => (current === id ? null : id)),
+    [],
+  )
 
   const promptRef = useRef<HTMLTextAreaElement | null>(null)
   const focusPromptRequest = useFocusPromptRequest()
@@ -81,7 +94,8 @@ export const useGeneratePanel = ({ assetType }: UseGeneratePanelParams) => {
         costUsd,
         remainingBalanceUsd: balance,
       } = await generateSpriteWithRetroDiffusion({
-        prompt,
+        // The library keeps the user's own words; only the request carries the rules.
+        prompt: buildPrompt(prompt, template, assetType),
         width: genSize,
         height: genSize,
         style: ASSET_TYPE_STYLE[assetType],
@@ -100,7 +114,7 @@ export const useGeneratePanel = ({ assetType }: UseGeneratePanelParams) => {
     } finally {
       setIsLoading(false)
     }
-  }, [prompt, genSize, assetType, apiKey, addGeneration, applyGeneration])
+  }, [prompt, template, genSize, assetType, apiKey, addGeneration, applyGeneration])
 
   const handleUseResult = useCallback(async () => {
     if (!result) return
@@ -116,6 +130,11 @@ export const useGeneratePanel = ({ assetType }: UseGeneratePanelParams) => {
     placeholder: ASSET_TYPE_PROMPT_PLACEHOLDER[assetType],
     examples: ASSET_TYPE_EXAMPLE_CHIPS[assetType],
     handleUseExample,
+    templates: Object.values(GAME_TEMPLATES),
+    templateId,
+    handleToggleTemplate,
+    templateSummary: template?.summary ?? GAME_TEMPLATE_OFF_SUMMARY,
+    templateTooltip: GAME_TEMPLATE_TOOLTIP,
     genSize,
     setGenSize,
     sizes: AI_SPRITE_SIZES,

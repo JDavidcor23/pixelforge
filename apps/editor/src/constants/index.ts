@@ -8,6 +8,8 @@ import type {
   InspectorTabId,
   BottomPanelTabId,
   RetroDiffusionStyle,
+  GameTemplate,
+  GameTemplateId,
 } from '@/types'
 import { COLORS } from '@pixelforge/tokens/colors'
 
@@ -467,3 +469,33 @@ export const COLOR_PICKER = {
   HUE_STEP: 4,
 } as const
 
+/** Shown instead of a coordinate when the cursor is outside the canvas. */
+export const CURSOR_POSITION_FALLBACK = '—'
+
+
+/**
+ * Create tab > Generate — game templates. Each one is data only: adding a genre
+ * (top-down RPG, top-down shooter, FPS…) means adding an entry here, not code.
+ */
+export const GAME_TEMPLATES: Readonly<Record<GameTemplateId, GameTemplate>> = {
+  platformer: {
+    id: 'platformer',
+    label: 'Platformer',
+    summary: 'Platformer rules on: full body, side view, ready to animate.',
+    rules: {
+      character:
+        'full body game character sprite, entire figure visible from head to feet, ' +
+        'side view facing right, standing idle pose, feet on the ground, ' +
+        'centered with empty space around the figure, single character, ' +
+        'clear readable silhouette, 2D platformer sprite, not a portrait, not cropped',
+    },
+  },
+}
+
+export const DEFAULT_GAME_TEMPLATE_ID: GameTemplateId = 'platformer'
+
+export const GAME_TEMPLATE_OFF_SUMMARY = 'No template: your prompt is sent exactly as you write it.'
+
+export const GAME_TEMPLATE_TOOLTIP =
+  "Templates add game-ready rules to your prompt so you don't burn credits on unusable sprites. " +
+  'Turn it off to write everything yourself.'
