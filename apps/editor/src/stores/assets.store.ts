@@ -31,6 +31,10 @@ export interface AssetsState {
   readonly repository: AssetLibraryRepository | null
   addGeneration: (generation: Omit<AIGeneration, 'id' | 'timestamp'>) => AIGeneration
   addAnimation: (animation: AIAnimation) => void
+  /** Removes one generation from the library (Recent strip + Assets tab) and its IndexedDB/localStorage copy. */
+  removeGeneration: (id: string) => void
+  /** Removes one animation from the library (Recent strip + Assets tab) and its IndexedDB/localStorage copy. */
+  removeAnimation: (id: string) => void
   markSheetAvailable: (animationId: string) => void
   /** Loads the library from `repository`, migrating the legacy localStorage history into it. */
   hydrate: (repository: AssetLibraryRepository) => Promise<void>
@@ -59,6 +63,7 @@ const evictedIds = <T extends LibraryEntry>(entries: readonly T[]): string[] =>
   entries.slice(ASSET_LIBRARY_LIMIT).map((entry) => entry.id)
 
 const reportWriteError = (what: string) => (e: unknown) => console.error(`Failed to save ${what}`, e)
+const reportDeleteError = (what: string) => (e: unknown) => console.error(`Failed to delete ${what}`, e)
 
 const initialGenerations = parseGenerationHistory(readStorage(GENERATION_HISTORY_STORAGE_KEY)).generations
 const initialAnimations = parseAnimationHistory(readStorage(ANIMATION_HISTORY_STORAGE_KEY)).animations
@@ -118,6 +123,40 @@ export const useAssetsStore = create<AssetsState>((set, get) => ({
     set({ animations: all })
     try {
       persistAnimationHistory(localStorage, all)
+    } catch (e) {
+      console.error('Failed to persist animation history', e)
+    }
+  },
+
+  removeGeneration: (id) => {
+    const { repository, generations } = get()
+    const next = generations.filter((g) => g.id !== id)
+    set({ generations: next })
+
+    if (repository) {
+      repository.removeGenerations([id]).catch(reportDeleteError('generation'))
+      return
+    }
+
+    try {
+      persistGenerationHistory(localStorage, next)
+    } catch (e) {
+      console.error('Failed to persist generation history', e)
+    }
+  },
+
+  removeAnimation: (id) => {
+    const { repository, animations } = get()
+    const next = animations.filter((a) => a.id !== id)
+    set({ animations: next })
+
+    if (repository) {
+      repository.removeAnimations([id]).catch(reportDeleteError('animation'))
+      return
+    }
+
+    try {
+      persistAnimationHistory(localStorage, next)
     } catch (e) {
       console.error('Failed to persist animation history', e)
     }

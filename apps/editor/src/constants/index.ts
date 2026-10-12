@@ -10,6 +10,9 @@ import type {
   RetroDiffusionStyle,
   GameTemplate,
   GameTemplateId,
+  QualityTier,
+  QualityTierConfig,
+  QualityRecommendation,
 } from '@/types'
 import { COLORS } from '@pixelforge/tokens/colors'
 
@@ -138,6 +141,23 @@ export const SPRITE_ANIMATION = {
 
 export const AI_SPRITE_SIZES = [64, 128] as const
 export const AI_SPRITE_DEFAULT_SIZE: number = AI_SPRITE_SIZES[0]
+/**
+ * Create tab > Generate, default `genSize` per asset type. Verified live
+ * 2026-10-11: 128x128 gives a full body WITH margin at the same price as 64
+ * (Draft tier, $0.03), but a 64x64 request under Standard quality with a
+ * short prompt also produced a full body with margin at a known-good price
+ * ($0.06) — the owner wants 64 as the default, not 128, so every asset type
+ * (including `character`) currently shares the flat `AI_SPRITE_DEFAULT_SIZE`.
+ * 128 stays selectable in the Output size dropdown. Only a starting point —
+ * the user's own size pick always wins (see `useGeneratePanel.hook.ts`).
+ */
+export const AI_SPRITE_DEFAULT_SIZE_BY_ASSET_TYPE: Readonly<Record<AssetType, number>> = {
+  character: AI_SPRITE_DEFAULT_SIZE,
+  object: AI_SPRITE_DEFAULT_SIZE,
+  weapon: AI_SPRITE_DEFAULT_SIZE,
+  costume: AI_SPRITE_DEFAULT_SIZE,
+  effect: AI_SPRITE_DEFAULT_SIZE,
+}
 // Manual sprite import: the user declares how many frames the uploaded PNG
 // contains (engine-style, no auto-detection). 1 = single sprite, >=2 = sheet.
 // Quantization is intentionally disabled on import — the image is already
@@ -148,6 +168,13 @@ export const SPRITE_IMPORT_MAX_FRAMES = 16
 // Accepted file types for the import <input>. PNG first (preferred for crisp
 // pixel art), but any image type is allowed.
 export const SPRITE_IMPORT_ACCEPT = 'image/png,image/*'
+/**
+ * Accepted file type for importing PNGs straight into the Assets library
+ * (Create tab Recent strip + the bottom panel's Assets view) — PNG only,
+ * unlike `SPRITE_IMPORT_ACCEPT`, since an imported asset is stored and
+ * re-decoded exactly like an AI generation.
+ */
+export const ASSET_LIBRARY_IMPORT_ACCEPT = 'image/png'
 // Increment whenever persisted animation frames become incompatible with the
 // current generation/normalization pipeline. Unversioned entries are legacy.
 export const ANIMATION_PIPELINE_VERSION = 1
@@ -181,17 +208,22 @@ export const RETRO_DIFFUSION_TOKEN_HEADER = 'X-RD-Token'
 export const RETRO_DIFFUSION_STYLES = ['rd_fast__default', 'rd_plus__default'] as const
 export const RETRO_DIFFUSION_DEFAULT_STYLE: RetroDiffusionStyle = 'rd_fast__default'
 /**
- * Per-image USD cost, measured with `check_cost` (free) on 2026-08-17.
- * Note the floor: below ~128px the price barely moves, so generating SMALLER
- * than the flat zone saves nothing. Always request the largest size that still
- * costs the floor rather than the size the user happens to be editing at.
+ * Per-generation USD cost, measured live with `check_cost` (free) on
+ * 2026-10-11. Flat per quality tier — unlike the Fast/Plus-only table this
+ * replaces, size does NOT change the price, so there is no per-size lookup
+ * anymore. See `QUALITY_TIER_COST_USD` below for the tier→price map that
+ * replaced it.
  */
-export const RETRO_DIFFUSION_COST_TABLE = {
-  rd_fast__default: { 32: 0.017, 64: 0.017, 128: 0.019, 256: 0.028, 384: 0.041 },
-  rd_plus__default: { 32: 0.026, 64: 0.027, 128: 0.033, 256: 0.058, 384: 0.099 },
-} as const
-export const RETRO_DIFFUSION_MIN_SIZE = 32
+export const RETRO_DIFFUSION_MIN_SIZE = 64
 export const RETRO_DIFFUSION_MAX_SIZE = 384
+/**
+ * `rd_pro__*` styles (Quality: Best) accept a narrower range than Fast/Plus —
+ * measured live on 2026-10-11. Requesting outside it is rejected upstream, so
+ * the server clamps by style, not by a single global range.
+ */
+export const RETRO_DIFFUSION_PRO_STYLE_PREFIX = 'rd_pro__'
+export const RETRO_DIFFUSION_PRO_MIN_SIZE = 12
+export const RETRO_DIFFUSION_PRO_MAX_SIZE = 256
 export const RETRO_DIFFUSION_DEFAULT_STRENGTH = 0.6
 // Measured live: a 64px sprite took 15.6s end to end. 120s leaves room for queueing.
 export const RETRO_DIFFUSION_TIMEOUT_MS = 120000
@@ -374,6 +406,136 @@ export const ASSET_TYPE_STYLE: Readonly<Record<AssetType, RetroDiffusionStyle>> 
   effect: 'rd_fast__game_asset',
 }
 
+/**
+ * Create tab > Generate, "Quality" selector (Sprite Studio v2). `draft` is
+ * exactly `ASSET_TYPE_STYLE` above (today's default, unchanged).
+ *
+ * `rd_plus__low_res` (`standard`, character/costume) and `rd_pro__default`
+ * (`best`, every asset type) WERE verified live on 2026-10-11 — `check_cost`
+ * plus a real 64px generation, at $0.06 and $0.18 respectively (see
+ * `QUALITY_TIER_COST_USD`). The other `standard`-tier styles
+ * (`rd_plus__default` for object/effect, `rd_plus__item_sheet` for weapon)
+ * were NOT individually probed per asset type — same conservative-wiring
+ * caveat as `ASSET_TYPE_STYLE`'s own comment.
+ */
+export const ASSET_TYPE_STYLE_BY_QUALITY: Readonly<Record<QualityTier, Readonly<Record<AssetType, RetroDiffusionStyle>>>> = {
+  draft: ASSET_TYPE_STYLE,
+  standard: {
+    character: 'rd_plus__low_res',
+    object: 'rd_plus__default',
+    weapon: 'rd_plus__item_sheet',
+    costume: 'rd_plus__low_res',
+    effect: 'rd_plus__default',
+  },
+  best: {
+    character: 'rd_pro__default',
+    object: 'rd_pro__default',
+    weapon: 'rd_pro__default',
+    costume: 'rd_pro__default',
+    effect: 'rd_pro__default',
+  },
+}
+
+/** Must stay equal to `QUALITY_RECOMMENDATION_BY_ASSET_TYPE.character.tier` (default asset type is `character`). */
+export const DEFAULT_QUALITY_TIER: QualityTier = 'standard'
+
+/** Flat per-generation USD price per tier, measured live with `check_cost` on 2026-10-11 — size does not change it. */
+export const QUALITY_TIER_COST_USD: Readonly<Record<QualityTier, number>> = {
+  draft: 0.03,
+  standard: 0.06,
+  best: 0.18,
+}
+
+/**
+ * Static comparison PNGs (64x64, same prompt/seed across tiers) — see
+ * `apps/editor/public/ai-quality-samples/`. Regenerated 2026-10-11 with the
+ * Platformer template's `character` rules (see `GAME_TEMPLATES.platformer`)
+ * applied on top of `AI_QUALITY_SAMPLE_PROMPT`, seed 77, 64x64 — only the
+ * quality tier differs between the three files.
+ */
+export const AI_QUALITY_SAMPLE_SRC: Readonly<Record<QualityTier, string>> = {
+  draft: '/ai-quality-samples/draft.png',
+  standard: '/ai-quality-samples/standard.png',
+  best: '/ai-quality-samples/best.png',
+}
+
+/**
+ * Exact prompt behind `AI_QUALITY_SAMPLE_SRC` (Platformer template, seed 77,
+ * 64x64) — shown in the Compare-quality modal so the owner can verify what
+ * produced each sample.
+ */
+export const AI_QUALITY_SAMPLE_PROMPT =
+  'a burly old viking wizard with a long white beard, muscular bare arms, a tall pointed blue hat with stars, ' +
+  'a blue robe with stars that opens at the front showing leather boots, a fur mantle, and a tall wooden staff ' +
+  'with a glowing blue crystal'
+/** Seed behind every `AI_QUALITY_SAMPLE_SRC` sample — shown next to the prompt in the Compare-quality modal. */
+export const AI_QUALITY_SAMPLE_SEED = 77
+/** Native resolution of every `AI_QUALITY_SAMPLE_SRC` file — the Compare-quality modal sizes samples as integer multiples of this. */
+export const AI_QUALITY_SAMPLE_NATIVE_SIZE = 64
+/** How long the Compare-quality modal's "Copy prompt" button shows "Copied" before reverting. */
+export const AI_QUALITY_SAMPLE_COPY_FEEDBACK_MS = 2000
+
+export const QUALITY_TIERS: readonly QualityTierConfig[] = [
+  {
+    id: 'draft',
+    label: 'Draft',
+    styleLabel: 'Retro Diffusion Fast',
+    priceUsd: QUALITY_TIER_COST_USD.draft,
+    sampleSrc: AI_QUALITY_SAMPLE_SRC.draft,
+  },
+  {
+    id: 'standard',
+    label: 'Standard',
+    styleLabel: 'Retro Diffusion Plus',
+    priceUsd: QUALITY_TIER_COST_USD.standard,
+    sampleSrc: AI_QUALITY_SAMPLE_SRC.standard,
+  },
+  {
+    id: 'best',
+    label: 'Best',
+    styleLabel: 'Retro Diffusion Pro',
+    priceUsd: QUALITY_TIER_COST_USD.best,
+    sampleSrc: AI_QUALITY_SAMPLE_SRC.best,
+  },
+] as const
+
+/**
+ * Create tab > Generate, Quality selector — which tier is "Recommended"
+ * depends on the asset type, not a single global tier. Only `character` has
+ * a live test behind its `reason` (2026-10-11: `rd_plus__low_res`, 64x64,
+ * short prompt → full body with margin, $0.06). The other asset types reuse
+ * `standard` conservatively; their `reason` must stay generic
+ * (`verified: false`) until each gets its own live test — see
+ * `QualityRecommendation`'s own comment.
+ */
+export const QUALITY_RECOMMENDATION_BY_ASSET_TYPE: Readonly<Record<AssetType, QualityRecommendation>> = {
+  character: {
+    tier: 'standard',
+    reason: 'Best value for characters: full body at 64px.',
+    verified: true,
+  },
+  costume: {
+    tier: 'standard',
+    reason: 'Same model as characters.',
+    verified: false,
+  },
+  object: {
+    tier: 'standard',
+    reason: 'Good balance of detail and price.',
+    verified: false,
+  },
+  weapon: {
+    tier: 'standard',
+    reason: 'Good balance of detail and price.',
+    verified: false,
+  },
+  effect: {
+    tier: 'standard',
+    reason: 'Good balance of detail and price.',
+    verified: false,
+  },
+}
+
 export const ASSET_TYPE_PROMPT_PLACEHOLDER: Readonly<Record<AssetType, string>> = {
   character: 'A cute dragon, 8-bit style...',
   object: 'A wooden barrel with iron bands',
@@ -484,13 +646,16 @@ export const GAME_TEMPLATES: Readonly<Record<GameTemplateId, GameTemplate>> = {
   platformer: {
     id: 'platformer',
     label: 'Platformer',
-    summary: 'Platformer rules on: full body, side view, ready to animate.',
+    summary: 'Platformer rules on: full body, strict side profile, ready to animate.',
     rules: {
+      // Verified live 2026-10-11: "side view" alone produced a 3/4 view — the
+      // official Retro Diffusion example asks for a "strict side profile
+      // facing right" instead, which is what this rule carries now.
       character:
-        'full body game character sprite, entire figure visible from head to feet, ' +
-        'side view facing right, standing idle pose, feet on the ground, ' +
-        'centered with empty space around the figure, single character, ' +
-        'clear readable silhouette, 2D platformer sprite, not a portrait, not cropped',
+        'Full body 2D platformer game character sprite, strict side profile facing right, ' +
+        'flat 2D, not 3/4 view. The entire figure is visible: head, readable face, both arms, ' +
+        'both legs and both feet. Feet on the ground, empty margin around the figure, ' +
+        'single character, not cropped, not a portrait.',
     },
   },
 }
@@ -502,3 +667,11 @@ export const GAME_TEMPLATE_OFF_SUMMARY = 'No template: your prompt is sent exact
 export const GAME_TEMPLATE_TOOLTIP =
   "Templates add game-ready rules to your prompt so you don't burn credits on unusable sprites. " +
   'Turn it off to write everything yourself.'
+
+/**
+ * Verified live 2026-10-11: a ~350-word prompt made Retro Diffusion zoom in
+ * and crop the legs; a ~40-word prompt gave a full body. Applies to every
+ * asset type, not just character.
+ */
+export const PROMPT_WORD_LIMIT = 40
+export const PROMPT_WORD_LIMIT_WARNING = `Long prompts crop the character. Keep it under ${PROMPT_WORD_LIMIT} words.`

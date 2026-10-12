@@ -1,9 +1,11 @@
-import { Check, Coins, Info, Sparkles } from 'lucide-react'
+import { Check, Coins, Info, Sparkles, Upload, X } from 'lucide-react'
 
 import { AiResultCard } from '../AiResultCard/AiResultCard'
+import { QualitySelector } from './QualitySelector'
 import { useGeneratePanel } from './useGeneratePanel.hook'
 import { FOCUS_RING } from '@/constants/focus-ring'
 import { MOTION } from '@/constants/motion'
+import { ASSET_LIBRARY_IMPORT_ACCEPT, PROMPT_WORD_LIMIT_WARNING } from '@/constants'
 import type { AssetType } from '@/types'
 
 const FIELD = 'w-full rounded border border-line bg-base px-2 py-2 text-xs text-ink outline-none focus:border-accent'
@@ -17,16 +19,21 @@ export const GeneratePanel = ({ assetType }: GeneratePanelProps) => {
   const {
     prompt,
     setPrompt,
+    promptWordCount,
+    isPromptOverWordLimit,
     placeholder,
     examples,
     handleUseExample,
     genSize,
     setGenSize,
     sizes,
+    maxGenSize,
+    qualityTier,
+    setQualityTier,
     error,
     isLoading,
     handleGenerate,
-    lastCostUsd,
+    estimatedCostUsd,
     remainingBalanceUsd,
     hasApiKey,
     openSettings,
@@ -41,7 +48,13 @@ export const GeneratePanel = ({ assetType }: GeneratePanelProps) => {
     templateTooltip,
     recent,
     handleApplyRecent,
+    handleDeleteRecent,
     handleSeeAllAssets,
+    importFileInputRef,
+    isImporting,
+    importError,
+    handleOpenImportPicker,
+    handleImportFiles,
   } = useGeneratePanel({ assetType })
 
   return (
@@ -98,6 +111,17 @@ export const GeneratePanel = ({ assetType }: GeneratePanelProps) => {
         )}
       </div>
 
+      <div className="flex items-center justify-between gap-2">
+        <p className={`text-2xs ${isPromptOverWordLimit ? 'text-danger' : 'text-subtle'}`}>
+          {promptWordCount} word{promptWordCount === 1 ? '' : 's'}
+        </p>
+        {isPromptOverWordLimit && <p className="text-2xs text-danger">{PROMPT_WORD_LIMIT_WARNING}</p>}
+      </div>
+
+      {assetType === 'character' && (
+        <p className="text-2xs text-subtle">Describe the character only — not the scene or camera.</p>
+      )}
+
       <div className="flex flex-wrap items-center gap-1.5">
         <span className="text-2xs text-subtle">Try:</span>
         {examples.map((example) => (
@@ -123,13 +147,18 @@ export const GeneratePanel = ({ assetType }: GeneratePanelProps) => {
         <label className={`mb-1 block ${SECTION_LABEL}`}>Output size</label>
         <select value={genSize} onChange={(e) => setGenSize(Number(e.target.value))} className={FIELD}>
           {sizes.map((s) => (
-            <option key={s} value={s}>
+            <option key={s} value={s} disabled={maxGenSize !== null && s > maxGenSize}>
               {s}x{s}
             </option>
           ))}
         </select>
         <p className="mt-1 text-2xs text-subtle">Using the result will change the canvas to this size.</p>
+        {maxGenSize !== null && (
+          <p className="mt-1 text-2xs text-subtle">Best quality supports sizes up to {maxGenSize}x{maxGenSize}.</p>
+        )}
       </div>
+
+      <QualitySelector assetType={assetType} value={qualityTier} onChange={setQualityTier} disabled={isLoading} />
 
       <button
         type="button"
@@ -164,32 +193,71 @@ export const GeneratePanel = ({ assetType }: GeneratePanelProps) => {
         />
       )}
 
-      {recent.length > 0 && (
-        <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-1.5">
+        <div className="flex items-center justify-between gap-2">
           <span className={SECTION_LABEL}>Recent</span>
-          <div className="flex flex-wrap gap-1.5">
-            {recent.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => handleApplyRecent(item)}
-                title={item.title}
-                className={`size-10 shrink-0 overflow-hidden rounded-sm border border-line bg-base ${FOCUS_RING.SURFACE} ${MOTION.COLORS} hover:border-line-strong`}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element -- Vite SPA, no next/image available */}
-                <img src={item.thumbnailSrc} alt="" className="image-pixelated h-full w-full object-contain" />
-              </button>
-            ))}
-          </div>
           <button
             type="button"
-            onClick={handleSeeAllAssets}
-            className={`self-start text-2xs text-subtle underline-offset-2 hover:text-accent hover:underline ${MOTION.COLORS} ${FOCUS_RING.SURFACE}`}
+            onClick={handleOpenImportPicker}
+            disabled={isImporting}
+            className={`flex items-center gap-1 text-2xs text-subtle hover:text-accent ${MOTION.COLORS} ${FOCUS_RING.SURFACE} disabled:pointer-events-none disabled:opacity-40`}
           >
-            See all in Assets
+            <Upload size={11} aria-hidden />
+            {isImporting ? 'Importing…' : 'Import'}
           </button>
+          <input
+            ref={importFileInputRef}
+            type="file"
+            accept={ASSET_LIBRARY_IMPORT_ACCEPT}
+            multiple
+            onChange={handleImportFiles}
+            className="hidden"
+          />
         </div>
-      )}
+
+        {importError && <p className="text-2xs text-danger">{importError}</p>}
+
+        {recent.length > 0 ? (
+          <>
+            <div className="flex flex-wrap gap-1.5">
+              {recent.map((item) => (
+                <div key={item.id} className="group relative size-10 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => handleApplyRecent(item)}
+                    title={item.title}
+                    className={`size-10 overflow-hidden rounded-sm border border-line bg-base ${FOCUS_RING.SURFACE} ${MOTION.COLORS} hover:border-line-strong`}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element -- Vite SPA, no next/image available */}
+                    <img src={item.thumbnailSrc} alt="" className="image-pixelated h-full w-full object-contain" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleDeleteRecent(item)
+                    }}
+                    aria-label={`Delete ${item.title}`}
+                    title="Delete"
+                    className={`absolute -right-1.5 -top-1.5 flex size-4 items-center justify-center rounded-full border border-line-strong bg-raised text-subtle opacity-0 hover:border-danger hover:text-danger group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 ${MOTION.REVEAL} ${FOCUS_RING.SURFACE}`}
+                  >
+                    <X size={9} aria-hidden />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={handleSeeAllAssets}
+              className={`self-start text-2xs text-subtle underline-offset-2 hover:text-accent hover:underline ${MOTION.COLORS} ${FOCUS_RING.SURFACE}`}
+            >
+              See all in Assets
+            </button>
+          </>
+        ) : (
+          <p className="text-2xs text-subtle">No assets yet. Generate one above or import a PNG.</p>
+        )}
+      </div>
 
       {!hasApiKey && (
         <button
@@ -203,9 +271,7 @@ export const GeneratePanel = ({ assetType }: GeneratePanelProps) => {
 
       <div className="flex items-center gap-1.5 font-mono text-3xs text-subtle" title="Retro Diffusion">
         <Coins size={12} className="shrink-0" aria-hidden />
-        <span className="min-w-0 flex-1 truncate">
-          {lastCostUsd !== null ? `Est. $${lastCostUsd.toFixed(3)}` : 'No generation yet this session'}
-        </span>
+        <span className="min-w-0 flex-1 truncate">{`Est. $${estimatedCostUsd.toFixed(2)}`}</span>
         {remainingBalanceUsd !== null && (
           <span className="shrink-0">${remainingBalanceUsd.toFixed(2)} left</span>
         )}

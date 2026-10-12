@@ -1,6 +1,6 @@
 import type { StateCreator } from 'zustand'
 
-import { DEFAULT_ASSET_TYPE, DEFAULT_CREATE_METHOD, RESIZABLE_PANELS } from '@/constants'
+import { DEFAULT_ASSET_TYPE, DEFAULT_CREATE_METHOD, DEFAULT_QUALITY_TIER, RESIZABLE_PANELS } from '@/constants'
 import type { EditorUIStore } from '@/types'
 
 import type { UISlice } from '../types/slices'
@@ -24,6 +24,7 @@ export const createUISlice: StateCreator<
     bottomPanelTab: 'timeline',
     createMethod: DEFAULT_CREATE_METHOD,
     createAssetType: DEFAULT_ASSET_TYPE,
+    createQualityTier: DEFAULT_QUALITY_TIER,
     focusPromptRequest: 0,
     leftSidebarWidth: RESIZABLE_PANELS.LEFT.DEFAULT,
     rightSidebarWidth: RESIZABLE_PANELS.RIGHT.DEFAULT,
@@ -94,6 +95,11 @@ export const createUISlice: StateCreator<
   setCreateAssetType: (assetType) =>
     set((state) => ({
       ui: { ...state.ui, createAssetType: assetType },
+    })),
+
+  setCreateQualityTier: (tier) =>
+    set((state) => ({
+      ui: { ...state.ui, createQualityTier: tier },
     })),
 
   requestFocusPrompt: () =>

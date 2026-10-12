@@ -6,7 +6,7 @@ export * from './mascot.types'
 export * from './account-deletion.types'
 
 import type { Command, DispatchResult } from '@/lib/core/commands'
-import type { AssetType, CreateMethod } from './ai-generation'
+import type { AssetType, CreateMethod, QualityTier } from './ai-generation'
 import type { DocumentPayload } from './document'
 
 export interface RgbaColor {
@@ -268,6 +268,11 @@ export interface EditorUIState {
      */
     readonly createAssetType: AssetType
     /**
+     * Create tab > Generate, "Quality" selector (Sprite Studio v2) — persisted
+     * the same way as `createAssetType` above so the choice survives a reload.
+     */
+    readonly createQualityTier: QualityTier
+    /**
      * One-shot nonce bumped by `requestFocusPrompt` to ask the Create >
      * Generate panel to focus its prompt textarea (e.g. from the Assets tab's
      * "New asset" tile). `0` means "never requested" — never persisted at a
@@ -299,6 +304,7 @@ export interface EditorUIActions {
   setBottomPanelTab: (tab: BottomPanelTabId) => void
   setCreateMethod: (method: CreateMethod) => void
   setCreateAssetType: (assetType: AssetType) => void
+  setCreateQualityTier: (tier: QualityTier) => void
   requestFocusPrompt: () => void
   setLeftSidebarWidth: (width: number) => void
   setRightSidebarWidth: (width: number) => void

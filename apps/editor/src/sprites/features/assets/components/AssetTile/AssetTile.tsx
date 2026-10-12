@@ -1,4 +1,4 @@
-import { Download, FileJson } from 'lucide-react'
+import { Download, FileJson, Trash2 } from 'lucide-react'
 
 import { FOCUS_RING } from '@/constants/focus-ring'
 import { MOTION } from '@/constants/motion'
@@ -9,9 +9,10 @@ interface AssetTileProps {
   readonly onSelect: (item: AssetLibraryItem) => void
   readonly onDownload: (item: AssetLibraryItem) => void
   readonly onDownloadSource: (item: AssetLibraryItem) => void
+  readonly onDelete: (item: AssetLibraryItem) => void
 }
 
-export const AssetTile = ({ item, onSelect, onDownload, onDownloadSource }: AssetTileProps) => {
+export const AssetTile = ({ item, onSelect, onDownload, onDownloadSource, onDelete }: AssetTileProps) => {
   const canDownload = item.kind === 'generation' || item.canDownloadSheet
 
   return (
@@ -33,8 +34,28 @@ export const AssetTile = ({ item, onSelect, onDownload, onDownloadSource }: Asse
         )}
 
         <div
-          className={`absolute right-1 top-1 flex flex-col gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 ${MOTION.REVEAL}`}
+          className={`absolute right-1 top-1 flex flex-col gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 ${MOTION.REVEAL}`}
         >
+          <span
+            role="button"
+            tabIndex={0}
+            onClick={(e) => {
+              e.stopPropagation()
+              onDelete(item)
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.stopPropagation()
+                onDelete(item)
+              }
+            }}
+            aria-label={`Delete ${item.label}`}
+            title="Delete"
+            className="flex size-5 items-center justify-center rounded-sm bg-raised/90 text-ink hover:bg-danger hover:text-on-accent"
+          >
+            <Trash2 size={11} aria-hidden />
+          </span>
+
           <span
             role="button"
             tabIndex={canDownload ? 0 : -1}

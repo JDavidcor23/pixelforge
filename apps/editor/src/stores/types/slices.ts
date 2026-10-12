@@ -8,6 +8,7 @@ import type {
   Layer,
   PixelBuffer,
   PixelCoord,
+  QualityTier,
   RgbaColor,
   SaveStatus,
   SelectionState,
@@ -131,6 +132,8 @@ export interface UISlice {
     bottomPanelTab: BottomPanelTabId
     createMethod: CreateMethod
     createAssetType: AssetType
+    /** Create tab > Generate, "Quality" selector — persisted like `createAssetType` above. */
+    createQualityTier: QualityTier
     focusPromptRequest: number
     leftSidebarWidth: number
     rightSidebarWidth: number
@@ -146,6 +149,7 @@ export interface UISlice {
   setBottomPanelTab: (tab: BottomPanelTabId) => void
   setCreateMethod: (method: CreateMethod) => void
   setCreateAssetType: (assetType: AssetType) => void
+  setCreateQualityTier: (tier: QualityTier) => void
   requestFocusPrompt: () => void
   setLeftSidebarWidth: (width: number) => void
   setRightSidebarWidth: (width: number) => void

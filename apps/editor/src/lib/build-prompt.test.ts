@@ -6,8 +6,8 @@ import { GAME_TEMPLATES } from '@/constants'
 const platformer = GAME_TEMPLATES.platformer
 
 describe('buildPrompt', () => {
-  it('appends the template rules for a character', () => {
-    expect(buildPrompt('a knight', platformer, 'character')).toBe(`a knight, ${platformer.rules.character}`)
+  it('puts the template rules before the user prompt for a character', () => {
+    expect(buildPrompt('a knight', platformer, 'character')).toBe(`${platformer.rules.character} Character: a knight`)
   })
 
   it('returns the prompt unchanged when no template is selected', () => {

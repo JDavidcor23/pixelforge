@@ -62,6 +62,7 @@ export interface UseAnimateTabReturn {
   handleDismissResult: () => void
   recent: readonly RecentAnimationItem[]
   handleApplyRecent: (item: RecentAnimationItem) => Promise<void>
+  handleDeleteRecent: (item: RecentAnimationItem) => void
   handleSeeAllAssets: () => void
 }
 
@@ -81,6 +82,7 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
   const addAnimation = useAssetsStore((s) => s.addAnimation)
   const markSheetAvailable = useAssetsStore((s) => s.markSheetAvailable)
   const animations = useAssetsStore((s) => s.animations)
+  const removeAnimation = useAssetsStore((s) => s.removeAnimation)
   const setBottomPanelTab = useSetBottomPanelTab()
   const toggleTimeline = useToggleTimeline()
   const timelineOpen = useEditorUIStore((s) => s.ui.timelineOpen)
@@ -253,6 +255,8 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
     [applyAnimation],
   )
 
+  const handleDeleteRecent = useCallback((item: RecentAnimationItem) => removeAnimation(item.id), [removeAnimation])
+
   const handleSeeAllAssets = useCallback(() => {
     setBottomPanelTab('assets')
     if (!timelineOpen) toggleTimeline()
@@ -282,6 +286,7 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
     handleDismissResult,
     recent,
     handleApplyRecent,
+    handleDeleteRecent,
     handleSeeAllAssets,
   }
 }

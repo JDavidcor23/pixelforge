@@ -22,6 +22,8 @@ export type RetroDiffusionSpriteStyle =
   | 'rd_plus__default'
   | 'rd_fast__game_asset'
   | 'rd_plus__item_sheet'
+  | 'rd_plus__low_res'
+  | 'rd_pro__default'
 
 /**
  * The only animation actions Retro Diffusion actually accepts — every one of
@@ -109,6 +111,19 @@ export interface AIGeneration {
 }
 
 /**
+ * A PNG read from disk and decoded (data URL + natural size), ready to be
+ * handed to `useAssetsStore.addGeneration` — see `lib/import-library-image.ts`.
+ * `name` is the file name without its extension, used as the library entry's
+ * title in place of a generation prompt.
+ */
+export interface ImportedLibraryImage {
+  readonly name: string
+  readonly dataUrl: string
+  readonly width: number
+  readonly height: number
+}
+
+/**
  * What the Create tab's "1 · WHAT ARE YOU MAKING?" chips let the user declare
  * about the asset they're about to draw, generate or import. Drives both the
  * Retro Diffusion `prompt_style` (see `ASSET_TYPE_STYLE`) and which Assets-tab
@@ -118,6 +133,39 @@ export type AssetType = 'character' | 'object' | 'weapon' | 'costume' | 'effect'
 
 /** How the user wants to produce the asset selected in step 1 of the Create tab. */
 export type CreateMethod = 'draw' | 'generate' | 'import'
+
+/**
+ * Create tab > Generate, "Quality" selector (Sprite Studio v2). Flat USD price
+ * per tier, measured live with `check_cost` — generation size does NOT change
+ * the price (see `QUALITY_TIER_COST_USD` in constants). Drives both the
+ * Retro Diffusion `prompt_style` (`ASSET_TYPE_STYLE_BY_QUALITY`) and the
+ * output-size ceiling (`rd_pro__*` styles only accept up to 256px).
+ */
+export type QualityTier = 'draft' | 'standard' | 'best'
+
+/** One tile of the Quality selector — presentational data only. */
+export interface QualityTierConfig {
+  readonly id: QualityTier
+  readonly label: string
+  /** e.g. "Retro Diffusion Fast" — shown in the compare modal, not on the tile itself. */
+  readonly styleLabel: string
+  readonly priceUsd: number
+  readonly sampleSrc: string
+}
+
+/**
+ * Which tier gets the Quality selector's "Recommended" tag for a given asset
+ * type, and why. `verified: false` means the `reason` has NOT been backed by
+ * a live Retro Diffusion generation for that specific asset type — it borrows
+ * the closest verified reasoning. Do not strengthen a `reason`'s wording (e.g.
+ * naming a resolution or describing the output) until a live test for that
+ * asset type backs it, same caveat as `ASSET_TYPE_STYLE`'s own comment.
+ */
+export interface QualityRecommendation {
+  readonly tier: QualityTier
+  readonly reason: string
+  readonly verified: boolean
+}
 
 /**
  * A single motion choice offered by the Animate tab for a given asset type

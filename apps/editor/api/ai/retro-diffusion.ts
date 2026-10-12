@@ -4,12 +4,15 @@ import {
   RETRO_DIFFUSION_DEFAULT_STYLE,
   RETRO_DIFFUSION_MIN_SIZE,
   RETRO_DIFFUSION_MAX_SIZE,
+  RETRO_DIFFUSION_PRO_STYLE_PREFIX,
+  RETRO_DIFFUSION_PRO_MIN_SIZE,
+  RETRO_DIFFUSION_PRO_MAX_SIZE,
   RETRO_DIFFUSION_TIMEOUT_MS,
   RETRO_DIFFUSION_ANIMATION_TIMEOUT_MS,
   RETRO_DIFFUSION_NO_IMAGE_ERROR,
   RETRO_DIFFUSION_MISSING_KEY_ERROR,
 } from '../../src/constants'
-import type { RetroDiffusionRequestBody } from '../../src/types'
+import type { RetroDiffusionRequestBody, RetroDiffusionStyle } from '../../src/types'
 
 /** Shape of the upstream Retro Diffusion response we actually consume. */
 interface RetroDiffusionApiResponse {
@@ -20,8 +23,18 @@ interface RetroDiffusionApiResponse {
   readonly error?: string
 }
 
-const clampSize = (value: number): number =>
-  Math.min(RETRO_DIFFUSION_MAX_SIZE, Math.max(RETRO_DIFFUSION_MIN_SIZE, Math.round(value)))
+/**
+ * `rd_pro__*` (Quality: Best) accepts a narrower size range than Fast/Plus —
+ * measured live on 2026-10-11 (see `RETRO_DIFFUSION_PRO_MIN_SIZE`/`_MAX_SIZE`).
+ * Clamping must read the resolved style, not a single global range, or a Best
+ * request above 256px would be forwarded upstream and rejected there instead.
+ */
+const clampSize = (value: number, style: RetroDiffusionStyle): number => {
+  const isProStyle = style.startsWith(RETRO_DIFFUSION_PRO_STYLE_PREFIX)
+  const min = isProStyle ? RETRO_DIFFUSION_PRO_MIN_SIZE : RETRO_DIFFUSION_MIN_SIZE
+  const max = isProStyle ? RETRO_DIFFUSION_PRO_MAX_SIZE : RETRO_DIFFUSION_MAX_SIZE
+  return Math.min(max, Math.max(min, Math.round(value)))
+}
 
 /** Retro Diffusion wants bare base64 for `input_image`, not a data URI. */
 const stripDataUri = (base64: string): string => {
@@ -69,8 +82,8 @@ export default async function handler(req: Request): Promise<Response> {
       return json({ error: RETRO_DIFFUSION_MISSING_KEY_ERROR, code: 'MISSING_API_KEY' }, 401)
     }
 
-    const requestWidth = clampSize(width)
-    const requestHeight = clampSize(height)
+    const requestWidth = clampSize(width, style)
+    const requestHeight = clampSize(height, style)
 
     const upstream = await fetch(RETRO_DIFFUSION_ENDPOINT, {
       method: 'POST',

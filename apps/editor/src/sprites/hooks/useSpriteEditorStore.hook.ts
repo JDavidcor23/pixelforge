@@ -537,6 +537,17 @@ export const useCreateAssetType = () => useEditorUIStore((s) => s.ui.createAsset
 export const useSetCreateAssetType = () => useEditorUIStore((s) => s.setCreateAssetType)
 
 /**
+ * Returns the Create tab's "Quality" selector value (draft/standard/best) —
+ * persisted the same way as `useCreateAssetType` above.
+ */
+export const useCreateQualityTier = () => useEditorUIStore((s) => s.ui.createQualityTier)
+
+/**
+ * Action to change the Create tab's selected quality tier.
+ */
+export const useSetCreateQualityTier = () => useEditorUIStore((s) => s.setCreateQualityTier)
+
+/**
  * ── Resizable panels (batch 2) ───────────────────────────────────────────────
  */
 

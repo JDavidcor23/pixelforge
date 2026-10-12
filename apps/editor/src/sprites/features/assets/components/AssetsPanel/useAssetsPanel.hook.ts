@@ -3,6 +3,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { animationSheetCache } from '@/lib/animation-sheet-cache'
 import { downloadFromHref, downloadJson } from '@/lib/download-file'
 import { useApplyAsset } from '@/sprites/hooks/useApplyAsset.hook'
+import { useImportLibraryAssets } from '@/sprites/hooks/useImportLibraryAssets.hook'
 import {
   useRequestFocusPrompt,
   useSetCreateMethod,
@@ -23,6 +24,8 @@ export const useAssetsPanel = ({ search }: UseAssetsPanelParams) => {
   const generations = useAssetsStore((s) => s.generations)
   const animations = useAssetsStore((s) => s.animations)
   const sheetsAvailableForDownload = useAssetsStore((s) => s.sheetsAvailableForDownload)
+  const removeGeneration = useAssetsStore((s) => s.removeGeneration)
+  const removeAnimation = useAssetsStore((s) => s.removeAnimation)
   const { applyGeneration, applyAnimation } = useApplyAsset()
   const setInspectorTab = useSetInspectorTab()
   const setCreateMethod = useSetCreateMethod()
@@ -30,6 +33,16 @@ export const useAssetsPanel = ({ search }: UseAssetsPanelParams) => {
 
   const [selectedFolderId, setSelectedFolderId] = useState<FolderId>('all')
   const [isApplying, setIsApplying] = useState(false)
+
+  const selectedFolder = ASSET_FOLDERS.find((folder) => folder.id === selectedFolderId) ?? ASSET_FOLDERS[0]
+
+  const {
+    fileInputRef: importFileInputRef,
+    isImporting,
+    importError,
+    handleOpenImportPicker,
+    handleImportFiles,
+  } = useImportLibraryAssets({ assetType: selectedFolder.assetType ?? DEFAULT_ASSET_TYPE })
 
   const items = useMemo<AssetLibraryItem[]>(() => {
     const combined = [
@@ -72,7 +85,6 @@ export const useAssetsPanel = ({ search }: UseAssetsPanelParams) => {
     return counts
   }, [items])
 
-  const selectedFolder = ASSET_FOLDERS.find((folder) => folder.id === selectedFolderId) ?? ASSET_FOLDERS[0]
   const normalizedSearch = search.trim().toLowerCase()
 
   const filteredItems = useMemo(
@@ -156,6 +168,14 @@ export const useAssetsPanel = ({ search }: UseAssetsPanelParams) => {
     [generations],
   )
 
+  const handleDeleteItem = useCallback(
+    (item: AssetLibraryItem) => {
+      if (item.kind === 'generation') removeGeneration(item.id)
+      else removeAnimation(item.id)
+    },
+    [removeGeneration, removeAnimation],
+  )
+
   return {
     folders: ASSET_FOLDERS,
     selectedFolderId,
@@ -167,6 +187,12 @@ export const useAssetsPanel = ({ search }: UseAssetsPanelParams) => {
     handleSelectItem,
     handleDownloadItem,
     handleDownloadSource,
+    handleDeleteItem,
     handleOpenCreate,
+    importFileInputRef,
+    isImporting,
+    importError,
+    handleOpenImportPicker,
+    handleImportFiles,
   }
 }

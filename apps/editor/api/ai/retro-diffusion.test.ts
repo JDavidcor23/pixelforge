@@ -36,7 +36,7 @@ describe('retro-diffusion Vercel Function', () => {
     const fetchMock = vi.fn(async (_url: string, init: RequestInit) => {
       const sentBody = JSON.parse(init.body as string)
       expect(sentBody.width).toBe(384) // clamped down from 999
-      expect(sentBody.height).toBe(32) // clamped up from 1
+      expect(sentBody.height).toBe(64) // clamped up from 1
       return new Response(JSON.stringify({ base64_images: ['AAAA'] }), { status: 200 })
     })
     vi.stubGlobal('fetch', fetchMock)
