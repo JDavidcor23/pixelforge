@@ -23,3 +23,16 @@ export const LEGACY_SPRITE_EDITOR_STORAGE_KEY = 'sprite-editor-core'
  */
 export const PREFS_STORAGE_KEY = 'sprite-editor-prefs'
 export const SPRITE_EDITOR_STORAGE_KEY = 'sprite-editor-colors'
+
+/**
+ * Assets library (AI generations + animations). Its own IndexedDB database, not
+ * a store inside `DOCUMENT_DB_NAME`: bumping that DB's version would block on
+ * the document repository's open connection. Replaces the old localStorage
+ * history (~5 MB quota, 10 entries) — see `assets.store.ts`'s `hydrate`.
+ */
+export const ASSET_DB_NAME = 'pixelforge-assets'
+export const ASSET_DB_VERSION = 1
+export const ASSET_GENERATIONS_STORE = 'generations' as const
+export const ASSET_ANIMATIONS_STORE = 'animations' as const
+/** Per kind (generations and animations each). */
+export const ASSET_LIBRARY_LIMIT = 200

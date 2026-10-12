@@ -172,3 +172,18 @@ export interface GameTemplate {
   readonly summary: string
   readonly rules: Readonly<Partial<Record<AssetType, string>>>
 }
+
+export interface AssetLibrarySnapshot {
+  readonly generations: AIGeneration[]
+  readonly animations: AIAnimation[]
+}
+
+/** Where the Assets library lives between sessions (IndexedDB in the browser, in-memory in tests). */
+export interface AssetLibraryRepository {
+  loadAll(): Promise<AssetLibrarySnapshot>
+  putGenerations(generations: readonly AIGeneration[]): Promise<void>
+  putAnimations(animations: readonly AIAnimation[]): Promise<void>
+  removeGenerations(ids: readonly string[]): Promise<void>
+  removeAnimations(ids: readonly string[]): Promise<void>
+  clear(): Promise<void>
+}
