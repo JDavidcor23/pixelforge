@@ -32,7 +32,7 @@ zoomable canvas.
 prompt (Retro Diffusion), then drop results straight onto the canvas.
 
 <p align="center">
-  <img src="docs/images/ai-generation.png" alt="PixelForge IA sprite generation panel with recent generations" width="100%">
+  <img src="docs/images/ai-generation.png" alt="PixelForge IA sprite generation panel: asset type, game template, prompt and quality tiers with sample previews" width="100%">
 </p>
 
 **Sound editor** — a searchable sound library, one-click presets, a big
