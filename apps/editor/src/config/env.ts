@@ -17,6 +17,26 @@ export function getSupabaseAnonKey(): string {
 }
 
 /**
+ * `true` once real Supabase credentials are configured (editor-auth change).
+ * Accounts are optional — when this is `false` the login page shows a calm
+ * "accounts are not available in this build" notice instead of wiring up
+ * sign-in buttons against the placeholder host, and the TopBar's account
+ * entry stays hidden. The editor itself keeps working either way.
+ */
+export function isSupabaseConfigured(): boolean {
+  return Boolean(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY)
+}
+
+/**
+ * The editor's marketing/legal site — only used to link out to Privacy/Terms
+ * from the login page (editor-auth change). Falls back to the production
+ * landing domain so a dev machine with no `.env` still gets a working link.
+ */
+export function getLandingUrl(): string {
+  return import.meta.env.VITE_LANDING_URL || 'https://www.pixelforgeia.com'
+}
+
+/**
  * The `PixelCore` implementation override (design.md's `resolveCore()` flag
  * chain: localStorage override -> this env var -> default `'ts'`). Returns
  * the raw string — `core-config.ts` is still the one place that validates it

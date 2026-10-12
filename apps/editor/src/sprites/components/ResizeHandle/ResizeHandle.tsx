@@ -1,6 +1,7 @@
 import { useResizeHandle } from './useResizeHandle.hook'
 import { FOCUS_RING } from '@/constants/focus-ring'
 import { MOTION } from '@/constants/motion'
+import { Z_INDEX } from '@/constants/z-index'
 
 interface ResizeHandleProps {
   readonly axis: 'x' | 'y'
@@ -55,7 +56,7 @@ export const ResizeHandle = ({
       onKeyDown={handleKeyDown}
       onDoubleClick={handleDoubleClick}
       title={`${label} — double-click to reset`}
-      className={`group z-50 touch-none ${FOCUS_RING.INSET} ${positionClassName}`}
+      className={`group ${Z_INDEX.HANDLE} touch-none ${FOCUS_RING.INSET} ${positionClassName}`}
     >
       <div
         className={`${axis === 'x' ? 'mx-auto h-full w-px' : 'my-auto h-px w-full'} ${MOTION.COLORS} ${

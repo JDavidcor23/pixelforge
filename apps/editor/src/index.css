@@ -69,6 +69,11 @@ body {
     mask-image: radial-gradient(circle at center, black, transparent 80%);
   }
 
+  /** Fades a pixel-art scene's own edges into the page behind it (the login mascot canvas), so it has no hard rectangular border. */
+  .pixel-scene-fade {
+    mask-image: radial-gradient(circle at center, black 70%, transparent 100%);
+  }
+
   .text-shadow-accent {
     text-shadow: 0 0 20px rgb(var(--pf-accent-rgb) / 0.3);
   }

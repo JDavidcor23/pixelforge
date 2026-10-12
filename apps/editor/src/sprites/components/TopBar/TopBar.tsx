@@ -3,8 +3,10 @@ import { ChevronDown, Download, FileImage, PanelsTopLeft, Redo2, Undo2 } from 'l
 import { useTopBar } from './useTopBar.hook'
 import { CanvasSizePopover } from './CanvasSizePopover/CanvasSizePopover'
 import { SaveIndicator } from './SaveIndicator/SaveIndicator'
+import { AccountMenu } from './AccountMenu/AccountMenu'
 import { DISABLED_STATE, FOCUS_RING } from '@/constants/focus-ring'
 import { MOTION } from '@/constants/motion'
+import { Z_INDEX } from '@/constants/z-index'
 
 const CHIP =
   'rounded border border-line-strong px-1.5 py-0.5 font-mono text-3xs uppercase tracking-wider text-subtle'
@@ -105,7 +107,7 @@ export const TopBar = () => {
           <div
             role="menu"
             aria-label="Export options"
-            className={`absolute right-0 top-full z-50 mt-1 w-52 rounded border border-line-strong bg-raised py-1 shadow-popover ${MOTION.POPOVER_ENTER}`}
+            className={`absolute right-0 top-full ${Z_INDEX.POPOVER} mt-1 w-52 rounded border border-line-strong bg-raised py-1 shadow-popover ${MOTION.POPOVER_ENTER}`}
           >
             <button
               type="button"
@@ -126,6 +128,8 @@ export const TopBar = () => {
           </div>
         )}
       </div>
+
+      <AccountMenu />
     </header>
   )
 }

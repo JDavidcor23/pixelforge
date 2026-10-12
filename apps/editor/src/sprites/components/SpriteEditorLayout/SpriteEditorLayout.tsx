@@ -10,10 +10,11 @@ import { useSpriteEditorLayout } from './useSpriteEditorLayout.hook'
 import { FOCUS_RING } from '@/constants/focus-ring'
 import { MOTION } from '@/constants/motion'
 import { RESIZABLE_PANELS } from '@/constants'
+import { Z_INDEX } from '@/constants/z-index'
 
 /** Shared treatment for the floating handles that collapse and expand a rail. */
 const HANDLE_BASE =
-  `absolute z-[60] flex items-center justify-center border border-line-strong bg-hover/90 text-muted backdrop-blur-sm transition-all hover:text-accent ${FOCUS_RING.SURFACE}`
+  `absolute ${Z_INDEX.HANDLE} flex items-center justify-center border border-line-strong bg-hover/90 text-muted backdrop-blur-sm transition-all hover:text-accent ${FOCUS_RING.SURFACE}`
 
 const FADE = 'transition-opacity duration-300 motion-reduce:transition-none'
 
@@ -95,7 +96,7 @@ export const SpriteEditorLayout = () => {
           )}
 
           {docStatus === 'ready' && !isPersistent && (
-            <div className="absolute left-1/2 top-2 z-50 -translate-x-1/2 rounded-lg border border-line-strong bg-surface/90 px-3 py-1 text-xs text-muted backdrop-blur-sm">
+            <div className={`absolute left-1/2 top-2 ${Z_INDEX.POPOVER} -translate-x-1/2 rounded-lg border border-line-strong bg-surface/90 px-3 py-1 text-xs text-muted backdrop-blur-sm`}>
               Drafts are not being saved — local storage is unavailable.
             </div>
           )}
@@ -142,7 +143,7 @@ export const SpriteEditorLayout = () => {
             <button
               onClick={toggleToolbar}
               aria-label="Expand Tools"
-              className={`${HANDLE_BASE} bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-full p-2`}
+              className={`${HANDLE_BASE} bottom-4 left-1/2 -translate-x-1/2 rounded-full p-2`}
               title="Expand Tools"
             >
               <ChevronUp size={20} />
@@ -203,7 +204,7 @@ export const SpriteEditorLayout = () => {
           <button
             onClick={toggleBottomPanel}
             aria-label="Collapse Bottom Panel"
-            className={`absolute -top-6 left-1/2 z-[60] flex h-6 w-12 -translate-x-1/2 items-center justify-center rounded-t-lg border border-b-0 border-line-strong bg-surface text-muted hover:bg-hover hover:text-accent ${MOTION.COLORS} ${FOCUS_RING.SURFACE}`}
+            className={`absolute -top-6 left-1/2 ${Z_INDEX.HANDLE} flex h-6 w-12 -translate-x-1/2 items-center justify-center rounded-t-lg border border-b-0 border-line-strong bg-surface text-muted hover:bg-hover hover:text-accent ${MOTION.COLORS} ${FOCUS_RING.SURFACE}`}
             title="Collapse Bottom Panel"
           >
             <ChevronDown size={14} />
