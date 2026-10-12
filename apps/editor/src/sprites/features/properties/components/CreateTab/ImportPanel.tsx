@@ -5,7 +5,7 @@ import { AI_SPRITE_SIZES, SPRITE_IMPORT_ACCEPT, SPRITE_IMPORT_MAX_FRAMES, SPRITE
 import { FOCUS_RING } from '@/constants/focus-ring'
 import { MOTION } from '@/constants/motion'
 
-const FIELD = 'w-full rounded border border-line bg-base px-2 py-2 text-xs text-ink outline-none focus:border-accent'
+const FIELD = 'w-full rounded border border-line bg-sunken px-2 py-2 text-xs text-ink outline-none focus:border-accent'
 
 export const ImportPanel = () => {
   const {

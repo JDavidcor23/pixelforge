@@ -22,7 +22,7 @@ export function ClipInspector() {
 
   if (!hasClip) {
     return (
-      <div className="flex h-44 shrink-0 items-center justify-center gap-2 border-t border-line bg-base px-6">
+      <div className="flex h-44 shrink-0 items-center justify-center gap-2 border-t border-line bg-sunken px-6">
         <MousePointer2 className="size-3.5 text-subtle" aria-hidden />
         <p className="text-xs text-muted">Select a clip to change its volume, speed and fades.</p>
       </div>
@@ -32,7 +32,7 @@ export function ClipInspector() {
   return (
     <section
       aria-label="Selected clip"
-      className="flex h-44 shrink-0 gap-8 border-t border-line bg-base px-6 py-4"
+      className="flex h-44 shrink-0 gap-8 border-t border-line bg-sunken px-6 py-4"
     >
       <div className="flex w-75 shrink-0 flex-col gap-2">
         <span className="self-start rounded bg-hover px-2 py-0.75 text-2xs font-medium text-muted">

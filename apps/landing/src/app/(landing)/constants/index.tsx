@@ -6,6 +6,7 @@ import { ROUTES } from '@/constants/ROUTES'
 export const LANDING_NAV = {
   LOGO_LABEL: BRAND.FULL_NAME,
   CTA_BUTTON: 'Launch Editor',
+  SIGN_IN: 'Sign in',
 } as const
 
 export const LANDING_NAV_LINKS: readonly NavLink[] = [

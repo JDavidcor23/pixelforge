@@ -10,7 +10,7 @@ interface AuthFormProps {
 }
 
 const LABEL = 'mb-1.5 block text-xs font-medium text-muted'
-const INPUT = `w-full rounded border border-line-strong bg-base px-3 py-2 text-sm text-ink placeholder:text-subtle ${FOCUS_RING.INPUT}`
+const INPUT = `w-full rounded border border-line-strong bg-sunken px-3 py-2 text-sm text-ink placeholder:text-subtle ${FOCUS_RING.INPUT}`
 const SUBMIT = `w-full rounded bg-accent px-4 py-2.5 text-sm font-semibold text-on-accent hover:bg-accent-strong ${MOTION.PRESS} ${FOCUS_RING.SURFACE} ${DISABLED_STATE}`
 const EYE_BUTTON = `absolute inset-y-0 right-2 flex items-center text-subtle hover:text-muted ${MOTION.COLORS} ${FOCUS_RING.SURFACE} rounded`
 

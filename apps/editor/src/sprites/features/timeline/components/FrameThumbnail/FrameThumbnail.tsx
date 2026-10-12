@@ -36,7 +36,7 @@ export const FrameThumbnail = memo(function FrameThumbnail({
         style={{ width: TIMELINE_THUMBNAIL_SIZE, height: TIMELINE_THUMBNAIL_SIZE }}
         className={`checker-bg relative rounded-sm select-none ${getThumbnailBorderClass(isActive, isSelected)}`}
       >
-        <span className="absolute left-0.5 top-0.5 rounded-sm bg-base px-1 font-mono text-3xs leading-none text-ink">
+        <span className="absolute left-0.5 top-0.5 rounded-sm bg-sunken px-1 font-mono text-3xs leading-none text-ink">
           {frameIndex + 1}
         </span>
       </div>
@@ -57,7 +57,7 @@ export const FrameThumbnail = memo(function FrameThumbnail({
         disabled={isOnly}
         aria-label={`Delete frame ${frameIndex + 1}`}
         title={isOnly ? "Can't delete the only frame" : `Delete frame ${frameIndex + 1}`}
-        className={`absolute -right-1 -top-1 size-4 items-center justify-center rounded-sm border border-line-strong bg-base text-muted ${MOTION.COLORS} ${FOCUS_RING.BASE} hover:border-danger hover:bg-danger hover:text-ink focus-visible:border-danger focus-visible:bg-danger focus-visible:text-ink disabled:pointer-events-none disabled:opacity-40 ${
+        className={`absolute -right-1 -top-1 size-4 items-center justify-center rounded-sm border border-line-strong bg-sunken text-muted ${MOTION.COLORS} ${FOCUS_RING.BASE} hover:border-danger hover:bg-danger hover:text-ink focus-visible:border-danger focus-visible:bg-danger focus-visible:text-ink disabled:pointer-events-none disabled:opacity-40 ${
           isActive ? 'flex' : 'hidden group-hover:flex group-focus-within:flex'
         }`}
       >

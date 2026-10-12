@@ -42,7 +42,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
   return (
     <ModalPortal>
       <div
-        className={`fixed inset-0 ${Z_INDEX.MODAL} flex items-center justify-center bg-base/70 backdrop-blur-sm ${MOTION.FADE_ENTER}`}
+        className={`fixed inset-0 ${Z_INDEX.MODAL} flex items-center justify-center bg-sunken/70 backdrop-blur-sm ${MOTION.FADE_ENTER}`}
         onClick={handleClose}
       >
         <div

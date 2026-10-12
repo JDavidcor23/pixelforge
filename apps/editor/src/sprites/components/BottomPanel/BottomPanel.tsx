@@ -70,7 +70,7 @@ export const BottomPanel = () => {
                 onChange={(e) => handleSearchChange(e.target.value)}
                 placeholder="Search assets"
                 aria-label="Search assets"
-                className="h-6.5 w-55 rounded border border-line bg-base pl-6.5 pr-2 text-2xs text-ink placeholder:text-subtle outline-none focus:border-accent"
+                className="h-6.5 w-55 rounded border border-line bg-sunken pl-6.5 pr-2 text-2xs text-ink placeholder:text-subtle outline-none focus:border-accent"
               />
             </div>
             <button

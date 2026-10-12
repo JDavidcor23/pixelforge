@@ -8,7 +8,7 @@ import { MOTION } from '@/constants/motion'
 import { ASSET_LIBRARY_IMPORT_ACCEPT, PROMPT_WORD_LIMIT_WARNING } from '@/constants'
 import type { AssetType } from '@/types'
 
-const FIELD = 'w-full rounded border border-line bg-base px-2 py-2 text-xs text-ink outline-none focus:border-accent'
+const FIELD = 'w-full rounded border border-line bg-sunken px-2 py-2 text-xs text-ink outline-none focus:border-accent'
 const SECTION_LABEL = 'font-mono text-3xs uppercase tracking-wider text-subtle'
 
 interface GeneratePanelProps {
@@ -102,7 +102,7 @@ export const GeneratePanel = ({ assetType }: GeneratePanelProps) => {
           placeholder={placeholder}
           onKeyDown={(e) => e.stopPropagation()}
           onPaste={(e) => e.stopPropagation()}
-          className="min-h-18 w-full resize-y rounded border border-line-strong bg-base p-2.5 text-xs leading-relaxed text-ink placeholder:text-subtle focus:border-ai-ink focus:outline-none"
+          className="min-h-18 w-full resize-y rounded border border-line-strong bg-sunken p-2.5 text-xs leading-relaxed text-ink placeholder:text-subtle focus:border-ai-ink focus:outline-none"
         />
         {isLoading && (
           <div className="absolute right-2 top-2">
@@ -226,7 +226,7 @@ export const GeneratePanel = ({ assetType }: GeneratePanelProps) => {
                     type="button"
                     onClick={() => handleApplyRecent(item)}
                     title={item.title}
-                    className={`size-10 overflow-hidden rounded-sm border border-line bg-base ${FOCUS_RING.SURFACE} ${MOTION.COLORS} hover:border-line-strong`}
+                    className={`size-10 overflow-hidden rounded-sm border border-line bg-sunken ${FOCUS_RING.SURFACE} ${MOTION.COLORS} hover:border-line-strong`}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element -- Vite SPA, no next/image available */}
                     <img src={item.thumbnailSrc} alt="" className="image-pixelated h-full w-full object-contain" />

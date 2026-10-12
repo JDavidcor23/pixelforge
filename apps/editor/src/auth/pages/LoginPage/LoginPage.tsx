@@ -28,8 +28,8 @@ export const LoginPage = () => {
   const { isAvailable, mode, setMode, isGoogleLoading, handleGoogleSignIn, privacyUrl, termsUrl } = useLoginPage()
 
   return (
-    <div className="flex min-h-screen w-full flex-col bg-base text-ink lg:flex-row">
-      <div className="relative order-2 flex items-center justify-center overflow-hidden bg-base px-6 py-10 lg:order-2 lg:w-[55%]">
+    <div className="flex min-h-screen w-full flex-col bg-sunken text-ink lg:flex-row">
+      <div className="relative order-2 flex items-center justify-center overflow-hidden bg-sunken px-6 py-10 lg:order-2 lg:w-[55%]">
         <div className="bg-grid bg-grid-fade pointer-events-none absolute inset-0" />
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgb(var(--pf-accent-rgb)/0.12)_0%,transparent_70%)]" />
         <MascotScene />

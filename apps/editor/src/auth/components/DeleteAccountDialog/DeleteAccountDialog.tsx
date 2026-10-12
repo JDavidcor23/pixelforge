@@ -11,7 +11,7 @@ interface DeleteAccountDialogProps {
   onClose: () => void
 }
 
-const INPUT = `w-full rounded border border-line-strong bg-base px-3 py-2 text-sm text-ink placeholder:text-subtle ${FOCUS_RING.INPUT} ${DISABLED_STATE}`
+const INPUT = `w-full rounded border border-line-strong bg-sunken px-3 py-2 text-sm text-ink placeholder:text-subtle ${FOCUS_RING.INPUT} ${DISABLED_STATE}`
 const CHECKBOX = `mt-0.5 size-3.5 shrink-0 rounded border-line-strong text-accent ${FOCUS_RING.INPUT} ${DISABLED_STATE}`
 const CANCEL_BUTTON = `rounded-sm border border-line-strong px-3 py-1.5 text-ui text-ink hover:bg-hover ${MOTION.PRESS} ${FOCUS_RING.RAISED} ${DISABLED_STATE}`
 const CONFIRM_BUTTON = `flex items-center gap-1.5 rounded-sm bg-danger px-3 py-1.5 text-ui font-semibold text-ink hover:bg-danger/85 ${MOTION.PRESS} ${FOCUS_RING.RAISED} ${DISABLED_STATE}`
@@ -40,7 +40,7 @@ export function DeleteAccountDialog({ onClose }: DeleteAccountDialogProps) {
     <ModalPortal>
       <div
         onClick={handleBackdropClick}
-        className={`fixed inset-0 ${Z_INDEX.MODAL} flex items-center justify-center bg-base/70 backdrop-blur-sm ${MOTION.FADE_ENTER}`}
+        className={`fixed inset-0 ${Z_INDEX.MODAL} flex items-center justify-center bg-sunken/70 backdrop-blur-sm ${MOTION.FADE_ENTER}`}
       >
         <div
           ref={dialogRef}

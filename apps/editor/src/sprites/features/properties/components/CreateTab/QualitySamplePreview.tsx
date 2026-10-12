@@ -41,7 +41,7 @@ export const QualitySamplePreview = ({ tiers, onClose }: QualitySamplePreviewPro
     <ModalPortal>
       <div
         onClick={handleBackdropClick}
-        className={`fixed inset-0 ${Z_INDEX.MODAL} flex items-center justify-center bg-base/80 p-4 ${MOTION.FADE_ENTER}`}
+        className={`fixed inset-0 ${Z_INDEX.MODAL} flex items-center justify-center bg-sunken/80 p-4 ${MOTION.FADE_ENTER}`}
       >
         <div
           role="dialog"
@@ -125,7 +125,7 @@ export const QualitySamplePreview = ({ tiers, onClose }: QualitySamplePreviewPro
                 ))}
               </div>
 
-              <div className="mt-5 rounded-sm border border-line-strong bg-base p-3">
+              <div className="mt-5 rounded-sm border border-line-strong bg-sunken p-3">
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-mono text-3xs uppercase tracking-wider text-subtle">Prompt used</span>
                   <button

@@ -57,7 +57,7 @@ export function DescribeWithAISection() {
           aria-label="Describe the sound"
           aria-describedby={generationError ? errorId : undefined}
           aria-invalid={generationError ? true : undefined}
-          className={`h-9.5 w-full rounded border border-line bg-base px-2.5 text-ui text-ink placeholder:text-subtle ${FOCUS_RING.INPUT}`}
+          className={`h-9.5 w-full rounded border border-line bg-sunken px-2.5 text-ui text-ink placeholder:text-subtle ${FOCUS_RING.INPUT}`}
         />
 
         {generationError && (

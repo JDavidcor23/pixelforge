@@ -56,7 +56,7 @@ export function ApiKeyField({
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
             aria-label={`${label} API key`}
-            className={`h-8.5 w-full rounded-sm border border-line bg-base px-2.5 pr-9 text-ui text-ink placeholder:text-subtle ${MOTION.COLORS} ${FOCUS_RING.INPUT}`}
+            className={`h-8.5 w-full rounded-sm border border-line bg-sunken px-2.5 pr-9 text-ui text-ink placeholder:text-subtle ${MOTION.COLORS} ${FOCUS_RING.INPUT}`}
           />
           <button
             type="button"

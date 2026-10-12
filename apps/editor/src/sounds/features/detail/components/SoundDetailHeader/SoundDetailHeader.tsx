@@ -50,7 +50,7 @@ export function SoundDetailHeader({ asset, source }: SoundDetailHeaderProps) {
               maxLength={nameMaxLength}
               spellCheck={false}
               autoFocus
-              className="w-full min-w-0 rounded border border-accent bg-base px-1 font-mono text-title font-semibold text-ink outline-none"
+              className="w-full min-w-0 rounded border border-accent bg-sunken px-1 font-mono text-title font-semibold text-ink outline-none"
             />
           ) : (
             <>

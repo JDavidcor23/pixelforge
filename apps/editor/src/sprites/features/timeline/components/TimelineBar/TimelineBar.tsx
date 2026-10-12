@@ -81,7 +81,7 @@ export const TimelineBar = () => {
           max={SPRITE_EDITOR_TIMELINE.MAX_FPS}
           onChange={handleFpsChange}
           title="Frames per second"
-          className="h-7 w-11 rounded border border-line bg-base text-center font-mono text-xs text-ink outline-none focus:border-accent"
+          className="h-7 w-11 rounded border border-line bg-sunken text-center font-mono text-xs text-ink outline-none focus:border-accent"
         />
         <span className="text-2xs text-subtle">FPS</span>
       </div>

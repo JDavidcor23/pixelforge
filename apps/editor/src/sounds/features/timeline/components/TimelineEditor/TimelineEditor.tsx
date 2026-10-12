@@ -11,7 +11,7 @@ export function TimelineEditor() {
     useTimelineEditor()
 
   return (
-    <section aria-label="Timeline" className="flex min-w-0 flex-1 flex-col bg-base">
+    <section aria-label="Timeline" className="flex min-w-0 flex-1 flex-col bg-sunken">
       <TimelineTopBar />
       <TimelineToolbar />
       <TimelineTransport

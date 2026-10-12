@@ -46,7 +46,7 @@ export function TimelineTopBar() {
             maxLength={nameMaxLength}
             spellCheck={false}
             autoFocus
-            className="min-w-0 rounded border border-accent bg-base px-1 font-mono text-base font-semibold text-ink outline-none"
+            className="min-w-0 rounded border border-accent bg-sunken px-1 font-mono text-base font-semibold text-ink outline-none"
           />
         ) : (
           <>

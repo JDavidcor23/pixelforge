@@ -11,7 +11,7 @@ export const FOCUS_RING = {
   RAISED_AI:
     'outline-none focus-visible:ring-2 focus-visible:ring-ai-ink focus-visible:ring-offset-2 focus-visible:ring-offset-raised',
   BASE:
-    'outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-base',
+    'outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-sunken',
   /** Ring sits inside the element — for full-bleed rows that touch an edge. */
   INSET: 'outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent',
   /** Outline-based ring for elements that already draw a box-shadow ring of their own (selected timeline clips). */
