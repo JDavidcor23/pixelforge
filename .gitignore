@@ -61,3 +61,7 @@ package-lock.json
 # impeccable design tool: per-machine cache and consent
 .impeccable/hook.cache.json
 .impeccable/*.local.json
+
+# graphify: per-machine cache and dated backups churn on every rebuild and cause merge conflicts
+graphify-out/cache/
+graphify-out/20*/
