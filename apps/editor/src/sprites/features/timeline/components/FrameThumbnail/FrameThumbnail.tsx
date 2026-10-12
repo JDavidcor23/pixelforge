@@ -1,5 +1,9 @@
 import { X } from 'lucide-react'
 
+import { FOCUS_RING } from '@/constants/focus-ring'
+import { MOTION } from '@/constants/motion'
+import { TIMELINE_THUMBNAIL_SIZE } from '@/constants'
+
 interface FrameThumbnailProps {
   readonly frameIndex: number
   readonly isActive: boolean
@@ -8,14 +12,10 @@ interface FrameThumbnailProps {
   readonly onRemove: (index: number) => void
 }
 
-function getThumbnailClass(isActive: boolean, isSelected: boolean): string {
-  if (isActive) {
-    return 'border-[#00f5ff] bg-[#091824] text-[#00f5ff] shadow-[0_0_8px_rgba(0,245,255,0.4)] ring-1 ring-[#00f5ff]/30'
-  }
-  if (isSelected) {
-    return 'border-[#7c3aed] bg-[#160a28] text-[#c4b5fd] shadow-[0_0_6px_rgba(124,58,237,0.3)] ring-1 ring-[#7c3aed]/30'
-  }
-  return 'border-white/10 bg-[#0f1115] text-[#8888aa] hover:border-white/20 hover:text-[#aaaacc]'
+function getThumbnailBorderClass(isActive: boolean, isSelected: boolean): string {
+  if (isActive) return 'border-2 border-accent'
+  if (isSelected) return 'border-2 border-accent/50'
+  return 'border border-line-strong hover:border-line-strong/80'
 }
 
 export const FrameThumbnail = ({
@@ -26,29 +26,22 @@ export const FrameThumbnail = ({
   onRemove,
 }: FrameThumbnailProps) => {
   return (
-    <div
-      className="group relative flex-shrink-0"
-      data-frame-index={frameIndex}
-    >
-      {/* Visual button — interaction handled by strip container */}
+    <div className="group relative shrink-0" data-frame-index={frameIndex}>
+      {/* Visual tile — interaction handled by the strip container */}
       <div
-        className={`relative flex h-12 w-12 flex-col items-center justify-center rounded border text-xs font-semibold transition-all select-none ${getThumbnailClass(isActive, isSelected)}`}
+        style={{ width: TIMELINE_THUMBNAIL_SIZE, height: TIMELINE_THUMBNAIL_SIZE }}
+        className={`checker-bg relative rounded-sm select-none ${getThumbnailBorderClass(isActive, isSelected)}`}
       >
-        <span>{frameIndex + 1}</span>
-
-        {/* Bottom indicator line */}
-        <span
-          className={`absolute bottom-1 left-3 right-3 h-0.5 rounded-full transition-all ${
-            isActive
-              ? 'bg-[#00f5ff] opacity-100'
-              : isSelected
-                ? 'bg-[#7c3aed] opacity-100'
-                : 'opacity-0'
-          }`}
-        />
+        <span className="absolute left-0.5 top-0.5 rounded-sm bg-base px-1 font-mono text-3xs leading-none text-ink">
+          {frameIndex + 1}
+        </span>
       </div>
 
-      {/* Delete button — own click handler, stops propagation */}
+      {/* Delete button — own click handler, stops propagation. Visible on hover/focus
+          of the thumbnail and always visible on the active frame — a filled red
+          circle used to sit right on top of the red/cyan selection border and was
+          nearly invisible, so this is a neutral square that only turns danger-red
+          on hover/focus. */}
       <button
         type="button"
         data-is-delete-btn="true"
@@ -58,10 +51,13 @@ export const FrameThumbnail = ({
         }}
         onPointerDown={(e) => e.stopPropagation()} // prevent strip drag from starting here
         disabled={isOnly}
-        className="absolute -right-1 -top-1 hidden h-4 w-4 items-center justify-center rounded-full bg-[#ff4466] text-white shadow-md transition-opacity group-hover:flex disabled:opacity-30 disabled:cursor-not-allowed"
-        title="Delete frame"
+        aria-label={`Delete frame ${frameIndex + 1}`}
+        title={isOnly ? "Can't delete the only frame" : `Delete frame ${frameIndex + 1}`}
+        className={`absolute -right-1 -top-1 size-4 items-center justify-center rounded-sm border border-line-strong bg-base text-muted ${MOTION.COLORS} ${FOCUS_RING.BASE} hover:border-danger hover:bg-danger hover:text-ink focus-visible:border-danger focus-visible:bg-danger focus-visible:text-ink disabled:pointer-events-none disabled:opacity-40 ${
+          isActive ? 'flex' : 'hidden group-hover:flex group-focus-within:flex'
+        }`}
       >
-        <X size={10} />
+        <X size={10} aria-hidden />
       </button>
     </div>
   )

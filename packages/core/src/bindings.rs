@@ -458,6 +458,11 @@ impl WasmDocument {
         ))
     }
 
+    /// ADR 0008: lossless canvas resize — see `Document::doc_resize`'s doc.
+    pub fn doc_resize(&mut self, canvas_w: u32, canvas_h: u32, label: &str) -> Vec<u32> {
+        encode_dispatch_result(&self.inner.doc_resize(canvas_w, canvas_h, label))
+    }
+
     #[allow(clippy::too_many_arguments)]
     pub fn frame_paste(
         &mut self,

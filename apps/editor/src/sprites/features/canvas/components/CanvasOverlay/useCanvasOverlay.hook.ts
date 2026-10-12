@@ -12,7 +12,7 @@ export const useCanvasOverlay = () => {
 
   const zoomPercentage = `${viewport.zoom * SPRITE_EDITOR_VIEWPORT.PERCENTAGE_MULTIPLIER}%`
   const positionText = cursorPixel
-    ? `X: ${cursorPixel.x}  Y: ${cursorPixel.y}`
+    ? `X ${cursorPixel.x}  Y ${cursorPixel.y}`
     : '—'
 
   const centerViewLabel = `Center view (${

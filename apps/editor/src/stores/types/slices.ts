@@ -1,10 +1,15 @@
 import type {
   AnimationFrame,
+  AssetType,
+  BottomPanelTabId,
+  CreateMethod,
   DocStatus,
+  InspectorTabId,
   Layer,
   PixelBuffer,
   PixelCoord,
   RgbaColor,
+  SaveStatus,
   SelectionState,
   Timeline,
   ToolType,
@@ -120,6 +125,14 @@ export interface UISlice {
     timelineOpen: boolean
     toolbarOpen: boolean
     toolbarPosition: { x: number; y: number } | null
+    inspectorTab: InspectorTabId
+    bottomPanelTab: BottomPanelTabId
+    createMethod: CreateMethod
+    createAssetType: AssetType
+    focusPromptRequest: number
+    leftSidebarWidth: number
+    rightSidebarWidth: number
+    bottomPanelHeight: number
   }
   toggleLeftSidebar: () => void
   toggleRightSidebar: () => void
@@ -127,6 +140,15 @@ export interface UISlice {
   toggleToolbar: () => void
   toggleZenMode: () => void
   setToolbarPosition: (position: { x: number; y: number } | null) => void
+  setInspectorTab: (tab: InspectorTabId) => void
+  setBottomPanelTab: (tab: BottomPanelTabId) => void
+  setCreateMethod: (method: CreateMethod) => void
+  setCreateAssetType: (assetType: AssetType) => void
+  requestFocusPrompt: () => void
+  setLeftSidebarWidth: (width: number) => void
+  setRightSidebarWidth: (width: number) => void
+  setBottomPanelHeight: (height: number) => void
+  resetPanelSizes: () => void
   openSettings: () => void
   closeSettings: () => void
 }
@@ -145,6 +167,10 @@ export interface ViewPrefsSlice {
 export interface DocumentStatusSlice {
   docStatus: DocStatus
   setDocStatus: (status: DocStatus) => void
+  saveStatus: SaveStatus
+  lastSavedAt: number | null
+  saveError: string | null
+  isPersistent: boolean
 }
 
 // ── Compound Slice (orchestration) ───────────────────────────────────────────

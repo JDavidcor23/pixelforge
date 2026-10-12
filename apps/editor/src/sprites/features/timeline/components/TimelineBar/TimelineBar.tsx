@@ -1,8 +1,12 @@
-import { Play, Pause, SkipBack, SkipForward, Plus, Repeat, Copy, ClipboardPaste, Clipboard } from 'lucide-react'
+import { Clipboard, ClipboardPaste, Copy, Pause, Play, Plus, Repeat, SkipBack, SkipForward } from 'lucide-react'
 
 import { SPRITE_EDITOR_TIMELINE } from '@/constants'
 import { FrameThumbnail } from '../FrameThumbnail/FrameThumbnail'
 import { useTimelineBar } from './useTimelineBar.hook'
+import { FOCUS_RING } from '@/constants/focus-ring'
+import { MOTION } from '@/constants/motion'
+
+const ICON_BUTTON = `flex size-8 items-center justify-center rounded text-muted hover:text-accent ${MOTION.PRESS} ${FOCUS_RING.SURFACE} disabled:pointer-events-none disabled:opacity-30`
 
 export const TimelineBar = () => {
   const {
@@ -25,65 +29,65 @@ export const TimelineBar = () => {
     handlePasteFramesAtEnd,
   } = useTimelineBar()
 
-  const PlaybackIcon = timeline.isPlaying ? Pause : Play
   const totalFrames = timeline.frames.length
 
   return (
-    <div className="flex h-24 cursor-default items-center border-t border-white/10 bg-[#0f1115] px-4">
-
+    <div className="flex h-full cursor-default items-center gap-3 px-4">
       {/* Transport */}
       <div className="flex items-center gap-1">
         <button
           type="button"
           onClick={handlePreviousFrame}
           disabled={totalFrames <= 1}
-          className="rounded p-2 text-[#8888aa] transition-colors hover:text-[#00f5ff] disabled:opacity-30 disabled:cursor-not-allowed"
+          aria-label="Previous frame"
+          className={ICON_BUTTON}
           title="Previous frame"
         >
-          <SkipBack size={16} />
+          <SkipBack size={16} aria-hidden />
         </button>
         <button
           type="button"
           onClick={handleTogglePlayback}
-          className="rounded p-2 text-[#8888aa] transition-colors hover:text-[#00f5ff]"
+          aria-label={timeline.isPlaying ? 'Pause' : 'Play'}
           title={timeline.isPlaying ? 'Pause' : 'Play'}
+          className={`flex size-8 items-center justify-center rounded bg-accent text-on-accent hover:bg-accent-strong ${MOTION.PRESS} ${FOCUS_RING.SURFACE}`}
         >
-          <PlaybackIcon size={16} />
+          {timeline.isPlaying ? <Pause size={16} aria-hidden /> : <Play size={16} aria-hidden />}
         </button>
         <button
           type="button"
           onClick={handleNextFrame}
           disabled={totalFrames <= 1}
-          className="rounded p-2 text-[#8888aa] transition-colors hover:text-[#00f5ff] disabled:opacity-30 disabled:cursor-not-allowed"
+          aria-label="Next frame"
+          className={ICON_BUTTON}
           title="Next frame"
         >
-          <SkipForward size={16} />
+          <SkipForward size={16} aria-hidden />
         </button>
       </div>
 
-      <div className="mx-3 h-8 w-px bg-white/10" />
+      <div className="h-8 w-px shrink-0 bg-line-strong" />
 
       {/* FPS */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1.5">
         <input
           type="number"
           value={timeline.fps}
           min={SPRITE_EDITOR_TIMELINE.MIN_FPS}
           max={SPRITE_EDITOR_TIMELINE.MAX_FPS}
           onChange={handleFpsChange}
-          className="w-12 rounded border border-white/10 bg-[#1a1a2e] px-1 py-0.5 text-center text-xs text-[#ededed]"
           title="Frames per second"
+          className="h-7 w-11 rounded border border-line bg-base text-center font-mono text-xs text-ink outline-none focus:border-accent"
         />
-        <span className="text-[10px] text-[#8888aa]">FPS</span>
+        <span className="text-2xs text-subtle">FPS</span>
       </div>
 
-      <div className="mx-3 h-8 w-px bg-white/10" />
+      <div className="h-8 w-px shrink-0 bg-line-strong" />
 
       {/* Frame strip — all interaction handled here, not on individual thumbnails */}
       <div
         ref={stripRef}
-        className="relative flex flex-1 items-center gap-2 overflow-x-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent hover:scrollbar-thumb-white/20"
-        style={{ userSelect: 'none' }}
+        className="relative flex h-full flex-1 select-none items-center gap-2 overflow-x-auto"
         onPointerDown={handleStripPointerDown}
         onPointerMove={handleStripPointerMove}
         onPointerUp={handleStripPointerUp}
@@ -91,16 +95,9 @@ export const TimelineBar = () => {
         {/* Rubber band selection overlay */}
         {dragRect && dragRect.width > 6 && (
           <div
-            className="pointer-events-none absolute top-1.5 bottom-1.5 z-10 rounded"
-            style={{
-              left: dragRect.left,
-              width: dragRect.width,
-              border: '2px dashed #00f5ff',
-              backgroundColor: 'rgba(0, 245, 255, 0.06)',
-              boxShadow: '0 0 12px rgba(0, 245, 255, 0.15) inset, 0 0 4px rgba(0, 245, 255, 0.1)',
-            }}
+            className="pointer-events-none absolute top-1.5 bottom-1.5 z-10 rounded border-2 border-dashed border-accent bg-accent/5"
+            style={{ left: dragRect.left, width: dragRect.width }}
           >
-            {/* 8 anchor dots: corners + edge midpoints */}
             {[
               'top-0 left-0 -translate-x-1/2 -translate-y-1/2',
               'top-0 left-1/2 -translate-x-1/2 -translate-y-1/2',
@@ -111,10 +108,7 @@ export const TimelineBar = () => {
               'bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2',
               'bottom-0 right-0 translate-x-1/2 translate-y-1/2',
             ].map((pos) => (
-              <span
-                key={pos}
-                className={`absolute h-2 w-2 rounded-full bg-[#00f5ff] shadow-[0_0_4px_#00f5ff] ${pos}`}
-              />
+              <span key={pos} className={`absolute size-2 rounded-full bg-accent ${pos}`} />
             ))}
           </div>
         )}
@@ -135,71 +129,64 @@ export const TimelineBar = () => {
           type="button"
           onClick={handleAddFrame}
           onPointerDown={(e) => e.stopPropagation()} // prevent strip drag
-          className="flex-shrink-0 rounded p-2 text-[#8888aa] transition-colors hover:text-[#00f5ff]"
+          aria-label="Add frame"
           title="Add frame"
+          className={`flex h-14 w-8 shrink-0 items-center justify-center rounded-sm border border-line-strong text-muted hover:text-accent ${MOTION.PRESS} ${FOCUS_RING.SURFACE}`}
         >
-          <Plus size={16} />
+          <Plus size={16} aria-hidden />
         </button>
       </div>
 
-      <div className="mx-3 h-8 w-px bg-white/10" />
+      <div className="h-8 w-px shrink-0 bg-line-strong" />
 
       {/* Frame clipboard */}
       <div className="flex items-center gap-1">
         <button
           type="button"
           onClick={handleCopyFrames}
-          className="rounded p-2 text-[#8888aa] transition-colors hover:text-[#00f5ff]"
+          aria-label="Copy selected frames"
+          className={ICON_BUTTON}
           title="Copy selected frames (Ctrl+C)"
         >
-          <Copy size={16} />
+          <Copy size={16} aria-hidden />
         </button>
         <button
           type="button"
           onClick={handlePasteFrames}
           disabled={!frameClipboard}
-          className={`rounded p-2 transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
-            frameClipboard
-              ? 'text-[#7c3aed] hover:text-[#7c3aed]/80'
-              : 'text-[#8888aa]'
-          }`}
+          aria-label="Paste after current"
+          className={ICON_BUTTON}
           title="Paste after current (Insert)"
         >
-          <ClipboardPaste size={16} />
+          <ClipboardPaste size={16} aria-hidden />
         </button>
         <button
           type="button"
           onClick={handlePasteFramesAtEnd}
           disabled={!frameClipboard}
-          className={`rounded p-2 transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
-            frameClipboard
-              ? 'text-[#00f5ff] hover:text-[#00f5ff]/80'
-              : 'text-[#8888aa]'
-          }`}
+          aria-label="Paste at the end"
+          className={ICON_BUTTON}
           title="Paste at the end (Ctrl+V)"
         >
-          <Clipboard size={16} />
+          <Clipboard size={16} aria-hidden />
         </button>
       </div>
 
-      <div className="mx-3 h-8 w-px bg-white/10" />
+      <div className="h-8 w-px shrink-0 bg-line-strong" />
 
       {/* Loop */}
-      <div className="flex items-center gap-1.5">
-        <button
-          type="button"
-          onClick={handleToggleLoop}
-          className={`rounded p-2 transition-colors ${
-            timeline.loop
-              ? 'text-[#00f5ff]'
-              : 'text-[#8888aa] hover:text-[#00f5ff]'
-          }`}
-          title={timeline.loop ? 'Loop on' : 'Loop off'}
-        >
-          <Repeat size={16} />
-        </button>
-        <span className="text-[10px] text-[#8888aa]">Loop</span>
-      </div>
+      <button
+        type="button"
+        onClick={handleToggleLoop}
+        aria-pressed={timeline.loop}
+        title={timeline.loop ? 'Loop on' : 'Loop off'}
+        className={`flex items-center gap-1.5 rounded px-2 py-1.5 ${MOTION.PRESS} ${FOCUS_RING.SURFACE} ${
+          timeline.loop ? 'bg-hover text-ink' : 'text-muted hover:text-ink'
+        }`}
+      >
+        <Repeat size={16} className={timeline.loop ? 'text-accent' : ''} aria-hidden />
+        <span className="text-2xs">Loop</span>
+      </button>
     </div>
   )
 }

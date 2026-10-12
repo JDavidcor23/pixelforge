@@ -1,1 +1,1 @@
-export { RightSidebar } from './components/RightSidebar/RightSidebar'
+export { Inspector } from './components/Inspector/Inspector'

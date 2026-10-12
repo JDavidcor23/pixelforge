@@ -113,4 +113,22 @@ describe.each(implementations)('PixelCore contract ($name)', ({ make }) => {
     const color = getPixel({ w: 4, h: 4, data }, 2, 2)
     expect(color).toEqual({ r: 0, g: 255, b: 0, a: 255 })
   })
+
+  it('doc.resize (ADR 0008): shrinking crops anchored top-left and undo restores byte-identical pixels', () => {
+    const core = make()
+    core.dispatch({ type: 'stroke.begin', layerId: 'L0' })
+    core.dispatch({ type: 'stroke.points', points: packPoints([{ x: 0, y: 0 }]), rgba: RED })
+    core.dispatch({ type: 'stroke.end', label: 'Draw' })
+    const beforeResize = core.readLayer('F0', 'L0').slice()
+
+    const resized = core.dispatch({ type: 'doc.resize', canvasWidth: 2, canvasHeight: 2, label: 'Resize canvas' })
+    expect(resized.changed).toBe(true)
+    expect(core.snapshot().canvasWidth).toBe(2)
+    expect(core.snapshot().canvasHeight).toBe(2)
+    expect(getPixel({ w: 2, h: 2, data: core.readLayer('F0', 'L0') }, 0, 0)).toEqual({ r: 255, g: 0, b: 0, a: 255 })
+
+    core.dispatch({ type: 'undo' })
+    expect(core.snapshot().canvasWidth).toBe(4)
+    expect(core.readLayer('F0', 'L0')).toEqual(beforeResize)
+  })
 })

@@ -16,6 +16,7 @@ export const wasmdocument_can_redo: (a: number) => number;
 export const wasmdocument_can_undo: (a: number) => number;
 export const wasmdocument_debug_force_trap: (a: number) => void;
 export const wasmdocument_doc_replace: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number) => [number, number];
+export const wasmdocument_doc_resize: (a: number, b: number, c: number, d: number, e: number) => [number, number];
 export const wasmdocument_export_pixels: (a: number) => [number, number];
 export const wasmdocument_fill: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => [number, number];
 export const wasmdocument_frame_add: (a: number) => [number, number];

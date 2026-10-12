@@ -3,6 +3,7 @@ import type { AnimationFrame, Layer } from '@/types'
 import { createEmptyBuffer, getPixel, putPixel } from '../pixel-buffer'
 import { packPoints, packRgba } from './color-codec'
 import { frameToSerializedFrame } from './serialize'
+import { historyBytes } from './history'
 import {
   createCoreState,
   currentActiveLayerId,
@@ -182,6 +183,132 @@ describe('doc.replace via dispatch (AI Copilot apply/import)', () => {
 
     const undone = dispatchCommand(replaced, { type: 'undo' }).state
     expect(undone.doc.canvasWidth).toBe(4)
+  })
+})
+
+describe('doc.resize via dispatch (ADR 0008 — lossless canvas resize)', () => {
+  it('is a no-op (no history entry) when the size is unchanged', () => {
+    const doc = makeDoc(4, 4)
+    const state = createCoreState(doc)
+    const outcome = dispatchCommand(state, { type: 'doc.resize', canvasWidth: 4, canvasHeight: 4, label: 'Resize canvas' })
+    expect(outcome.result.changed).toBe(false)
+    expect(outcome.state.history.entries).toHaveLength(0)
+  })
+
+  it('rejects a non-positive or fractional size, never partially applying it', () => {
+    const doc = makeDoc(4, 4)
+    const state = createCoreState(doc)
+    for (const cmd of [
+      { type: 'doc.resize' as const, canvasWidth: 0, canvasHeight: 4, label: 'Resize canvas' },
+      { type: 'doc.resize' as const, canvasWidth: 4, canvasHeight: -1, label: 'Resize canvas' },
+      { type: 'doc.resize' as const, canvasWidth: 2.5, canvasHeight: 4, label: 'Resize canvas' },
+    ]) {
+      const outcome = dispatchCommand(state, cmd)
+      expect(outcome.result.changed).toBe(false)
+      expect(outcome.state.doc.canvasWidth).toBe(4)
+    }
+  })
+
+  it('growing preserves every layer (ids, name, visibility, lock, opacity) and costs zero history bytes', () => {
+    const doc = makeDoc(2, 2, 1, 2) // 1 frame, 2 layers
+    let state = createCoreState(doc)
+    state = dispatchCommand(state, { type: 'layer.meta', layerId: currentLayers(doc)[0].id, patch: { name: 'Base', visible: false, opacity: 50 } }).state
+    putPixel(currentLayers(state.doc)[0].pixels, 0, 0, RED)
+
+    const resized = dispatchCommand(state, { type: 'doc.resize', canvasWidth: 4, canvasHeight: 4, label: 'Resize canvas' })
+    expect(resized.result.changed).toBe(true)
+    expect(resized.state.doc.canvasWidth).toBe(4)
+    expect(resized.state.doc.canvasHeight).toBe(4)
+    expect(currentLayers(resized.state.doc)).toHaveLength(2)
+    expect(currentLayers(resized.state.doc)[0].id).toBe(currentLayers(doc)[0].id)
+    expect(currentLayers(resized.state.doc)[0].name).toBe('Base')
+    expect(currentLayers(resized.state.doc)[0].visible).toBe(false)
+    expect(currentLayers(resized.state.doc)[0].opacity).toBe(50)
+    expect(getPixel(currentLayers(resized.state.doc)[0].pixels, 0, 0)).toEqual(RED) // preserved, anchored top-left
+    expect(getPixel(currentLayers(resized.state.doc)[0].pixels, 3, 3)).toEqual(TRANSPARENT) // new area
+
+    const entry = resized.state.history.entries[resized.state.history.entries.length - 1]
+    if (entry.kind !== 'doc.resize') throw new Error('expected a doc.resize entry')
+    expect(entry.strips).toHaveLength(0) // growing cuts nothing
+  })
+
+  it('shrinking retains only the cut strip bytes, not a full snapshot', () => {
+    const doc = makeDoc(4, 4, 1, 1)
+    const state = createCoreState(doc)
+    const resized = dispatchCommand(state, { type: 'doc.resize', canvasWidth: 2, canvasHeight: 2, label: 'Resize canvas' })
+    expect(resized.result.changed).toBe(true)
+    // cut area = 4x4 minus the kept 2x2 = 12px * 4 bytes * 1 layer.
+    expect(historyBytes(resized.state.history)).toBe(12 * 4)
+  })
+
+  it('shrink then undo restores byte-identical pixels', () => {
+    const doc = makeDoc(4, 4, 1, 1)
+    const state = createCoreState(doc)
+    putPixel(currentLayers(doc)[0].pixels, 3, 3, GREEN) // exactly the pixel the resize below cuts away
+    const before = currentLayers(state.doc)[0].pixels.data.slice()
+
+    const resized = dispatchCommand(state, { type: 'doc.resize', canvasWidth: 2, canvasHeight: 2, label: 'Resize canvas' }).state
+    const undone = dispatchCommand(resized, { type: 'undo' }).state
+    expect(undone.doc.canvasWidth).toBe(4)
+    expect(currentLayers(undone.doc)[0].pixels.data).toEqual(before)
+  })
+
+  it('redo re-applies the deterministic crop', () => {
+    const doc = makeDoc(4, 4, 1, 1)
+    const state = createCoreState(doc)
+    const resized = dispatchCommand(state, { type: 'doc.resize', canvasWidth: 2, canvasHeight: 2, label: 'Resize canvas' }).state
+    const afterResizeBytes = currentLayers(resized.doc)[0].pixels.data.slice()
+    const undone = dispatchCommand(resized, { type: 'undo' }).state
+    const redone = dispatchCommand(undone, { type: 'redo' }).state
+    expect(redone.doc.canvasWidth).toBe(2)
+    expect(currentLayers(redone.doc)[0].pixels.data).toEqual(afterResizeBytes)
+  })
+
+  it('a "wider but shorter" mixed resize only cuts the bottom strip', () => {
+    const doc = makeDoc(2, 4, 1, 1)
+    const state = createCoreState(doc)
+    const resized = dispatchCommand(state, { type: 'doc.resize', canvasWidth: 4, canvasHeight: 2, label: 'Resize canvas' })
+    expect(resized.result.changed).toBe(true)
+    // only the bottom 2 rows (old width 2) are cut: 2 * 2 * 4 bytes.
+    expect(historyBytes(resized.state.history)).toBe(2 * 2 * 4)
+    const undone = dispatchCommand(resized.state, { type: 'undo' }).state
+    expect(undone.doc.canvasWidth).toBe(2)
+    expect(undone.doc.canvasHeight).toBe(4)
+  })
+
+  it('preserves per-frame durations and every frame/layer across a multi-frame multi-layer document', () => {
+    const doc = makeDoc(4, 4, 2, 2)
+    const state = createCoreState(doc)
+    const resized = dispatchCommand(state, { type: 'doc.resize', canvasWidth: 2, canvasHeight: 2, label: 'Resize canvas' }).state
+    expect(resized.doc.timeline.frames).toHaveLength(2)
+    for (let f = 0; f < 2; f++) {
+      expect(resized.doc.timeline.frames[f].durationMs).toBe(doc.timeline.frames[f].durationMs)
+      expect(resized.doc.timeline.frames[f].layers).toHaveLength(2)
+      for (let l = 0; l < 2; l++) {
+        expect(resized.doc.timeline.frames[f].layers[l].id).toBe(doc.timeline.frames[f].layers[l].id)
+      }
+    }
+  })
+})
+
+describe('ADR 0008 performance budget / acceptance — measured history bytes', () => {
+  it('growing 64x64 -> 128x128 on 4 layers x 8 frames costs 0 history bytes (target: 0)', () => {
+    const doc = makeDoc(64, 64, 8, 4)
+    const state = createCoreState(doc)
+    const resized = dispatchCommand(state, { type: 'doc.resize', canvasWidth: 128, canvasHeight: 128, label: 'Resize canvas' })
+    expect(resized.result.changed).toBe(true)
+    expect(historyBytes(resized.state.history)).toBe(0)
+  })
+
+  it('shrinking 128x128 -> 64x64 on 4 layers x 8 frames costs exactly the cut area (target: ~1.5 MB)', () => {
+    const doc = makeDoc(128, 128, 8, 4)
+    const state = createCoreState(doc)
+    const resized = dispatchCommand(state, { type: 'doc.resize', canvasWidth: 64, canvasHeight: 64, label: 'Resize canvas' })
+    expect(resized.result.changed).toBe(true)
+    // (128*128 - 64*64) px * 4 bytes/px * 32 layers (4 layers x 8 frames) = 1,572,864 bytes.
+    const cutAreaBytes = (128 * 128 - 64 * 64) * 4 * (4 * 8)
+    expect(cutAreaBytes).toBe(1_572_864)
+    expect(historyBytes(resized.state.history)).toBe(cutAreaBytes)
   })
 })
 

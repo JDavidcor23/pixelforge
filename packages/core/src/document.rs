@@ -34,7 +34,7 @@ use std::collections::HashMap;
 
 use crate::history::{
     DocSnapshotRecord, FrameRecord, History, HistoryEntry, HistoryPatch, LayerMetaSnapshot,
-    LayerRecord,
+    LayerRecord, ResizeStrip,
 };
 
 // ── Constants (mirror `apps/editor/src/constants/index.ts`) ────────────────
@@ -318,7 +318,17 @@ fn frame_to_live(r: &FrameRecord) -> Frame {
 /// Mirrors `ts-core.ts`'s `dirtyAndEvictedOf` exactly (see that function's
 /// doc for the full "C1/W8 fix" rationale: precise (frame,layer) pairs,
 /// never a blanket sweep).
-fn dirty_and_evicted_of(entry: &HistoryEntry, dir: Direction) -> (Vec<DirtyRect>, Vec<LayerRef>) {
+///
+/// `live_frames`: the document's OWN frames, already mutated by `apply_entry`
+/// to the post-apply state by the time this runs (`undo`/`redo` call
+/// `apply_entry` first) — used ONLY by the `DocResize` case, which (unlike
+/// `DocReplace`) never stores a full before/after frame snapshot, so it has
+/// no other source for "every (frame, layer) pair that is now dirty".
+fn dirty_and_evicted_of(
+    entry: &HistoryEntry,
+    dir: Direction,
+    live_frames: &[Frame],
+) -> (Vec<DirtyRect>, Vec<LayerRef>) {
     match entry {
         HistoryEntry::Patch {
             frame_id, patches, ..
@@ -415,6 +425,17 @@ fn dirty_and_evicted_of(entry: &HistoryEntry, dir: Direction) -> (Vec<DirtyRect>
             let evicted = out_of.frames.iter().flat_map(full_refs_record).collect();
             (dirty, evicted)
         }
+        // Ids never change on a resize (every layer is mutated in place), so
+        // there is never anything to evict — every frame/layer simply needs
+        // its pixel cache entry refreshed at the (already live) post-apply
+        // canvas size.
+        HistoryEntry::DocResize { .. } => (
+            live_frames
+                .iter()
+                .flat_map(|f| full_dirty(f, 0, 0))
+                .collect(),
+            vec![],
+        ),
     }
 }
 
@@ -1140,6 +1161,63 @@ impl Document {
                 // fps/loop/isPlaying deliberately NOT restored (playback/view
                 // prefs, not document data) — mirrors `applyEntry`'s
                 // 'doc.replace' case exactly.
+            }
+            HistoryEntry::DocResize {
+                from_w,
+                from_h,
+                to_w,
+                to_h,
+                strips,
+                ..
+            } => {
+                // ADR 0008: ids never change — resize mutates every existing
+                // layer's buffer in place, so there is no frame/layer list to
+                // restore and no focus to resolve (unlike every other
+                // structural entry kind above).
+                let (target_w, target_h) = if dir == Direction::Before {
+                    (*from_w, *from_h)
+                } else {
+                    (*to_w, *to_h)
+                };
+                let cur_w = self.canvas_w;
+                let cur_h = self.canvas_h;
+                for frame in &mut self.frames {
+                    for layer in &mut frame.layers {
+                        if let Some(resized) = crate::pixels::resize_buffer(
+                            &layer.data,
+                            cur_w,
+                            cur_h,
+                            target_w,
+                            target_h,
+                        ) {
+                            layer.data = resized;
+                        }
+                    }
+                }
+                if dir == Direction::Before {
+                    // Undo: paste the cut strips back into the now-padded buffers.
+                    for strip in strips {
+                        if let Some(frame) = self.frames.iter_mut().find(|f| f.id == strip.frame_id)
+                        {
+                            if let Some(layer) =
+                                frame.layers.iter_mut().find(|l| l.id == strip.layer_id)
+                            {
+                                crate::pixels::write_rect(
+                                    &mut layer.data,
+                                    target_w,
+                                    target_h,
+                                    strip.rect.x,
+                                    strip.rect.y,
+                                    strip.rect.w,
+                                    strip.rect.h,
+                                    &strip.bytes,
+                                );
+                            }
+                        }
+                    }
+                }
+                self.canvas_w = target_w;
+                self.canvas_h = target_h;
             }
         }
     }
@@ -1952,6 +2030,120 @@ impl Document {
         self.finish(changed, history_changed, dirty, evicted, false, true)
     }
 
+    /// ADR 0008: lossless canvas resize. Unlike `doc_replace`, every existing
+    /// frame/layer is mutated IN PLACE, anchored top-left (crop/pad, never
+    /// resampled) — ids, names, visibility, lock, opacity and per-frame
+    /// durations are all untouched. Invalid input (non-positive dimension)
+    /// rejects the whole op, same as `doc_replace`; an unchanged size is a
+    /// no-op that pushes no history entry. The history entry stores only the
+    /// strips a shrink actually cuts away (right strip when `canvas_w <
+    /// self.canvas_w`, bottom strip when `canvas_h < self.canvas_h`) — see
+    /// `history.rs`'s `HistoryEntry::DocResize` doc.
+    pub fn doc_resize(&mut self, canvas_w: u32, canvas_h: u32, label: &str) -> DispatchResult {
+        let history_v0 = self.history.version;
+        let commit_dirty = if self.stroke.is_some() {
+            self.end_open_stroke("Draw")
+        } else {
+            vec![]
+        };
+        let commit_changed = !commit_dirty.is_empty();
+
+        let valid = canvas_w > 0 && canvas_h > 0;
+        let mut own_dirty = vec![];
+        let mut own_changed = false;
+
+        if valid && (canvas_w != self.canvas_w || canvas_h != self.canvas_h) {
+            let from_w = self.canvas_w;
+            let from_h = self.canvas_h;
+            let to_w = canvas_w;
+            let to_h = canvas_h;
+
+            let mut strips = Vec::new();
+            for frame in &mut self.frames {
+                for layer in &mut frame.layers {
+                    if to_w < from_w {
+                        if let Some(bytes) = crate::pixels::extract_rect(
+                            &layer.data,
+                            from_w,
+                            from_h,
+                            to_w,
+                            0,
+                            from_w - to_w,
+                            from_h,
+                        ) {
+                            strips.push(ResizeStrip {
+                                frame_id: frame.id,
+                                layer_id: layer.id,
+                                rect: Rect {
+                                    x: to_w,
+                                    y: 0,
+                                    w: from_w - to_w,
+                                    h: from_h,
+                                },
+                                bytes,
+                            });
+                        }
+                    }
+                    if to_h < from_h {
+                        let bottom_w = from_w.min(to_w);
+                        if bottom_w > 0 {
+                            if let Some(bytes) = crate::pixels::extract_rect(
+                                &layer.data,
+                                from_w,
+                                from_h,
+                                0,
+                                to_h,
+                                bottom_w,
+                                from_h - to_h,
+                            ) {
+                                strips.push(ResizeStrip {
+                                    frame_id: frame.id,
+                                    layer_id: layer.id,
+                                    rect: Rect {
+                                        x: 0,
+                                        y: to_h,
+                                        w: bottom_w,
+                                        h: from_h - to_h,
+                                    },
+                                    bytes,
+                                });
+                            }
+                        }
+                    }
+                    if let Some(resized) =
+                        crate::pixels::resize_buffer(&layer.data, from_w, from_h, to_w, to_h)
+                    {
+                        layer.data = resized;
+                    }
+                }
+            }
+
+            self.canvas_w = to_w;
+            self.canvas_h = to_h;
+
+            own_dirty = self
+                .frames
+                .iter()
+                .flat_map(|f| full_dirty(f, to_w, to_h))
+                .collect();
+            self.history.push(HistoryEntry::DocResize {
+                label: label.to_string(),
+                from_w,
+                from_h,
+                to_w,
+                to_h,
+                strips,
+            });
+            self.revision += 1;
+            own_changed = true;
+        }
+
+        let dirty = [commit_dirty, own_dirty].concat();
+        let changed = own_changed || commit_changed;
+        let history_changed = self.history.version != history_v0;
+        self.finish(changed, history_changed, dirty, vec![], false, true)
+    }
+
     /// `frame.paste` — pastes `layer_counts.len()` fresh frames at `at`,
     /// always with fresh ids/buffers (judgment-day round 2, finding 6 — never
     /// aliases the caller's ids/buffers). KNOWN DEVIATION from
@@ -2068,7 +2260,7 @@ impl Document {
         };
         self.apply_entry(&entry, Direction::Before);
         self.revision += 1;
-        let (dirty, evicted) = dirty_and_evicted_of(&entry, Direction::Before);
+        let (dirty, evicted) = dirty_and_evicted_of(&entry, Direction::Before, &self.frames);
         let dirty = patch_in_canvas_rects(dirty, self.canvas_w, self.canvas_h);
         let history_changed = self.history.version != history_v0;
         // Fix-agent 7g: `undo`/`redo` can pop ANY of the 9 history-entry
@@ -2093,7 +2285,7 @@ impl Document {
         };
         self.apply_entry(&entry, Direction::After);
         self.revision += 1;
-        let (dirty, evicted) = dirty_and_evicted_of(&entry, Direction::After);
+        let (dirty, evicted) = dirty_and_evicted_of(&entry, Direction::After, &self.frames);
         let dirty = patch_in_canvas_rects(dirty, self.canvas_w, self.canvas_h);
         let history_changed = self.history.version != history_v0;
         self.finish(true, history_changed, dirty, evicted, false, true)
@@ -2384,6 +2576,150 @@ mod tests {
         let r = doc.doc_replace(0, 0, u32::MAX, 100, &[], "Import");
         assert!(!r.changed);
         assert_eq!(doc.canvas_w, 2); // untouched
+    }
+
+    #[test]
+    fn doc_resize_same_size_is_a_no_op() {
+        let mut doc = Document::new(4, 4);
+        let r = doc.doc_resize(4, 4, "Resize canvas");
+        assert!(!r.changed);
+        assert!(!r.history_changed);
+    }
+
+    #[test]
+    fn doc_resize_rejects_a_zero_dimension() {
+        let mut doc = Document::new(4, 4);
+        let r = doc.doc_resize(0, 4, "Resize canvas");
+        assert!(!r.changed);
+        assert_eq!(doc.canvas_w, 4);
+    }
+
+    #[test]
+    fn doc_resize_growing_costs_zero_history_bytes_and_pads_transparent() {
+        let mut doc = Document::new(2, 2);
+        doc.stroke_begin(1);
+        doc.stroke_points(&[0, 0], rgba(255, 0, 0, 255)); // one pixel only, never flood-fills
+        doc.stroke_end("Draw");
+        let bytes_before_resize = doc.history_bytes(); // the stroke's own 8-byte patch entry
+
+        let r = doc.doc_resize(4, 4, "Resize canvas");
+        assert!(r.changed);
+        assert_eq!(doc.canvas_w, 4);
+        assert_eq!(doc.canvas_h, 4);
+        assert_eq!(doc.history_bytes(), bytes_before_resize); // growing adds zero strip bytes
+        let data = doc.read_layer(1, 1);
+        assert_eq!(&data[0..4], &[255, 0, 0, 255]); // original content preserved top-left
+        assert_eq!(&data[(3 * 4 + 3) * 4..(3 * 4 + 3) * 4 + 4], &[0, 0, 0, 0]); // new area transparent
+    }
+
+    #[test]
+    fn doc_resize_shrinking_costs_only_the_cut_area() {
+        let mut doc = Document::new(4, 4);
+        let r = doc.doc_resize(2, 2, "Resize canvas");
+        assert!(r.changed);
+        assert_eq!(doc.canvas_w, 2);
+        assert_eq!(doc.canvas_h, 2);
+        // cut area = 4*4 - 2*2 = 12 px, times 4 bytes, times 1 layer.
+        assert_eq!(doc.history_bytes(), 12 * 4);
+    }
+
+    #[test]
+    fn doc_resize_shrink_then_undo_restores_byte_identical_buffer() {
+        let mut doc = Document::new(4, 4);
+        doc.stroke_begin(1);
+        doc.stroke_points(&[3, 3], rgba(9, 9, 9, 255)); // exactly the pixel the resize below cuts away
+        doc.stroke_end("Draw");
+        let before = doc.read_layer(1, 1).to_vec();
+        doc.doc_resize(2, 2, "Resize canvas");
+        assert_ne!(doc.read_layer(1, 1).len(), before.len());
+        let undo = doc.undo();
+        assert!(undo.changed);
+        assert_eq!(doc.canvas_w, 4);
+        assert_eq!(doc.canvas_h, 4);
+        assert_eq!(doc.read_layer(1, 1), before);
+    }
+
+    #[test]
+    fn doc_resize_redo_reapplies_the_deterministic_crop() {
+        let mut doc = Document::new(4, 4);
+        doc.doc_resize(2, 2, "Resize canvas");
+        let after_resize = doc.read_layer(1, 1).to_vec();
+        doc.undo();
+        let redo = doc.redo();
+        assert!(redo.changed);
+        assert_eq!(doc.canvas_w, 2);
+        assert_eq!(doc.canvas_h, 2);
+        assert_eq!(doc.read_layer(1, 1), after_resize);
+    }
+
+    #[test]
+    fn doc_resize_mixed_wider_but_shorter_only_cuts_the_bottom_strip() {
+        let mut doc = Document::new(2, 4);
+        let r = doc.doc_resize(4, 2, "Resize canvas"); // wider (grow) + shorter (shrink)
+        assert!(r.changed);
+        // Only the bottom strip is cut: width stays within the OLD width (2),
+        // height cut = 4 - 2 = 2 rows -> 2 * 2 * 4 bytes.
+        assert_eq!(doc.history_bytes(), 2 * 2 * 4);
+        let undo = doc.undo();
+        assert!(undo.changed);
+        assert_eq!(doc.canvas_w, 2);
+        assert_eq!(doc.canvas_h, 4);
+    }
+
+    #[test]
+    fn doc_resize_1x1_edge_case_round_trips() {
+        let mut doc = Document::new(1, 1);
+        doc.fill(1, 0, 0, rgba(1, 2, 3, 255), "Fill");
+        let before = doc.read_layer(1, 1).to_vec();
+        doc.doc_resize(3, 3, "Resize canvas");
+        assert_eq!(doc.canvas_w, 3);
+        doc.doc_resize(1, 1, "Resize canvas");
+        assert_eq!(doc.canvas_w, 1);
+        assert_eq!(doc.read_layer(1, 1), before);
+    }
+
+    #[test]
+    fn doc_resize_preserves_ids_and_metadata_across_multiple_frames_and_layers() {
+        let mut doc = Document::new(4, 4);
+        doc.layer_add(); // frame 1 now has 2 layers: handle 1, handle 2
+        doc.layer_meta(1, Some("Base".to_string()), Some(false), None, Some(50.0));
+        doc.frame_add(); // frame 2 (handle 2 if frame ids start at 1... actually frame_id_counter continues)
+        let before_meta = doc.meta_doc();
+        let frame_count_before = before_meta[6];
+
+        let r = doc.doc_resize(8, 8, "Resize canvas");
+        assert!(r.changed);
+
+        let after_meta = doc.meta_doc();
+        assert_eq!(after_meta[6], frame_count_before); // same frame count
+        assert_eq!(doc.canvas_w, 8);
+        assert_eq!(doc.canvas_h, 8);
+        // Layer 1's metadata (name/visible/opacity) must survive untouched.
+        assert_eq!(doc.meta_layer_opacity()[0], 50.0);
+    }
+
+    #[test]
+    fn doc_resize_evicts_nothing_ids_never_change() {
+        let mut doc = Document::new(4, 4);
+        let r = doc.doc_resize(2, 2, "Resize canvas");
+        assert!(r.evicted.is_empty());
+        let undo = doc.undo();
+        assert!(undo.evicted.is_empty());
+    }
+
+    #[test]
+    fn doc_resize_with_an_open_stroke_commits_it_first() {
+        let mut doc = Document::new(4, 4);
+        doc.stroke_begin(1);
+        doc.stroke_points(&[0, 0], rgba(1, 1, 1, 255));
+        let r = doc.doc_resize(2, 2, "Resize canvas");
+        assert!(r.changed);
+        assert!(!r.stroke_open);
+        // Two history entries: the committed stroke patch, then the resize.
+        assert!(r.can_undo);
+        doc.undo(); // undoes the resize
+        doc.undo(); // undoes the stroke
+        assert!(!doc.can_undo());
     }
 
     #[test]

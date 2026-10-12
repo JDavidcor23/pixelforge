@@ -6,6 +6,7 @@ import {
   popRedo,
   canUndo,
   canRedo,
+  entryBytes,
   historyBytes,
   HISTORY_MAX_ENTRIES,
   HISTORY_MAX_BYTES,
@@ -125,5 +126,36 @@ describe('eviction — bounded history retention', () => {
   it('never evicts the only (newest) entry, even if it alone exceeds the byte budget', () => {
     const history = pushEntry(createHistory(), makePatchEntry('Huge', HISTORY_MAX_BYTES + 1))
     expect(history.entries).toHaveLength(1)
+  })
+})
+
+describe('entryBytes — doc.resize (ADR 0008)', () => {
+  it('a growing resize (no strips) costs zero bytes', () => {
+    const entry: HistoryEntry = {
+      kind: 'doc.resize',
+      label: 'Resize canvas',
+      fromWidth: 2,
+      fromHeight: 2,
+      toWidth: 4,
+      toHeight: 4,
+      strips: [],
+    }
+    expect(entryBytes(entry)).toBe(0)
+  })
+
+  it('a shrinking resize costs exactly the sum of its retained strip bytes', () => {
+    const entry: HistoryEntry = {
+      kind: 'doc.resize',
+      label: 'Resize canvas',
+      fromWidth: 4,
+      fromHeight: 4,
+      toWidth: 2,
+      toHeight: 2,
+      strips: [
+        { frameId: 'f0', layerId: 'l0', rect: { x: 2, y: 0, w: 2, h: 4 }, bytes: new Uint8Array(2 * 4 * 4) },
+        { frameId: 'f0', layerId: 'l0', rect: { x: 0, y: 2, w: 2, h: 2 }, bytes: new Uint8Array(2 * 2 * 4) },
+      ],
+    }
+    expect(entryBytes(entry)).toBe(2 * 4 * 4 + 2 * 2 * 4)
   })
 })

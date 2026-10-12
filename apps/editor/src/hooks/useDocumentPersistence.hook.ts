@@ -10,7 +10,6 @@ import {
 } from '@/services/document-persistence.controller'
 import { registerDocumentPersistenceFlush } from '@/services/document-persistence-flush-bus.service'
 import { DOCUMENT_AUTOSAVE_DEBOUNCE_MS } from '@/constants/persistence'
-import type { DocStatus, RgbaColor } from '@/types'
 import type { DocumentPayload } from '@/types/document'
 
 export interface UseDocumentPersistenceResult {
@@ -59,8 +58,7 @@ export function useDocumentPersistence(): UseDocumentPersistenceResult {
 
     const storeApi: DocumentPersistenceStoreApi = {
       getState: () => useSpriteEditorStore.getState(),
-      setState: (patch: Partial<{ docStatus: DocStatus; primaryColor: RgbaColor; secondaryColor: RgbaColor }>) =>
-        useSpriteEditorStore.setState(patch),
+      setState: (patch) => useSpriteEditorStore.setState(patch),
       subscribe: (listener: (state: { docRevision: number }) => void) => useSpriteEditorStore.subscribe(listener),
       exportDocument: () => useSpriteEditorStore.getState().exportDocument(),
       importDocument: (payload: DocumentPayload) => useSpriteEditorStore.getState().importDocument(payload),
@@ -87,6 +85,12 @@ export function useDocumentPersistence(): UseDocumentPersistenceResult {
       clearScheduledTimeout: (handle) => clearTimeout(handle as ReturnType<typeof setTimeout>),
       onPersistentChange: (persistent) => {
         if (!cancelled) setIsPersistent(persistent)
+        // Batch 4: also mirror into the store — `useDocumentPersistence` is
+        // only ever mounted once (`SpriteEditorLayout`), so this is the one
+        // place other components (TopBar's save-status indicator) can learn
+        // about it without mounting this hook, and its side effect, a
+        // second time.
+        useSpriteEditorStore.setState({ isPersistent: persistent })
       },
       // judgment-day round 2 (finding 8): lets the controller observe THIS
       // effect instance's own cancellation mid-flight (before migration/
@@ -101,6 +105,7 @@ export function useDocumentPersistence(): UseDocumentPersistenceResult {
 
         useSpriteEditorStore.getState().setDocStatus('ready')
         setIsPersistent(false)
+        useSpriteEditorStore.setState({ isPersistent: false })
 
         // Safe-mode loop: a fresh in-memory repository only — never touches
         // the real IndexedDB draft again this session.

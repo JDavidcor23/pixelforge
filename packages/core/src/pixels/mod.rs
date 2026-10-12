@@ -279,6 +279,35 @@ pub fn write_rect(
     true
 }
 
+/// Crops or pads `data` (a `old_w x old_h` buffer) to `new_w x new_h`,
+/// anchored at the top-left corner: pixels inside the overlap are copied
+/// byte-for-byte, and any newly added area is left fully transparent
+/// (zeroed) — never resampled. Mirrors `apps/editor/src/lib/pixel-buffer.ts`'s
+/// `resizeBuffer` exactly (ADR 0008's `doc.resize`). `None` if `data`'s
+/// length doesn't match `old_w*old_h*CHANNELS`, or either output dimension
+/// overflows the allocation size.
+pub fn resize_buffer(
+    data: &[u8],
+    old_w: u32,
+    old_h: u32,
+    new_w: u32,
+    new_h: u32,
+) -> Option<Vec<u8>> {
+    if !valid_buffer(data, old_w, old_h) {
+        return None;
+    }
+    let out_len = buffer_len(new_w, new_h)?;
+    let mut out = vec![0u8; out_len];
+    let overlap_w = old_w.min(new_w);
+    let overlap_h = old_h.min(new_h);
+    if overlap_w > 0 && overlap_h > 0 {
+        if let Some(patch) = extract_rect(data, old_w, old_h, 0, 0, overlap_w, overlap_h) {
+            write_rect(&mut out, new_w, new_h, 0, 0, overlap_w, overlap_h, &patch);
+        }
+    }
+    Some(out)
+}
+
 /// `true` iff two same-length byte slices hold identical values.
 pub fn bytes_equal(a: &[u8], b: &[u8]) -> bool {
     a == b
@@ -521,6 +550,38 @@ mod tests {
     fn put_points_on_a_short_buffer_is_a_safe_no_op() {
         let mut short = vec![0u8; 4];
         assert_eq!(put_points(&mut short, 4, 4, &[0, 0], 0xffffffff), 0);
+    }
+
+    #[test]
+    fn resize_buffer_growing_pads_with_transparent_pixels() {
+        let mut data = empty(2, 2);
+        put_pixel(&mut data, 2, 2, 0, 0, pack_rgba(1, 2, 3, 255));
+        let resized = resize_buffer(&data, 2, 2, 4, 4).unwrap();
+        assert_eq!(resized.len(), 4 * 4 * 4);
+        assert_eq!(
+            get_pixel(&resized, 4, 4, 0, 0),
+            Some(pack_rgba(1, 2, 3, 255))
+        );
+        assert_eq!(get_pixel(&resized, 4, 4, 3, 3), Some(0)); // new area is transparent
+    }
+
+    #[test]
+    fn resize_buffer_shrinking_crops_anchored_top_left() {
+        let mut data = empty(4, 4);
+        put_pixel(&mut data, 4, 4, 0, 0, pack_rgba(1, 2, 3, 255));
+        put_pixel(&mut data, 4, 4, 3, 3, pack_rgba(9, 9, 9, 255)); // cropped away
+        let resized = resize_buffer(&data, 4, 4, 2, 2).unwrap();
+        assert_eq!(resized.len(), 2 * 2 * 4);
+        assert_eq!(
+            get_pixel(&resized, 2, 2, 0, 0),
+            Some(pack_rgba(1, 2, 3, 255))
+        );
+    }
+
+    #[test]
+    fn resize_buffer_rejects_mismatched_source_buffer() {
+        let short = vec![0u8; 4];
+        assert_eq!(resize_buffer(&short, 4, 4, 2, 2), None);
     }
 
     #[test]

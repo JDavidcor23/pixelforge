@@ -43,6 +43,17 @@ if (pkgAvailable) {
   console.warn(`[wasm-pixel-core.differential.fuzz] ${wasmPath} not found — run "pnpm run build:wasm" in packages/core first. Skipping this suite.`)
 }
 
+/**
+ * ADR 0008: `doc.resize` is wired into `Document`/`WasmDocument` on the Rust
+ * side (and into `WasmPixelCore.dispatch`, feature-detected), but the
+ * COMMITTED `pkg/` build this suite loads may predate the rebuild that adds
+ * the `doc_resize` export. Feature-detecting here — rather than always
+ * including `doc.resize` in the random command pool — keeps this suite green
+ * against a stale `pkg/` while still fully exercising parity automatically
+ * the moment `pnpm run build:wasm` regenerates it (no test-file edit needed).
+ */
+const wasmSupportsDocResize = pkgAvailable && typeof wasmModule.WasmDocument?.prototype?.doc_resize === 'function'
+
 // ── Deterministic LCG ────────────────────────────────────────────────────
 function makeRng(seed: number): () => number {
   let state = seed >>> 0
@@ -115,6 +126,20 @@ function randomCommand(rng: () => number, ts: TsPixelCore, strokeOpen: boolean):
       frameDurationMs: 80,
       label: 'Import',
     }),
+    // ADR 0008: random sizes both growing and shrinking, 1..max(current*2, 8).
+    // Only added to the pool once the loaded pkg/ actually exports
+    // `doc_resize` — see `wasmSupportsDocResize`'s doc above.
+    ...(wasmSupportsDocResize
+      ? [
+          () =>
+            ({
+              type: 'doc.resize',
+              canvasWidth: int(rng, Math.max(w * 2, 8)) + 1,
+              canvasHeight: int(rng, Math.max(h * 2, 8)) + 1,
+              label: 'Resize canvas',
+            }) satisfies Command,
+        ]
+      : []),
     () => ({ type: 'undo' }),
     () => ({ type: 'redo' }),
     () => ({ type: 'timeline.setFps', fps: int(rng, 60) + 1 }),

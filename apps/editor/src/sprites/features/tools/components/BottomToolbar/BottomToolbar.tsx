@@ -41,7 +41,7 @@ export const BottomToolbar = () => {
       ref={toolbarRef}
       onMouseDown={handleDragStart}
       style={positionStyle}
-      className={`pointer-events-auto absolute z-40 flex select-none items-center gap-1 rounded-full border border-line-strong bg-hover/90 px-3 py-2 backdrop-blur transition-shadow ${isDragging ? 'cursor-grabbing shadow-2xl ring-2 ring-accent/20' : 'cursor-grab hover:shadow-xl'}`}
+      className={`pointer-events-auto absolute z-40 flex select-none items-center gap-1 rounded border border-line-strong bg-hover/90 px-2 py-1.5 shadow-popover backdrop-blur transition-shadow ${isDragging ? 'cursor-grabbing ring-2 ring-accent/20' : 'cursor-grab'}`}
     >
       <div className="mr-1 text-subtle">
         <GripVertical size={16} />
@@ -55,13 +55,13 @@ export const BottomToolbar = () => {
           onSelect={handleSelectTool}
         />
       ))}
-      <div className="mx-2 h-6 w-px bg-line-strong" />
+      <div className="mx-1 h-5 w-px bg-line-strong" />
       <button
         type="button"
         onClick={toggleGrid}
         title="Toggle Grid Overlay"
-        className={`relative rounded p-2 transition-colors ${
-          showGrid ? 'bg-accent/20 text-accent' : 'text-muted hover:text-ink'
+        className={`relative flex size-8 items-center justify-center rounded transition-colors ${
+          showGrid ? 'bg-base text-accent' : 'text-muted hover:text-ink'
         }`}
       >
         <Grid3x3 size={18} />
@@ -71,7 +71,7 @@ export const BottomToolbar = () => {
         type="button"
         onClick={toggleOnionSkin}
         title={`Onion Skin: ${onionSkinEnabled ? 'ENABLED' : 'DISABLED'} (dim non-active layers)`}
-        className={`relative rounded p-2 transition-all ${
+        className={`relative flex size-8 items-center justify-center rounded transition-all ${
           onionSkinEnabled
             ? 'glow-accent bg-accent text-base'
             : 'text-muted hover:text-ink'
@@ -79,14 +79,14 @@ export const BottomToolbar = () => {
       >
         <Layers size={18} />
       </button>
-      <div className="mx-2 h-6 w-px bg-line-strong" />
+      <div className="mx-1 h-5 w-px bg-line-strong" />
       <ColorSwatch primaryColor={primaryColor} secondaryColor={secondaryColor} />
-      <div className="mx-2 h-6 w-px bg-line-strong" />
+      <div className="mx-1 h-5 w-px bg-line-strong" />
       <button
         type="button"
         onClick={toggleToolbar}
         title="Hide Toolbar"
-        className="rounded p-2 text-muted transition-colors hover:text-ink"
+        className="flex size-8 items-center justify-center rounded text-muted transition-colors hover:text-ink"
       >
         <ChevronDown size={18} />
       </button>

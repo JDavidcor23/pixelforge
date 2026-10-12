@@ -80,6 +80,33 @@ body {
   .glow-ai {
     box-shadow: 0 0 30px rgb(var(--pf-ai-rgb) / 0.25);
   }
+
+  /**
+   * Crisp, non-blurred pixel art in plain <img> tags (Konva's own canvas gets
+   * this via `.konvajs-content canvas` below). Sprite Studio v2 discovery:
+   * several components referenced this exact class name before it existed —
+   * their thumbnails were silently smoothed. Defined once, here.
+   */
+  .image-pixelated {
+    image-rendering: pixelated;
+  }
+
+  /** Rainbow track for the Color Picker's hue slider — same stops as the old ColorArea gradient. */
+  .hue-slider-track {
+    background-image: linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00);
+  }
+
+  /** Transparency checkerboard for frame/asset tiles that have no live preview. */
+  .checker-bg {
+    background-image:
+      linear-gradient(45deg, var(--pf-checker-a) 25%, transparent 25%),
+      linear-gradient(-45deg, var(--pf-checker-a) 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, var(--pf-checker-a) 75%),
+      linear-gradient(-45deg, transparent 75%, var(--pf-checker-a) 75%);
+    background-size: 12px 12px;
+    background-position: 0 0, 0 6px, 6px -6px, -6px 0px;
+    background-color: var(--pf-checker-b);
+  }
 }
 
 .konvajs-content canvas {

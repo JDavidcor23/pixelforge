@@ -122,7 +122,7 @@ export const useTimelineBar = () => {
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [copySelectedFrames, pasteFrames])
+  }, [copySelectedFrames, pasteFramesAtEnd])
 
   // ── Global pointerup — safety net to end drag ──────────────────────
   useEffect(() => {

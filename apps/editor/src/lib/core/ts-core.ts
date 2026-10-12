@@ -10,6 +10,7 @@ import {
   extractRect,
   isInBounds,
   putPixel,
+  resizeBuffer,
   writeRect,
 } from '../pixel-buffer'
 import { cloneFrames } from '../history'
@@ -26,6 +27,7 @@ import {
   type History,
   type HistoryEntry,
   type LayerMetaSnapshot,
+  type ResizeStrip,
   type StructuralDocSnapshot,
 } from './history'
 
@@ -324,10 +326,16 @@ function fullRefs(frame: AnimationFrame): LayerRef[] {
  * document now matches is `dirty`; whichever side it just left is `evicted`
  * (only when that side introduced/removed actual layers — `layer.meta`/
  * `layer.reorder` never touch pixels in either direction).
+ *
+ * `resultDoc`: the document AFTER `applyEntry` already ran — used only by
+ * `doc.resize`, which (unlike `doc.replace`) never stores a full before/
+ * after frame snapshot, so it has no other source for "every (frame, layer)
+ * pair that is now dirty".
  */
 function dirtyAndEvictedOf(
   entry: HistoryEntry,
-  direction: 'before' | 'after'
+  direction: 'before' | 'after',
+  resultDoc: DocSnapshot
 ): { readonly dirty: ReadonlyArray<DirtyRect>; readonly evicted: ReadonlyArray<LayerRef> } {
   const none = { dirty: [], evicted: [] } as const
   switch (entry.kind) {
@@ -361,6 +369,12 @@ function dirtyAndEvictedOf(
       const outOf = direction === 'before' ? entry.after : entry.before
       return { dirty: into.timeline.frames.flatMap(fullDirty), evicted: outOf.timeline.frames.flatMap(fullRefs) }
     }
+    case 'doc.resize':
+      // Ids never change on a resize (every layer is mutated in place), so
+      // there is never anything to evict — every frame/layer simply needs
+      // its pixel cache entry refreshed at the (already applied) post-apply
+      // canvas size.
+      return { dirty: resultDoc.timeline.frames.flatMap(fullDirty), evicted: [] }
     default: {
       const _exhaustive: never = entry
       return none
@@ -493,6 +507,32 @@ function applyEntry(doc: DocSnapshot, entry: HistoryEntry, direction: 'before' |
           selectedFrameIndices: snap.timeline.selectedFrameIndices,
         },
       }
+    }
+
+    case 'doc.resize': {
+      // ADR 0008: ids never change — resize mutates every existing layer's
+      // buffer in place, so there is no frame/layer list to restore and no
+      // focus to resolve (unlike every other structural entry kind above).
+      const targetWidth = direction === 'before' ? entry.fromWidth : entry.toWidth
+      const targetHeight = direction === 'before' ? entry.fromHeight : entry.toHeight
+      let frames = doc.timeline.frames.map((f) => ({
+        ...f,
+        layers: f.layers.map((l) => ({ ...l, pixels: resizeBuffer(l.pixels, targetWidth, targetHeight) })),
+      }))
+      if (direction === 'before') {
+        // Undo: paste the cut strips back into the now-padded buffers.
+        for (const strip of entry.strips) {
+          frames = frames.map((f) =>
+            f.id !== strip.frameId
+              ? f
+              : {
+                  ...f,
+                  layers: f.layers.map((l) => (l.id !== strip.layerId ? l : { ...l, pixels: writeRect(l.pixels, strip.rect, strip.bytes) })),
+                }
+          )
+        }
+      }
+      return { ...doc, canvasWidth: targetWidth, canvasHeight: targetHeight, timeline: { ...doc.timeline, frames } }
     }
 
     case 'layer.add': {
@@ -677,6 +717,7 @@ const STROKE_COMMIT_COMMANDS: ReadonlySet<Command['type']> = new Set([
   'frame.remove',
   'frame.paste',
   'doc.replace',
+  'doc.resize',
   'layer.add',
   'layer.remove',
   'layer.meta',
@@ -1069,6 +1110,55 @@ function dispatchCommandSwitch(state: CoreState, cmd: Command): SwitchOutcome {
       }
     }
 
+    case 'doc.resize': {
+      if (!Number.isInteger(cmd.canvasWidth) || !Number.isInteger(cmd.canvasHeight) || cmd.canvasWidth < 1 || cmd.canvasHeight < 1) {
+        return noChange(state) // reject the whole op — never resample, never partially apply
+      }
+      const fromWidth = state.doc.canvasWidth
+      const fromHeight = state.doc.canvasHeight
+      const toWidth = cmd.canvasWidth
+      const toHeight = cmd.canvasHeight
+      if (fromWidth === toWidth && fromHeight === toHeight) return noChange(state)
+
+      const strips: ResizeStrip[] = []
+      const frames: AnimationFrame[] = state.doc.timeline.frames.map((frame) => ({
+        ...frame,
+        layers: frame.layers.map((layer) => {
+          // Right strip: the columns `[toWidth, fromWidth)` a width SHRINK cuts away.
+          if (toWidth < fromWidth) {
+            const rect: Rect = { x: toWidth, y: 0, w: fromWidth - toWidth, h: fromHeight }
+            strips.push({ frameId: frame.id, layerId: layer.id, rect, bytes: extractRect(layer.pixels, rect) })
+          }
+          // Bottom strip: the rows `[toHeight, fromHeight)` a height SHRINK cuts away, only
+          // across the width the OLD canvas actually had (`min(fromWidth, toWidth)`).
+          if (toHeight < fromHeight) {
+            const bottomWidth = Math.min(fromWidth, toWidth)
+            if (bottomWidth > 0) {
+              const rect: Rect = { x: 0, y: toHeight, w: bottomWidth, h: fromHeight - toHeight }
+              strips.push({ frameId: frame.id, layerId: layer.id, rect, bytes: extractRect(layer.pixels, rect) })
+            }
+          }
+          return { ...layer, pixels: resizeBuffer(layer.pixels, toWidth, toHeight) }
+        }),
+      }))
+
+      const doc: DocSnapshot = { ...state.doc, canvasWidth: toWidth, canvasHeight: toHeight, timeline: { ...state.doc.timeline, frames } }
+      const history = pushEntry(state.history, {
+        kind: 'doc.resize',
+        label: cmd.label,
+        fromWidth,
+        fromHeight,
+        toWidth,
+        toHeight,
+        strips,
+      })
+      const revision = state.revision + 1
+      return {
+        state: withState(state, { doc, history, strokeState: null, revision }),
+        result: { dirty: frames.flatMap(fullDirty), changed: true },
+      }
+    }
+
     case 'undo': {
       // "undo ... end any open stroke" — commit it first so undo acts on a consistent, up-to-date history stack.
       const cur = endOpenStroke(state, 'Draw').state
@@ -1081,7 +1171,7 @@ function dispatchCommandSwitch(state: CoreState, cmd: Command): SwitchOutcome {
       // every layer of every frame (that used to be the ONLY way the pixel
       // cache could stay correct across a structural undo/redo; it is no
       // longer needed now every entry kind reports precise pairs).
-      const { dirty, evicted } = dirtyAndEvictedOf(popped.entry, 'before')
+      const { dirty, evicted } = dirtyAndEvictedOf(popped.entry, 'before', doc)
       return {
         state: withState(cur, { doc, history: popped.history, strokeState: null, revision }),
         result: { dirty, changed: true, evicted },
@@ -1094,7 +1184,7 @@ function dispatchCommandSwitch(state: CoreState, cmd: Command): SwitchOutcome {
       if (!popped) return noChange(cur)
       const doc = applyEntry(cur.doc, popped.entry, 'after')
       const revision = cur.revision + 1
-      const { dirty, evicted } = dirtyAndEvictedOf(popped.entry, 'after')
+      const { dirty, evicted } = dirtyAndEvictedOf(popped.entry, 'after', doc)
       return {
         state: withState(cur, { doc, history: popped.history, strokeState: null, revision }),
         result: { dirty, changed: true, evicted },

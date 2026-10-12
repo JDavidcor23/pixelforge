@@ -52,6 +52,18 @@ pub struct FrameRecord {
     pub duration_ms: u32,
 }
 
+/// One cut strip retained by a `doc.resize` entry (ADR 0008) — only the
+/// pixels a shrink actually removed, addressed by stable `(frame_id,
+/// layer_id)` and a rect in the OLD (`from`) coordinate space. Mirrors
+/// `history.ts`'s `ResizeStrip`.
+#[derive(Clone, Debug)]
+pub struct ResizeStrip {
+    pub frame_id: u32,
+    pub layer_id: u32,
+    pub rect: Rect,
+    pub bytes: Vec<u8>,
+}
+
 /// Full-document snapshot — ONLY used by the `doc.replace` entry (see
 /// `history.ts`'s module doc: "the one deliberate exception").
 #[derive(Clone, Debug)]
@@ -117,6 +129,21 @@ pub enum HistoryEntry {
         before: DocSnapshotRecord,
         after: DocSnapshotRecord,
     },
+    /// ADR 0008: a lossless canvas resize. Every layer is mutated IN PLACE
+    /// (same frame/layer ids — unlike `DocReplace`), so this entry stores
+    /// only the before/after SIZE plus the strips a shrink cut away, never a
+    /// full document snapshot. Growing a canvas produces `strips: vec![]`
+    /// (0 bytes toward the undo budget); undo pads back to `from_w/from_h`
+    /// and writes the strips back; redo re-applies the deterministic
+    /// crop/pad to `to_w/to_h`.
+    DocResize {
+        label: String,
+        from_w: u32,
+        from_h: u32,
+        to_w: u32,
+        to_h: u32,
+        strips: Vec<ResizeStrip>,
+    },
 }
 
 fn bytes_of_frame(frame: &FrameRecord) -> usize {
@@ -146,6 +173,7 @@ pub fn entry_bytes(entry: &HistoryEntry) -> usize {
         }
         HistoryEntry::FramePaste { frames, .. } => frames.iter().map(bytes_of_frame).sum(),
         HistoryEntry::LayerMeta { .. } | HistoryEntry::LayerReorder { .. } => 0,
+        HistoryEntry::DocResize { strips, .. } => strips.iter().map(|s| s.bytes.len()).sum(),
     }
 }
 
@@ -359,6 +387,52 @@ mod tests {
             to: 1,
         };
         assert_eq!(entry_bytes(&reorder), 0);
+    }
+
+    #[test]
+    fn doc_resize_entry_bytes_is_the_sum_of_its_strips() {
+        let growing = HistoryEntry::DocResize {
+            label: "Resize canvas".into(),
+            from_w: 2,
+            from_h: 2,
+            to_w: 4,
+            to_h: 4,
+            strips: vec![],
+        };
+        assert_eq!(entry_bytes(&growing), 0);
+
+        let shrinking = HistoryEntry::DocResize {
+            label: "Resize canvas".into(),
+            from_w: 4,
+            from_h: 4,
+            to_w: 2,
+            to_h: 2,
+            strips: vec![
+                ResizeStrip {
+                    frame_id: 1,
+                    layer_id: 1,
+                    rect: Rect {
+                        x: 2,
+                        y: 0,
+                        w: 2,
+                        h: 4,
+                    },
+                    bytes: vec![0u8; 2 * 4 * 4],
+                },
+                ResizeStrip {
+                    frame_id: 1,
+                    layer_id: 1,
+                    rect: Rect {
+                        x: 0,
+                        y: 2,
+                        w: 2,
+                        h: 2,
+                    },
+                    bytes: vec![0u8; 2 * 2 * 4],
+                },
+            ],
+        };
+        assert_eq!(entry_bytes(&shrinking), 2 * 4 * 4 + 2 * 2 * 4);
     }
 
     #[test]

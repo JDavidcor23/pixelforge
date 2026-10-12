@@ -30,7 +30,7 @@ import type { PixelBuffer, Rect } from '@/types'
  *
  * Two families of commands:
  *  - UNDOABLE (push a history entry): `stroke.*`, `fill`, `frame.add`,
- *    `frame.remove`, `frame.paste`, `doc.replace`, `layer.add`,
+ *    `frame.remove`, `frame.paste`, `doc.replace`, `doc.resize`, `layer.add`,
  *    `layer.remove`, `layer.meta`, `layer.reorder`, `selection.commit`,
  *    `region.clear`, `undo`, `redo`.
  *  - NON-UNDOABLE (mutate view/playback state, bump `revision`, but push NO
@@ -117,6 +117,21 @@ export type Command =
       readonly canvasHeight: number
       readonly frames: ReadonlyArray<DocReplaceFrameInput>
       readonly frameDurationMs: number
+      readonly label: string
+    }
+  | {
+      /**
+       * ADR 0008: lossless canvas resize. Unlike `doc.replace`, every
+       * existing frame/layer is mutated IN PLACE — anchored top-left
+       * (crop/pad, never resampled) — so ids, names, visibility, lock,
+       * opacity and per-frame durations all survive untouched. Validated
+       * the same way `doc.replace` is: a non-positive/non-integer dimension
+       * rejects the whole op; an unchanged size is a no-op (no history
+       * entry pushed).
+       */
+      readonly type: 'doc.resize'
+      readonly canvasWidth: number
+      readonly canvasHeight: number
       readonly label: string
     }
   | { readonly type: 'undo' }

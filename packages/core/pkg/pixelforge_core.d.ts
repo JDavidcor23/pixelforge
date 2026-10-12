@@ -31,6 +31,10 @@ export class WasmDocument {
      */
     debug_force_trap(): void;
     doc_replace(canvas_w: number, canvas_h: number, frame_count: number, frame_duration_ms: number, pixels: Uint8Array, label: string): Uint32Array;
+    /**
+     * ADR 0008: lossless canvas resize — see `Document::doc_resize`'s doc.
+     */
+    doc_resize(canvas_w: number, canvas_h: number, label: string): Uint32Array;
     export_pixels(): Uint8Array;
     fill(layer_id: number, x: number, y: number, rgba: number, label: string): Uint32Array;
     frame_add(): Uint32Array;
@@ -185,6 +189,7 @@ export interface InitOutput {
     readonly wasmdocument_can_undo: (a: number) => number;
     readonly wasmdocument_debug_force_trap: (a: number) => void;
     readonly wasmdocument_doc_replace: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number) => [number, number];
+    readonly wasmdocument_doc_resize: (a: number, b: number, c: number, d: number, e: number) => [number, number];
     readonly wasmdocument_export_pixels: (a: number) => [number, number];
     readonly wasmdocument_fill: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => [number, number];
     readonly wasmdocument_frame_add: (a: number) => [number, number];
