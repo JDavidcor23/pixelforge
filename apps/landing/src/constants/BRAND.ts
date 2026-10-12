@@ -9,4 +9,6 @@ export const BRAND = {
   SUFFIX: 'IA',
   FULL_NAME: 'PixelForge IA',
   SITE_URL: 'https://www.pixelforgeia.com',
+  DEVELOPER_NAME: 'Jorge David Díaz',
+  CONTACT_EMAIL: 'jorgedavid23diaz@gmail.com',
 } as const

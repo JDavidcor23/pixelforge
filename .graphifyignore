@@ -1,0 +1,24 @@
+# Vendored third-party skill (and its .github mirror) - not project knowledge
+.claude/skills/impeccable/
+.claude/agents/impeccable-*
+.claude/output-styles/
+.github/skills/
+.github/agents/
+.github/hooks/
+.impeccable/
+
+# Generated / local-only files
+packages/core/pkg/
+supabase/.temp/
+.atl/
+.changeset/
+.claude/settings.local.json
+.mcp.json
+
+# Scratch renders and boilerplate assets
+output/
+images/
+apps/landing/public/*.svg
+apps/editor/public/sprites/
+apps/editor/public/ai-guides/
+apps/landing/src/assets/

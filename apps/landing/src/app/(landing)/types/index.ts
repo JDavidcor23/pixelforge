@@ -28,3 +28,16 @@ export interface FooterLink {
 export interface WordmarkProps {
   readonly className?: string
 }
+
+export interface LegalSection {
+  readonly heading: string
+  readonly paragraphs?: readonly string[]
+  readonly list?: readonly string[]
+}
+
+export interface LegalDocumentProps {
+  readonly title: string
+  readonly lastUpdated: string
+  readonly intro?: string
+  readonly sections: readonly LegalSection[]
+}

@@ -17,3 +17,4 @@ packages/core/pkg/*.wasm binary
 packages/core/pkg/*.js text eol=lf
 packages/core/pkg/*.d.ts text eol=lf
 packages/core/pkg/package.json text eol=lf
+graphify-out/graph.json merge=graphify
