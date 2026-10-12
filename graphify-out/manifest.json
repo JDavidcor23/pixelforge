@@ -120,9 +120,9 @@
     "semantic_hash": "58df57805fcd819442320c7754699642"
   },
   "apps/editor/src/constants/persistence.ts": {
-    "mtime": 1791818689.5140991,
-    "seen": 1791819146.4726403,
-    "ast_hash": "d4356841da1ed94d3bad59df3d1bf420",
+    "mtime": 1791824400.6500127,
+    "seen": 1791824663.287012,
+    "ast_hash": "b8045760e447dcaa9e595e68b6bf8ea0",
     "semantic_hash": ""
   },
   "apps/editor/src/constants/routes.ts": {
@@ -1812,9 +1812,9 @@
     "semantic_hash": "0aa292717b479058ff430e5fcc356f13"
   },
   "apps/editor/src/types/index.ts": {
-    "mtime": 1791818617.1305943,
-    "seen": 1791819146.5476365,
-    "ast_hash": "10f171b8b32c2ed820efe8ee872c4a54",
+    "mtime": 1791824870.944255,
+    "seen": 1791825228.8284304,
+    "ast_hash": "35c1ac6f8cb34bf07d7631f4b1789926",
     "semantic_hash": ""
   },
   "apps/editor/src/types/settings.ts": {
@@ -2610,15 +2610,15 @@
     "semantic_hash": ""
   },
   "apps/editor/src/sprites/features/properties/components/AnimateTab/AnimateTab.tsx": {
-    "mtime": 1791821849.3600552,
-    "seen": 1791821924.6841483,
-    "ast_hash": "546bbdc943f1b12e3a2a3471a783d8de",
+    "mtime": 1791824563.5514727,
+    "seen": 1791824663.3536315,
+    "ast_hash": "56c170c38eadda6b7d615281bf4ec388",
     "semantic_hash": ""
   },
   "apps/editor/src/sprites/features/properties/components/AnimateTab/useAnimateTab.hook.ts": {
-    "mtime": 1791821819.0484743,
-    "seen": 1791821924.6841483,
-    "ast_hash": "51a7c438ccc8933e6a2f1abd68fe2fc1",
+    "mtime": 1791824972.5595374,
+    "seen": 1791825228.807095,
+    "ast_hash": "a5cfa792b4c367f9a3c651d4832887cb",
     "semantic_hash": ""
   },
   "apps/editor/src/sprites/features/properties/components/CollapsibleSection/CollapsibleSection.tsx": {
@@ -2748,9 +2748,9 @@
     "semantic_hash": ""
   },
   "apps/editor/src/sprites/components/SpriteEditorLayout/useSpriteEditorLayout.hook.ts": {
-    "mtime": 1791812472.2778008,
-    "seen": 1791813990.4804251,
-    "ast_hash": "dd00d70fbf29aa1bb6a2d3c28282c502",
+    "mtime": 1791825084.7404504,
+    "seen": 1791825228.7999966,
+    "ast_hash": "72821ca4cce788cc4bdd87bacabd4966",
     "semantic_hash": ""
   },
   "apps/editor/src/lib/canvas-blank.ts": {
@@ -2887,13 +2887,13 @@
   },
   "supabase/migrations/20261011000000_init_pixelforge.sql": {
     "mtime": 1791812472.480884,
-    "seen": 1791822098.1225688,
+    "seen": 1791825428.0634596,
     "ast_hash": "441faf36f811c0b13668c58640fb149d",
     "semantic_hash": ""
   },
   "supabase/migrations/20261012000000_account_deletions.sql": {
     "mtime": 1791812472.480884,
-    "seen": 1791822098.1225688,
+    "seen": 1791825428.0634596,
     "ast_hash": "ccad6f7ae95685f6775c6f252fd9d3bf",
     "semantic_hash": ""
   },
@@ -3018,9 +3018,9 @@
     "semantic_hash": ""
   },
   "apps/editor/src/services/auth.service.ts": {
-    "mtime": 1791812472.2701948,
-    "seen": 1791813990.4804251,
-    "ast_hash": "6c80777d61d99592ffb23e2f0c7e5348",
+    "mtime": 1791824972.5585363,
+    "seen": 1791825228.772191,
+    "ast_hash": "8cf6716568386aeece4be4fd98494af3",
     "semantic_hash": ""
   },
   "apps/editor/src/sprites/components/TopBar/AccountMenu/AccountMenu.tsx": {
@@ -3169,7 +3169,7 @@
   },
   "supabase/migrations/20261012010000_minimal_user_data.sql": {
     "mtime": 1791812472.4823902,
-    "seen": 1791822098.1225688,
+    "seen": 1791825428.0634596,
     "ast_hash": "9e75198e27e9fb7557e5f8d51487ac55",
     "semantic_hash": ""
   },
@@ -3198,9 +3198,9 @@
     "semantic_hash": ""
   },
   "apps/editor/src/stores/persist-keys.test.ts": {
-    "mtime": 1791819057.2758434,
-    "seen": 1791819146.5396092,
-    "ast_hash": "8a16a07c353d75b6148def824506ef7b",
+    "mtime": 1791824617.3027177,
+    "seen": 1791824663.367188,
+    "ast_hash": "83635f3b69870a995b84a154da4d0c4b",
     "semantic_hash": ""
   },
   "apps/editor/src/hooks/useAssetLibraryPersistence.hook.ts": {
@@ -3288,15 +3288,15 @@
     "semantic_hash": ""
   },
   "apps/editor/api/ai/pixellab/animate.test.ts": {
-    "mtime": 1791819030.1190486,
-    "seen": 1791819146.4668598,
-    "ast_hash": "d44999104d88698bef3b01a1993f35f8",
+    "mtime": 1791825186.4874003,
+    "seen": 1791825228.737575,
+    "ast_hash": "8908f9313d46820bc6723ad69c3f0dbc",
     "semantic_hash": ""
   },
   "apps/editor/api/ai/pixellab/animate.ts": {
-    "mtime": 1791818827.756474,
-    "seen": 1791819146.4668598,
-    "ast_hash": "68837472fe2c7d9da684a24235023ad9",
+    "mtime": 1791824957.0241573,
+    "seen": 1791825228.737575,
+    "ast_hash": "00c9143ef81de5d0eabaf605850c5ae6",
     "semantic_hash": ""
   },
   "apps/editor/api/ai/pixellab/job.test.ts": {
@@ -3312,9 +3312,9 @@
     "semantic_hash": ""
   },
   "apps/editor/src/constants/animation.ts": {
-    "mtime": 1791821749.4373865,
-    "seen": 1791821924.620843,
-    "ast_hash": "fbb739b9bbf64e8ed7bb9c2db72a73df",
+    "mtime": 1791825099.3076217,
+    "seen": 1791825228.7448676,
+    "ast_hash": "accbf43b94dd5bd620549708af28d89b",
     "semantic_hash": ""
   },
   "apps/editor/src/lib/animation-harness.test.ts": {
@@ -3360,15 +3360,15 @@
     "semantic_hash": ""
   },
   "apps/editor/src/services/pixellab-animation.service.ts": {
-    "mtime": 1791819785.724033,
-    "seen": 1791819841.969898,
-    "ast_hash": "50537b96887695f78c31c664ceb58d60",
+    "mtime": 1791824972.5585363,
+    "seen": 1791825228.7748387,
+    "ast_hash": "c355793e86cde148c13264754bb5b98b",
     "semantic_hash": ""
   },
   "apps/editor/src/types/animation.types.ts": {
-    "mtime": 1791821722.5676973,
-    "seen": 1791821924.7041483,
-    "ast_hash": "99cb136b2e2e53fa60e6ed9aa99acfb0",
+    "mtime": 1791825099.3076217,
+    "seen": 1791825228.8284304,
+    "ast_hash": "9c59d31359a3e8392c01c65ae5b5c1b0",
     "semantic_hash": ""
   },
   "scripts/pixellab-animate-harness.ts": {
@@ -3384,9 +3384,9 @@
     "semantic_hash": ""
   },
   "apps/editor/src/services/pixellab-animation.service.test.ts": {
-    "mtime": 1791819798.6465883,
-    "seen": 1791819841.969898,
-    "ast_hash": "f82282fb5824daae07bba68103aaf33e",
+    "mtime": 1791825168.8237383,
+    "seen": 1791825228.7748387,
+    "ast_hash": "6cd130713cf70bcc203d0669860058cf",
     "semantic_hash": ""
   },
   "apps/editor/src/lib/compose-horizontal-sheet.test.ts": {
@@ -3411,6 +3411,120 @@
     "mtime": 1791821762.9429436,
     "seen": 1791821924.6258404,
     "ast_hash": "a1297d463013cf187b660c576746f059",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/hooks/useAnimationJobRecovery.hook.ts": {
+    "mtime": 1791824470.4639518,
+    "seen": 1791824663.288012,
+    "ast_hash": "009f0d5b71cd94eec740ea5d345928c6",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/lib/animation-job-ledger.test.ts": {
+    "mtime": 1791825121.5325,
+    "seen": 1791825228.748874,
+    "ast_hash": "73bf67c3adcb47462ccea7cfa3ba8f19",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/lib/animation-job-ledger.ts": {
+    "mtime": 1791824994.3589659,
+    "seen": 1791825228.748874,
+    "ast_hash": "81a732695fb4d2796720c9b16ec08c3e",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/sprites/features/properties/components/AnimateTab/UnfinishedJobs.tsx": {
+    "mtime": 1791825099.3091273,
+    "seen": 1791825228.807095,
+    "ast_hash": "a19a20e6ac00272c24d4028f83cfb708",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/sprites/features/properties/components/AnimateTab/animate-tab.classes.ts": {
+    "mtime": 1791824557.649429,
+    "seen": 1791824663.3536315,
+    "ast_hash": "88fb01aaba333772caa84c3150859f7f",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/sprites/features/properties/components/AnimateTab/useFinishAnimation.hook.ts": {
+    "mtime": 1791824492.0132568,
+    "seen": 1791824663.3536315,
+    "ast_hash": "cedd8204d09ba98258c4425e17032db3",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/sprites/features/properties/components/AnimateTab/useUnfinishedJobs.hook.ts": {
+    "mtime": 1791825099.3091273,
+    "seen": 1791825228.8084564,
+    "ast_hash": "871ae29ba0dc143ff3844ea7d52dd95c",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/stores/animation-job-ledger.store.test.ts": {
+    "mtime": 1791824613.2880738,
+    "seen": 1791824663.3651843,
+    "ast_hash": "f51b9199f9b33e5e69c6f624cf183497",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/stores/animation-job-ledger.store.ts": {
+    "mtime": 1791825012.0822427,
+    "seen": 1791825228.8204782,
+    "ast_hash": "08c6ff8d928998eb04f51614874f6c81",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/constants/ai-jobs.ts": {
+    "mtime": 1791824920.9494736,
+    "seen": 1791825228.7448676,
+    "ast_hash": "c38d10feb012966d813d45edc103bf1a",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/hooks/useServerAnimationSync.hook.ts": {
+    "mtime": 1791825084.7389069,
+    "seen": 1791825228.7468708,
+    "ast_hash": "ab0b7ee7f3cf6cce7302c83255dd3bb4",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/lib/ai-job-record.test.ts": {
+    "mtime": 1791825128.171616,
+    "seen": 1791825228.7468708,
+    "ast_hash": "f292eed91ecb10850e1e4b47146979bc",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/lib/ai-job-record.ts": {
+    "mtime": 1791824957.023155,
+    "seen": 1791825228.7468708,
+    "ast_hash": "29ece2bc130674a679589240ffad6be2",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/lib/server-animation-sync.test.ts": {
+    "mtime": 1791825150.4797056,
+    "seen": 1791825228.7662692,
+    "ast_hash": "0998a0effbe1efe3b882bbf8cffcd820",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/lib/server-animation-sync.ts": {
+    "mtime": 1791825053.8523521,
+    "seen": 1791825228.7662692,
+    "ast_hash": "26fbae8887f083d9f695768aa07ed37b",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/services/server-animation-jobs.service.ts": {
+    "mtime": 1791825067.5039866,
+    "seen": 1791825228.7748387,
+    "ast_hash": "7118919bd4392cdc235230d6ce33a847",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/types/ai-jobs.types.ts": {
+    "mtime": 1791824869.8481188,
+    "seen": 1791825228.8284304,
+    "ast_hash": "8338745ae3ec6e49f3b6280199af679e",
+    "semantic_hash": ""
+  },
+  "supabase/functions/collect-ai-jobs/index.ts": {
+    "mtime": 1791824861.3428974,
+    "seen": 1791825228.84353,
+    "ast_hash": "7a1dae4f0a2c6fb471c09c6586a1a614",
+    "semantic_hash": ""
+  },
+  "docs/ai-notes/deploy-ai-jobs-collector.md": {
+    "mtime": 1791825265.6998725,
+    "seen": 1791825401.5869217,
+    "ast_hash": "79ee6c0e4298683c22e2e5e224b0df94",
     "semantic_hash": ""
   }
 }
