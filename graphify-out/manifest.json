@@ -2893,13 +2893,13 @@
   },
   "supabase/migrations/20261011000000_init_pixelforge.sql": {
     "mtime": 1791760779.301772,
-    "seen": 1791773669.1346157,
+    "seen": 1791780030.1850533,
     "ast_hash": "",
     "semantic_hash": ""
   },
   "supabase/migrations/20261012000000_account_deletions.sql": {
     "mtime": 1791761499.7872427,
-    "seen": 1791773669.1346157,
+    "seen": 1791780030.1850533,
     "ast_hash": "",
     "semantic_hash": ""
   },
@@ -3175,7 +3175,7 @@
   },
   "supabase/migrations/20261012010000_minimal_user_data.sql": {
     "mtime": 1791766419.7038343,
-    "seen": 1791773669.1346157,
+    "seen": 1791780030.1850533,
     "ast_hash": "",
     "semantic_hash": ""
   },
@@ -3273,6 +3273,24 @@
     "mtime": 1791779073.3351965,
     "seen": 1791779484.9954915,
     "ast_hash": "2e418c372eddfeb132a8b56e68099725",
+    "semantic_hash": ""
+  },
+  "apps/editor/public/ai-quality-samples/best.png": {
+    "mtime": 1791780017.9017694,
+    "seen": 1791780030.1850533,
+    "ast_hash": "2717eb10766b5b4b51a004050d730742",
+    "semantic_hash": ""
+  },
+  "apps/editor/public/ai-quality-samples/draft.png": {
+    "mtime": 1791780017.8529544,
+    "seen": 1791780030.1850533,
+    "ast_hash": "e944a8b6ff166b37bf80e46ecf3e156c",
+    "semantic_hash": ""
+  },
+  "apps/editor/public/ai-quality-samples/standard.png": {
+    "mtime": 1791780017.877275,
+    "seen": 1791780030.1850533,
+    "ast_hash": "21225b7190925b83e5437a9ff27e7c48",
     "semantic_hash": ""
   }
 }

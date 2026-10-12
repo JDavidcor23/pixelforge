@@ -18,10 +18,10 @@
     "semantic_hash": "2be96c21caa2bcd0ccd12ad150a8c629"
   },
   "apps/editor/api/ai/retro-diffusion.test.ts": {
-    "mtime": 1791750852.3742943,
-    "seen": 1791754747.700318,
-    "ast_hash": "237ee3f5a7a9d737bff680a50db34dee",
-    "semantic_hash": "237ee3f5a7a9d737bff680a50db34dee"
+    "mtime": 1791779735.241161,
+    "seen": 1791780001.9128637,
+    "ast_hash": "b3ea6d91d18e017ac3ec3261e36a6b68",
+    "semantic_hash": ""
   },
   "apps/editor/api/ai/retro-diffusion.ts": {
     "mtime": 1791777265.0772786,
@@ -108,9 +108,9 @@
     "semantic_hash": "967110912f6a4ef1c0e7616774923436"
   },
   "apps/editor/src/constants/index.ts": {
-    "mtime": 1791779380.2647438,
-    "seen": 1791779484.924821,
-    "ast_hash": "4cccc9c58c659cc54055918402b82a4d",
+    "mtime": 1791779658.092079,
+    "seen": 1791779714.8079906,
+    "ast_hash": "70b7e0470b970625ac1759a5d3f1effa",
     "semantic_hash": ""
   },
   "apps/editor/src/constants/motion.ts": {
@@ -2694,9 +2694,9 @@
     "semantic_hash": ""
   },
   "apps/editor/src/sprites/features/properties/components/CreateTab/useGeneratePanel.hook.ts": {
-    "mtime": 1791779101.751215,
-    "seen": 1791779484.9894557,
-    "ast_hash": "8851948dce548fdcc61ba0a6377f2796",
+    "mtime": 1791779633.2678676,
+    "seen": 1791779714.8780751,
+    "ast_hash": "b86284e4e090f4e584269105ff44d397",
     "semantic_hash": ""
   },
   "apps/editor/src/sprites/features/properties/components/CreateTab/useImportPanel.hook.ts": {
@@ -3261,24 +3261,6 @@
     "mtime": 1791778309.8261154,
     "seen": 1791778532.6404357,
     "ast_hash": "0d94a5febd2bedc0cddbcb49730b2dbf",
-    "semantic_hash": ""
-  },
-  "apps/editor/public/ai-quality-samples/best.png": {
-    "mtime": 1791778976.0794744,
-    "seen": 1791779485.0316963,
-    "ast_hash": "2717eb10766b5b4b51a004050d730742",
-    "semantic_hash": ""
-  },
-  "apps/editor/public/ai-quality-samples/draft.png": {
-    "mtime": 1791778976.0202298,
-    "seen": 1791779485.0316963,
-    "ast_hash": "e944a8b6ff166b37bf80e46ecf3e156c",
-    "semantic_hash": ""
-  },
-  "apps/editor/public/ai-quality-samples/standard.png": {
-    "mtime": 1791778976.0504072,
-    "seen": 1791779485.0316963,
-    "ast_hash": "21225b7190925b83e5437a9ff27e7c48",
     "semantic_hash": ""
   },
   "apps/editor/src/lib/import-library-image.ts": {
