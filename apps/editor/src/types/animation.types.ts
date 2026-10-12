@@ -59,9 +59,32 @@ export type AnimationJobState = 'queued' | 'processing' | 'completed' | 'failed'
  */
 export type AnimationErrorCode = 'ALREADY_RUNNING' | 'BUSY'
 
+/** A job state that is not terminal — the provider is still working on it. */
+export type AnimationActiveJobState = Extract<AnimationJobState, 'queued' | 'processing'>
+
+/**
+ * Why the client stopped polling a job it still holds: the poll window ran out
+ * (`timeout`) or too many status reads failed in a row (`network`). The job is
+ * KEPT either way — it may still finish, and it is billed.
+ */
+export type AnimationStallReason = 'timeout' | 'network'
+
+/** PixelLab's own view of a running job, from the last successful poll. */
+export interface AnimationJobProgress {
+  readonly state: AnimationActiveJobState
+  /** Position in PixelLab's queue, when reported. */
+  readonly queuePosition: number | null
+  /** PixelLab's own estimate of the remaining wait, when reported. */
+  readonly estimatedWaitSeconds: number | null
+}
+
 /** `AIJob<AnimateResult>` plus the typed `AnimationErrorCode` above. */
 export interface AnimateJob extends AIJob<AnimateResult> {
   readonly errorCode: AnimationErrorCode | null
+  /** Non-null while polling is paused on a job that is still kept in `animatePending`. */
+  readonly stall: AnimationStallReason | null
+  /** Last reported progress of the polled job, or null before the first poll / when idle. */
+  readonly progress: AnimationJobProgress | null
 }
 
 export interface AnimationJobStatus {
@@ -70,7 +93,22 @@ export interface AnimationJobStatus {
   readonly frames: readonly string[]
   readonly error: string | null
   readonly costUsd: number | null
+  /** Queue position while the job waits, when the provider reports it. */
+  readonly queuePosition?: number
+  /** Provider's estimate of the remaining wait, when reported. */
+  readonly estimatedWaitSeconds?: number
 }
+
+/**
+ * How one polling run of a pending job ended. `stalled` and `abandoned` never
+ * mean the job is gone upstream: `stalled` keeps it for "Check again",
+ * `abandoned` means the user discarded it while the loop was sleeping.
+ */
+export type AnimationPollOutcome =
+  | { readonly kind: 'completed'; readonly frames: readonly string[] }
+  | { readonly kind: 'failed'; readonly error: string | null }
+  | { readonly kind: 'stalled'; readonly reason: AnimationStallReason }
+  | { readonly kind: 'abandoned' }
 
 /**
  * Port: the Animate tab depends on this, never on a vendor. Slow providers
@@ -109,6 +147,9 @@ export interface PixelLabBackgroundJob {
   readonly last_response?: {
     readonly images?: readonly (PixelLabBase64Image | string)[]
     readonly detail?: unknown
+    /** Measured 2026-10-12: present while the job runs. */
+    readonly queue_position?: number
+    readonly estimated_wait_seconds?: number
   } | null
   readonly usage?: { readonly type?: string; readonly usd?: number } | null
 }
@@ -120,7 +161,7 @@ export interface PixelLabBackgroundJob {
  */
 export interface PendingAnimationJob {
   readonly jobId: string
-  /** `Date.now()` at submit — drives elapsed time and the client timeout. */
+  /** `Date.now()` at submit — drives the elapsed time. The poll window restarts on every resume, not from here. */
   readonly startedAt: number
   readonly label: string
   readonly assetType: AssetType

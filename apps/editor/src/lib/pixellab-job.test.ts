@@ -62,6 +62,24 @@ describe('mapPixelLabJob', () => {
     expect(mapPixelLabJob({ status: 'queued' })).toEqual({ status: 'queued', frames: [], error: null, costUsd: null })
     expect(mapPixelLabJob({ status: 'something-new' }).status).toBe('processing')
   })
+
+  // Measured 2026-10-12: a running job reports its queue position and wait estimate in `last_response`.
+  it('passes the queue position and wait estimate of a running job through', () => {
+    const status = mapPixelLabJob({
+      status: 'processing',
+      last_response: { queue_position: 3, estimated_wait_seconds: 95 },
+    })
+
+    expect(status).toEqual({
+      status: 'processing',
+      frames: [],
+      error: null,
+      costUsd: null,
+      queuePosition: 3,
+      estimatedWaitSeconds: 95,
+    })
+    expect(mapPixelLabJob({ status: 'processing' })).not.toHaveProperty('queuePosition')
+  })
 })
 
 describe('readPngSize', () => {

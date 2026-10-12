@@ -54,6 +54,20 @@ const KNOWN_STATES: readonly AnimationJobState[] = ['queued', 'processing', 'com
 const toJobState = (status: string | undefined): AnimationJobState =>
   KNOWN_STATES.find((state) => state === status) ?? 'processing'
 
+const isFiniteNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value)
+
+/** Queue position / wait estimate of a running job — only the fields PixelLab actually sent. */
+const readProgress = (
+  response: PixelLabBackgroundJob['last_response'],
+): Pick<AnimationJobStatus, 'queuePosition' | 'estimatedWaitSeconds'> => {
+  const queuePosition = response?.queue_position
+  const estimatedWaitSeconds = response?.estimated_wait_seconds
+  return {
+    ...(isFiniteNumber(queuePosition) && { queuePosition }),
+    ...(isFiniteNumber(estimatedWaitSeconds) && { estimatedWaitSeconds }),
+  }
+}
+
 /**
  * `GET /v2/background-jobs/{id}` → the port's `AnimationJobStatus`. A finished
  * job holds `frame_count + 1` images: index 0 is the INPUT frame, so it is
@@ -68,7 +82,7 @@ export function mapPixelLabJob(job: PixelLabBackgroundJob): AnimationJobStatus {
     return { status, frames: [], error: detail ?? PIXELLAB_JOB_FAILED_ERROR, costUsd }
   }
   if (status !== 'completed') {
-    return { status, frames: [], error: null, costUsd }
+    return { status, frames: [], error: null, costUsd, ...readProgress(job.last_response) }
   }
 
   const frames = (job.last_response?.images ?? [])

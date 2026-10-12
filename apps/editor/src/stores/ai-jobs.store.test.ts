@@ -17,7 +17,9 @@ const storage = vi.hoisted(() => {
 })
 
 const IDLE = { isRunning: false, error: null, result: null }
-const IDLE_ANIMATE = { ...IDLE, errorCode: null }
+const IDLE_ANIMATE = { ...IDLE, errorCode: null, stall: null, progress: null }
+const PENDING = { jobId: 'job-1', startedAt: 1, label: 'Walk', assetType: 'character' as const }
+const PROCESSING = { state: 'processing' as const, queuePosition: 2, estimatedWaitSeconds: 60 }
 
 describe('useAIJobsStore', () => {
   beforeEach(() => {
@@ -65,5 +67,76 @@ describe('useAIJobsStore', () => {
 
     useAIJobsStore.getState().setAnimateJob({ isRunning: true, error: null, errorCode: null })
     expect(useAIJobsStore.getState().animate.errorCode).toBeNull()
+  })
+
+  // Regression: a 5-min client timeout used to clear `animatePending`, losing a
+  // PAID job that finished later on PixelLab.
+  describe('kept animate job lifecycle', () => {
+    beforeEach(() => {
+      useAIJobsStore.getState().setAnimatePending(PENDING)
+      useAIJobsStore.getState().setAnimateJob({ isRunning: true, progress: PROCESSING })
+    })
+
+    it('a timeout stalls polling but keeps the pending job (and its persisted id)', () => {
+      useAIJobsStore.getState().stallAnimate('timeout')
+
+      const state = useAIJobsStore.getState()
+      expect(state.animatePending).toEqual(PENDING)
+      expect(state.animate.isRunning).toBe(false)
+      expect(state.animate.stall).toBe('timeout')
+      const saved = JSON.parse(storage.get(AI_JOBS_STORAGE_KEY) ?? '{}') as { state: Record<string, unknown> }
+      expect(saved.state).toEqual({ animatePending: PENDING })
+    })
+
+    it('a network stall keeps the pending job too', () => {
+      useAIJobsStore.getState().stallAnimate('network')
+
+      expect(useAIJobsStore.getState().animatePending).toEqual(PENDING)
+      expect(useAIJobsStore.getState().animate.stall).toBe('network')
+    })
+
+    it('check again re-claims the kept job for a new polling loop', () => {
+      useAIJobsStore.getState().stallAnimate('timeout')
+
+      expect(useAIJobsStore.getState().resumeAnimate()).toEqual(PENDING)
+      expect(useAIJobsStore.getState().animate.isRunning).toBe(true)
+      expect(useAIJobsStore.getState().animate.stall).toBeNull()
+    })
+
+    it('refuses to resume while a loop already holds the job (no double polling)', () => {
+      expect(useAIJobsStore.getState().resumeAnimate()).toBeNull()
+    })
+
+    it('refuses to resume when nothing is pending', () => {
+      useAIJobsStore.getState().discardAnimatePending()
+      expect(useAIJobsStore.getState().resumeAnimate()).toBeNull()
+    })
+
+    it('discard clears the pending job and the stalled state', () => {
+      useAIJobsStore.getState().stallAnimate('timeout')
+      useAIJobsStore.getState().discardAnimatePending()
+
+      const state = useAIJobsStore.getState()
+      expect(state.animatePending).toBeNull()
+      expect(state.animate).toEqual(IDLE_ANIMATE)
+    })
+
+    it('a completed job clears the pending job and releases the loop in one update', () => {
+      useAIJobsStore.getState().settleAnimate()
+
+      const state = useAIJobsStore.getState()
+      expect(state.animatePending).toBeNull()
+      expect(state.animate.isRunning).toBe(false)
+      expect(state.animate.progress).toBeNull()
+    })
+
+    it('a failed job clears the pending job and keeps the error', () => {
+      useAIJobsStore.getState().settleAnimate({ error: 'NSFW', errorCode: null })
+
+      const state = useAIJobsStore.getState()
+      expect(state.animatePending).toBeNull()
+      expect(state.animate.error).toBe('NSFW')
+      expect(state.animate.isRunning).toBe(false)
+    })
   })
 })

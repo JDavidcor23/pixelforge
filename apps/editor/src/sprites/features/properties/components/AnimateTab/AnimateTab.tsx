@@ -4,12 +4,19 @@ import { AiResultCard } from '../AiResultCard/AiResultCard'
 import { AssetTypeSelector } from '../CreateTab/AssetTypeSelector'
 import { useAnimateTab } from './useAnimateTab.hook'
 import { ANIMATE_CUSTOM_MOTION_PLACEHOLDER } from '@/constants'
-import { ANIMATION_BUSY_MESSAGE, ANIMATION_GENERATING_HINT } from '@/constants/animation'
+import {
+  ANIMATION_BUSY_MESSAGE,
+  ANIMATION_CHECK_AGAIN_LABEL,
+  ANIMATION_DISCARD_HINT,
+  ANIMATION_DISCARD_LABEL,
+} from '@/constants/animation'
 import { FOCUS_RING } from '@/constants/focus-ring'
 import { MOTION } from '@/constants/motion'
 
 const FIELD = 'w-full rounded border border-line bg-sunken px-2 py-1.5 text-xs text-ink outline-none focus:border-accent'
 const SECTION_LABEL = 'font-mono text-3xs uppercase tracking-wider text-subtle'
+/** Same secondary button as AiResultCard. */
+const SECONDARY_BUTTON = `flex h-8 shrink-0 items-center justify-center rounded border border-line-strong px-3 text-xs text-muted hover:text-ink ${MOTION.PRESS} ${FOCUS_RING.SURFACE}`
 
 export const AnimateTab = () => {
   const {
@@ -29,6 +36,12 @@ export const AnimateTab = () => {
     setCustomText,
     isGenerating,
     elapsedLabel,
+    runningLabel,
+    progressHint,
+    isStalled,
+    stalledMessage,
+    handleCheckAgain,
+    handleDiscardJob,
     animError,
     isBusyError,
     handleGenerateAnimation,
@@ -43,7 +56,8 @@ export const AnimateTab = () => {
     handleSeeAllAssets,
   } = useAnimateTab()
 
-  const isGenerateDisabled = isGenerating || !!canvasSizeError || (motion.isCustomInput && !customText.trim())
+  const isGenerateDisabled =
+    isGenerating || isStalled || !!canvasSizeError || (motion.isCustomInput && !customText.trim())
 
   return (
     <div className="flex flex-col gap-3">
@@ -128,7 +142,22 @@ export const AnimateTab = () => {
         </div>
       )}
 
-      {!canvasSizeError && animError && (
+      {isStalled && (
+        <div className="flex flex-col gap-2 rounded-sm border border-ai/40 bg-ai/10 p-2">
+          <p className="text-xs text-ai-ink">{stalledMessage}</p>
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={handleCheckAgain} className={SECONDARY_BUTTON}>
+              {ANIMATION_CHECK_AGAIN_LABEL}
+            </button>
+            <button type="button" onClick={handleDiscardJob} className={SECONDARY_BUTTON}>
+              {ANIMATION_DISCARD_LABEL}
+            </button>
+          </div>
+          <p className="text-2xs text-subtle">{ANIMATION_DISCARD_HINT}</p>
+        </div>
+      )}
+
+      {!canvasSizeError && !isStalled && animError && (
         <>
           {isBusyError ? (
             <div className="rounded-sm border border-ai/40 bg-ai/10 p-2">
@@ -151,7 +180,7 @@ export const AnimateTab = () => {
         {isGenerating ? (
           <>
             <div className="size-3 animate-spin rounded-full border-2 border-ink border-t-transparent motion-reduce:animate-none" />
-            Generating… {elapsedLabel}
+            {runningLabel} {elapsedLabel}
           </>
         ) : (
           <>
@@ -161,7 +190,7 @@ export const AnimateTab = () => {
         )}
       </button>
 
-      {isGenerating && <p className="text-center text-2xs text-subtle">{ANIMATION_GENERATING_HINT}</p>}
+      {isGenerating && <p className="text-center text-2xs text-subtle">{progressHint}</p>}
 
       {result && (
         <AiResultCard

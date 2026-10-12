@@ -16,6 +16,7 @@ import { useAssetsStore } from '@/stores/assets.store'
 import { useAIJobsStore } from '@/stores/ai-jobs.store'
 import { ANIMATION_HARNESS, buildAnimationAction, findAnimationMotion } from '@/lib/animation-harness'
 import { allowedFrameCounts, getAnimationFrameCountError, getAnimationSizeError } from '@/lib/animation-limits'
+import { formatAnimationProgressHint, pollAnimationJob } from '@/lib/animation-polling'
 import { isCanvasBlank } from '@/lib/canvas-blank'
 import { AnimationProviderError, resolveAnimationProvider } from '@/services/animation-provider.service'
 import {
@@ -27,19 +28,23 @@ import {
 import {
   ANIMATION_ALREADY_RUNNING_ERROR,
   ANIMATION_ELAPSED_TICK_MS,
+  ANIMATION_GENERATING_HINT,
+  ANIMATION_GENERATING_LABEL,
   ANIMATION_GENERIC_ERROR,
   ANIMATION_POLL_INTERVAL_MS,
   ANIMATION_POLL_MAX_CONSECUTIVE_ERRORS,
   ANIMATION_POLL_TIMEOUT_MS,
+  ANIMATION_QUEUED_LABEL,
   ANIMATION_REFERENCE_EXPORT_ERROR,
   ANIMATION_SECONDS_PER_MINUTE,
-  ANIMATION_TIMEOUT_ERROR,
+  ANIMATION_STALLED_MESSAGE,
+  ANIMATION_STALLED_NETWORK_MESSAGE,
 } from '@/constants/animation'
 import type {
   AIAnimation,
   AnimateResult,
+  AnimationActiveJobState,
   AnimationErrorCode,
-  AnimationJobStatus,
   AnimationMotionPreset,
   AssetType,
   PendingAnimationJob,
@@ -72,6 +77,22 @@ export interface UseAnimateTabReturn {
   elapsedSeconds: number | null
   /** `elapsedSeconds` formatted as `m:ss`, or null when idle. */
   elapsedLabel: string | null
+  /** PixelLab's state from the last poll, or null before the first one / when idle. */
+  jobState: AnimationActiveJobState | null
+  /** Generate button text while a job runs: queued vs generating. */
+  runningLabel: string
+  /** Queue position / wait estimate when PixelLab sends them, else the generic hint. */
+  progressHint: string
+  /**
+   * Polling paused on a job that is still kept (client timeout or network).
+   * New submits stay blocked until `handleCheckAgain` or `handleDiscardJob`.
+   */
+  isStalled: boolean
+  stalledMessage: string | null
+  /** Resumes polling the kept job with a fresh window. */
+  handleCheckAgain: () => void
+  /** Forgets the kept job. It may still finish — and be billed — on PixelLab. */
+  handleDiscardJob: () => void
   animError: string | null
   /**
    * True when `animError` means "another job is already running" rather than a
@@ -160,9 +181,15 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
   const animError = useAIJobsStore((s) => s.animate.error)
   const animErrorCode = useAIJobsStore((s) => s.animate.errorCode)
   const result = useAIJobsStore((s) => s.animate.result)
+  const stall = useAIJobsStore((s) => s.animate.stall)
+  const progress = useAIJobsStore((s) => s.animate.progress)
   const pendingJob = useAIJobsStore((s) => s.animatePending)
   const setAnimateJob = useAIJobsStore((s) => s.setAnimateJob)
   const setAnimatePending = useAIJobsStore((s) => s.setAnimatePending)
+  const stallAnimate = useAIJobsStore((s) => s.stallAnimate)
+  const resumeAnimate = useAIJobsStore((s) => s.resumeAnimate)
+  const settleAnimate = useAIJobsStore((s) => s.settleAnimate)
+  const discardAnimatePending = useAIJobsStore((s) => s.discardAnimatePending)
   const setResult = useCallback((next: AnimateResult | null) => setAnimateJob({ result: next }), [setAnimateJob])
 
   const provider = useMemo(
@@ -224,60 +251,81 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
     [addAnimation, applyAnimation, setResult],
   )
 
-  /** Polls until the job completes, fails or times out. Assumes `animate.isRunning` is already true. */
+  /**
+   * One polling window for a kept job. Assumes the caller already claimed it
+   * (`animate.isRunning` true). Only a terminal state clears `animatePending`;
+   * a timeout or a run of network errors stalls instead, so the paid job can
+   * still be collected with "Check again".
+   */
   const pollUntilDone = useCallback(
     async (pending: PendingAnimationJob) => {
       const isStillPending = () => useAIJobsStore.getState().animatePending?.jobId === pending.jobId
-      let consecutiveErrors = 0
       try {
-        while (isStillPending()) {
-          if (Date.now() - pending.startedAt > ANIMATION_POLL_TIMEOUT_MS) throw new Error(ANIMATION_TIMEOUT_ERROR)
-          await sleep(ANIMATION_POLL_INTERVAL_MS)
+        const outcome = await pollAnimationJob(pending.jobId, {
+          poll: provider.poll,
+          isStillPending,
+          onProgress: (progress) => setAnimateJob({ progress }),
+          sleep,
+          now: Date.now,
+          intervalMs: ANIMATION_POLL_INTERVAL_MS,
+          timeoutMs: ANIMATION_POLL_TIMEOUT_MS,
+          maxConsecutiveErrors: ANIMATION_POLL_MAX_CONSECUTIVE_ERRORS,
+        })
 
-          let job: AnimationJobStatus
-          try {
-            job = await provider.poll(pending.jobId)
-            consecutiveErrors = 0
-          } catch (error) {
-            // A dropped request must not throw away a paid job — retry a few times first.
-            consecutiveErrors += 1
-            if (consecutiveErrors >= ANIMATION_POLL_MAX_CONSECUTIVE_ERRORS) throw error
-            continue
-          }
-
-          if (job.status === 'failed') throw new Error(job.error ?? ANIMATION_GENERIC_ERROR)
-          if (job.status === 'completed') {
-            await finishAnimation(pending, job.frames)
+        switch (outcome.kind) {
+          case 'completed':
+            await finishAnimation(pending, outcome.frames)
+            settleAnimate()
             return
-          }
+          case 'failed':
+            settleAnimate({ error: outcome.error ?? ANIMATION_GENERIC_ERROR, errorCode: null })
+            return
+          case 'stalled':
+            stallAnimate(outcome.reason)
+            return
+          case 'abandoned':
+            // Discarded mid-sleep: `discardAnimatePending` already released the loop.
+            if (!useAIJobsStore.getState().animatePending) setAnimateJob({ isRunning: false, progress: null })
+            return
         }
       } catch (error) {
-        setAnimateJob({ error: errorMessage(error), errorCode: errorCode(error) })
-      } finally {
-        // Pending first: clearing `isRunning` while a job is still pending would
-        // make the resume effect below start a second loop.
-        if (isStillPending()) setAnimatePending(null)
-        setAnimateJob({ isRunning: false })
+        // Frames arrived but saving/applying them threw — the job itself is done upstream.
+        settleAnimate({ error: errorMessage(error), errorCode: errorCode(error) })
       }
     },
-    [provider, finishAnimation, setAnimateJob, setAnimatePending],
+    [provider, finishAnimation, setAnimateJob, settleAnimate, stallAnimate],
   )
 
   // Resume: after a reload the pending job is back from sessionStorage but no
-  // loop is polling it. `isRunning` is the guard — a live loop always holds it.
+  // loop is polling it. `resumeAnimate` refuses while a loop holds the job, and
+  // a stalled job waits for "Check again" instead of polling on its own.
   useEffect(() => {
-    if (!pendingJob || useAIJobsStore.getState().animate.isRunning) return
-    setAnimateJob({ isRunning: true, error: null, errorCode: null })
-    void pollUntilDone(pendingJob)
-  }, [pendingJob, pollUntilDone, setAnimateJob])
+    if (!pendingJob || useAIJobsStore.getState().animate.stall) return
+    const resumed = resumeAnimate()
+    if (resumed) void pollUntilDone(resumed)
+  }, [pendingJob, pollUntilDone, resumeAnimate])
 
-  // Elapsed-time ticker, only while a job runs.
+  // Elapsed-time ticker, only while a loop is actually polling.
   useEffect(() => {
-    if (jobStartedAt === null) return
+    if (jobStartedAt === null || !isGenerating) return
     setNow(Date.now())
     const timer = setInterval(() => setNow(Date.now()), ANIMATION_ELAPSED_TICK_MS)
     return () => clearInterval(timer)
-  }, [jobStartedAt])
+  }, [jobStartedAt, isGenerating])
+
+  const handleCheckAgain = useCallback(() => {
+    const resumed = resumeAnimate()
+    if (resumed) void pollUntilDone(resumed)
+  }, [resumeAnimate, pollUntilDone])
+
+  const handleDiscardJob = useCallback(() => discardAnimatePending(), [discardAnimatePending])
+
+  const isStalled = stall !== null
+  const stalledMessage =
+    stall === 'network' ? ANIMATION_STALLED_NETWORK_MESSAGE : stall === 'timeout' ? ANIMATION_STALLED_MESSAGE : null
+  const jobState = progress?.state ?? null
+  const runningLabel = jobState === 'queued' ? ANIMATION_QUEUED_LABEL : ANIMATION_GENERATING_LABEL
+  const progressHint = formatAnimationProgressHint(progress) ?? ANIMATION_GENERATING_HINT
 
   const elapsedSeconds =
     jobStartedAt === null ? null : Math.max(0, Math.floor((now - jobStartedAt) / MS_PER_SECOND))
@@ -297,6 +345,8 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
   const handleGenerateAnimation = useCallback(async () => {
     if (motion.isCustomInput && !customText.trim()) return
 
+    // A stalled job is still pending, so this also blocks a second (paid) submit
+    // until the user checks again or discards it — and avoids PixelLab's 429.
     const jobs = useAIJobsStore.getState()
     if (jobs.animatePending || jobs.animate.isRunning) {
       setAnimateJob({ error: ANIMATION_ALREADY_RUNNING_ERROR, errorCode: 'ALREADY_RUNNING' })
@@ -312,7 +362,7 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
       return
     }
 
-    setAnimateJob({ isRunning: true, error: null, result: null, errorCode: null })
+    setAnimateJob({ isRunning: true, error: null, result: null, errorCode: null, stall: null, progress: null })
     try {
       const firstFrameBase64 = await exportCanvasReference()
       if (!firstFrameBase64) throw new Error(ANIMATION_REFERENCE_EXPORT_ERROR)
@@ -383,6 +433,13 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
     jobStartedAt,
     elapsedSeconds,
     elapsedLabel,
+    jobState,
+    runningLabel,
+    progressHint,
+    isStalled,
+    stalledMessage,
+    handleCheckAgain,
+    handleDiscardJob,
     animError,
     isBusyError,
     handleGenerateAnimation,
