@@ -2887,14 +2887,14 @@
   },
   "supabase/migrations/20261011000000_init_pixelforge.sql": {
     "mtime": 1791812472.480884,
-    "seen": 1791820161.904036,
-    "ast_hash": "",
+    "seen": 1791822098.1225688,
+    "ast_hash": "441faf36f811c0b13668c58640fb149d",
     "semantic_hash": ""
   },
   "supabase/migrations/20261012000000_account_deletions.sql": {
     "mtime": 1791812472.480884,
-    "seen": 1791820161.904036,
-    "ast_hash": "",
+    "seen": 1791822098.1225688,
+    "ast_hash": "ccad6f7ae95685f6775c6f252fd9d3bf",
     "semantic_hash": ""
   },
   "apps/editor/src/auth/pages/LoginPage/LoginPage.tsx": {
@@ -3169,8 +3169,8 @@
   },
   "supabase/migrations/20261012010000_minimal_user_data.sql": {
     "mtime": 1791812472.4823902,
-    "seen": 1791820161.904036,
-    "ast_hash": "",
+    "seen": 1791822098.1225688,
+    "ast_hash": "9e75198e27e9fb7557e5f8d51487ac55",
     "semantic_hash": ""
   },
   "apps/editor/src/sprites/features/properties/components/PositionFields/PositionFields.tsx": {
