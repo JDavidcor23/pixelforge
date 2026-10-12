@@ -1,6 +1,7 @@
 import { Palette, Bot, Boxes, Library, Music, Rocket } from 'lucide-react'
 import type { FeatureCardProps, PipelineStepProps, NavLink, FooterLink } from '../types'
 import { BRAND } from '@/constants/BRAND'
+import { ROUTES } from '@/constants/ROUTES'
 
 export const LANDING_NAV = {
   LOGO_LABEL: BRAND.FULL_NAME,
@@ -126,4 +127,6 @@ export const LANDING_FOOTER_LINKS: readonly FooterLink[] = [
   { label: 'GitHub', href: 'https://github.com', isExternal: true },
   { label: 'Discord', href: 'https://discord.com', isExternal: true },
   { label: 'Docs', href: '/docs', isExternal: false },
+  { label: 'Privacy', href: ROUTES.PRIVACY, isExternal: false },
+  { label: 'Terms', href: ROUTES.TERMS, isExternal: false },
 ] as const
