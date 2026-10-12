@@ -13,6 +13,7 @@ Client-side (bundled — must be prefixed `VITE_`, never a secret):
 | `VITE_SUPABASE_URL` | For auth/storage | Supabase project URL. Falls back to a placeholder (auth/storage calls will fail, everything else works). |
 | `VITE_SUPABASE_ANON_KEY` | For auth/storage | Supabase anon/public key — safe to expose client-side by design. |
 | `VITE_PIXEL_CORE` | No | Overrides which `PixelCore` implementation loads (`'ts'` \| `'wasm'`). Defaults to `'ts'`; `'wasm'` has no implementation yet (phase 4+). A `localStorage['pf:core']` override takes precedence over this for local debugging. |
+| `VITE_LANDING_URL` | No | Marketing site origin, used to link out to Privacy/Terms from `/login`. Defaults to `https://www.pixelforgeia.com`. |
 
 Server-side only (Vercel Functions in `api/ai/*.ts` — **never** prefix these
 `VITE_`, or they would ship in the client bundle):

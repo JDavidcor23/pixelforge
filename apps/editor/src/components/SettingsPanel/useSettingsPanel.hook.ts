@@ -1,6 +1,8 @@
 import { useState, useCallback, useEffect, useId, useRef } from 'react'
 import type { KeyboardEvent, MouseEvent, RefObject } from 'react'
 import { useEditorPrefsStore } from '@/stores/prefs.store'
+import { useAuthStore } from '@/stores/auth.store'
+import { useEditorUIStore } from '@/stores/ui.store'
 import {
   getElevenLabsApiKey,
   setElevenLabsApiKey,
@@ -31,11 +33,16 @@ interface UseSettingsPanelResult {
   titleId: string
   handleKeyDown: (event: KeyboardEvent<HTMLDivElement>) => void
   handlePanelClick: (event: MouseEvent<HTMLDivElement>) => void
+  /** Account section (editor-auth change) only shows while signed in — no account, no cloud data to delete. */
+  isSignedIn: boolean
+  handleDeleteAccountClick: () => void
 }
 
 export const useSettingsPanel = (onClose: () => void): UseSettingsPanelResult => {
   const retroDiffusionApiKey = useEditorPrefsStore((s) => s.retroDiffusionApiKey)
   const setRetroDiffusionApiKey = useEditorPrefsStore((s) => s.setRetroDiffusionApiKey)
+  const authStatus = useAuthStore((s) => s.status)
+  const openDeleteAccountDialog = useEditorUIStore((s) => s.openDeleteAccountDialog)
 
   const [retroKey, setRetroKey] = useState(retroDiffusionApiKey ?? '')
   const [elevenLabsKey, setElevenLabsKey] = useState('')
@@ -127,6 +134,12 @@ export const useSettingsPanel = (onClose: () => void): UseSettingsPanelResult =>
     event.stopPropagation()
   }, [])
 
+  // Settings closes first so the Delete dialog never stacks on top of it.
+  const handleDeleteAccountClick = useCallback(() => {
+    onClose()
+    openDeleteAccountDialog()
+  }, [onClose, openDeleteAccountDialog])
+
   return {
     retroKey,
     setRetroKey,
@@ -149,5 +162,7 @@ export const useSettingsPanel = (onClose: () => void): UseSettingsPanelResult =>
     titleId,
     handleKeyDown,
     handlePanelClick,
+    isSignedIn: authStatus === 'signed-in',
+    handleDeleteAccountClick,
   }
 }

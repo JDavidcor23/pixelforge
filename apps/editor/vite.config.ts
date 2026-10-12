@@ -2,6 +2,7 @@ import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import wasm from 'vite-plugin-wasm'
 import path from 'path'
+import { vercelFunctionsDev } from './dev/vercel-functions-dev'
 
 export default defineConfig({
   plugins: [
@@ -18,6 +19,8 @@ export default defineConfig({
     // (`missing field 'type'` from its @swc/core transform). Top-level await
     // is native from ES2022, so `build.target` below covers it instead.
     wasm(),
+    // Serves `api/*` Vercel Functions under `pnpm dev` (dev only).
+    vercelFunctionsDev(),
   ],
   build: {
     target: 'es2022',

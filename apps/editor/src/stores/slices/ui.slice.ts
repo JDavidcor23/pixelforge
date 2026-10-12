@@ -12,6 +12,8 @@ export const createUISlice: StateCreator<
   UISlice
 > = (set) => ({
   settingsOpen: false,
+  deleteAccountDialogOpen: false,
+  accountDeletedNoticeVisible: false,
   ui: {
     leftSidebarOpen: true,
     rightSidebarOpen: true,
@@ -139,4 +141,12 @@ export const createUISlice: StateCreator<
   openSettings: () => set({ settingsOpen: true }),
 
   closeSettings: () => set({ settingsOpen: false }),
+
+  openDeleteAccountDialog: () => set({ deleteAccountDialogOpen: true }),
+
+  closeDeleteAccountDialog: () => set({ deleteAccountDialogOpen: false }),
+
+  showAccountDeletedNotice: () => set({ accountDeletedNoticeVisible: true }),
+
+  dismissAccountDeletedNotice: () => set({ accountDeletedNoticeVisible: false }),
 })

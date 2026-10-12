@@ -3,6 +3,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import type { DocumentRepository, StoredDocument } from '@/types/document'
 import { createIndexedDbDocumentRepository } from './indexeddb-document.repository.service'
 import { createInMemoryDocumentRepository } from './in-memory-document.repository.service'
+import { LOCAL_DRAFT_DOCUMENT_ID } from '@/constants/persistence'
 
 // Adapter contract suite (task 1.23) — the SAME behavior must hold for both
 // the IndexedDB repo (via `fake-indexeddb/auto`) and the InMemory fallback,
@@ -79,5 +80,13 @@ describe.each([
     await repository.save(makeDoc(id, 1))
     await repository.remove(id)
     expect(await repository.load(id)).toBeNull()
+  })
+
+  // Account deletion's "also delete what's saved in this browser" checkbox calls
+  // exactly this — remove() under the one real draft id, not a random one.
+  it('remove() clears the local draft (LOCAL_DRAFT_DOCUMENT_ID)', async () => {
+    await repository.save(makeDoc(LOCAL_DRAFT_DOCUMENT_ID, 1))
+    await repository.remove(LOCAL_DRAFT_DOCUMENT_ID)
+    expect(await repository.load(LOCAL_DRAFT_DOCUMENT_ID)).toBeNull()
   })
 })

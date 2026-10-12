@@ -8,6 +8,9 @@ export function useEditorLayout() {
   const isSettingsOpen = useEditorUIStore((state) => state.settingsOpen)
   const openSettings = useEditorUIStore((state) => state.openSettings)
   const closeSettings = useEditorUIStore((state) => state.closeSettings)
+  const isDeleteAccountDialogOpen = useEditorUIStore((state) => state.deleteAccountDialogOpen)
+  const closeDeleteAccountDialog = useEditorUIStore((state) => state.closeDeleteAccountDialog)
+  const isAccountDeletedNoticeVisible = useEditorUIStore((state) => state.accountDeletedNoticeVisible)
 
   const navItems = EDITOR_NAV_ITEMS.map((item) => ({
     ...item,
@@ -19,5 +22,8 @@ export function useEditorLayout() {
     isSettingsOpen,
     openSettings,
     closeSettings,
+    isDeleteAccountDialogOpen,
+    closeDeleteAccountDialog,
+    isAccountDeletedNoticeVisible,
   }
 }

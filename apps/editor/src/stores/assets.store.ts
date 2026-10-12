@@ -29,6 +29,8 @@ export interface AssetsState {
   addGeneration: (generation: Omit<AIGeneration, 'id' | 'timestamp'>) => AIGeneration
   addAnimation: (animation: AIAnimation) => void
   markSheetAvailable: (animationId: string) => void
+  /** Account deletion's "also delete what's saved in this browser" checkbox — wipes the AI generation/animation history and its localStorage backing. */
+  clearLocalHistory: () => void
 }
 
 const readStorage = (key: string): string | null => {
@@ -80,5 +82,15 @@ export const useAssetsStore = create<AssetsState>((set, get) => ({
     set((state) => ({
       sheetsAvailableForDownload: new Set(state.sheetsAvailableForDownload).add(animationId),
     }))
+  },
+
+  clearLocalHistory: () => {
+    set({ generations: [], animations: [], sheetsAvailableForDownload: new Set<string>() })
+    try {
+      persistGenerationHistory(localStorage, [])
+      persistAnimationHistory(localStorage, [])
+    } catch (e) {
+      console.error('Failed to clear local AI history', e)
+    }
   },
 }))

@@ -119,6 +119,8 @@ export interface ClipboardSlice {
 
 export interface UISlice {
   settingsOpen: boolean
+  deleteAccountDialogOpen: boolean
+  accountDeletedNoticeVisible: boolean
   ui: {
     leftSidebarOpen: boolean
     rightSidebarOpen: boolean
@@ -151,6 +153,10 @@ export interface UISlice {
   resetPanelSizes: () => void
   openSettings: () => void
   closeSettings: () => void
+  openDeleteAccountDialog: () => void
+  closeDeleteAccountDialog: () => void
+  showAccountDeletedNotice: () => void
+  dismissAccountDeletedNotice: () => void
 }
 
 // ── View Prefs Slice ─────────────────────────────────────────────────────────

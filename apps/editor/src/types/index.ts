@@ -1,6 +1,9 @@
 import type { LucideIcon } from 'lucide-react'
 
 export * from './ai-generation'
+export * from './auth.types'
+export * from './mascot.types'
+export * from './account-deletion.types'
 
 import type { Command, DispatchResult } from '@/lib/core/commands'
 import type { AssetType, CreateMethod } from './ai-generation'
@@ -244,6 +247,10 @@ export type BottomPanelTabId = 'timeline' | 'assets'
 export interface EditorUIState {
   /** Shell-level Settings modal. Session only — not persisted. */
   readonly settingsOpen: boolean
+  /** Shell-level "Delete my account" dialog (editor-auth change). Session only — not persisted. */
+  readonly deleteAccountDialogOpen: boolean
+  /** Calm confirmation banner shown once, right after a successful account deletion. Session only. */
+  readonly accountDeletedNoticeVisible: boolean
   readonly ui: {
     readonly leftSidebarOpen: boolean
     readonly rightSidebarOpen: boolean
@@ -278,6 +285,10 @@ export interface EditorUIState {
 export interface EditorUIActions {
   openSettings: () => void
   closeSettings: () => void
+  openDeleteAccountDialog: () => void
+  closeDeleteAccountDialog: () => void
+  showAccountDeletedNotice: () => void
+  dismissAccountDeletedNotice: () => void
   toggleLeftSidebar: () => void
   toggleRightSidebar: () => void
   toggleTimeline: () => void
