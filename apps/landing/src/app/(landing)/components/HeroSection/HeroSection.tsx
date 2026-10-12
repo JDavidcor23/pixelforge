@@ -31,11 +31,13 @@ export const HeroSection = () =>
             >
               { LANDING_HERO.CTA_PRIMARY }
             </a>
+            {/* Hidden until there is a game demo to link to.
             <button
               className="rounded-lg border border-accent px-8 py-3 text-base font-semibold text-accent transition-all hover:bg-accent/10 hover:scale-105"
             >
               { LANDING_HERO.CTA_SECONDARY }
             </button>
+            */}
           </div>
         </div>
 
