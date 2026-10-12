@@ -69,6 +69,11 @@ describe('ANIMATION_HARNESS', () => {
     const ids = ANIMATION_HARNESS.character.motions.map((preset) => preset.id)
     expect(ids).toEqual(expect.arrayContaining(['idle', 'walk', 'run', 'jump', 'attack', 'crouch']))
   })
+
+  it('closes the loop on the first frame for idle only, never for walk', () => {
+    expect(findAnimationMotion('character', 'idle').loopToFirstFrame).toBe(true)
+    expect(findAnimationMotion('character', 'walk').loopToFirstFrame).toBeFalsy()
+  })
 })
 
 describe('findAnimationMotion', () => {

@@ -37,6 +37,7 @@ interface HarnessCase {
   readonly frameCount: number
   readonly enhancePrompt: boolean
   readonly driftThreshold?: number
+  readonly loopToFirstFrame: boolean
 }
 
 interface Base64Image {
@@ -95,6 +96,7 @@ const toCase = (preset: AnimationMotionPreset): HarnessCase => ({
   frameCount: framesArg ? Number(framesArg) : preset.defaultFrames,
   enhancePrompt: preset.enhancePrompt ?? false,
   driftThreshold: preset.driftThreshold,
+  loopToFirstFrame: preset.loopToFirstFrame ?? false,
 })
 
 /** The custom preset has no motion text of its own, so it is never benchmarked here. */
@@ -130,12 +132,14 @@ const toBase64 = (image: Base64Image | string): string =>
 const runCase = async (harnessCase: HarnessCase, firstFrame: string, outDir: string): Promise<CaseResult> => {
   const started = Date.now()
   try {
-    // Same body as `api/ai/pixellab/animate.ts` — and, like it, never `last_frame`
-    // (measured 2026-10-12: forcing the loop back to frame 0 killed the motion).
+    // Same body as `api/ai/pixellab/animate.ts`, including `last_frame` only for
+    // motions that opt in (`loopToFirstFrame`).
+    const frame = { type: 'base64', base64: firstFrame, format: 'png' }
     const submitted = await request<{ background_job_id: string }>('/animate-with-text-v3', {
       method: 'POST',
       body: JSON.stringify({
-        first_frame: { type: 'base64', base64: firstFrame, format: 'png' },
+        first_frame: frame,
+        ...(harnessCase.loopToFirstFrame ? { last_frame: frame } : {}),
         action: harnessCase.action,
         frame_count: harnessCase.frameCount,
         no_background: true,

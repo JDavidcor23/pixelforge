@@ -373,6 +373,7 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
         frameCount: nFrames,
         enhancePrompt: motion.enhancePrompt,
         driftThreshold: motion.driftThreshold,
+        loopToFirstFrame: motion.loopToFirstFrame,
         job: { label: motion.label, assetType },
       })
       const pending: PendingAnimationJob = { jobId, startedAt: Date.now(), label: motion.label, assetType }

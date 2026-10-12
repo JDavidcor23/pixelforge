@@ -41,7 +41,21 @@ describe('pixellab/animate Vercel Function', () => {
     expect((await res.json()).code).toBe('MISSING_API_KEY')
   })
 
-  it('forwards bare base64, no_background and never last_frame; returns the job id', async () => {
+  it('sends the first frame as last_frame only when loopToFirstFrame is set', async () => {
+    process.env.PIXELLAB_API_KEY = 'env-key'
+    const fetchMock = vi.fn(async (_url: string, init: RequestInit) => {
+      const sent = JSON.parse(init.body as string)
+      expect(sent.last_frame).toEqual(sent.first_frame)
+      return new Response(JSON.stringify({ background_job_id: 'job-43' }), { status: 200 })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const res = await handler(jsonRequest({ ...validBody, loopToFirstFrame: true, apiKey: 'byok-key' }))
+    expect(res.status).toBe(200)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('forwards bare base64, no_background and no last_frame by default; returns the job id', async () => {
     process.env.PIXELLAB_API_KEY = 'env-key'
     const fetchMock = vi.fn(async (_url: string, init: RequestInit) => {
       const sent = JSON.parse(init.body as string)

@@ -18,6 +18,12 @@ export interface AnimationMotionPreset {
   readonly enhancePrompt?: boolean
   /** PixelLab `drift_threshold`. Omitted = provider default. */
   readonly driftThreshold?: number
+  /**
+   * Sends the first frame as PixelLab `last_frame` too, so the loop closes on
+   * the reference. Measured 2026-10-12: keeps an idle on-model over 12 frames,
+   * but leaves a walk almost static — enable it only for in-place motions.
+   */
+  readonly loopToFirstFrame?: boolean
   /** True only for "Custom" — the user writes the motion text; identity rules are still prepended. */
   readonly isCustomInput?: boolean
 }
@@ -42,6 +48,8 @@ export interface AnimationRequest {
   readonly frameCount: number
   readonly enhancePrompt?: boolean
   readonly driftThreshold?: number
+  /** Close the loop on the first frame (PixelLab `last_frame`). See `AnimationMotionPreset.loopToFirstFrame`. */
+  readonly loopToFirstFrame?: boolean
   readonly seed?: number
   /** Name + folder of the asset, so a server-tracked job can be saved without the browser. */
   readonly job?: AnimationJobMeta

@@ -81,8 +81,8 @@ async function recordServerJob(accessToken: string, input: AiJobRecordInput): Pr
  * Signed-in + server key: the job is ALSO written to `public.ai_jobs` before
  * the id is returned, so the server collects it even if the browser closes.
  *
- * `last_frame` is never sent: measured 2026-10-12, forcing the loop back to
- * the first frame left the animation almost static.
+ * `last_frame` is sent only when the motion opts in (`loopToFirstFrame`):
+ * measured 2026-10-12, it keeps an idle on-model but leaves a walk almost static.
  */
 export default async function handler(req: Request): Promise<Response> {
   try {
@@ -92,6 +92,7 @@ export default async function handler(req: Request): Promise<Response> {
       frameCount,
       enhancePrompt,
       driftThreshold,
+      loopToFirstFrame,
       seed,
       apiKey: clientApiKey,
       job,
@@ -118,11 +119,13 @@ export default async function handler(req: Request): Promise<Response> {
       return json({ error: PIXELLAB_MISSING_KEY_ERROR, code: 'MISSING_API_KEY' }, 401)
     }
 
+    const firstFrame = { type: 'base64', base64: stripDataUri(firstFrameBase64), format: 'png' }
     const upstream = await fetch(`${PIXELLAB_API_BASE}${PIXELLAB_ANIMATE_PATH}`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        first_frame: { type: 'base64', base64: stripDataUri(firstFrameBase64), format: 'png' },
+        first_frame: firstFrame,
+        ...(loopToFirstFrame ? { last_frame: firstFrame } : {}),
         action: action.trim(),
         frame_count: frameCount,
         // Real alpha back, so the editor never keys out a background.
@@ -162,6 +165,7 @@ export default async function handler(req: Request): Promise<Response> {
           action: action.trim(),
           ...(enhancePrompt !== undefined ? { enhance_prompt: enhancePrompt } : {}),
           ...(driftThreshold !== undefined ? { drift_threshold: driftThreshold } : {}),
+          ...(loopToFirstFrame ? { loop_to_first_frame: true } : {}),
           ...(seed !== undefined ? { seed } : {}),
         },
       })

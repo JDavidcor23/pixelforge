@@ -14,7 +14,10 @@ import type { AnimationHarness, AnimationMotionPreset, AssetType } from '../type
  * explicit motion gave real steps, the same hand on the staff and the same
  * scale. A bare "walking" turned the character toward the camera and swapped
  * hands; `enhance_prompt` stepped but drifted to side profile; sending the
- * first frame as `last_frame` too killed the motion. Every new motion must pass
+ * first frame as `last_frame` too killed the motion. Idle (same day, 12 frames):
+ * without `last_frame` the wizard turned toward the camera by frame 7; with it
+ * he stayed on-model and the loop closed — so `last_frame` is opt-in per motion
+ * (`loopToFirstFrame`). A stricter idle prompt did not help. Every new motion must pass
  * the eval script on a real sprite before it ships.
  */
 
@@ -47,6 +50,7 @@ const CHARACTER_MOTIONS: readonly AnimationMotionPreset[] = [
     label: 'Idle',
     motion: 'idle breathing loop in place: chest rises and falls, head and shoulders bob slightly, feet stay planted, clothing sways gently',
     defaultFrames: 4,
+    loopToFirstFrame: true,
   },
   {
     // The measured best prompt (2026-10-12), with "robe" generalized to clothing.
