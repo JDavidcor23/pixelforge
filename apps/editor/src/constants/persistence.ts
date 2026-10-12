@@ -23,6 +23,12 @@ export const LEGACY_SPRITE_EDITOR_STORAGE_KEY = 'sprite-editor-core'
  */
 export const PREFS_STORAGE_KEY = 'sprite-editor-prefs'
 export const SPRITE_EDITOR_STORAGE_KEY = 'sprite-editor-colors'
+/**
+ * AI jobs store — sessionStorage, not localStorage, and only the pending
+ * Animate job: a PixelLab job keeps running (and is billed) after a reload,
+ * so its id must survive the reload for polling to resume (ADR 0009).
+ */
+export const AI_JOBS_STORAGE_KEY = 'sprite-editor-ai-jobs'
 
 /**
  * Assets library (AI generations + animations). Its own IndexedDB database, not

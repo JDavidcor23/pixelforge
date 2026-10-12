@@ -1,8 +1,8 @@
 # Sprite Generation with Retro Diffusion
 
-The editor generates sprites and animations from text prompts using the
-[Retro Diffusion](https://www.retrodiffusion.ai/) API. It is the only image
-generation engine in the project.
+The editor generates sprites from text prompts using the
+[Retro Diffusion](https://www.retrodiffusion.ai/) API. Animations use PixelLab
+(see "Animation Flow" below).
 
 ## Sprite Flow
 
@@ -17,15 +17,22 @@ generation engine in the project.
 5. **Apply**: the store (`overwriteWithPixels`) replaces the current canvas and
    adjusts its dimensions.
 
-## Animation Flow
+## Animation Flow (PixelLab, ADR 0009)
 
-1. The current frame is exported as the reference image (`input_image`).
-2. `generateAnimationWithRetroDiffusion` requests the animation with
-   `return_spritesheet: true` — a GIF cannot be decomposed on a canvas.
-3. The response is **one grid sheet** (4 frames of 64px arrive as a single
-   128x128 PNG, 2x2), with exact cells and no gutters.
-4. `sliceAnimationSheet` cuts the frames by division: rows and columns come from
-   dividing the sheet's real dimensions by the requested frame size.
+Animations no longer use Retro Diffusion. The Animate tab depends on the
+`AnimationProvider` port (`services/animation-provider.service.ts`); PixelLab
+is the only adapter (`services/pixellab-animation.service.ts`).
+
+1. The current canvas is exported at its own size as the first frame.
+2. `buildAnimationAction` (`animation-harness.ts`) puts the asset type's
+   identity rules FIRST, then the motion text from `ANIMATION_HARNESS`.
+3. `api/ai/pixellab/animate` submits the job and returns its id at once;
+   `api/ai/pixellab/job` reads the status (`pixellab-job.ts` drops the input
+   frame at index 0 and returns PNG data URIs).
+4. The hook polls every 3 s (5 min timeout). The pending job id survives a
+   reload (sessionStorage) so a paid job is never lost.
+
+`scripts/pixellab-animate-harness.ts` evaluates the same catalogue offline.
 
 ## Key Utilities (`retro-diffusion-utils.ts`)
 
@@ -34,8 +41,6 @@ generation engine in the project.
   spending anything.
 - `decodeGeneratedSprite`: Base64 to pixels. If the PNG already matches the grid
   size it is used **verbatim**; otherwise it falls through to the import pipeline.
-- `generateAnimationWithRetroDiffusion`: generates the animation sheet.
-- `sliceAnimationSheet`: cuts the sheet into individual frames.
 
 ## Why There Is No Background Removal
 

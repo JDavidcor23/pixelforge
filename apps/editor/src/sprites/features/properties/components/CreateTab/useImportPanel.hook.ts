@@ -5,20 +5,32 @@ import {
   useImportAnimationFrames,
   useOverwriteWithPixels,
 } from '@/sprites/hooks/useSpriteEditorStore.hook'
-import { decodeSheetToFrames, decodeToPixels } from '@/lib/sprite-pipeline'
+import {
+  decodeAtNativeSize,
+  decodeSheetAtNativeSize,
+  decodeSheetToFrames,
+  decodeToPixels,
+} from '@/lib/sprite-pipeline'
 import {
   AI_SPRITE_DEFAULT_SIZE,
   SPRITE_ANIMATION,
   SPRITE_IMPORT_DEFAULT_FRAMES,
   SPRITE_IMPORT_MAX_FRAMES,
+  SPRITE_IMPORT_MAX_NATIVE_SIZE,
   SPRITE_IMPORT_MIN_FRAMES,
 } from '@/constants'
 
 export interface UseImportPanelReturn {
   frameCount: number
   setFrameCount: (value: number) => void
+  /** Explicit resolution — only used while `isOriginalSize` is false. Picking one turns "Original" off. */
   size: number
   setSize: Dispatch<SetStateAction<number>>
+  /** Default: the imported image keeps its native resolution (frame width for a sheet). */
+  isOriginalSize: boolean
+  selectOriginalSize: () => void
+  /** Canvas side the last import landed at, or null before the first import. */
+  importedSize: number | null
   isSheet: boolean
   isImporting: boolean
   error: string | null
@@ -32,13 +44,18 @@ export interface UseImportPanelReturn {
  * uploaded PNG holds and the pipeline obeys — we never auto-detect frames.
  * Quantization is always disabled because the image is already hand-edited;
  * re-quantizing would destroy the user's palette.
+ *
+ * Size (ADR 0009): defaults to the image's own resolution. The old 64px
+ * default downscaled a 128px PNG before the Animate tab ever saw it.
  */
 export const useImportPanel = (): UseImportPanelReturn => {
   const overwriteWithPixels = useOverwriteWithPixels()
   const importAnimationFrames = useImportAnimationFrames()
 
   const [frameCount, setFrameCountState] = useState<number>(SPRITE_IMPORT_DEFAULT_FRAMES)
-  const [size, setSize] = useState<number>(AI_SPRITE_DEFAULT_SIZE)
+  const [size, setSizeState] = useState<number>(AI_SPRITE_DEFAULT_SIZE)
+  const [isOriginalSize, setIsOriginalSize] = useState(true)
+  const [importedSize, setImportedSize] = useState<number | null>(null)
   const [isImporting, setIsImporting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -54,6 +71,13 @@ export const useImportPanel = (): UseImportPanelReturn => {
     )
     setFrameCountState(clamped)
   }, [])
+
+  const setSize = useCallback<Dispatch<SetStateAction<number>>>((value) => {
+    setIsOriginalSize(false)
+    setSizeState(value)
+  }, [])
+
+  const selectOriginalSize = useCallback(() => setIsOriginalSize(true), [])
 
   const handleOpenFilePicker = useCallback(() => {
     fileInputRef.current?.click()
@@ -84,12 +108,18 @@ export const useImportPanel = (): UseImportPanelReturn => {
 
         if (frameCount <= SPRITE_IMPORT_MIN_FRAMES) {
           // Single sprite — quantize=false keeps the user's hand-cleaned palette.
-          const pixels = await decodeToPixels(dataUrl, size, false)
+          const pixels = isOriginalSize
+            ? await decodeAtNativeSize(dataUrl, SPRITE_IMPORT_MAX_NATIVE_SIZE, false)
+            : await decodeToPixels(dataUrl, size, false)
           overwriteWithPixels(pixels, dataUrl)
+          setImportedSize(pixels.w)
         } else {
           // Multi-frame sheet — the user declares the frame count; no auto-detect.
-          const frames = await decodeSheetToFrames(dataUrl, frameCount, size, false)
+          const frames = isOriginalSize
+            ? await decodeSheetAtNativeSize(dataUrl, frameCount, SPRITE_IMPORT_MAX_NATIVE_SIZE, false)
+            : await decodeSheetToFrames(dataUrl, frameCount, size, false)
           importAnimationFrames(frames, SPRITE_ANIMATION.DEFAULT_FRAME_DURATION_MS)
+          setImportedSize(frames[0]?.w ?? null)
         }
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Could not import the sprite.')
@@ -99,7 +129,7 @@ export const useImportPanel = (): UseImportPanelReturn => {
         input.value = ''
       }
     },
-    [frameCount, size, overwriteWithPixels, importAnimationFrames, readFileAsDataUrl],
+    [frameCount, size, isOriginalSize, overwriteWithPixels, importAnimationFrames, readFileAsDataUrl],
   )
 
   // Single rule for "does this PNG hold an animation sheet?" — kept here so the
@@ -111,6 +141,9 @@ export const useImportPanel = (): UseImportPanelReturn => {
     setFrameCount,
     size,
     setSize,
+    isOriginalSize,
+    selectOriginalSize,
+    importedSize,
     isSheet,
     isImporting,
     error,

@@ -25,24 +25,8 @@ export type RetroDiffusionSpriteStyle =
   | 'rd_plus__low_res'
   | 'rd_pro__default'
 
-/**
- * The only animation actions Retro Diffusion actually accepts — every one of
- * these was probed live; `run`, `running`, `die` and `hurt` all fail. A "run"
- * request therefore maps to `custom_action` and carries the intent in the prompt.
- */
-export type RetroDiffusionAnimationAction =
-  | 'walking'
-  | 'idle'
-  | 'jump'
-  | 'crouch'
-  | 'attack'
-  | 'destroy'
-  | 'custom_action'
-  | 'subtle_motion'
-
-export type RetroDiffusionStyle =
-  | RetroDiffusionSpriteStyle
-  | `rd_advanced_animation__${RetroDiffusionAnimationAction}`
+/** Animations moved to PixelLab (ADR 0009); Retro Diffusion only generates base sprites. */
+export type RetroDiffusionStyle = RetroDiffusionSpriteStyle
 
 export interface RetroDiffusionRequestBody {
   readonly prompt: string
@@ -50,13 +34,6 @@ export interface RetroDiffusionRequestBody {
   readonly height: number
   readonly style?: RetroDiffusionStyle
   readonly seed?: number
-  /**
-   * Frame count for an animation style. Billed FLAT at $0.14 regardless of the
-   * value (2..16 all verified), so asking for more frames is free.
-   */
-  readonly framesDuration?: number
-  /** Without this Retro Diffusion answers with a GIF, which canvas cannot slice. */
-  readonly returnSpritesheet?: boolean
   /** base64 PNG (data URI or bare) for img2img — keeps a character consistent across generations. */
   readonly inputImageBase64?: string
   /** 0..1 — how far img2img may drift from `inputImageBase64`. Ignored without one. */
@@ -168,27 +145,6 @@ export interface QualityRecommendation {
 }
 
 /**
- * A single motion choice offered by the Animate tab for a given asset type
- * (Sprite Studio v2). The same shape covers both character motions (Idle,
- * Walk, Run…) and non-character motions (Breathe, Spin…) — the UI and the
- * generation hook never branch on asset type directly, only on this table
- * (see `ANIMATE_MOTIONS_BY_ASSET_TYPE` in `constants/index.ts`).
- */
-export interface AnimateMotionOption {
-  readonly id: string
-  readonly label: string
-  readonly rdAction: RetroDiffusionAnimationAction
-  /**
-   * Fixed motion text substituted into the prompt for options that are not
-   * user-authored (e.g. Squash & stretch, Spin, Breathe). Omitted for options
-   * whose own `label` already reads naturally as the motion word (Idle, Walk…).
-   */
-  readonly fixedMotionText?: string
-  /** True only for "Custom" — renders a free-text textarea instead of firing immediately. */
-  readonly isCustomInput?: boolean
-}
-
-/**
  * Normalized view-model row for the bottom panel's Assets tab — a single
  * shape covering both `AIGeneration` (still sprites) and `AIAnimation`
  * (multi-frame) history entries, so the grid/folder tree don't need to
@@ -202,7 +158,6 @@ export interface AssetLibraryItem {
   /** Back-compat default applied here (not in storage) — untyped history counts as `'character'`. */
   readonly assetType: AssetType
   readonly isAnimated: boolean
-  readonly canDownloadSheet: boolean
 }
 
 /** Game genres whose sprite rules the Create tab can add to a prompt. */

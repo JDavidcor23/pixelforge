@@ -22,6 +22,14 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
     isRetroSaved,
     handleSaveRetroKey,
     handleRemoveRetroKey,
+    pixelLabKey,
+    setPixelLabKey,
+    showPixelLabKey,
+    toggleShowPixelLabKey,
+    hasPixelLabKey,
+    isPixelLabSaved,
+    handleSavePixelLabKey,
+    handleRemovePixelLabKey,
     elevenLabsKey,
     setElevenLabsKey,
     showElevenLabsKey,
@@ -87,6 +95,20 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
               placeholder="Paste your Retro Diffusion API key"
               helpUrl={API_KEY_HELP_URL.RETRO_DIFFUSION}
               saved={isRetroSaved}
+            />
+
+            <ApiKeyField
+              label="PixelLab"
+              value={pixelLabKey}
+              onChange={setPixelLabKey}
+              showKey={showPixelLabKey}
+              onToggleShow={toggleShowPixelLabKey}
+              hasStoredKey={hasPixelLabKey}
+              onSave={handleSavePixelLabKey}
+              onRemove={handleRemovePixelLabKey}
+              placeholder="Paste your PixelLab API key"
+              helpUrl={API_KEY_HELP_URL.PIXELLAB}
+              saved={isPixelLabSaved}
             />
 
             <ApiKeyField

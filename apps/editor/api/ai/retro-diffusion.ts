@@ -8,7 +8,6 @@ import {
   RETRO_DIFFUSION_PRO_MIN_SIZE,
   RETRO_DIFFUSION_PRO_MAX_SIZE,
   RETRO_DIFFUSION_TIMEOUT_MS,
-  RETRO_DIFFUSION_ANIMATION_TIMEOUT_MS,
   RETRO_DIFFUSION_NO_IMAGE_ERROR,
   RETRO_DIFFUSION_MISSING_KEY_ERROR,
 } from '../../src/constants'
@@ -65,8 +64,6 @@ export default async function handler(req: Request): Promise<Response> {
       seed,
       inputImageBase64,
       strength,
-      framesDuration,
-      returnSpritesheet,
       checkCost = false,
       apiKey: clientApiKey,
     } = (await req.json()) as RetroDiffusionRequestBody
@@ -104,17 +101,9 @@ export default async function handler(req: Request): Promise<Response> {
         ...(inputImageBase64
           ? { input_image: stripDataUri(inputImageBase64), ...(strength !== undefined ? { strength } : {}) }
           : {}),
-        ...(framesDuration !== undefined ? { frames_duration: framesDuration } : {}),
-        ...(returnSpritesheet ? { return_spritesheet: true } : {}),
         ...(checkCost ? { check_cost: true } : {}),
       }),
-      // An animation takes several times longer than a sprite, and aborting one
-      // does NOT refund it — Retro Diffusion bills the generation either way.
-      signal: AbortSignal.timeout(
-        framesDuration !== undefined
-          ? RETRO_DIFFUSION_ANIMATION_TIMEOUT_MS
-          : RETRO_DIFFUSION_TIMEOUT_MS,
-      ),
+      signal: AbortSignal.timeout(RETRO_DIFFUSION_TIMEOUT_MS),
     })
 
     const data = (await upstream.json().catch(() => null)) as RetroDiffusionApiResponse | null
@@ -138,10 +127,6 @@ export default async function handler(req: Request): Promise<Response> {
       return json({ error: RETRO_DIFFUSION_NO_IMAGE_ERROR }, 502)
     }
 
-    // NOTE: width/height are what was REQUESTED, which for an animation is the
-    // size of ONE frame — the returned PNG is a grid of them (4 frames of 64px
-    // come back as a single 128x128 sheet). Callers slicing a sheet must read the
-    // real dimensions off the decoded image, not trust these two numbers.
     return json({
       base64: image.startsWith('data:') ? image : `data:image/png;base64,${image}`,
       width: requestWidth,

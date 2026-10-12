@@ -1,6 +1,7 @@
 import type { LucideIcon } from 'lucide-react'
 
 export * from './ai-generation'
+export * from './animation.types'
 export * from './auth.types'
 export * from './mascot.types'
 export * from './account-deletion.types'
@@ -128,13 +129,6 @@ export type DocStatus = 'loading' | 'ready'
  * `'saved'`/`'error'` transitions around its own debounced `save()`.
  */
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
-
-// ── Animation Types ─────────────────────────────────────────────────────────
-
-// Side-view sprites only walk left or right. Compass directions were dropped
-// (top-down framing) — revisit if a top-down view is added later. Only shown
-// for `character` assets — non-character motions have no facing.
-export type AnimationDirection = 'left' | 'right'
 
 // ── Core Editor Store ────────────────────────────────────────────────────────
 
@@ -324,6 +318,8 @@ export interface EditorPrefsState {
   readonly onionSkinEnabled: boolean
   /** BYOK: when set, generations bill this user's own Retro Diffusion balance. */
   readonly retroDiffusionApiKey: string | null
+  /** BYOK: when set, animations bill this user's own PixelLab balance (ADR 0009). */
+  readonly pixelLabApiKey: string | null
 }
 
 export interface EditorPrefsActions {
@@ -335,6 +331,7 @@ export interface EditorPrefsActions {
   setShowGrid: (show: boolean) => void
   toggleOnionSkin: () => void
   setRetroDiffusionApiKey: (key: string | null) => void
+  setPixelLabApiKey: (key: string | null) => void
 }
 
 export type EditorPrefsStore = EditorPrefsState & EditorPrefsActions

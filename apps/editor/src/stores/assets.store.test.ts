@@ -40,7 +40,6 @@ describe('useAssetsStore.clearLocalHistory', () => {
     useAssetsStore.setState({
       generations: [],
       animations: [],
-      sheetsAvailableForDownload: new Set(),
       repository: null,
     })
   })
@@ -49,21 +48,19 @@ describe('useAssetsStore.clearLocalHistory', () => {
     vi.unstubAllGlobals()
   })
 
-  it('resets generations, animations and the download-availability set', () => {
+  it('resets generations and animations', () => {
     useAssetsStore.getState().addGeneration({
       prompt: 'a cute dragon',
       base64: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
       width: 1,
       height: 1,
     })
-    useAssetsStore.getState().markSheetAvailable('some-animation-id')
 
     useAssetsStore.getState().clearLocalHistory()
 
     const state = useAssetsStore.getState()
     expect(state.generations).toEqual([])
     expect(state.animations).toEqual([])
-    expect(state.sheetsAvailableForDownload.size).toBe(0)
   })
 
   it('removes the persisted history keys from localStorage', () => {
@@ -102,7 +99,6 @@ describe('useAssetsStore.hydrate (IndexedDB library)', () => {
     useAssetsStore.setState({
       generations: [],
       animations: [],
-      sheetsAvailableForDownload: new Set(),
       repository: null,
     })
   })

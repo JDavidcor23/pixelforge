@@ -1,12 +1,38 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { useAIJobsStore } from './ai-jobs.store'
+import { AI_JOBS_STORAGE_KEY } from '@/constants/persistence'
+
+// The store persists its pending Animate job to sessionStorage; vitest runs in
+// node, so give it one before the store module is evaluated.
+const storage = vi.hoisted(() => {
+  const data = new Map<string, string>()
+  const memory = {
+    getItem: (key: string) => data.get(key) ?? null,
+    setItem: (key: string, value: string) => void data.set(key, value),
+    removeItem: (key: string) => void data.delete(key),
+  }
+  globalThis.sessionStorage = memory as unknown as Storage
+  return data
+})
 
 const IDLE = { isRunning: false, error: null, result: null }
+const IDLE_ANIMATE = { ...IDLE, errorCode: null }
 
 describe('useAIJobsStore', () => {
   beforeEach(() => {
-    useAIJobsStore.setState({ generate: IDLE, animate: IDLE, generatePrompt: '' })
+    useAIJobsStore.setState({ generate: IDLE, animate: IDLE_ANIMATE, animatePending: null, generatePrompt: '' })
+  })
+
+  // A PixelLab job keeps running (and is billed) after a reload, so only its
+  // id is persisted — the spinner/result state is not.
+  it('persists only the pending animate job', () => {
+    const pending = { jobId: 'job-1', startedAt: 1, label: 'Walk', assetType: 'character' as const }
+    useAIJobsStore.getState().setAnimatePending(pending)
+    useAIJobsStore.getState().setAnimateJob({ isRunning: true })
+
+    const saved = JSON.parse(storage.get(AI_JOBS_STORAGE_KEY) ?? '{}') as { state: Record<string, unknown> }
+    expect(saved.state).toEqual({ animatePending: pending })
   })
 
   // The tab that started the request may be unmounted when it resolves; the
@@ -28,5 +54,16 @@ describe('useAIJobsStore', () => {
 
     expect(useAIJobsStore.getState().animate.isRunning).toBe(true)
     expect(useAIJobsStore.getState().generate).toEqual(IDLE)
+  })
+
+  // ADR 0009: `isBusyError` is derived from this typed code, never from
+  // comparing `animate.error`'s message text.
+  it('keeps a typed errorCode alongside the error message', () => {
+    useAIJobsStore.getState().setAnimateJob({ error: 'PixelLab is busy', errorCode: 'BUSY' })
+
+    expect(useAIJobsStore.getState().animate.errorCode).toBe('BUSY')
+
+    useAIJobsStore.getState().setAnimateJob({ isRunning: true, error: null, errorCode: null })
+    expect(useAIJobsStore.getState().animate.errorCode).toBeNull()
   })
 })

@@ -13,6 +13,9 @@ export const ImportPanel = () => {
     setFrameCount,
     size,
     setSize,
+    isOriginalSize,
+    selectOriginalSize,
+    importedSize,
     isSheet,
     isImporting,
     error,
@@ -20,6 +23,8 @@ export const ImportPanel = () => {
     handleOpenFilePicker,
     handleFileSelected,
   } = useImportPanel()
+
+  const originalSizeLabel = importedSize ? `Original (${importedSize}x${importedSize})` : 'Original'
 
   return (
     <div className="flex flex-col gap-3">
@@ -43,7 +48,12 @@ export const ImportPanel = () => {
         </div>
         <div className="flex-1">
           <label className="mb-1 block text-2xs text-subtle">Resolution</label>
-          <select value={size} onChange={(e) => setSize(Number(e.target.value))} className={FIELD}>
+          <select
+            value={isOriginalSize ? '' : size}
+            onChange={(e) => (e.target.value === '' ? selectOriginalSize() : setSize(Number(e.target.value)))}
+            className={FIELD}
+          >
+            <option value="">{originalSizeLabel}</option>
             {AI_SPRITE_SIZES.map((s) => (
               <option key={s} value={s}>
                 {s}x{s}

@@ -65,3 +65,6 @@ package-lock.json
 # graphify: per-machine cache and dated backups churn on every rebuild and cause merge conflicts
 graphify-out/cache/
 graphify-out/20*/
+
+# Local AI harness output (generated sprites, paid runs)
+.harness-out/
