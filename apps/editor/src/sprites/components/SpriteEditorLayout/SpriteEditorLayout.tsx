@@ -50,7 +50,7 @@ export const SpriteEditorLayout = () => {
     : 'transition-[grid-template-columns] duration-300 ease-in-out motion-reduce:transition-none'
 
   return (
-    <div ref={containerRef} className="flex h-full w-full flex-col overflow-hidden bg-base">
+    <div ref={containerRef} className="flex h-full w-full flex-col overflow-hidden bg-sunken">
       <TopBar />
 
       <div
@@ -83,7 +83,7 @@ export const SpriteEditorLayout = () => {
         </div>
 
         {/* Main Content Area */}
-        <div className="relative min-h-0 overflow-hidden bg-base">
+        <div className="relative min-h-0 overflow-hidden bg-sunken">
           {docStatus === 'ready' ? (
             <>
               <CanvasArea />

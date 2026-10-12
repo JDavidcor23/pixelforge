@@ -27,7 +27,7 @@ export const ToolButton = ({ tool, isActive, onSelect }: ToolButtonProps) => {
       onClick={() => onSelect(tool)}
       title={`${tool.label} (${tool.shortcut})`}
       className={`relative flex size-8 items-center justify-center rounded transition-colors ${
-        isActive ? 'bg-base text-accent' : 'text-muted hover:text-ink'
+        isActive ? 'bg-sunken text-accent' : 'text-muted hover:text-ink'
       }`}
     >
       {IconComponent && <IconComponent size={18} />}

@@ -23,7 +23,7 @@ export function DeleteSoundDialog() {
   return (
     <div
       onClick={handleBackdropClick}
-      className={`fixed inset-0 z-50 flex items-center justify-center bg-base/70 backdrop-blur-sm ${MOTION.FADE_ENTER}`}
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-sunken/70 backdrop-blur-sm ${MOTION.FADE_ENTER}`}
     >
       <div
         role="alertdialog"

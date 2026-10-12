@@ -9,7 +9,7 @@ interface ColorInputsProps {
 }
 
 const FIELD =
-  'rounded border border-line bg-base px-1.5 py-1 text-center font-mono text-xs text-ink outline-none focus:border-accent'
+  'rounded border border-line bg-sunken px-1.5 py-1 text-center font-mono text-xs text-ink outline-none focus:border-accent'
 
 /**
  * Fine-grained color control via HEX and RGBA values.

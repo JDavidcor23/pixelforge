@@ -21,7 +21,7 @@ export function EditorLayout() {
   } = useEditorLayout()
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-base text-ink">
+    <div className="flex h-screen w-screen overflow-hidden bg-sunken text-ink">
       <nav
         className="flex w-14 shrink-0 flex-col items-center gap-2 border-r border-line bg-surface py-3"
         aria-label="Editor navigation"

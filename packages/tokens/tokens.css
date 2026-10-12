@@ -75,14 +75,19 @@
   --pf-checker-b: #14171d;
 
   /* -- Legacy aliases: kept so `bg-background` / `text-foreground` still
-   *    resolve. Prefer `bg-base` / `text-ink` in new code. ----------------- */
+   *    resolve. Prefer `bg-sunken` / `text-ink` in new code. ----------------- */
   --background: var(--pf-base);
   --foreground: var(--pf-ink);
 }
 
 @theme inline {
-  /* Surfaces  → bg-base, bg-surface, bg-raised, bg-hover */
-  --color-base: var(--pf-base);
+  /* Surfaces  → bg-sunken, bg-surface, bg-raised, bg-hover
+   * NAMING GUARD: a --color-* key must NEVER reuse a key from --text-*,
+   * --shadow-*, --inset-shadow-*, --drop-shadow-* or --text-shadow-*
+   * (xs, sm, base, lg, xl, 2xl…9xl, 3xs, 2xs, ui, title, popover).
+   * Tailwind v4 shares one utility prefix across namespaces: --color-base
+   * once turned `text-base` into a color and hid the landing hero CTA. */
+  --color-sunken: var(--pf-base);
   --color-surface: var(--pf-surface);
   --color-raised: var(--pf-raised);
   --color-hover: var(--pf-hover);
@@ -119,7 +124,8 @@
 
   /* Dense UI type steps missing from Tailwind's scale
    * → text-3xs (10px label-caps, key chips, ruler labels), text-2xs (11px meta),
-   *   text-ui (13px controls), text-title (22px detail title) */
+   *   text-ui (13px controls), text-title (22px detail title)
+   * NAMING GUARD: new type keys here must not match an existing --color-* key. */
   --text-3xs: 0.625rem;
   --text-3xs--line-height: 0.75rem;
   --text-2xs: 0.6875rem;

@@ -49,7 +49,7 @@ export const TrackHeader = memo(function TrackHeader({ track }: TrackHeaderProps
             maxLength={nameMaxLength}
             spellCheck={false}
             autoFocus
-            className="min-w-0 flex-1 rounded border border-accent bg-base px-1 text-ui font-medium text-ink outline-none"
+            className="min-w-0 flex-1 rounded border border-accent bg-sunken px-1 text-ui font-medium text-ink outline-none"
           />
         ) : (
           <span

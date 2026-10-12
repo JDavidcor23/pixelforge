@@ -3,7 +3,7 @@ name: Synthetic Architect
 source-of-truth: src/app/globals.css
 canvas-mirror: src/constants/COLORS.ts
 colors:
-  base: '#0a0c10'
+  sunken: '#0a0c10'
   surface: '#0f1115'
   raised: '#121419'
   hover: '#171a21'
@@ -84,6 +84,9 @@ spacing:
 not compete with it. If the two ever disagree, `globals.css` wins and this file
 is the bug.
 
+Before adding a color token, read the naming guard in `packages/tokens/tokens.css`:
+a `--color-*` key must never reuse a type or shadow key (`base`, `sm`, `lg`…).
+
 Three rules, and they are not negotiable:
 
 1. **Never write a hex in a component.** Use the Tailwind utility that maps to a
@@ -116,7 +119,7 @@ product.
 
 | Token | Role |
 | --- | --- |
-| `base` | Page background, canvas backdrop, input field interiors |
+| `sunken` | Page background, canvas backdrop, input field interiors |
 | `surface` | Sidebars, panels, primary containers |
 | `raised` | Navbars, panel headers, cards |
 | `hover` | Hover and active rows, selected list items, active tool |
@@ -209,7 +212,7 @@ dated, tight enough to stay structural.
 
 ### Input fields & selects
 
-`base` interior, `line` border, `ink` text. Focus moves the border to `accent`
+`sunken` interior, `line` border, `ink` text. Focus moves the border to `accent`
 with a 2px accent ring. Labels sit above the field in `label-caps`.
 
 ### Cards & panels

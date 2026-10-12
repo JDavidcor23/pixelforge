@@ -12,12 +12,12 @@ export function SoundEditorLayout() {
     useSoundEditorLayout()
 
   return (
-    <div className="relative flex h-full w-full overflow-hidden bg-base text-ink">
+    <div className="relative flex h-full w-full overflow-hidden bg-sunken text-ink">
       {showAudioOverlay && (
         <button
           type="button"
           onClick={handleEnableAudio}
-          className={`absolute inset-0 z-50 flex flex-col items-center justify-center gap-3 bg-base/90 backdrop-blur-sm ${FOCUS_RING.INSET}`}
+          className={`absolute inset-0 z-50 flex flex-col items-center justify-center gap-3 bg-sunken/90 backdrop-blur-sm ${FOCUS_RING.INSET}`}
         >
           <AudioLines className="size-12 text-accent" aria-hidden />
           <span className="text-base font-medium text-ink">Click to enable audio</span>

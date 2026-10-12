@@ -8,7 +8,7 @@ import { FOCUS_RING } from '@/constants/focus-ring'
 import { MOTION } from '@/constants/motion'
 import type { AnimationDirection } from '@/types'
 
-const FIELD = 'w-full rounded border border-line bg-base px-2 py-1.5 text-xs text-ink outline-none focus:border-accent'
+const FIELD = 'w-full rounded border border-line bg-sunken px-2 py-1.5 text-xs text-ink outline-none focus:border-accent'
 const SECTION_LABEL = 'font-mono text-3xs uppercase tracking-wider text-subtle'
 
 const capitalizeWords = (value: string) =>
@@ -64,7 +64,7 @@ export const AnimateTab = () => {
       <AssetTypeSelector value={assetType} onChange={setAssetType} compact />
 
       {previewRef && (
-        <div className="flex flex-col items-center gap-2 rounded-sm border border-line bg-base p-2">
+        <div className="flex flex-col items-center gap-2 rounded-sm border border-line bg-sunken p-2">
           <span className="font-mono text-3xs font-bold uppercase tracking-widest text-subtle">
             AI input preview (64x64)
           </span>
@@ -118,7 +118,7 @@ export const AnimateTab = () => {
             placeholder={ANIMATE_CUSTOM_MOTION_PLACEHOLDER[assetType]}
             onKeyDown={(e) => e.stopPropagation()}
             onPaste={(e) => e.stopPropagation()}
-            className="w-full resize-y rounded border border-line-strong bg-base p-2.5 text-xs leading-relaxed text-ink placeholder:text-subtle focus:border-ai-ink focus:outline-none"
+            className="w-full resize-y rounded border border-line-strong bg-sunken p-2.5 text-xs leading-relaxed text-ink placeholder:text-subtle focus:border-ai-ink focus:outline-none"
           />
         </div>
       )}
@@ -192,7 +192,7 @@ export const AnimateTab = () => {
                   type="button"
                   onClick={() => handleApplyRecent(item)}
                   title={item.title}
-                  className={`size-10 overflow-hidden rounded-sm border border-line bg-base ${FOCUS_RING.SURFACE} ${MOTION.COLORS} hover:border-line-strong`}
+                  className={`size-10 overflow-hidden rounded-sm border border-line bg-sunken ${FOCUS_RING.SURFACE} ${MOTION.COLORS} hover:border-line-strong`}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element -- Vite SPA, no next/image available */}
                   <img src={item.thumbnailSrc} alt="" className="image-pixelated h-full w-full object-contain" />

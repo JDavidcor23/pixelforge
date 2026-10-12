@@ -61,7 +61,7 @@ export const BottomToolbar = () => {
         onClick={toggleGrid}
         title="Toggle Grid Overlay"
         className={`relative flex size-8 items-center justify-center rounded transition-colors ${
-          showGrid ? 'bg-base text-accent' : 'text-muted hover:text-ink'
+          showGrid ? 'bg-sunken text-accent' : 'text-muted hover:text-ink'
         }`}
       >
         <Grid3x3 size={18} />
@@ -73,7 +73,7 @@ export const BottomToolbar = () => {
         title={`Onion Skin: ${onionSkinEnabled ? 'ENABLED' : 'DISABLED'} (dim non-active layers)`}
         className={`relative flex size-8 items-center justify-center rounded transition-all ${
           onionSkinEnabled
-            ? 'glow-accent bg-accent text-base'
+            ? 'glow-accent bg-accent text-on-accent'
             : 'text-muted hover:text-ink'
         }`}
       >

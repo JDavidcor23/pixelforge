@@ -21,7 +21,7 @@ export const AssetTile = ({ item, onSelect, onDownload, onDownloadSource, onDele
         type="button"
         onClick={() => onSelect(item)}
         title={item.label}
-        className={`relative size-23 overflow-hidden rounded-sm border border-line bg-base ${FOCUS_RING.SURFACE}`}
+        className={`relative size-23 overflow-hidden rounded-sm border border-line bg-sunken ${FOCUS_RING.SURFACE}`}
       >
         {item.thumbnailSrc && (
           <img src={item.thumbnailSrc} alt={item.label} className="image-pixelated h-full w-full object-contain" />

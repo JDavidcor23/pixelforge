@@ -2,7 +2,7 @@ import { useResetPasswordPage } from './useResetPasswordPage.hook'
 import { DISABLED_STATE, FOCUS_RING } from '@/constants/focus-ring'
 import { MOTION } from '@/constants/motion'
 
-const INPUT = `w-full rounded border border-line-strong bg-base px-3 py-2 text-sm text-ink placeholder:text-subtle ${FOCUS_RING.INPUT}`
+const INPUT = `w-full rounded border border-line-strong bg-sunken px-3 py-2 text-sm text-ink placeholder:text-subtle ${FOCUS_RING.INPUT}`
 const SUBMIT = `w-full rounded bg-accent px-4 py-2.5 text-sm font-semibold text-on-accent hover:bg-accent-strong ${MOTION.PRESS} ${FOCUS_RING.SURFACE} ${DISABLED_STATE}`
 
 export const ResetPasswordPage = () => {
@@ -10,7 +10,7 @@ export const ResetPasswordPage = () => {
     useResetPasswordPage()
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-base px-6 text-ink">
+    <div className="flex min-h-screen w-full items-center justify-center bg-sunken px-6 text-ink">
       <div className="w-full max-w-sm rounded-sm border border-line bg-surface p-8">
         <p className="font-mono text-2xs font-bold tracking-widest text-accent">PIXELFORGE</p>
         <h1 className="mt-4 text-lg font-semibold text-ink">Set a new password</h1>

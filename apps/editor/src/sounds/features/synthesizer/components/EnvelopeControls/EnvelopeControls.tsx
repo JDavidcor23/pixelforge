@@ -28,7 +28,7 @@ export function EnvelopeControls() {
       </h3>
 
       {/* ADSR Visual Curve */}
-      <div className="rounded bg-base p-2">
+      <div className="rounded bg-sunken p-2">
         <svg
           viewBox={viewBox}
           className="h-16 w-full"
