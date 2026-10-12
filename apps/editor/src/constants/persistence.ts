@@ -15,3 +15,11 @@ export const DOCUMENT_STORE_NAME = 'drafts' as const
 
 /** Legacy pre-phase-1 zustand `persist` key (`RgbaColor[][]`, no `version`). */
 export const LEGACY_SPRITE_EDITOR_STORAGE_KEY = 'sprite-editor-core'
+
+/**
+ * zustand `persist` keys — one per store. Two stores on the same key overwrite
+ * each other on every write (the document store used to share
+ * `sprite-editor-prefs` and wiped the saved API key on each edit).
+ */
+export const PREFS_STORAGE_KEY = 'sprite-editor-prefs'
+export const SPRITE_EDITOR_STORAGE_KEY = 'sprite-editor-colors'

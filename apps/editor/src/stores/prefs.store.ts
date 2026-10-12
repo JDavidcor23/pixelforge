@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 import type { EditorPrefsStore } from '@/types'
+import { PREFS_STORAGE_KEY } from '@/constants/persistence'
 
 import { createPaletteSlice } from './slices/palette.slice'
 import { createViewPrefsSlice } from './slices/view-prefs.slice'
@@ -18,7 +19,7 @@ export const useEditorPrefsStore = create<EditorPrefsStore>()(
       ...createIntegrationsSlice(set, get, api),
     }),
     {
-      name: 'sprite-editor-prefs',
+      name: PREFS_STORAGE_KEY,
       partialize: (state) => ({
         palette: state.palette,
         showGrid: state.showGrid,
