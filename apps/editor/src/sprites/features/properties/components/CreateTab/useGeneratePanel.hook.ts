@@ -22,17 +22,11 @@ import {
   GAME_TEMPLATE_OFF_SUMMARY,
   GAME_TEMPLATE_TOOLTIP,
 } from '@/constants'
+import { useAIJobsStore } from '@/stores/ai-jobs.store'
 import type { AssetType, GameTemplateId } from '@/types'
 
 export interface UseGeneratePanelParams {
   readonly assetType: AssetType
-}
-
-export interface GenerateResult {
-  readonly base64: string
-  readonly width: number
-  readonly prompt: string
-  readonly autoApplied: boolean
 }
 
 /**
@@ -49,13 +43,18 @@ export const useGeneratePanel = ({ assetType }: UseGeneratePanelParams) => {
   const addGeneration = useAssetsStore((s) => s.addGeneration)
   const { applyGeneration } = useApplyAsset()
 
-  const [prompt, setPrompt] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
+  // Request state lives in `useAIJobsStore`, not `useState`: the request keeps
+  // running if this tab unmounts, and its result must be here when it remounts.
+  const prompt = useAIJobsStore((s) => s.generatePrompt)
+  const setPrompt = useAIJobsStore((s) => s.setGeneratePrompt)
+  const isLoading = useAIJobsStore((s) => s.generate.isRunning)
+  const error = useAIJobsStore((s) => s.generate.error)
+  const result = useAIJobsStore((s) => s.generate.result)
+  const setGenerateJob = useAIJobsStore((s) => s.setGenerateJob)
+  const lastCostUsd = useAIJobsStore((s) => s.lastCostUsd)
+  const remainingBalanceUsd = useAIJobsStore((s) => s.remainingBalanceUsd)
+  const setBalance = useAIJobsStore((s) => s.setBalance)
   const [genSize, setGenSize] = useState<number>(AI_SPRITE_DEFAULT_SIZE)
-  const [lastCostUsd, setLastCostUsd] = useState<number | null>(null)
-  const [remainingBalanceUsd, setRemainingBalanceUsd] = useState<number | null>(null)
-  const [result, setResult] = useState<GenerateResult | null>(null)
   // Clicking the active template chip turns it off (null = prompt sent as-is).
   const [templateId, setTemplateId] = useState<GameTemplateId | null>(DEFAULT_GAME_TEMPLATE_ID)
   const template = templateId ? GAME_TEMPLATES[templateId] : null
@@ -77,15 +76,13 @@ export const useGeneratePanel = ({ assetType }: UseGeneratePanelParams) => {
     promptRef.current?.focus()
   }, [focusPromptRequest])
 
-  const handleUseExample = useCallback((prompt: string) => setPrompt(prompt), [])
+  const handleUseExample = useCallback((prompt: string) => setPrompt(prompt), [setPrompt])
 
   const handleGenerate = useCallback(async () => {
-    if (!prompt.trim()) return
+    if (!prompt.trim() || useAIJobsStore.getState().generate.isRunning) return
 
     try {
-      setIsLoading(true)
-      setError(null)
-      setResult(null)
+      setGenerateJob({ isRunning: true, error: null, result: null })
 
       const {
         base64,
@@ -103,26 +100,25 @@ export const useGeneratePanel = ({ assetType }: UseGeneratePanelParams) => {
       })
 
       addGeneration({ prompt, base64, width, height, assetType })
-      setLastCostUsd(costUsd)
-      setRemainingBalanceUsd(balance)
+      setBalance(costUsd, balance)
 
       const canApplyAutomatically = isCanvasBlank(useSpriteEditorStore.getState().timeline.frames)
       if (canApplyAutomatically) await applyGeneration({ base64, width })
-      setResult({ base64, width, prompt, autoApplied: canApplyAutomatically })
+      setGenerateJob({ result: { base64, width, prompt, autoApplied: canApplyAutomatically } })
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Generation failed')
+      setGenerateJob({ error: e instanceof Error ? e.message : 'Generation failed' })
     } finally {
-      setIsLoading(false)
+      setGenerateJob({ isRunning: false })
     }
-  }, [prompt, template, genSize, assetType, apiKey, addGeneration, applyGeneration])
+  }, [prompt, template, genSize, assetType, apiKey, addGeneration, applyGeneration, setGenerateJob, setBalance])
 
   const handleUseResult = useCallback(async () => {
     if (!result) return
     await applyGeneration({ base64: result.base64, width: result.width })
-    setResult({ ...result, autoApplied: true })
-  }, [result, applyGeneration])
+    setGenerateJob({ result: { ...result, autoApplied: true } })
+  }, [result, applyGeneration, setGenerateJob])
 
-  const handleDismissResult = useCallback(() => setResult(null), [])
+  const handleDismissResult = useCallback(() => setGenerateJob({ result: null }), [setGenerateJob])
 
   return {
     prompt,

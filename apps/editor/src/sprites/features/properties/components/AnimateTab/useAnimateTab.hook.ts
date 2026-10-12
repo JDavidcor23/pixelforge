@@ -23,14 +23,15 @@ import {
   RETRO_DIFFUSION_OBJECT_ANIMATION_PROMPT,
   SPRITE_ANIMATION,
 } from '@/constants'
-import type { AIAnimation, AnimateMotionOption, AnimationDirection, AssetType, RetroDiffusionAnimationAction } from '@/types'
-
-export interface AnimateResult {
-  readonly frames: readonly string[]
-  readonly frameDurationMs: number
-  readonly label: string
-  readonly autoApplied: boolean
-}
+import { useAIJobsStore } from '@/stores/ai-jobs.store'
+import type {
+  AIAnimation,
+  AnimateMotionOption,
+  AnimateResult,
+  AnimationDirection,
+  AssetType,
+  RetroDiffusionAnimationAction,
+} from '@/types'
 
 export interface UseAnimateTabReturn {
   assetType: AssetType
@@ -84,10 +85,14 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
   )
   const [nFrames, setNFrames] = useState<number>(SPRITE_ANIMATION.DEFAULT_N_FRAMES)
   const [customText, setCustomText] = useState('')
-  const [isGenerating, setIsGenerating] = useState(false)
-  const [animError, setAnimError] = useState<string | null>(null)
   const [previewRef, setPreviewRef] = useState<string | null>(null)
-  const [result, setResult] = useState<AnimateResult | null>(null)
+  // Request state lives in `useAIJobsStore` so it survives this tab unmounting.
+  const isGenerating = useAIJobsStore((s) => s.animate.isRunning)
+  const animError = useAIJobsStore((s) => s.animate.error)
+  const result = useAIJobsStore((s) => s.animate.result)
+  const setAnimateJob = useAIJobsStore((s) => s.setAnimateJob)
+  const setAnimError = useCallback((error: string) => setAnimateJob({ error }), [setAnimateJob])
+  const setResult = useCallback((next: AnimateResult | null) => setAnimateJob({ result: next }), [setAnimateJob])
 
   const motion = motions.find((option) => option.id === motionId) ?? motions[0]
   const isCharacter = assetType === 'character'
@@ -116,11 +121,10 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
 
   const handleGenerateAnimation = useCallback(async () => {
     if (motion.isCustomInput && !customText.trim()) return
+    if (useAIJobsStore.getState().animate.isRunning) return
 
     try {
-      setIsGenerating(true)
-      setAnimError(null)
-      setResult(null)
+      setAnimateJob({ isRunning: true, error: null, result: null })
 
       const { layersToBase64, pixelBufferToDataUri } = await import('@/lib/export-utils')
       // Prefer the native-resolution AI generation over a re-render of the
@@ -192,9 +196,12 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
         setAnimError(message || 'Animation generation failed.')
       }
     } finally {
-      setIsGenerating(false)
+      setAnimateJob({ isRunning: false })
     }
   }, [
+    setAnimateJob,
+    setAnimError,
+    setResult,
     motion,
     customText,
     isCharacter,
@@ -213,9 +220,9 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
     if (!result) return
     await applyAnimation({ frames: result.frames, frameDurationMs: result.frameDurationMs })
     setResult({ ...result, autoApplied: true })
-  }, [result, applyAnimation])
+  }, [result, applyAnimation, setResult])
 
-  const handleDismissResult = useCallback(() => setResult(null), [])
+  const handleDismissResult = useCallback(() => setResult(null), [setResult])
 
   return {
     assetType,

@@ -187,3 +187,30 @@ export interface AssetLibraryRepository {
   removeAnimations(ids: readonly string[]): Promise<void>
   clear(): Promise<void>
 }
+
+/** Create > Generate result card. */
+export interface GenerateResult {
+  readonly base64: string
+  readonly width: number
+  readonly prompt: string
+  readonly autoApplied: boolean
+}
+
+/** Animate tab result card. */
+export interface AnimateResult {
+  readonly frames: readonly string[]
+  readonly frameDurationMs: number
+  readonly label: string
+  readonly autoApplied: boolean
+}
+
+/**
+ * An in-flight or finished AI request's UI state. Lives in a store, not in
+ * the tab's `useState`, so switching tabs or routes mid-request doesn't lose
+ * the spinner, the result card or the error.
+ */
+export interface AIJob<TResult> {
+  readonly isRunning: boolean
+  readonly error: string | null
+  readonly result: TResult | null
+}
