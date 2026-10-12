@@ -411,13 +411,23 @@ mod tests {
                 ResizeStrip {
                     frame_id: 1,
                     layer_id: 1,
-                    rect: Rect { x: 2, y: 0, w: 2, h: 4 },
+                    rect: Rect {
+                        x: 2,
+                        y: 0,
+                        w: 2,
+                        h: 4,
+                    },
                     bytes: vec![0u8; 2 * 4 * 4],
                 },
                 ResizeStrip {
                     frame_id: 1,
                     layer_id: 1,
-                    rect: Rect { x: 0, y: 2, w: 2, h: 2 },
+                    rect: Rect {
+                        x: 0,
+                        y: 2,
+                        w: 2,
+                        h: 2,
+                    },
                     bytes: vec![0u8; 2 * 2 * 4],
                 },
             ],

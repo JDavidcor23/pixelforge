@@ -286,7 +286,13 @@ pub fn write_rect(
 /// `resizeBuffer` exactly (ADR 0008's `doc.resize`). `None` if `data`'s
 /// length doesn't match `old_w*old_h*CHANNELS`, or either output dimension
 /// overflows the allocation size.
-pub fn resize_buffer(data: &[u8], old_w: u32, old_h: u32, new_w: u32, new_h: u32) -> Option<Vec<u8>> {
+pub fn resize_buffer(
+    data: &[u8],
+    old_w: u32,
+    old_h: u32,
+    new_w: u32,
+    new_h: u32,
+) -> Option<Vec<u8>> {
     if !valid_buffer(data, old_w, old_h) {
         return None;
     }
@@ -552,7 +558,10 @@ mod tests {
         put_pixel(&mut data, 2, 2, 0, 0, pack_rgba(1, 2, 3, 255));
         let resized = resize_buffer(&data, 2, 2, 4, 4).unwrap();
         assert_eq!(resized.len(), 4 * 4 * 4);
-        assert_eq!(get_pixel(&resized, 4, 4, 0, 0), Some(pack_rgba(1, 2, 3, 255)));
+        assert_eq!(
+            get_pixel(&resized, 4, 4, 0, 0),
+            Some(pack_rgba(1, 2, 3, 255))
+        );
         assert_eq!(get_pixel(&resized, 4, 4, 3, 3), Some(0)); // new area is transparent
     }
 
@@ -563,7 +572,10 @@ mod tests {
         put_pixel(&mut data, 4, 4, 3, 3, pack_rgba(9, 9, 9, 255)); // cropped away
         let resized = resize_buffer(&data, 4, 4, 2, 2).unwrap();
         assert_eq!(resized.len(), 2 * 2 * 4);
-        assert_eq!(get_pixel(&resized, 2, 2, 0, 0), Some(pack_rgba(1, 2, 3, 255)));
+        assert_eq!(
+            get_pixel(&resized, 2, 2, 0, 0),
+            Some(pack_rgba(1, 2, 3, 255))
+        );
     }
 
     #[test]

@@ -1183,9 +1183,13 @@ impl Document {
                 let cur_h = self.canvas_h;
                 for frame in &mut self.frames {
                     for layer in &mut frame.layers {
-                        if let Some(resized) =
-                            crate::pixels::resize_buffer(&layer.data, cur_w, cur_h, target_w, target_h)
-                        {
+                        if let Some(resized) = crate::pixels::resize_buffer(
+                            &layer.data,
+                            cur_w,
+                            cur_h,
+                            target_w,
+                            target_h,
+                        ) {
                             layer.data = resized;
                         }
                     }
@@ -1193,8 +1197,7 @@ impl Document {
                 if dir == Direction::Before {
                     // Undo: paste the cut strips back into the now-padded buffers.
                     for strip in strips {
-                        if let Some(frame) =
-                            self.frames.iter_mut().find(|f| f.id == strip.frame_id)
+                        if let Some(frame) = self.frames.iter_mut().find(|f| f.id == strip.frame_id)
                         {
                             if let Some(layer) =
                                 frame.layers.iter_mut().find(|l| l.id == strip.layer_id)
