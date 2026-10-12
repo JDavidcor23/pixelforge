@@ -15,11 +15,11 @@ export const ColorSwatch = ({ primaryColor, secondaryColor }: ColorSwatchProps) 
   return (
     <div className="relative ml-2 h-8 w-8">
       <div
-        className="absolute bottom-0 right-0 h-5 w-5 rounded border border-white/20"
+        className="absolute bottom-0 right-0 h-5 w-5 rounded border border-line-strong"
         style={{ backgroundColor: secondaryBackground }}
       />
       <div
-        className="absolute left-0 top-0 z-10 h-5 w-5 rounded border border-white/30"
+        className="absolute left-0 top-0 z-10 h-5 w-5 rounded border border-line-strong"
         style={{ backgroundColor: primaryBackground }}
       />
     </div>

@@ -1,4 +1,23 @@
-import type { RgbaColor } from '@/types'
+import { colord } from 'colord'
+
+import type { HsvColor, RgbaColor } from '@/types'
+
+/**
+ * Hex → HSV with a sticky-hue fallback. Converting an achromatic color
+ * (black, white, or any pure gray) back to HSV always yields hue 0 — the hex
+ * value has no hue information left. Passing the previously-known hue as
+ * `fallbackHue` keeps the hue slider from jumping to red whenever the user
+ * drags saturation/value to an achromatic corner. See `useColorPicker.hook.ts`.
+ */
+export function hexToHsv(hex: string, fallbackHue: number): HsvColor {
+  const { h, s, v, a } = colord(hex).toHsv()
+  const isAchromatic = s === 0 || v === 0
+  return { h: isAchromatic ? fallbackHue : h, s, v, a: Math.round(a * 255) }
+}
+
+export function hsvToHex(hsv: HsvColor): string {
+  return colord({ h: hsv.h, s: hsv.s, v: hsv.v, a: hsv.a / 255 }).toHex()
+}
 
 export function rgbaToHex(color: RgbaColor): string {
   const r = color.r.toString(16).padStart(2, '0')

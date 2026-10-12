@@ -1,4 +1,4 @@
-import type { DocStatus, RgbaColor } from '@/types'
+import type { DocStatus, RgbaColor, SaveStatus } from '@/types'
 import type { DocumentPayload, DocumentRepository } from '@/types/document'
 import { migrateLegacyDraft } from './legacy-draft-migration.service'
 import { LOCAL_DRAFT_DOCUMENT_ID } from '@/constants/persistence'
@@ -21,7 +21,17 @@ import { waitForWasmModule } from '@/lib/core/wasm-pixel-core-resolver'
  */
 export interface DocumentPersistenceStoreApi {
   getState: () => { docStatus: DocStatus; docRevision: number }
-  setState: (patch: Partial<{ docStatus: DocStatus; primaryColor: RgbaColor; secondaryColor: RgbaColor }>) => void
+  setState: (
+    patch: Partial<{
+      docStatus: DocStatus
+      primaryColor: RgbaColor
+      secondaryColor: RgbaColor
+      /** Batch 4 — visible save status (TopBar). See `scheduleSave`/`save` below for the transitions. */
+      saveStatus: SaveStatus
+      lastSavedAt: number
+      saveError: string | null
+    }>
+  ) => void
   subscribe: (listener: (state: { docRevision: number }) => void) => () => void
   exportDocument: () => DocumentPayload
   importDocument: (payload: DocumentPayload) => void
@@ -116,9 +126,13 @@ export async function startDocumentPersistence(
     const payload = store.exportDocument()
     repository
       .save({ id: LOCAL_DRAFT_DOCUMENT_ID, revision, updatedAt: Date.now(), payload })
+      .then(() => {
+        store.setState({ saveStatus: 'saved', lastSavedAt: Date.now(), saveError: null })
+      })
       .catch((error: unknown) => {
         console.error('Failed to save document draft', error)
         onPersistentChange(false)
+        store.setState({ saveStatus: 'error', saveError: error instanceof Error ? error.message : String(error) })
       })
   }
 
@@ -133,6 +147,10 @@ export async function startDocumentPersistence(
 
   const scheduleSave = () => {
     dirty = true
+    // Batch 4: flip to "Saving…" the moment an edit is pending, not just
+    // while `repository.save()`'s own promise is in flight — the debounce
+    // window itself is part of what the owner asked to make visible.
+    store.setState({ saveStatus: 'saving' })
     if (timer !== null) clearScheduledTimeout(timer)
     timer = scheduleTimeout(() => {
       timer = null

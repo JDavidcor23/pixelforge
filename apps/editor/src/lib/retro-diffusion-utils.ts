@@ -1,18 +1,12 @@
 import type {
   PixelBuffer,
-  AnimationAction,
-  AnimationDirection,
+  RetroDiffusionAnimationAction,
   RetroDiffusionCostEstimate,
   RetroDiffusionGenerationResult,
   RetroDiffusionRequestBody,
   RetroDiffusionStyle,
 } from '@/types'
-import {
-  RETRO_DIFFUSION_ROUTE,
-  RETRO_DIFFUSION_ANIMATION_ACTIONS,
-  RETRO_DIFFUSION_ANIMATION_PROMPT,
-  RETRO_DIFFUSION_ANIMATION_STYLE_PREFIX,
-} from '@/constants'
+import { RETRO_DIFFUSION_ROUTE, RETRO_DIFFUSION_ANIMATION_STYLE_PREFIX } from '@/constants'
 import { base64ToNativePixels } from './image-decode'
 import { decodeToPixels, cropRegion } from './sprite-pipeline'
 
@@ -67,18 +61,33 @@ export async function decodeGeneratedSprite(base64: string, size: number): Promi
   return decodeToPixels(base64, size, true)
 }
 
-/** Generates an animation sheet. `framesDuration` is billed flat, so ask for plenty. */
-export async function generateAnimationWithRetroDiffusion(
-  action: AnimationAction,
-  direction: AnimationDirection,
-  frames: number,
-  size: number,
-  referenceBase64: string,
-  apiKey?: string,
-): Promise<RetroDiffusionGenerationResult> {
+export interface GenerateAnimationParams {
+  /** Fully-built prompt text (see RETRO_DIFFUSION_CHARACTER_ANIMATION_PROMPT / _OBJECT_ANIMATION_PROMPT). */
+  readonly prompt: string
+  readonly rdAction: RetroDiffusionAnimationAction
+  readonly frames: number
+  readonly size: number
+  readonly referenceBase64: string
+  readonly apiKey?: string
+}
+
+/**
+ * Generates an animation sheet. `framesDuration` is billed flat, so ask for
+ * plenty. Prompt-building lives in the caller (constants + the Animate tab's
+ * hook) — this function only talks to the API, it does not know about asset
+ * types, motions or directions.
+ */
+export async function generateAnimationWithRetroDiffusion({
+  prompt,
+  rdAction,
+  frames,
+  size,
+  referenceBase64,
+  apiKey,
+}: GenerateAnimationParams): Promise<RetroDiffusionGenerationResult> {
   return postToRetroDiffusion<RetroDiffusionGenerationResult>({
-    prompt: RETRO_DIFFUSION_ANIMATION_PROMPT(action, direction),
-    style: `${RETRO_DIFFUSION_ANIMATION_STYLE_PREFIX}${RETRO_DIFFUSION_ANIMATION_ACTIONS[action]}` as RetroDiffusionStyle,
+    prompt,
+    style: `${RETRO_DIFFUSION_ANIMATION_STYLE_PREFIX}${rdAction}` as RetroDiffusionStyle,
     width: size,
     height: size,
     framesDuration: frames,

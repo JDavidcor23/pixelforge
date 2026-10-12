@@ -18,8 +18,8 @@ export const useExport = () => {
     // Note: The store state 'layers' usually represents the current frame's layers.
     // However, for a full sprite sheet, we need all frames.
     const allFrames = timeline.frames
-    
-    // If the duration/FPS is available, we could even export a GIF, 
+
+    // If the duration/FPS is available, we could even export a GIF,
     // but for now only PNG as requested.
     exportSpriteSheetAsPng(canvasWidth, canvasHeight, allFrames, 'spritesheet.png')
   }, [canvasWidth, canvasHeight, timeline])

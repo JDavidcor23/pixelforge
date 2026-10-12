@@ -5,22 +5,22 @@ export const CanvasOverlay = () => {
     useCanvasOverlay()
 
   return (
-    <div className="absolute bottom-2 left-2 z-50 flex items-center gap-2 rounded bg-surface/80 px-2 py-1 font-mono text-[10px] text-muted backdrop-blur">
+    <div className="absolute bottom-2 left-2 z-50 flex items-center gap-2.5 rounded border border-line bg-surface px-2.5 py-1.5 font-mono text-3xs text-muted">
       <button
         type="button"
         onClick={handleCenterView}
         aria-label={centerViewLabel}
         title={centerViewLabel}
-        className={`rounded border px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.15em] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent ${
-          isViewCentered
-            ? 'border-accent/40 text-accent'
-            : 'border-line-strong text-muted hover:border-accent/40 hover:text-accent'
+        className={`font-mono text-3xs font-semibold uppercase tracking-wider outline-none focus-visible:ring-1 focus-visible:ring-accent ${
+          isViewCentered ? 'text-accent' : 'text-accent/70 hover:text-accent'
         }`}
       >
         Center
       </button>
 
+      <span className="h-3 w-px bg-line-strong" aria-hidden />
       <span>{zoomPercentage}</span>
+      <span className="h-3 w-px bg-line-strong" aria-hidden />
       <span>{positionText}</span>
     </div>
   )

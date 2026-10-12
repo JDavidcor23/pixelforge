@@ -125,6 +125,25 @@ export const useSelection = () => useSpriteEditorStore((s) => s.selection)
 export const useDocStatus = () => useSpriteEditorStore((s) => s.docStatus)
 
 /**
+ * Returns the visible autosave status (Sprite Studio v2 batch 4) — see
+ * `SaveStatus` and `document-persistence.controller.ts`.
+ */
+export const useSaveStatus = () => useSpriteEditorStore((s) => s.saveStatus)
+
+/** Returns the `Date.now()` timestamp of the last successful autosave, or `null`. */
+export const useLastSavedAt = () => useSpriteEditorStore((s) => s.lastSavedAt)
+
+/** Returns the human-readable reason for the last failed save, or `null`. */
+export const useSaveError = () => useSpriteEditorStore((s) => s.saveError)
+
+/**
+ * Returns `false` once IndexedDB failed to open and drafts are no longer
+ * being saved — mirrors `useDocumentPersistence`'s own return value (see
+ * `document-status.slice.ts`'s `isPersistent`).
+ */
+export const useIsPersistent = () => useSpriteEditorStore((s) => s.isPersistent)
+
+/**
  * Returns the dimensions (width, height) of the active canvas.
  */
 export const useCanvasDimensions = () =>
@@ -411,6 +430,89 @@ export const useToggleZenMode = () => useEditorUIStore((s) => s.toggleZenMode)
  * Action to change the position of the main toolbar.
  */
 export const useSetToolbarPosition = () => useEditorUIStore((s) => s.setToolbarPosition)
+
+/**
+ * Returns the active tab of the right-hand Inspector panel (Sprite Studio v2).
+ */
+export const useInspectorTab = () => useEditorUIStore((s) => s.ui.inspectorTab)
+
+/**
+ * Action to switch the Inspector panel's active tab.
+ */
+export const useSetInspectorTab = () => useEditorUIStore((s) => s.setInspectorTab)
+
+/**
+ * Returns the active tab of the bottom panel (Timeline vs. Assets).
+ */
+export const useBottomPanelTab = () => useEditorUIStore((s) => s.ui.bottomPanelTab)
+
+/**
+ * Action to switch the bottom panel's active tab.
+ */
+export const useSetBottomPanelTab = () => useEditorUIStore((s) => s.setBottomPanelTab)
+
+/**
+ * Returns the Create tab's active method (draw/generate/import).
+ */
+export const useCreateMethod = () => useEditorUIStore((s) => s.ui.createMethod)
+
+/**
+ * Action to switch the Create tab's active method.
+ */
+export const useSetCreateMethod = () => useEditorUIStore((s) => s.setCreateMethod)
+
+/**
+ * Returns the one-shot nonce the Create > Generate panel watches to focus its
+ * prompt textarea (bumped by `useRequestFocusPrompt`).
+ */
+export const useFocusPromptRequest = () => useEditorUIStore((s) => s.ui.focusPromptRequest)
+
+/**
+ * Action to ask the Create > Generate panel to focus its prompt textarea.
+ */
+export const useRequestFocusPrompt = () => useEditorUIStore((s) => s.requestFocusPrompt)
+
+/**
+ * Returns the Create tab's "what are you making?" asset type — lifted into
+ * the UI store (batch 2) so the Animate tab reads/edits the same value.
+ */
+export const useCreateAssetType = () => useEditorUIStore((s) => s.ui.createAssetType)
+
+/**
+ * Action to change the shared Create/Animate asset type.
+ */
+export const useSetCreateAssetType = () => useEditorUIStore((s) => s.setCreateAssetType)
+
+/**
+ * ── Resizable panels (batch 2) ───────────────────────────────────────────────
+ */
+
+/** Current width (px) of the left layers rail. */
+export const useLeftSidebarWidth = () => useEditorUIStore((s) => s.ui.leftSidebarWidth)
+
+/** Action to resize the left layers rail (clamped to RESIZABLE_PANELS.LEFT). */
+export const useSetLeftSidebarWidth = () => useEditorUIStore((s) => s.setLeftSidebarWidth)
+
+/** Current width (px) of the right inspector. */
+export const useRightSidebarWidth = () => useEditorUIStore((s) => s.ui.rightSidebarWidth)
+
+/** Action to resize the right inspector (clamped to RESIZABLE_PANELS.RIGHT). */
+export const useSetRightSidebarWidth = () => useEditorUIStore((s) => s.setRightSidebarWidth)
+
+/** Current height (px) of the bottom panel (timeline/assets). */
+export const useBottomPanelHeight = () => useEditorUIStore((s) => s.ui.bottomPanelHeight)
+
+/** Action to resize the bottom panel (clamped to RESIZABLE_PANELS.BOTTOM). */
+export const useSetBottomPanelHeight = () => useEditorUIStore((s) => s.setBottomPanelHeight)
+
+/** Action to restore all three resizable panels to their defaults and expand any collapsed one. */
+export const useResetPanelSizes = () => useEditorUIStore((s) => s.resetPanelSizes)
+
+/**
+ * Action to open the shell's Settings panel (e.g. from an inline
+ * "configure your API key" prompt elsewhere in the editor).
+ */
+export const useOpenSettings = () => useEditorUIStore((s) => s.openSettings)
 
 /**
  * ── Prefs State & Actions ────────────────────────────────────────────────────

@@ -1,5 +1,7 @@
 import { Edit2, ArrowUp, ArrowDown, GripVertical, MoreVertical, Trash2 } from 'lucide-react'
 import { useLayerItem } from './useLayerItem.hook'
+import { FOCUS_RING } from '@/constants/focus-ring'
+import { MOTION } from '@/constants/motion'
 
 interface LayerItemProps {
   readonly id: string
@@ -81,17 +83,19 @@ export const LayerItem = ({
           onSelect(id)
         }
       }}
-      className={`relative flex w-full cursor-pointer items-center justify-between gap-2 px-3 py-2 text-left text-sm transition-all outline-none ${
-        isActive
-          ? 'border-l-2 border-[#00f5ff] bg-white/10 text-foreground'
-          : 'border-l-2 border-transparent text-[#8888aa] hover:bg-white/5'
+      className={`relative flex h-8 w-full shrink-0 cursor-pointer items-center justify-between gap-2 rounded px-2 text-left text-xs outline-none ${MOTION.COLORS} ${
+        isActive ? 'bg-accent/10 text-ink' : 'text-muted hover:bg-hover'
       } ${isDragging ? 'opacity-40 grayscale-[0.5]' : 'opacity-100'}`}
     >
       <div className="flex min-w-0 flex-1 items-center gap-2">
-        <div className="cursor-grab text-[#444455] active:cursor-grabbing hover:text-[#8888aa]">
-          <GripVertical size={14} />
+        <div
+          className={`cursor-grab active:cursor-grabbing ${
+            isActive ? 'text-accent' : 'text-subtle hover:text-muted'
+          }`}
+        >
+          <GripVertical size={14} aria-hidden />
         </div>
-        
+
         {isEditing ? (
           <input
             ref={inputRef}
@@ -107,10 +111,12 @@ export const LayerItem = ({
               }
             }}
             onClick={(e) => e.stopPropagation()}
-            className="w-full bg-white/10 px-1 py-0.5 text-sm text-foreground outline-none ring-1 ring-[#00f5ff]/50 focus:ring-[#00f5ff]"
+            className={`w-full rounded bg-hover px-1 py-0.5 text-xs text-ink outline-none ring-1 ring-accent/50 focus:ring-accent ${FOCUS_RING.INPUT}`}
           />
         ) : (
-          <span className="truncate">{name}</span>
+          <span className="truncate" title={name}>
+            {name}
+          </span>
         )}
       </div>
 
@@ -121,10 +127,10 @@ export const LayerItem = ({
             e.stopPropagation()
             onToggleVisibility(id)
           }}
-          className="rounded p-1 text-[#8888aa] transition-colors hover:text-foreground hover:bg-white/10"
+          className={`rounded p-1 text-muted hover:bg-hover hover:text-ink ${MOTION.COLORS}`}
           title={visible ? 'Hide layer' : 'Show layer'}
         >
-          <VisibilityIcon size={14} />
+          <VisibilityIcon size={14} aria-hidden />
         </button>
         <button
           type="button"
@@ -132,77 +138,86 @@ export const LayerItem = ({
             e.stopPropagation()
             onToggleLock(id)
           }}
-          className="rounded p-1 text-[#8888aa] transition-colors hover:text-foreground hover:bg-white/10"
+          className={`rounded p-1 text-muted hover:bg-hover hover:text-ink ${MOTION.COLORS}`}
           title={locked ? 'Unlock layer' : 'Lock layer'}
         >
-          <LockIcon size={14} />
+          <LockIcon size={14} aria-hidden />
         </button>
 
         <div className="relative" ref={menuRef}>
           <button
             type="button"
             onClick={toggleMenu}
-            className={`rounded p-1 transition-colors hover:text-foreground hover:bg-white/10 ${
-              isMenuOpen ? 'text-foreground bg-white/10' : 'text-[#8888aa]'
+            aria-haspopup="menu"
+            aria-expanded={isMenuOpen}
+            className={`rounded p-1 hover:bg-hover hover:text-ink ${MOTION.COLORS} ${
+              isMenuOpen ? 'bg-hover text-ink' : 'text-muted'
             }`}
           >
-            <MoreVertical size={14} />
+            <MoreVertical size={14} aria-hidden />
           </button>
 
           {isMenuOpen && (
-            <div className="absolute right-0 top-full z-50 mt-1 w-40 rounded-md border border-white/10 bg-[#1a1d23] py-1 shadow-xl ring-1 ring-black ring-opacity-10 backdrop-blur-md">
+            <div
+              role="menu"
+              className={`absolute right-0 top-full z-50 mt-1 w-40 rounded border border-line-strong bg-raised py-1 shadow-popover ${MOTION.POPOVER_ENTER}`}
+            >
               <button
                 type="button"
+                role="menuitem"
                 onClick={startEditing}
-                className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-[#ededed] hover:bg-white/5 transition-colors"
+                className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-ink hover:bg-hover ${MOTION.COLORS}`}
               >
-                <Edit2 size={12} />
+                <Edit2 size={12} aria-hidden />
                 Rename
               </button>
-              
-              <div className="my-1 border-t border-white/5" />
-              
+
+              <div className="my-1 border-t border-line" />
+
               <button
                 type="button"
+                role="menuitem"
                 disabled={isFirst}
                 onClick={(e) => {
                   e.stopPropagation()
                   if (!isFirst) onReorder(index, index - 1)
                   setIsMenuOpen(false)
                 }}
-                className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-[#ededed] hover:bg-white/5 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+                className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-ink hover:bg-hover disabled:hover:bg-transparent ${MOTION.COLORS} disabled:pointer-events-none disabled:opacity-30`}
               >
-                <ArrowUp size={12} />
+                <ArrowUp size={12} aria-hidden />
                 Move Up
               </button>
-              
+
               <button
                 type="button"
+                role="menuitem"
                 disabled={isLast}
                 onClick={(e) => {
                   e.stopPropagation()
                   if (!isLast) onReorder(index, index + 1)
                   setIsMenuOpen(false)
                 }}
-                className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-[#ededed] hover:bg-white/5 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+                className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-ink hover:bg-hover disabled:hover:bg-transparent ${MOTION.COLORS} disabled:pointer-events-none disabled:opacity-30`}
               >
-                <ArrowDown size={12} />
+                <ArrowDown size={12} aria-hidden />
                 Move Down
               </button>
 
-              <div className="my-1 border-t border-white/5" />
-              
+              <div className="my-1 border-t border-line" />
+
               <button
                 type="button"
+                role="menuitem"
                 disabled={!canDelete}
                 onClick={(e) => {
                   e.stopPropagation()
                   if (canDelete) onRemove(id)
                   setIsMenuOpen(false)
                 }}
-                className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-[#ff4d4d] hover:bg-red-500/10 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+                className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-danger hover:bg-danger/10 disabled:hover:bg-transparent ${MOTION.COLORS} disabled:pointer-events-none disabled:opacity-30`}
               >
-                <Trash2 size={12} />
+                <Trash2 size={12} aria-hidden />
                 Delete Layer
               </button>
             </div>
