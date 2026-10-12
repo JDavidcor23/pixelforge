@@ -6,6 +6,7 @@ import { useAnimationJobLedgerStore } from '@/stores/animation-job-ledger.store'
 import { createLedgerRecoverDeps } from '@/hooks/useAnimationJobRecovery.hook'
 import { useFinishAnimation } from './useFinishAnimation.hook'
 import {
+  canRemoveLedgerEntry,
   ledgerEntryStateMessage,
   recoverAnimationJob,
   recoverNoticeFor,
@@ -21,6 +22,8 @@ export interface UseUnfinishedJobsReturn {
   /** True when there is anything to show: unfinished rows or a fresh notice. */
   readonly isVisible: boolean
   readonly handleRecover: (jobId: string) => void
+  /** Forgets a job PixelLab no longer recognizes or cannot be reached. */
+  readonly handleRemove: (jobId: string) => void
 }
 
 /**
@@ -32,6 +35,7 @@ export interface UseUnfinishedJobsReturn {
 export const useUnfinishedJobs = (): UseUnfinishedJobsReturn => {
   const entries = useAnimationJobLedgerStore((s) => s.entries)
   const recoveringIds = useAnimationJobLedgerStore((s) => s.recoveringIds)
+  const removeLedgerEntry = useAnimationJobLedgerStore((s) => s.remove)
   const activeJobId = useAIJobsStore((s) => s.animatePending?.jobId ?? null)
   const pixelLabApiKey = usePixelLabApiKey()
   const presentAnimation = useFinishAnimation()
@@ -51,6 +55,7 @@ export const useUnfinishedJobs = (): UseUnfinishedJobsReturn => {
         isDiscarded: entry.status === 'discarded',
         stateMessage: ledgerEntryStateMessage(entry),
         isRecovering: recoveringIds.includes(entry.jobId),
+        canRemove: canRemoveLedgerEntry(entry),
       })),
     [entries, activeJobId, recoveringIds],
   )
@@ -66,5 +71,13 @@ export const useUnfinishedJobs = (): UseUnfinishedJobsReturn => {
     [provider, presentAnimation],
   )
 
-  return { items, notice, isVisible: items.length > 0 || notice !== null, handleRecover }
+  const handleRemove = useCallback(
+    (jobId: string) => {
+      setNotice(null)
+      removeLedgerEntry(jobId)
+    },
+    [removeLedgerEntry],
+  )
+
+  return { items, notice, isVisible: items.length > 0 || notice !== null, handleRecover, handleRemove }
 }

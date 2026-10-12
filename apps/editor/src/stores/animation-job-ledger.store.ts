@@ -2,7 +2,13 @@ import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 
 import { ANIMATION_JOB_LEDGER_STORAGE_KEY } from '@/constants/persistence'
-import { appendLedgerEntry, updateLedgerEntry } from '@/lib/animation-job-ledger'
+import { SERVER_SYNCED_JOB_IDS_LIMIT } from '@/constants/ai-jobs'
+import {
+  appendLedgerEntry,
+  rememberSyncedJobIds,
+  removeLedgerEntry,
+  updateLedgerEntry,
+} from '@/lib/animation-job-ledger'
 import type { LedgerEntryPatch, NewLedgerEntry } from '@/lib/animation-job-ledger'
 import type { AnimationJobLedgerEntry } from '@/types'
 
@@ -15,12 +21,20 @@ import type { AnimationJobLedgerEntry } from '@/types'
  * `persist` writes synchronously on every `set`, so `record` is durable before
  * the first poll starts. `recoveringIds` is runtime-only (not persisted): it
  * stops two Recover checks of the same job from running at once.
+ *
+ * `syncedServerJobIds` (persisted) are server-collected jobs (`public.ai_jobs`)
+ * already copied into the local Assets library — or found already there — so
+ * a sync never re-adds an animation the user deleted locally.
  */
 export interface AnimationJobLedgerState {
   readonly entries: readonly AnimationJobLedgerEntry[]
   readonly recoveringIds: readonly string[]
+  readonly syncedServerJobIds: readonly string[]
   record: (entry: NewLedgerEntry) => void
   update: (jobId: string, patch: LedgerEntryPatch) => void
+  /** Forgets an unfinished job PixelLab no longer recognizes or cannot reach ("Remove"). */
+  remove: (jobId: string) => void
+  markServerJobsSynced: (jobIds: readonly string[]) => void
   /** True when the caller now owns the check of `jobId`; false when one is already in flight. */
   claimRecovery: (jobId: string) => boolean
   releaseRecovery: (jobId: string) => void
@@ -31,8 +45,14 @@ export const useAnimationJobLedgerStore = create<AnimationJobLedgerState>()(
     (set, get) => ({
       entries: [],
       recoveringIds: [],
+      syncedServerJobIds: [],
       record: (entry) => set((state) => ({ entries: appendLedgerEntry(state.entries, entry) })),
       update: (jobId, patch) => set((state) => ({ entries: updateLedgerEntry(state.entries, jobId, patch) })),
+      remove: (jobId) => set((state) => ({ entries: removeLedgerEntry(state.entries, jobId) })),
+      markServerJobsSynced: (jobIds) =>
+        set((state) => ({
+          syncedServerJobIds: rememberSyncedJobIds(state.syncedServerJobIds, jobIds, SERVER_SYNCED_JOB_IDS_LIMIT),
+        })),
       claimRecovery: (jobId) => {
         if (get().recoveringIds.includes(jobId)) return false
         set((state) => ({ recoveringIds: [...state.recoveringIds, jobId] }))
@@ -44,7 +64,7 @@ export const useAnimationJobLedgerStore = create<AnimationJobLedgerState>()(
     {
       name: ANIMATION_JOB_LEDGER_STORAGE_KEY,
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ entries: state.entries }),
+      partialize: (state) => ({ entries: state.entries, syncedServerJobIds: state.syncedServerJobIds }),
     },
   ),
 )

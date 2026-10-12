@@ -5,6 +5,7 @@ export * from './animation.types'
 export * from './auth.types'
 export * from './mascot.types'
 export * from './account-deletion.types'
+export * from './ai-jobs.types'
 
 import type { Command, DispatchResult } from '@/lib/core/commands'
 import type { AssetType, CreateMethod, QualityTier } from './ai-generation'

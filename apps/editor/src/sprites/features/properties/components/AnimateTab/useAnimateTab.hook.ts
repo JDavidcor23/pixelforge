@@ -15,12 +15,14 @@ import { useEditorUIStore } from '@/stores/ui.store'
 import { useAssetsStore } from '@/stores/assets.store'
 import { useAIJobsStore } from '@/stores/ai-jobs.store'
 import { useAnimationJobLedgerStore } from '@/stores/animation-job-ledger.store'
+import { useAuthStore } from '@/stores/auth.store'
 import { useFinishAnimation } from './useFinishAnimation.hook'
 import { ANIMATION_HARNESS, buildAnimationAction, findAnimationMotion } from '@/lib/animation-harness'
 import { findLedgerEntry, isLedgerEntrySaved } from '@/lib/animation-job-ledger'
 import { allowedFrameCounts, getAnimationFrameCountError, getAnimationSizeError } from '@/lib/animation-limits'
 import { formatAnimationProgressHint, pollAnimationJob } from '@/lib/animation-polling'
 import { AnimationProviderError, resolveAnimationProvider } from '@/services/animation-provider.service'
+import { authService } from '@/services/auth.service'
 import { MS_PER_SECOND, RECENT_ASSETS_LIMIT } from '@/constants'
 import {
   ANIMATION_ALREADY_RUNNING_ERROR,
@@ -151,6 +153,7 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
   const { applyAnimation } = useApplyAsset()
   const canvasSize = useCanvasDimensions()
   const pixelLabApiKey = usePixelLabApiKey()
+  const isSignedIn = useAuthStore((s) => s.status === 'signed-in')
   const presentAnimation = useFinishAnimation()
   const recordLedgerEntry = useAnimationJobLedgerStore((s) => s.record)
   const updateLedger = useAnimationJobLedgerStore((s) => s.update)
@@ -193,9 +196,14 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
   const discardAnimatePending = useAIJobsStore((s) => s.discardAnimatePending)
   const setResult = useCallback((next: AnimateResult | null) => setAnimateJob({ result: next }), [setAnimateJob])
 
+  // The session token lets the server own a server-billed job (collects it even if this tab closes).
   const provider = useMemo(
-    () => resolveAnimationProvider({ apiKey: pixelLabApiKey ?? undefined }),
-    [pixelLabApiKey],
+    () =>
+      resolveAnimationProvider({
+        apiKey: pixelLabApiKey ?? undefined,
+        getAccessToken: isSignedIn ? authService.getAccessToken : undefined,
+      }),
+    [pixelLabApiKey, isSignedIn],
   )
 
   const motion = findAnimationMotion(assetType, motionId)
@@ -365,6 +373,7 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
         frameCount: nFrames,
         enhancePrompt: motion.enhancePrompt,
         driftThreshold: motion.driftThreshold,
+        job: { label: motion.label, assetType },
       })
       const pending: PendingAnimationJob = { jobId, startedAt: Date.now(), label: motion.label, assetType }
       // Durable FIRST (localStorage, synchronous): the paid job id must outlive a tab close before any poll.

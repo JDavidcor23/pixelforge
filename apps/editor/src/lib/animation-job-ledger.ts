@@ -100,6 +100,27 @@ export const updateLedgerEntry = (
     }),
   )
 
+/**
+ * Drops one entry for good — only the Animate tab's "Remove" on a job PixelLab
+ * no longer recognizes or cannot be reached (owner-approved). Saved entries are
+ * kept: they are the record that a job's frames already reached Assets.
+ */
+export const removeLedgerEntry = (
+  entries: readonly AnimationJobLedgerEntry[],
+  jobId: string,
+): AnimationJobLedgerEntry[] => entries.filter((entry) => entry.jobId !== jobId || isLedgerEntrySaved(entry))
+
+/** "Remove" is offered only after a Recover check failed to reach the job (unknown id or PixelLab down). */
+export const canRemoveLedgerEntry = (entry: AnimationJobLedgerEntry): boolean =>
+  isLedgerEntryUnfinished(entry) && entry.lastCheckUnreachable
+
+/** Adds job ids to the "already synced from the server" list: newest first, no duplicates, capped. */
+export const rememberSyncedJobIds = (
+  synced: readonly string[],
+  jobIds: readonly string[],
+  limit: number,
+): string[] => [...new Set([...jobIds, ...synced])].slice(0, limit)
+
 /** Entries the Animate tab lists as unfinished, newest first, minus the job a polling loop already owns. */
 export const selectUnfinishedEntries = (
   entries: readonly AnimationJobLedgerEntry[],

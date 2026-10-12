@@ -3,11 +3,14 @@ import { describe, expect, it, vi } from 'vitest'
 import {
   appendLedgerEntry,
   buildAnimationAsset,
+  canRemoveLedgerEntry,
   findLedgerEntry,
   ledgerEntryStateMessage,
   pruneLedger,
   recoverAnimationJob,
   recoverNoticeFor,
+  rememberSyncedJobIds,
+  removeLedgerEntry,
   runRecoverPass,
   selectAutoRecoverJobIds,
   selectUnfinishedEntries,
@@ -233,5 +236,28 @@ describe('recoverAnimationJob', () => {
     const outcomes = await runRecoverPass(['a', 'b'], deps)
     expect(order).toEqual(['a', 'b'])
     expect(outcomes.map((o) => o.kind)).toEqual(['running', 'running'])
+  })
+})
+
+describe('removeLedgerEntry / canRemoveLedgerEntry', () => {
+  it('drops an unfinished entry but never a saved one', () => {
+    const entries = [entryWith('a', 'pending'), entryWith('b', 'completed'), entryWith('c', 'discarded')]
+    expect(removeLedgerEntry(entries, 'a').map((e) => e.jobId)).toEqual(['b', 'c'])
+    expect(removeLedgerEntry(entries, 'b').map((e) => e.jobId)).toEqual(['a', 'b', 'c'])
+    expect(removeLedgerEntry(entries, 'missing')).toHaveLength(3)
+  })
+
+  it('offers Remove only after a Recover check could not reach the job', () => {
+    expect(canRemoveLedgerEntry(entryWith('a', 'pending'))).toBe(false)
+    expect(canRemoveLedgerEntry({ ...entryWith('a', 'pending'), lastCheckUnreachable: true })).toBe(true)
+    expect(canRemoveLedgerEntry({ ...entryWith('a', 'discarded'), lastCheckUnreachable: true })).toBe(true)
+    expect(canRemoveLedgerEntry({ ...entryWith('a', 'recovered'), lastCheckUnreachable: true })).toBe(false)
+  })
+})
+
+describe('rememberSyncedJobIds', () => {
+  it('puts new ids first, drops duplicates and caps the list', () => {
+    expect(rememberSyncedJobIds(['a', 'b'], ['c', 'a'], 10)).toEqual(['c', 'a', 'b'])
+    expect(rememberSyncedJobIds(['a', 'b', 'c'], ['d'], 2)).toEqual(['d', 'a'])
   })
 })

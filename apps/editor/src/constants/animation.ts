@@ -96,6 +96,8 @@ export const ANIMATION_UNFINISHED_HINT =
 export const ANIMATION_RECOVER_LABEL = 'Recover'
 export const ANIMATION_RECOVERING_LABEL = 'Checking…'
 export const ANIMATION_RECOVER_DISCARDED_TAG = 'Discarded'
+/** Forgets an unfinished job after a Recover could not reach it (unknown to PixelLab, or PixelLab down). */
+export const ANIMATION_REMOVE_JOB_LABEL = 'Remove'
 export const ANIMATION_RECOVER_QUEUED_STATE = 'Still queued on PixelLab.'
 export const ANIMATION_RECOVER_PROCESSING_STATE = 'Still processing on PixelLab.'
 export const ANIMATION_RECOVER_UNREACHABLE_STATE = 'Could not reach PixelLab. Try again later.'

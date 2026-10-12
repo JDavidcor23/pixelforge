@@ -4,12 +4,13 @@ import {
   ANIMATION_RECOVER_DISCARDED_TAG,
   ANIMATION_RECOVER_LABEL,
   ANIMATION_RECOVERING_LABEL,
+  ANIMATION_REMOVE_JOB_LABEL,
   ANIMATION_UNFINISHED_HINT,
   ANIMATION_UNFINISHED_TITLE,
 } from '@/constants/animation'
 
 export const UnfinishedJobs = () => {
-  const { items, notice, isVisible, handleRecover } = useUnfinishedJobs()
+  const { items, notice, isVisible, handleRecover, handleRemove } = useUnfinishedJobs()
 
   if (!isVisible) return null
 
@@ -32,14 +33,26 @@ export const UnfinishedJobs = () => {
             </span>
             {item.stateMessage && <span className="text-2xs text-muted">{item.stateMessage}</span>}
           </div>
-          <button
-            type="button"
-            onClick={() => handleRecover(item.jobId)}
-            disabled={item.isRecovering}
-            className={SECONDARY_BUTTON}
-          >
-            {item.isRecovering ? ANIMATION_RECOVERING_LABEL : ANIMATION_RECOVER_LABEL}
-          </button>
+          <div className="flex shrink-0 items-center gap-1">
+            {item.canRemove && (
+              <button
+                type="button"
+                onClick={() => handleRemove(item.jobId)}
+                disabled={item.isRecovering}
+                className={SECONDARY_BUTTON}
+              >
+                {ANIMATION_REMOVE_JOB_LABEL}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => handleRecover(item.jobId)}
+              disabled={item.isRecovering}
+              className={SECONDARY_BUTTON}
+            >
+              {item.isRecovering ? ANIMATION_RECOVERING_LABEL : ANIMATION_RECOVER_LABEL}
+            </button>
+          </div>
         </div>
       ))}
     </div>

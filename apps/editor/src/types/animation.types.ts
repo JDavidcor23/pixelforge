@@ -1,4 +1,5 @@
 import type { AIJob, AnimateResult, AssetType } from './ai-generation'
+import type { AnimationJobMeta } from './ai-jobs.types'
 
 /**
  * One motion of the animation harness (ADR 0009). The harness is DATA: the
@@ -42,6 +43,8 @@ export interface AnimationRequest {
   readonly enhancePrompt?: boolean
   readonly driftThreshold?: number
   readonly seed?: number
+  /** Name + folder of the asset, so a server-tracked job can be saved without the browser. */
+  readonly job?: AnimationJobMeta
 }
 
 export interface AnimationSubmitResult {
@@ -122,6 +125,12 @@ export interface AnimationProvider {
 /** BYOK: the end user's own key. Absent = the server falls back to its env key. */
 export interface AnimationProviderCredentials {
   readonly apiKey?: string
+  /**
+   * The signed-in user's session token, or null when signed out. Sent with a
+   * submit that uses the server key (never with BYOK) so the server records
+   * the job in `public.ai_jobs` and collects it even if the tab closes.
+   */
+  readonly getAccessToken?: () => Promise<string | null>
 }
 
 /**
@@ -213,6 +222,8 @@ export interface UnfinishedAnimationJobItem {
   /** Result of the last Recover check (still queued/processing, unreachable), or null. */
   readonly stateMessage: string | null
   readonly isRecovering: boolean
+  /** True once a Recover could not reach the job — the user may then forget it. */
+  readonly canRemove: boolean
 }
 
 /** Feedback of the last manual Recover that settled a job (the row itself leaves the list). */

@@ -49,4 +49,28 @@ describe('createPixelLabAnimationProvider', () => {
       provider.submit({ firstFrameBase64: 'data:image/png;base64,x', action: 'walk', frameCount: 8 }),
     ).rejects.toMatchObject({ code: null })
   })
+
+  // Server-owned jobs: the session token goes only with a server-billed submit.
+  it('submit() sends the session token when signed in and no BYOK key is set', async () => {
+    const fetchMock = vi.fn(async (_url: string, _init: RequestInit) => jsonResponse({ jobId: 'job-1' }, 200))
+    vi.stubGlobal('fetch', fetchMock)
+    const request = { firstFrameBase64: 'data:image/png;base64,x', action: 'walk', frameCount: 8 }
+
+    await createPixelLabAnimationProvider({ getAccessToken: async () => 'jwt-1' }).submit(request)
+    expect((fetchMock.mock.calls[0]![1].headers as Record<string, string>).Authorization).toBe('Bearer jwt-1')
+
+    await createPixelLabAnimationProvider({ apiKey: 'byok', getAccessToken: async () => 'jwt-1' }).submit(request)
+    expect(fetchMock.mock.calls[1]![1].headers).not.toHaveProperty('Authorization')
+  })
+
+  it('submit() still goes out when reading the session token fails', async () => {
+    const fetchMock = vi.fn(async (_url: string, _init: RequestInit) => jsonResponse({ jobId: 'job-2' }, 200))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const provider = createPixelLabAnimationProvider({ getAccessToken: async () => Promise.reject(new Error('x')) })
+    await expect(
+      provider.submit({ firstFrameBase64: 'data:image/png;base64,x', action: 'walk', frameCount: 8 }),
+    ).resolves.toEqual({ jobId: 'job-2' })
+    expect(fetchMock.mock.calls[0]![1].headers).not.toHaveProperty('Authorization')
+  })
 })
