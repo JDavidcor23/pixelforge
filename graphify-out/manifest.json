@@ -1902,9 +1902,9 @@
     "semantic_hash": "116e11eae85c95872aaf8a122f80e696"
   },
   "apps/landing/src/app/(landing)/components/HeroSection/HeroSection.tsx": {
-    "mtime": 1791813960.2653315,
-    "seen": 1791813990.4804251,
-    "ast_hash": "5751044b5ed4482192ac5a5746804190",
+    "mtime": 1791814566.3752475,
+    "seen": 1791814577.8518565,
+    "ast_hash": "b1d47ae1d87a8a7da2a26705939f4ae6",
     "semantic_hash": ""
   },
   "apps/landing/src/app/(landing)/components/Navbar/Navbar.tsx": {
