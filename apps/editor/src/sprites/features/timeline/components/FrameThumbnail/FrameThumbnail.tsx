@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { X } from 'lucide-react'
 
 import { FOCUS_RING } from '@/constants/focus-ring'
@@ -18,13 +19,16 @@ function getThumbnailBorderClass(isActive: boolean, isSelected: boolean): string
   return 'border border-line-strong hover:border-line-strong/80'
 }
 
-export const FrameThumbnail = ({
+// Props are all primitives plus a stable `onRemove` callback (useCallback'd
+// in `useTimelineBar`) — memoized so a re-render of TimelineBar (e.g. a
+// frame added elsewhere) doesn't re-render every OTHER thumbnail.
+export const FrameThumbnail = memo(function FrameThumbnail({
   frameIndex,
   isActive,
   isSelected,
   isOnly,
   onRemove,
-}: FrameThumbnailProps) => {
+}: FrameThumbnailProps) {
   return (
     <div className="group relative shrink-0" data-frame-index={frameIndex}>
       {/* Visual tile — interaction handled by the strip container */}
@@ -61,4 +65,4 @@ export const FrameThumbnail = ({
       </button>
     </div>
   )
-}
+})

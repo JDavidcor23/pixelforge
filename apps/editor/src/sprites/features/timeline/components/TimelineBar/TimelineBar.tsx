@@ -10,7 +10,13 @@ const ICON_BUTTON = `flex size-8 items-center justify-center rounded text-muted 
 
 export const TimelineBar = () => {
   const {
-    timeline,
+    frameIds,
+    frameCount: totalFrames,
+    currentFrameIndex,
+    selectedFrameIndices,
+    fps,
+    isPlaying,
+    loop,
     frameClipboard,
     stripRef,
     dragRect,
@@ -29,8 +35,6 @@ export const TimelineBar = () => {
     handlePasteFramesAtEnd,
   } = useTimelineBar()
 
-  const totalFrames = timeline.frames.length
-
   return (
     <div className="flex h-full cursor-default items-center gap-3 px-4">
       {/* Transport */}
@@ -48,11 +52,11 @@ export const TimelineBar = () => {
         <button
           type="button"
           onClick={handleTogglePlayback}
-          aria-label={timeline.isPlaying ? 'Pause' : 'Play'}
-          title={timeline.isPlaying ? 'Pause' : 'Play'}
+          aria-label={isPlaying ? 'Pause' : 'Play'}
+          title={isPlaying ? 'Pause' : 'Play'}
           className={`flex size-8 items-center justify-center rounded bg-accent text-on-accent hover:bg-accent-strong ${MOTION.PRESS} ${FOCUS_RING.SURFACE}`}
         >
-          {timeline.isPlaying ? <Pause size={16} aria-hidden /> : <Play size={16} aria-hidden />}
+          {isPlaying ? <Pause size={16} aria-hidden /> : <Play size={16} aria-hidden />}
         </button>
         <button
           type="button"
@@ -72,7 +76,7 @@ export const TimelineBar = () => {
       <div className="flex items-center gap-1.5">
         <input
           type="number"
-          value={timeline.fps}
+          value={fps}
           min={SPRITE_EDITOR_TIMELINE.MIN_FPS}
           max={SPRITE_EDITOR_TIMELINE.MAX_FPS}
           onChange={handleFpsChange}
@@ -114,12 +118,12 @@ export const TimelineBar = () => {
         )}
 
         {/* Frame thumbnails — purely visual */}
-        {timeline.frames.map((frame, index) => (
+        {frameIds.map((frameId, index) => (
           <FrameThumbnail
-            key={frame.id}
+            key={frameId}
             frameIndex={index}
-            isActive={index === timeline.currentFrameIndex}
-            isSelected={timeline.selectedFrameIndices.includes(index)}
+            isActive={index === currentFrameIndex}
+            isSelected={selectedFrameIndices.includes(index)}
             isOnly={totalFrames === 1}
             onRemove={handleRemoveFrame}
           />
@@ -178,13 +182,13 @@ export const TimelineBar = () => {
       <button
         type="button"
         onClick={handleToggleLoop}
-        aria-pressed={timeline.loop}
-        title={timeline.loop ? 'Loop on' : 'Loop off'}
+        aria-pressed={loop}
+        title={loop ? 'Loop on' : 'Loop off'}
         className={`flex items-center gap-1.5 rounded px-2 py-1.5 ${MOTION.PRESS} ${FOCUS_RING.SURFACE} ${
-          timeline.loop ? 'bg-hover text-ink' : 'text-muted hover:text-ink'
+          loop ? 'bg-hover text-ink' : 'text-muted hover:text-ink'
         }`}
       >
-        <Repeat size={16} className={timeline.loop ? 'text-accent' : ''} aria-hidden />
+        <Repeat size={16} className={loop ? 'text-accent' : ''} aria-hidden />
         <span className="text-2xs">Loop</span>
       </button>
     </div>

@@ -15,6 +15,7 @@ import {
   useUIState,
 } from '../../hooks/useSpriteEditorStore.hook'
 import { useDocumentPersistence } from '@/hooks/useDocumentPersistence.hook'
+import { useAssetLibraryPersistence } from '@/hooks/useAssetLibraryPersistence.hook'
 import { CANVAS_MIN_SIZE, RESIZABLE_PANELS, SPRITE_EDITOR_LAYOUT } from '@/constants'
 
 /**
@@ -30,6 +31,7 @@ export const useSpriteEditorLayout = () => {
   const toggleToolbar = useToggleToolbar()
   const docStatus = useDocStatus()
   const { isPersistent } = useDocumentPersistence()
+  useAssetLibraryPersistence()
 
   const leftSidebarWidth = useLeftSidebarWidth()
   const rightSidebarWidth = useRightSidebarWidth()

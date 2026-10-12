@@ -2,20 +2,22 @@ import { useEffect } from 'react'
 
 import { useSpriteEditorStore } from '@/stores'
 import {
-  useTimeline,
+  useIsPlaying,
+  useTimelineFps,
   useGoToNextFrame,
   useTogglePlayback,
 } from '@/sprites/hooks/useSpriteEditorStore.hook'
 
 export const useAnimationPlayback = () => {
-  const timeline = useTimeline()
+  const isPlaying = useIsPlaying()
+  const fps = useTimelineFps()
   const goToNextFrame = useGoToNextFrame()
   const togglePlayback = useTogglePlayback()
 
   useEffect(() => {
-    if (!timeline.isPlaying) return
+    if (!isPlaying) return
 
-    const intervalMs = Math.round(1000 / timeline.fps)
+    const intervalMs = Math.round(1000 / fps)
 
     const id = setInterval(() => {
       const { currentFrameIndex, frames, loop, isPlaying } =
@@ -38,5 +40,5 @@ export const useAnimationPlayback = () => {
     }, intervalMs)
 
     return () => clearInterval(id)
-  }, [timeline.isPlaying, timeline.fps, goToNextFrame, togglePlayback])
+  }, [isPlaying, fps, goToNextFrame, togglePlayback])
 }

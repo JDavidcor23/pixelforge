@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware'
 
 import type { SpriteEditorStore } from '@/types'
 import { SPRITE_EDITOR_CANVAS } from '@/constants'
+import { SPRITE_EDITOR_STORAGE_KEY } from '@/constants/persistence'
 
 import { createLayerSlice } from './slices/layer.slice'
 import { createToolSlice } from './slices/tool.slice'
@@ -36,8 +37,9 @@ export const useSpriteEditorStore = create<SpriteEditorStore>()(
       // JSON serialization anyway. This key only keeps UI/tool prefs, so it
       // is renamed (not versioned) to make the split obvious; the old
       // `sprite-editor-core` key is migrated once by
-      // `legacy-draft-migration.service.ts` and then removed.
-      name: 'sprite-editor-prefs',
+      // `legacy-draft-migration.service.ts` and then removed. Must NOT share a
+      // key with `prefs.store.ts` — see `SPRITE_EDITOR_STORAGE_KEY`.
+      name: SPRITE_EDITOR_STORAGE_KEY,
       partialize: (state) => ({
         primaryColor: state.primaryColor,
         secondaryColor: state.secondaryColor,

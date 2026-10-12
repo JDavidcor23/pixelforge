@@ -1,4 +1,4 @@
-import { Film } from 'lucide-react'
+import { Film, X } from 'lucide-react'
 
 import { AiResultCard } from '../AiResultCard/AiResultCard'
 import { AssetTypeSelector } from '../CreateTab/AssetTypeSelector'
@@ -40,6 +40,10 @@ export const AnimateTab = () => {
     result,
     handleUseResult,
     handleDismissResult,
+    recent,
+    handleApplyRecent,
+    handleDeleteRecent,
+    handleSeeAllAssets,
   } = useAnimateTab()
 
   const isGenerateDisabled = isGenerating || (motion.isCustomInput && !customText.trim())
@@ -176,6 +180,46 @@ export const AnimateTab = () => {
           autoApplied={result.autoApplied}
           autoAppliedLabel="Applied to timeline"
         />
+      )}
+
+      {recent.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          <span className={SECTION_LABEL}>Recent</span>
+          <div className="flex flex-wrap gap-1.5">
+            {recent.map((item) => (
+              <div key={item.id} className="group relative size-10 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => handleApplyRecent(item)}
+                  title={item.title}
+                  className={`size-10 overflow-hidden rounded-sm border border-line bg-base ${FOCUS_RING.SURFACE} ${MOTION.COLORS} hover:border-line-strong`}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element -- Vite SPA, no next/image available */}
+                  <img src={item.thumbnailSrc} alt="" className="image-pixelated h-full w-full object-contain" />
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleDeleteRecent(item)
+                  }}
+                  aria-label={`Delete ${item.title}`}
+                  title="Delete"
+                  className={`absolute -right-1.5 -top-1.5 flex size-4 items-center justify-center rounded-full border border-line-strong bg-raised text-subtle opacity-0 hover:border-danger hover:text-danger group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 ${MOTION.REVEAL} ${FOCUS_RING.SURFACE}`}
+                >
+                  <X size={9} aria-hidden />
+                </button>
+              </div>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={handleSeeAllAssets}
+            className={`self-start text-2xs text-subtle underline-offset-2 hover:text-accent hover:underline ${MOTION.COLORS} ${FOCUS_RING.SURFACE}`}
+          >
+            See all in Assets
+          </button>
+        </div>
       )}
     </div>
   )

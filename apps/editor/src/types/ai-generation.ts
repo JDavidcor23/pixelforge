@@ -22,6 +22,8 @@ export type RetroDiffusionSpriteStyle =
   | 'rd_plus__default'
   | 'rd_fast__game_asset'
   | 'rd_plus__item_sheet'
+  | 'rd_plus__low_res'
+  | 'rd_pro__default'
 
 /**
  * The only animation actions Retro Diffusion actually accepts — every one of
@@ -109,6 +111,19 @@ export interface AIGeneration {
 }
 
 /**
+ * A PNG read from disk and decoded (data URL + natural size), ready to be
+ * handed to `useAssetsStore.addGeneration` — see `lib/import-library-image.ts`.
+ * `name` is the file name without its extension, used as the library entry's
+ * title in place of a generation prompt.
+ */
+export interface ImportedLibraryImage {
+  readonly name: string
+  readonly dataUrl: string
+  readonly width: number
+  readonly height: number
+}
+
+/**
  * What the Create tab's "1 · WHAT ARE YOU MAKING?" chips let the user declare
  * about the asset they're about to draw, generate or import. Drives both the
  * Retro Diffusion `prompt_style` (see `ASSET_TYPE_STYLE`) and which Assets-tab
@@ -118,6 +133,39 @@ export type AssetType = 'character' | 'object' | 'weapon' | 'costume' | 'effect'
 
 /** How the user wants to produce the asset selected in step 1 of the Create tab. */
 export type CreateMethod = 'draw' | 'generate' | 'import'
+
+/**
+ * Create tab > Generate, "Quality" selector (Sprite Studio v2). Flat USD price
+ * per tier, measured live with `check_cost` — generation size does NOT change
+ * the price (see `QUALITY_TIER_COST_USD` in constants). Drives both the
+ * Retro Diffusion `prompt_style` (`ASSET_TYPE_STYLE_BY_QUALITY`) and the
+ * output-size ceiling (`rd_pro__*` styles only accept up to 256px).
+ */
+export type QualityTier = 'draft' | 'standard' | 'best'
+
+/** One tile of the Quality selector — presentational data only. */
+export interface QualityTierConfig {
+  readonly id: QualityTier
+  readonly label: string
+  /** e.g. "Retro Diffusion Fast" — shown in the compare modal, not on the tile itself. */
+  readonly styleLabel: string
+  readonly priceUsd: number
+  readonly sampleSrc: string
+}
+
+/**
+ * Which tier gets the Quality selector's "Recommended" tag for a given asset
+ * type, and why. `verified: false` means the `reason` has NOT been backed by
+ * a live Retro Diffusion generation for that specific asset type — it borrows
+ * the closest verified reasoning. Do not strengthen a `reason`'s wording (e.g.
+ * naming a resolution or describing the output) until a live test for that
+ * asset type backs it, same caveat as `ASSET_TYPE_STYLE`'s own comment.
+ */
+export interface QualityRecommendation {
+  readonly tier: QualityTier
+  readonly reason: string
+  readonly verified: boolean
+}
 
 /**
  * A single motion choice offered by the Animate tab for a given asset type
@@ -155,4 +203,80 @@ export interface AssetLibraryItem {
   readonly assetType: AssetType
   readonly isAnimated: boolean
   readonly canDownloadSheet: boolean
+}
+
+/** Game genres whose sprite rules the Create tab can add to a prompt. */
+export type GameTemplateId = 'platformer'
+
+/**
+ * A game template: hidden rules appended to the user's prompt so the result is
+ * a usable game sprite (full body, side view) instead of a portrait. Rules are
+ * per asset type; an asset type without rules gets the prompt unchanged.
+ */
+export interface GameTemplate {
+  readonly id: GameTemplateId
+  readonly label: string
+  /** One-line summary shown under the chip while the template is on. */
+  readonly summary: string
+  readonly rules: Readonly<Partial<Record<AssetType, string>>>
+}
+
+export interface AssetLibrarySnapshot {
+  readonly generations: AIGeneration[]
+  readonly animations: AIAnimation[]
+}
+
+/** Where the Assets library lives between sessions (IndexedDB in the browser, in-memory in tests). */
+export interface AssetLibraryRepository {
+  loadAll(): Promise<AssetLibrarySnapshot>
+  putGenerations(generations: readonly AIGeneration[]): Promise<void>
+  putAnimations(animations: readonly AIAnimation[]): Promise<void>
+  removeGenerations(ids: readonly string[]): Promise<void>
+  removeAnimations(ids: readonly string[]): Promise<void>
+  clear(): Promise<void>
+}
+
+/** Create > Generate result card. */
+export interface GenerateResult {
+  readonly base64: string
+  readonly width: number
+  readonly prompt: string
+  readonly autoApplied: boolean
+}
+
+/** Animate tab result card. */
+export interface AnimateResult {
+  readonly frames: readonly string[]
+  readonly frameDurationMs: number
+  readonly label: string
+  readonly autoApplied: boolean
+}
+
+/**
+ * An in-flight or finished AI request's UI state. Lives in a store, not in
+ * the tab's `useState`, so switching tabs or routes mid-request doesn't lose
+ * the spinner, the result card or the error.
+ */
+export interface AIJob<TResult> {
+  readonly isRunning: boolean
+  readonly error: string | null
+  readonly result: TResult | null
+}
+
+/** Create tab > Generate "Recent" strip entry — one `AIGeneration` from the Assets library. */
+export interface RecentGenerationItem {
+  readonly id: string
+  readonly title: string
+  readonly thumbnailSrc: string
+  readonly base64: string
+  readonly width: number
+}
+
+/** Animate tab "Recent" strip entry — one `AIAnimation` from the Assets library. */
+export interface RecentAnimationItem {
+  readonly id: string
+  readonly title: string
+  readonly thumbnailSrc: string
+  readonly frames: readonly string[]
+  readonly frameDurationMs: number
 }

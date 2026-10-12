@@ -3,8 +3,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   useCanvasDimensions,
   useDispatch,
-  useTimeline,
 } from '@/sprites/hooks/useSpriteEditorStore.hook'
+import { useSpriteEditorStore } from '@/stores'
 import { isCanvasBlank } from '@/lib/canvas-blank'
 import { CANVAS_SIZE_OPTIONS } from '@/constants'
 
@@ -23,7 +23,6 @@ const RESIZE_LABEL = 'Resize canvas'
  */
 export const useCanvasSizePopover = () => {
   const { width, height } = useCanvasDimensions()
-  const timeline = useTimeline()
   const dispatch = useDispatch()
 
   const [isOpen, setIsOpen] = useState(false)
@@ -53,20 +52,24 @@ export const useCanvasSizePopover = () => {
   )
 
   // Blank canvas (nothing drawn yet) resizes immediately — nothing to lose,
-  // so the confirm step would be a dead click. Otherwise ask first.
+  // so the confirm step would be a dead click. Otherwise ask first. Reads
+  // `timeline.frames` off `getState()` (not a subscription) — this hook only
+  // needs the frames at the moment of the click, and subscribing to the
+  // whole `timeline` would re-render the popover on every pixel while
+  // drawing.
   const handleSelectSize = useCallback(
     (size: number) => {
       if (size === width && size === height) {
         close()
         return
       }
-      if (isCanvasBlank(timeline.frames)) {
+      if (isCanvasBlank(useSpriteEditorStore.getState().timeline.frames)) {
         applyResize(size)
         return
       }
       setPendingSize(size)
     },
-    [width, height, timeline.frames, applyResize, close],
+    [width, height, applyResize, close],
   )
 
   const confirmResize = useCallback(() => {

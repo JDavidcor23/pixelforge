@@ -15,3 +15,24 @@ export const DOCUMENT_STORE_NAME = 'drafts' as const
 
 /** Legacy pre-phase-1 zustand `persist` key (`RgbaColor[][]`, no `version`). */
 export const LEGACY_SPRITE_EDITOR_STORAGE_KEY = 'sprite-editor-core'
+
+/**
+ * zustand `persist` keys — one per store. Two stores on the same key overwrite
+ * each other on every write (the document store used to share
+ * `sprite-editor-prefs` and wiped the saved API key on each edit).
+ */
+export const PREFS_STORAGE_KEY = 'sprite-editor-prefs'
+export const SPRITE_EDITOR_STORAGE_KEY = 'sprite-editor-colors'
+
+/**
+ * Assets library (AI generations + animations). Its own IndexedDB database, not
+ * a store inside `DOCUMENT_DB_NAME`: bumping that DB's version would block on
+ * the document repository's open connection. Replaces the old localStorage
+ * history (~5 MB quota, 10 entries) — see `assets.store.ts`'s `hydrate`.
+ */
+export const ASSET_DB_NAME = 'pixelforge-assets'
+export const ASSET_DB_VERSION = 1
+export const ASSET_GENERATIONS_STORE = 'generations' as const
+export const ASSET_ANIMATIONS_STORE = 'animations' as const
+/** Per kind (generations and animations each). */
+export const ASSET_LIBRARY_LIMIT = 200

@@ -18,7 +18,13 @@ export const AssetsPanel = ({ search }: AssetsPanelProps) => {
     handleSelectItem,
     handleDownloadItem,
     handleDownloadSource,
+    handleDeleteItem,
     handleOpenCreate,
+    importFileInputRef,
+    isImporting,
+    importError,
+    handleOpenImportPicker,
+    handleImportFiles,
   } = useAssetsPanel({ search })
 
   return (
@@ -37,7 +43,13 @@ export const AssetsPanel = ({ search }: AssetsPanelProps) => {
         onSelectItem={handleSelectItem}
         onDownloadItem={handleDownloadItem}
         onDownloadSource={handleDownloadSource}
+        onDeleteItem={handleDeleteItem}
         onOpenCreate={handleOpenCreate}
+        importFileInputRef={importFileInputRef}
+        isImporting={isImporting}
+        importError={importError}
+        onOpenImportPicker={handleOpenImportPicker}
+        onImportFiles={handleImportFiles}
       />
     </div>
   )

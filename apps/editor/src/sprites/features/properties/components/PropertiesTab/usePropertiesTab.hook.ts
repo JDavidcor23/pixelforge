@@ -3,13 +3,15 @@ import { useCallback } from 'react'
 import {
   useActiveLayerId,
   useActiveLayerOpacity,
-  useCursorPixel,
   useSetLayerOpacity,
 } from '@/sprites/hooks/useSpriteEditorStore.hook'
 
-export const usePropertiesTab = () => {
-  const cursorPixel = useCursorPixel()
+interface UsePropertiesTabReturn {
+  readonly activeLayerOpacity: number
+  readonly handleOpacityChange: (value: number) => void
+}
 
+export const usePropertiesTab = (): UsePropertiesTabReturn => {
   const activeLayerId = useActiveLayerId()
   const activeLayerOpacity = useActiveLayerOpacity()
   const setLayerOpacity = useSetLayerOpacity()
@@ -19,7 +21,6 @@ export const usePropertiesTab = () => {
   )
 
   return {
-    cursorPixel,
     activeLayerOpacity,
     handleOpacityChange,
   }

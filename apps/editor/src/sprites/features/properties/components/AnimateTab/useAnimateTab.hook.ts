@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 
 import { useApplyAsset } from '@/sprites/hooks/useApplyAsset.hook'
@@ -7,8 +7,11 @@ import {
   useCreateAssetType,
   useSetCreateAssetType,
   useRetroDiffusionApiKey,
+  useSetBottomPanelTab,
   useSpriteEditorStore,
+  useToggleTimeline,
 } from '@/sprites/hooks/useSpriteEditorStore.hook'
+import { useEditorUIStore } from '@/stores/ui.store'
 import { useAssetsStore } from '@/stores/assets.store'
 import { animationSheetCache } from '@/lib/animation-sheet-cache'
 import { isCanvasBlank } from '@/lib/canvas-blank'
@@ -18,19 +21,22 @@ import {
   ANIMATE_DEFAULT_MOTION_ID,
   ANIMATE_MOTIONS_BY_ASSET_TYPE,
   ANIMATION_PIPELINE_VERSION,
+  RECENT_ASSETS_LIMIT,
   RETRO_DIFFUSION_CHARACTER_ANIMATION_PROMPT,
   RETRO_DIFFUSION_MOTION_REJECTED_HINT,
   RETRO_DIFFUSION_OBJECT_ANIMATION_PROMPT,
   SPRITE_ANIMATION,
 } from '@/constants'
-import type { AIAnimation, AnimateMotionOption, AnimationDirection, AssetType, RetroDiffusionAnimationAction } from '@/types'
-
-export interface AnimateResult {
-  readonly frames: readonly string[]
-  readonly frameDurationMs: number
-  readonly label: string
-  readonly autoApplied: boolean
-}
+import { useAIJobsStore } from '@/stores/ai-jobs.store'
+import type {
+  AIAnimation,
+  AnimateMotionOption,
+  AnimateResult,
+  AnimationDirection,
+  AssetType,
+  RecentAnimationItem,
+  RetroDiffusionAnimationAction,
+} from '@/types'
 
 export interface UseAnimateTabReturn {
   assetType: AssetType
@@ -54,6 +60,10 @@ export interface UseAnimateTabReturn {
   result: AnimateResult | null
   handleUseResult: () => Promise<void>
   handleDismissResult: () => void
+  recent: readonly RecentAnimationItem[]
+  handleApplyRecent: (item: RecentAnimationItem) => Promise<void>
+  handleDeleteRecent: (item: RecentAnimationItem) => void
+  handleSeeAllAssets: () => void
 }
 
 /**
@@ -71,6 +81,11 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
   const retroDiffusionApiKey = useRetroDiffusionApiKey()
   const addAnimation = useAssetsStore((s) => s.addAnimation)
   const markSheetAvailable = useAssetsStore((s) => s.markSheetAvailable)
+  const animations = useAssetsStore((s) => s.animations)
+  const removeAnimation = useAssetsStore((s) => s.removeAnimation)
+  const setBottomPanelTab = useSetBottomPanelTab()
+  const toggleTimeline = useToggleTimeline()
+  const timelineOpen = useEditorUIStore((s) => s.ui.timelineOpen)
 
   // Shared with the Create tab (lifted into the UI store, batch 2) — animating
   // a non-character asset should still animate the type the user already chose.
@@ -84,10 +99,14 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
   )
   const [nFrames, setNFrames] = useState<number>(SPRITE_ANIMATION.DEFAULT_N_FRAMES)
   const [customText, setCustomText] = useState('')
-  const [isGenerating, setIsGenerating] = useState(false)
-  const [animError, setAnimError] = useState<string | null>(null)
   const [previewRef, setPreviewRef] = useState<string | null>(null)
-  const [result, setResult] = useState<AnimateResult | null>(null)
+  // Request state lives in `useAIJobsStore` so it survives this tab unmounting.
+  const isGenerating = useAIJobsStore((s) => s.animate.isRunning)
+  const animError = useAIJobsStore((s) => s.animate.error)
+  const result = useAIJobsStore((s) => s.animate.result)
+  const setAnimateJob = useAIJobsStore((s) => s.setAnimateJob)
+  const setAnimError = useCallback((error: string) => setAnimateJob({ error }), [setAnimateJob])
+  const setResult = useCallback((next: AnimateResult | null) => setAnimateJob({ result: next }), [setAnimateJob])
 
   const motion = motions.find((option) => option.id === motionId) ?? motions[0]
   const isCharacter = assetType === 'character'
@@ -116,11 +135,10 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
 
   const handleGenerateAnimation = useCallback(async () => {
     if (motion.isCustomInput && !customText.trim()) return
+    if (useAIJobsStore.getState().animate.isRunning) return
 
     try {
-      setIsGenerating(true)
-      setAnimError(null)
-      setResult(null)
+      setAnimateJob({ isRunning: true, error: null, result: null })
 
       const { layersToBase64, pixelBufferToDataUri } = await import('@/lib/export-utils')
       // Prefer the native-resolution AI generation over a re-render of the
@@ -192,9 +210,12 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
         setAnimError(message || 'Animation generation failed.')
       }
     } finally {
-      setIsGenerating(false)
+      setAnimateJob({ isRunning: false })
     }
   }, [
+    setAnimateJob,
+    setAnimError,
+    setResult,
     motion,
     customText,
     isCharacter,
@@ -213,9 +234,33 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
     if (!result) return
     await applyAnimation({ frames: result.frames, frameDurationMs: result.frameDurationMs })
     setResult({ ...result, autoApplied: true })
-  }, [result, applyAnimation])
+  }, [result, applyAnimation, setResult])
 
-  const handleDismissResult = useCallback(() => setResult(null), [])
+  const handleDismissResult = useCallback(() => setResult(null), [setResult])
+
+  const recent = useMemo<RecentAnimationItem[]>(
+    () =>
+      animations.slice(0, RECENT_ASSETS_LIMIT).map((animation) => ({
+        id: animation.id,
+        title: animation.label,
+        thumbnailSrc: animation.frames[0] ?? '',
+        frames: animation.frames,
+        frameDurationMs: animation.frameDurationMs,
+      })),
+    [animations],
+  )
+
+  const handleApplyRecent = useCallback(
+    (item: RecentAnimationItem) => applyAnimation({ frames: item.frames, frameDurationMs: item.frameDurationMs }),
+    [applyAnimation],
+  )
+
+  const handleDeleteRecent = useCallback((item: RecentAnimationItem) => removeAnimation(item.id), [removeAnimation])
+
+  const handleSeeAllAssets = useCallback(() => {
+    setBottomPanelTab('assets')
+    if (!timelineOpen) toggleTimeline()
+  }, [setBottomPanelTab, timelineOpen, toggleTimeline])
 
   return {
     assetType,
@@ -239,5 +284,9 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
     result,
     handleUseResult,
     handleDismissResult,
+    recent,
+    handleApplyRecent,
+    handleDeleteRecent,
+    handleSeeAllAssets,
   }
 }
