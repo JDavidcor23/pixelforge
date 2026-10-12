@@ -40,6 +40,9 @@ export const AnimateTab = () => {
     result,
     handleUseResult,
     handleDismissResult,
+    recent,
+    handleApplyRecent,
+    handleSeeAllAssets,
   } = useAnimateTab()
 
   const isGenerateDisabled = isGenerating || (motion.isCustomInput && !customText.trim())
@@ -176,6 +179,33 @@ export const AnimateTab = () => {
           autoApplied={result.autoApplied}
           autoAppliedLabel="Applied to timeline"
         />
+      )}
+
+      {recent.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          <span className={SECTION_LABEL}>Recent</span>
+          <div className="flex flex-wrap gap-1.5">
+            {recent.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => handleApplyRecent(item)}
+                title={item.title}
+                className={`size-10 shrink-0 overflow-hidden rounded-sm border border-line bg-base ${FOCUS_RING.SURFACE} ${MOTION.COLORS} hover:border-line-strong`}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element -- Vite SPA, no next/image available */}
+                <img src={item.thumbnailSrc} alt="" className="image-pixelated h-full w-full object-contain" />
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={handleSeeAllAssets}
+            className={`self-start text-2xs text-subtle underline-offset-2 hover:text-accent hover:underline ${MOTION.COLORS} ${FOCUS_RING.SURFACE}`}
+          >
+            See all in Assets
+          </button>
+        </div>
       )}
     </div>
   )

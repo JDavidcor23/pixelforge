@@ -1,12 +1,15 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { useApplyAsset } from '@/sprites/hooks/useApplyAsset.hook'
 import {
   useFocusPromptRequest,
   useOpenSettings,
   useRetroDiffusionApiKey,
+  useSetBottomPanelTab,
   useSpriteEditorStore,
+  useToggleTimeline,
 } from '@/sprites/hooks/useSpriteEditorStore.hook'
+import { useEditorUIStore } from '@/stores/ui.store'
 import { useAssetsStore } from '@/stores/assets.store'
 import { generateSpriteWithRetroDiffusion } from '@/lib/retro-diffusion-utils'
 import { isCanvasBlank } from '@/lib/canvas-blank'
@@ -21,9 +24,10 @@ import {
   GAME_TEMPLATES,
   GAME_TEMPLATE_OFF_SUMMARY,
   GAME_TEMPLATE_TOOLTIP,
+  RECENT_ASSETS_LIMIT,
 } from '@/constants'
 import { useAIJobsStore } from '@/stores/ai-jobs.store'
-import type { AssetType, GameTemplateId } from '@/types'
+import type { AssetType, GameTemplateId, RecentGenerationItem } from '@/types'
 
 export interface UseGeneratePanelParams {
   readonly assetType: AssetType
@@ -41,7 +45,11 @@ export const useGeneratePanel = ({ assetType }: UseGeneratePanelParams) => {
   const apiKey = useRetroDiffusionApiKey()
   const openSettings = useOpenSettings()
   const addGeneration = useAssetsStore((s) => s.addGeneration)
+  const generations = useAssetsStore((s) => s.generations)
   const { applyGeneration } = useApplyAsset()
+  const setBottomPanelTab = useSetBottomPanelTab()
+  const toggleTimeline = useToggleTimeline()
+  const timelineOpen = useEditorUIStore((s) => s.ui.timelineOpen)
 
   // Request state lives in `useAIJobsStore`, not `useState`: the request keeps
   // running if this tab unmounts, and its result must be here when it remounts.
@@ -120,6 +128,28 @@ export const useGeneratePanel = ({ assetType }: UseGeneratePanelParams) => {
 
   const handleDismissResult = useCallback(() => setGenerateJob({ result: null }), [setGenerateJob])
 
+  const recent = useMemo<RecentGenerationItem[]>(
+    () =>
+      generations.slice(0, RECENT_ASSETS_LIMIT).map((generation) => ({
+        id: generation.id,
+        title: generation.prompt,
+        thumbnailSrc: generation.base64,
+        base64: generation.base64,
+        width: generation.width,
+      })),
+    [generations],
+  )
+
+  const handleApplyRecent = useCallback(
+    (item: RecentGenerationItem) => applyGeneration({ base64: item.base64, width: item.width }),
+    [applyGeneration],
+  )
+
+  const handleSeeAllAssets = useCallback(() => {
+    setBottomPanelTab('assets')
+    if (!timelineOpen) toggleTimeline()
+  }, [setBottomPanelTab, timelineOpen, toggleTimeline])
+
   return {
     prompt,
     setPrompt,
@@ -145,5 +175,8 @@ export const useGeneratePanel = ({ assetType }: UseGeneratePanelParams) => {
     result,
     handleUseResult,
     handleDismissResult,
+    recent,
+    handleApplyRecent,
+    handleSeeAllAssets,
   }
 }

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 
 import { useApplyAsset } from '@/sprites/hooks/useApplyAsset.hook'
@@ -7,8 +7,11 @@ import {
   useCreateAssetType,
   useSetCreateAssetType,
   useRetroDiffusionApiKey,
+  useSetBottomPanelTab,
   useSpriteEditorStore,
+  useToggleTimeline,
 } from '@/sprites/hooks/useSpriteEditorStore.hook'
+import { useEditorUIStore } from '@/stores/ui.store'
 import { useAssetsStore } from '@/stores/assets.store'
 import { animationSheetCache } from '@/lib/animation-sheet-cache'
 import { isCanvasBlank } from '@/lib/canvas-blank'
@@ -18,6 +21,7 @@ import {
   ANIMATE_DEFAULT_MOTION_ID,
   ANIMATE_MOTIONS_BY_ASSET_TYPE,
   ANIMATION_PIPELINE_VERSION,
+  RECENT_ASSETS_LIMIT,
   RETRO_DIFFUSION_CHARACTER_ANIMATION_PROMPT,
   RETRO_DIFFUSION_MOTION_REJECTED_HINT,
   RETRO_DIFFUSION_OBJECT_ANIMATION_PROMPT,
@@ -30,6 +34,7 @@ import type {
   AnimateResult,
   AnimationDirection,
   AssetType,
+  RecentAnimationItem,
   RetroDiffusionAnimationAction,
 } from '@/types'
 
@@ -55,6 +60,9 @@ export interface UseAnimateTabReturn {
   result: AnimateResult | null
   handleUseResult: () => Promise<void>
   handleDismissResult: () => void
+  recent: readonly RecentAnimationItem[]
+  handleApplyRecent: (item: RecentAnimationItem) => Promise<void>
+  handleSeeAllAssets: () => void
 }
 
 /**
@@ -72,6 +80,10 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
   const retroDiffusionApiKey = useRetroDiffusionApiKey()
   const addAnimation = useAssetsStore((s) => s.addAnimation)
   const markSheetAvailable = useAssetsStore((s) => s.markSheetAvailable)
+  const animations = useAssetsStore((s) => s.animations)
+  const setBottomPanelTab = useSetBottomPanelTab()
+  const toggleTimeline = useToggleTimeline()
+  const timelineOpen = useEditorUIStore((s) => s.ui.timelineOpen)
 
   // Shared with the Create tab (lifted into the UI store, batch 2) — animating
   // a non-character asset should still animate the type the user already chose.
@@ -224,6 +236,28 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
 
   const handleDismissResult = useCallback(() => setResult(null), [setResult])
 
+  const recent = useMemo<RecentAnimationItem[]>(
+    () =>
+      animations.slice(0, RECENT_ASSETS_LIMIT).map((animation) => ({
+        id: animation.id,
+        title: animation.label,
+        thumbnailSrc: animation.frames[0] ?? '',
+        frames: animation.frames,
+        frameDurationMs: animation.frameDurationMs,
+      })),
+    [animations],
+  )
+
+  const handleApplyRecent = useCallback(
+    (item: RecentAnimationItem) => applyAnimation({ frames: item.frames, frameDurationMs: item.frameDurationMs }),
+    [applyAnimation],
+  )
+
+  const handleSeeAllAssets = useCallback(() => {
+    setBottomPanelTab('assets')
+    if (!timelineOpen) toggleTimeline()
+  }, [setBottomPanelTab, timelineOpen, toggleTimeline])
+
   return {
     assetType,
     setAssetType,
@@ -246,5 +280,8 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
     result,
     handleUseResult,
     handleDismissResult,
+    recent,
+    handleApplyRecent,
+    handleSeeAllAssets,
   }
 }

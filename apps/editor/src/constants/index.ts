@@ -472,6 +472,9 @@ export const COLOR_PICKER = {
 /** Shown instead of a coordinate when the cursor is outside the canvas. */
 export const CURSOR_POSITION_FALLBACK = '—'
 
+/** Create tab > Generate/Animate — max thumbnails shown in the "Recent" strip. */
+export const RECENT_ASSETS_LIMIT = 6
+
 
 /**
  * Create tab > Generate — game templates. Each one is data only: adding a genre

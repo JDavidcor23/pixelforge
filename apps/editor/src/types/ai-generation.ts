@@ -214,3 +214,21 @@ export interface AIJob<TResult> {
   readonly error: string | null
   readonly result: TResult | null
 }
+
+/** Create tab > Generate "Recent" strip entry — one `AIGeneration` from the Assets library. */
+export interface RecentGenerationItem {
+  readonly id: string
+  readonly title: string
+  readonly thumbnailSrc: string
+  readonly base64: string
+  readonly width: number
+}
+
+/** Animate tab "Recent" strip entry — one `AIAnimation` from the Assets library. */
+export interface RecentAnimationItem {
+  readonly id: string
+  readonly title: string
+  readonly thumbnailSrc: string
+  readonly frames: readonly string[]
+  readonly frameDurationMs: number
+}
