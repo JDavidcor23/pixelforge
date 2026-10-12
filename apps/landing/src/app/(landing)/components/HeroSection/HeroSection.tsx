@@ -9,7 +9,7 @@ import { BRAND } from '@/constants/BRAND'
 export const HeroSection = () =>
 {
   return (
-    <section className="relative overflow-hidden bg-[#0a0c10] pt-32 pb-24">
+    <section className="relative overflow-hidden bg-sunken pt-32 pb-24">
       {/* Background Grid */}
       <div className="bg-grid bg-grid-fade pointer-events-none absolute inset-0 z-0" />
       <div className="mx-auto max-w-7xl px-6">
@@ -27,7 +27,7 @@ export const HeroSection = () =>
           <div className="mt-10 flex flex-col gap-4 sm:flex-row">
             <a
               href={ EDITOR_APP_URL }
-              className="rounded-lg bg-accent px-8 py-3 text-base font-semibold text-black shadow-[0_0_30px_rgba(0,251,251,0.2)] transition-all hover:scale-105 hover:bg-white"
+              className="rounded-lg bg-accent px-8 py-3 text-base font-semibold text-on-accent glow-accent transition-all hover:scale-105 hover:bg-white"
             >
               { LANDING_HERO.CTA_PRIMARY }
             </a>

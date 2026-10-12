@@ -7,3 +7,10 @@
  */
 export const EDITOR_APP_URL =
   process.env.NEXT_PUBLIC_EDITOR_URL || 'http://localhost:5173'
+
+/**
+ * Mirrors the editor's login route (`apps/editor/src/constants/routes.ts`) —
+ * the landing can't import across apps. Trailing slashes on the env value are
+ * stripped so the result is never `…//login`.
+ */
+export const EDITOR_LOGIN_URL = `${EDITOR_APP_URL.replace(/\/+$/, '')}/login`
