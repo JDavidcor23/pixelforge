@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { ArrowLeftRight } from 'lucide-react'
 
 import { ColorInputs } from '../ColorInputs/ColorInputs'
@@ -11,7 +12,11 @@ import { MOTION } from '@/constants/motion'
 const SWATCH = 'size-8 shrink-0 rounded-sm border-2'
 const SECTION_LABEL = 'font-mono text-3xs uppercase tracking-wider text-subtle'
 
-export const ColorPicker = () => {
+// Takes no props and reads everything from the store via `useColorPicker` —
+// memoized so a PropertiesTab re-render (e.g. the opacity slider changing)
+// doesn't re-render this subtree too; it still re-renders on its own when the
+// store values it subscribes to change.
+export const ColorPicker = memo(function ColorPicker() {
   const {
     primaryHex,
     secondaryHex,
@@ -68,4 +73,4 @@ export const ColorPicker = () => {
       </div>
     </div>
   )
-}
+})

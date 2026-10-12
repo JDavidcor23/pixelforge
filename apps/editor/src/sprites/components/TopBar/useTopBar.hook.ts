@@ -4,9 +4,9 @@ import { useExport } from '@/sprites/features/properties/hooks/useExport.hook'
 import {
   useCanRedo,
   useCanUndo,
+  useFrameCount,
   useRedo,
   useResetPanelSizes,
-  useTimeline,
   useUIState,
   useUndo,
 } from '@/sprites/hooks/useSpriteEditorStore.hook'
@@ -22,7 +22,7 @@ import { RESIZABLE_PANELS, SPRITE_DOCUMENT_DEFAULT_NAME } from '@/constants'
 export const useTopBar = () => {
   const ui = useUIState()
   const resetPanelSizes = useResetPanelSizes()
-  const timeline = useTimeline()
+  const frameCount = useFrameCount()
   const canUndo = useCanUndo()
   const canRedo = useCanRedo()
   const undo = useUndo()
@@ -33,7 +33,6 @@ export const useTopBar = () => {
   const exportMenuRef = useRef<HTMLDivElement>(null)
   const exportTriggerRef = useRef<HTMLButtonElement>(null)
 
-  const frameCount = timeline.frames.length
   const frameCountLabel = `${frameCount} ${frameCount === 1 ? 'FRAME' : 'FRAMES'}`
 
   // `returnFocus` is false for the outside-click/blur-equivalent paths (the

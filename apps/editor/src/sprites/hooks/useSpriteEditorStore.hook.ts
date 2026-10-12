@@ -76,8 +76,61 @@ export const useCursorPixel = () => useSpriteEditorStore((s) => s.cursorPixel)
 
 /**
  * Returns the timeline state (frames, current frame, FPS, playback status).
+ *
+ * This is a WIDE selector — every dispatch that touches `timeline` (including
+ * every `stroke.points` dispatch while drawing, via `patchDirtyLayers`)
+ * produces a new `timeline` object, so every consumer of this hook re-renders
+ * on every pixel. Prefer one of the granular selectors below
+ * (`useFrameCount`, `useFrameIds`, `useCurrentFrameIndex`,
+ * `useSelectedFrameIndices`, `useTimelineFps`, `useIsPlaying`,
+ * `useTimelineLoop`) unless the component genuinely needs the whole timeline
+ * (e.g. `CanvasArea`, which reads `timeline.frames` for onion skinning).
  */
 export const useTimeline = () => useSpriteEditorStore((s) => s.timeline)
+
+/**
+ * Returns the number of frames in the timeline — a primitive, so it only
+ * re-renders when a frame is added or removed, never while drawing.
+ */
+export const useFrameCount = () => useSpriteEditorStore((s) => s.timeline.frames.length)
+
+/**
+ * Returns the ordered list of frame ids. Built with `useShallow` because the
+ * `.map` below allocates a new array on every call — without it this would
+ * re-render on every `timeline` identity change (every pixel while drawing)
+ * even though the ids themselves rarely change.
+ */
+export const useFrameIds = () =>
+  useSpriteEditorStore(useShallow((s) => s.timeline.frames.map((f) => f.id)))
+
+/**
+ * Returns the index of the currently active frame.
+ */
+export const useCurrentFrameIndex = () => useSpriteEditorStore((s) => s.timeline.currentFrameIndex)
+
+/**
+ * Returns the indices of the currently selected frames. `patchDirtyLayers`
+ * (the hot path that runs on every `stroke.points` dispatch) shallow-spreads
+ * `timeline` and only replaces `frames`, so this array's reference is stable
+ * while drawing — a plain selector is enough, no `useShallow` needed.
+ */
+export const useSelectedFrameIndices = () =>
+  useSpriteEditorStore((s) => s.timeline.selectedFrameIndices)
+
+/**
+ * Returns the animation playback speed (frames per second).
+ */
+export const useTimelineFps = () => useSpriteEditorStore((s) => s.timeline.fps)
+
+/**
+ * Returns whether animation playback is currently running.
+ */
+export const useIsPlaying = () => useSpriteEditorStore((s) => s.timeline.isPlaying)
+
+/**
+ * Returns whether animation playback loops at the end of the timeline.
+ */
+export const useTimelineLoop = () => useSpriteEditorStore((s) => s.timeline.loop)
 
 /**
  * Returns the document revision counter (phase 2) — bumps whenever a

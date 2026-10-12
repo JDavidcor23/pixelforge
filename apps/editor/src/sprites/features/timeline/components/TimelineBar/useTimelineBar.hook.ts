@@ -2,7 +2,13 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { SPRITE_EDITOR_TIMELINE } from '@/constants'
 import {
-  useTimeline,
+  useFrameCount,
+  useFrameIds,
+  useCurrentFrameIndex,
+  useSelectedFrameIndices,
+  useTimelineFps,
+  useIsPlaying,
+  useTimelineLoop,
   useAddFrame,
   useRemoveFrame,
   useSetCurrentFrame,
@@ -18,6 +24,7 @@ import {
   useFrameClipboard,
   useSelection,
 } from '@/sprites/hooks/useSpriteEditorStore.hook'
+import { useSpriteEditorStore } from '@/stores'
 import { useAnimationPlayback } from '../../hooks/useAnimationPlayback.hook'
 
 // ── Helper: find which frame index (by data-frame-index) the pointer is over ──
@@ -55,7 +62,13 @@ function getFramesInViewportRange(
 }
 
 export const useTimelineBar = () => {
-  const timeline = useTimeline()
+  const frameIds = useFrameIds()
+  const frameCount = useFrameCount()
+  const currentFrameIndex = useCurrentFrameIndex()
+  const selectedFrameIndices = useSelectedFrameIndices()
+  const fps = useTimelineFps()
+  const isPlaying = useIsPlaying()
+  const loop = useTimelineLoop()
   const addFrame = useAddFrame()
   const removeFrame = useRemoveFrame()
   const setCurrentFrame = useSetCurrentFrame()
@@ -87,10 +100,10 @@ export const useTimelineBar = () => {
   const [dragRect, setDragRect] = useState<{ left: number; width: number } | null>(null)
 
   // ── Ref for current selectedFrameIndices (avoids stale closure in pointerUp) ─
-  const selectedFrameIndicesRef = useRef<number[]>(timeline.selectedFrameIndices)
+  const selectedFrameIndicesRef = useRef<number[]>(selectedFrameIndices)
   useEffect(() => {
-    selectedFrameIndicesRef.current = timeline.selectedFrameIndices
-  }, [timeline.selectedFrameIndices])
+    selectedFrameIndicesRef.current = selectedFrameIndices
+  }, [selectedFrameIndices])
 
   // ── Ref for pixelSelection (keyboard shortcut disambiguation) ─────
   const pixelSelectionRef = useRef(pixelSelection)
@@ -205,9 +218,13 @@ export const useTimelineBar = () => {
           const currentSelection = selectedFrameIndicesRef.current
 
           if (isShift) {
-            // Range selection: from currentFrameIndex (anchor) to clickedIndex
-            const start = Math.min(timeline.currentFrameIndex, clickedIndex)
-            const end = Math.max(timeline.currentFrameIndex, clickedIndex)
+            // Range selection: from currentFrameIndex (anchor) to clickedIndex.
+            // Read straight off `getState()` — `currentFrameIndex` can change
+            // between renders without this handler being re-created (it isn't
+            // a dep), so closing over the hook-level value would go stale.
+            const activeFrameIndex = useSpriteEditorStore.getState().timeline.currentFrameIndex
+            const start = Math.min(activeFrameIndex, clickedIndex)
+            const end = Math.max(activeFrameIndex, clickedIndex)
             const range = Array.from({ length: end - start + 1 }, (_, i) => start + i)
             setFrameSelection(range)
           } else if (isCtrl) {
@@ -266,7 +283,13 @@ export const useTimelineBar = () => {
   const handlePasteFramesAtEnd = useCallback(() => pasteFramesAtEnd(), [pasteFramesAtEnd])
 
   return {
-    timeline,
+    frameIds,
+    frameCount,
+    currentFrameIndex,
+    selectedFrameIndices,
+    fps,
+    isPlaying,
+    loop,
     frameClipboard,
     stripRef,
     dragRect,

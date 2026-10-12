@@ -1,4 +1,4 @@
-import { SPRITE_EDITOR_CANVAS, SPRITE_EDITOR_VIEWPORT } from '@/constants'
+import { CURSOR_POSITION_FALLBACK, SPRITE_EDITOR_CANVAS, SPRITE_EDITOR_VIEWPORT } from '@/constants'
 import {
   useViewport,
   useCursorPixel,
@@ -13,7 +13,7 @@ export const useCanvasOverlay = () => {
   const zoomPercentage = `${viewport.zoom * SPRITE_EDITOR_VIEWPORT.PERCENTAGE_MULTIPLIER}%`
   const positionText = cursorPixel
     ? `X ${cursorPixel.x}  Y ${cursorPixel.y}`
-    : '—'
+    : CURSOR_POSITION_FALLBACK
 
   const centerViewLabel = `Center view (${
     SPRITE_EDITOR_CANVAS.RESET_VIEW_ZOOM * SPRITE_EDITOR_VIEWPORT.PERCENTAGE_MULTIPLIER
