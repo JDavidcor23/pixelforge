@@ -1812,9 +1812,9 @@
     "semantic_hash": "0aa292717b479058ff430e5fcc356f13"
   },
   "apps/editor/src/types/index.ts": {
-    "mtime": 1791824870.944255,
-    "seen": 1791825228.8284304,
-    "ast_hash": "35c1ac6f8cb34bf07d7631f4b1789926",
+    "mtime": 1791855281.5755866,
+    "seen": 1791855667.1985593,
+    "ast_hash": "a74de2485ccacf428b4a1c483ed3c0bb",
     "semantic_hash": ""
   },
   "apps/editor/src/types/settings.ts": {
@@ -2562,15 +2562,15 @@
     "semantic_hash": ""
   },
   "apps/editor/src/sprites/components/TopBar/TopBar.tsx": {
-    "mtime": 1791812472.2823164,
-    "seen": 1791813990.4804251,
-    "ast_hash": "852890a9a14740b8b927a10d2c137615",
+    "mtime": 1791855575.8485038,
+    "seen": 1791855667.1985593,
+    "ast_hash": "0d3a4724875fa482e57d110b4f3cbda4",
     "semantic_hash": ""
   },
   "apps/editor/src/sprites/components/TopBar/useTopBar.hook.ts": {
-    "mtime": 1791812472.284334,
-    "seen": 1791813990.4804251,
-    "ast_hash": "0b56473f3d9a9c038ffa5e849687d4f0",
+    "mtime": 1791855567.5090954,
+    "seen": 1791855667.1985593,
+    "ast_hash": "b3e1863261263ca325887a34cad7ae14",
     "semantic_hash": ""
   },
   "apps/editor/src/sprites/features/assets/components/AssetFolderTree/AssetFolderTree.tsx": {
@@ -2887,14 +2887,14 @@
   },
   "supabase/migrations/20261011000000_init_pixelforge.sql": {
     "mtime": 1791812472.480884,
-    "seen": 1791842886.9884892,
-    "ast_hash": "",
+    "seen": 1791854616.992098,
+    "ast_hash": "441faf36f811c0b13668c58640fb149d",
     "semantic_hash": ""
   },
   "supabase/migrations/20261012000000_account_deletions.sql": {
     "mtime": 1791812472.480884,
-    "seen": 1791842886.9884892,
-    "ast_hash": "",
+    "seen": 1791854616.992098,
+    "ast_hash": "ccad6f7ae95685f6775c6f252fd9d3bf",
     "semantic_hash": ""
   },
   "apps/editor/src/auth/pages/LoginPage/LoginPage.tsx": {
@@ -3169,8 +3169,8 @@
   },
   "supabase/migrations/20261012010000_minimal_user_data.sql": {
     "mtime": 1791812472.4823902,
-    "seen": 1791842886.9884892,
-    "ast_hash": "",
+    "seen": 1791854616.992098,
+    "ast_hash": "9e75198e27e9fb7557e5f8d51487ac55",
     "semantic_hash": ""
   },
   "apps/editor/src/sprites/features/properties/components/PositionFields/PositionFields.tsx": {
@@ -3318,15 +3318,15 @@
     "semantic_hash": ""
   },
   "apps/editor/src/lib/animation-harness.test.ts": {
-    "mtime": 1791844039.5283437,
-    "seen": 1791844268.9658983,
-    "ast_hash": "9964331393addc5f0f42e0a95f1d478a",
+    "mtime": 1791854279.4702837,
+    "seen": 1791854616.992098,
+    "ast_hash": "efad51480aa08990c0ed773844ea486e",
     "semantic_hash": ""
   },
   "apps/editor/src/lib/animation-harness.ts": {
-    "mtime": 1791844048.9996848,
-    "seen": 1791844268.9658983,
-    "ast_hash": "8bfba0f3948cec2cccb05dd2f6e5709c",
+    "mtime": 1791854287.509995,
+    "seen": 1791854616.992098,
+    "ast_hash": "97bcd22e1fab9ee9c5300de68c00df32",
     "semantic_hash": ""
   },
   "apps/editor/src/lib/animation-limits.test.ts": {
@@ -3529,8 +3529,62 @@
   },
   "supabase/migrations/20261012030000_ai_jobs.sql": {
     "mtime": 1791824825.8134427,
-    "seen": 1791842886.9884892,
-    "ast_hash": "",
+    "seen": 1791854616.992098,
+    "ast_hash": "f6396829dc95e5ddf9f5be045da6b2d3",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/constants/file-menu.ts": {
+    "mtime": 1791855519.388147,
+    "seen": 1791855667.1985593,
+    "ast_hash": "601b4c9e2504e34fb1efac4986f7264d",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/sprites/components/TopBar/ImportErrorNotice/ImportErrorNotice.tsx": {
+    "mtime": 1791855559.6390152,
+    "seen": 1791855667.1985593,
+    "ast_hash": "f6da7cdeb2380f554dbd1174dfc37f2d",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/sprites/components/TopBar/ImportErrorNotice/useImportErrorNotice.hook.ts": {
+    "mtime": 1791855555.0571587,
+    "seen": 1791855667.1985593,
+    "ast_hash": "85457c6e5534b9a1f30479e1ba03c681",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/sprites/components/TopBar/ImportSpriteSheetDialog/ImportSpriteSheetDialog.tsx": {
+    "mtime": 1791855391.1119425,
+    "seen": 1791855667.1985593,
+    "ast_hash": "6cde6b4ec124bf9479ddd59ed35d464a",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/sprites/components/TopBar/ImportSpriteSheetDialog/useImportSpriteSheetDialog.hook.ts": {
+    "mtime": 1791855583.8293288,
+    "seen": 1791855667.1985593,
+    "ast_hash": "aefa08132fe584adfc4518ad4fc350f9",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/sprites/components/TopBar/useTopBar.hook.test.ts": {
+    "mtime": 1791855597.0859842,
+    "seen": 1791855667.1985593,
+    "ast_hash": "4442a289e79013f236f3a65640e10597",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/sprites/hooks/useImportSpriteSheet.hook.test.ts": {
+    "mtime": 1791855592.8207006,
+    "seen": 1791855667.1985593,
+    "ast_hash": "6f407ed79861529c2f0fc93151aec3ab",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/sprites/hooks/useImportSpriteSheet.hook.ts": {
+    "mtime": 1791855549.2437687,
+    "seen": 1791855667.1985593,
+    "ast_hash": "bd9648e0594bae40f0b784813750a90b",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/types/file-menu.types.ts": {
+    "mtime": 1791855528.979326,
+    "seen": 1791855667.1985593,
+    "ast_hash": "f4b2d6f1feacb7770e014baa5727bece",
     "semantic_hash": ""
   }
 }
