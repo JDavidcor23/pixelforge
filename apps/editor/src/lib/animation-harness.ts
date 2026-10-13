@@ -26,7 +26,9 @@ const CUSTOM_MOTION_ID = 'custom'
 /** Character identity rules — generalized from the measured wizard prompt ("same hand holds the staff"). */
 const CHARACTER_IDENTITY_RULES =
   'Keep the exact same character, facing angle and camera view as the first frame. ' +
-  'Do not turn or rotate the body. Held items stay in the same hand in every frame.'
+  'Do not turn or rotate the body. Held items stay in the same hand in every frame. ' +
+  'Held items keep their full length and shape in every frame, they never shrink or disappear. ' +
+  'Held items keep the same angle as in the first frame, they never tilt or lie flat.'
 
 /**
  * Non-character subjects may legitimately turn (Spin), so their rules pin
@@ -68,8 +70,10 @@ const CHARACTER_MOTIONS: readonly AnimationMotionPreset[] = [
   {
     id: 'jump',
     label: 'Jump',
-    motion: 'jump in place: crouch to gather, push off with both legs, rise into the air with legs tucked, then land on the same spot and absorb the impact',
+    motion: 'energetic jump in place: a moderate knee bend, push off so both feet clearly leave the ground, rise high into the air with legs tucked, then land on the same spot with a slight bend; the free arm swings down on the bend and up on the rise, the arm holding an item moves only a little and the item stays upright, rising and falling with the body',
     defaultFrames: 8,
+    // Starts and ends standing, so the last frame can anchor to the first (as idle).
+    loopToFirstFrame: true,
   },
   {
     id: 'attack',

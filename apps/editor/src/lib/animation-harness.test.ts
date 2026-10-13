@@ -70,9 +70,27 @@ describe('ANIMATION_HARNESS', () => {
     expect(ids).toEqual(expect.arrayContaining(['idle', 'walk', 'run', 'jump', 'attack', 'crouch']))
   })
 
-  it('closes the loop on the first frame for idle only, never for walk', () => {
+  it('closes the loop on the first frame for idle and jump, never for walk', () => {
     expect(findAnimationMotion('character', 'idle').loopToFirstFrame).toBe(true)
+    expect(findAnimationMotion('character', 'jump').loopToFirstFrame).toBe(true)
     expect(findAnimationMotion('character', 'walk').loopToFirstFrame).toBeFalsy()
+  })
+
+  it('tells every character motion to keep held items whole', () => {
+    expect(ANIMATION_HARNESS.character.identityRules).toContain(
+      'Held items keep their full length and shape in every frame, they never shrink or disappear.',
+    )
+    expect(ANIMATION_HARNESS.character.identityRules).toContain(
+      'Held items keep the same angle as in the first frame, they never tilt or lie flat.',
+    )
+  })
+
+  it('jumps with lively free arms while the held item stays upright', () => {
+    const { motion } = findAnimationMotion('character', 'jump')
+    expect(motion).toContain('the free arm swings down on the bend and up on the rise')
+    expect(motion).toContain('the arm holding an item moves only a little and the item stays upright')
+    expect(motion).toContain('both feet clearly leave the ground')
+    expect(motion).not.toMatch(/staff/)
   })
 })
 
