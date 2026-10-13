@@ -2888,13 +2888,13 @@
   "supabase/migrations/20261011000000_init_pixelforge.sql": {
     "mtime": 1791812472.480884,
     "seen": 1791842886.9884892,
-    "ast_hash": "441faf36f811c0b13668c58640fb149d",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "supabase/migrations/20261012000000_account_deletions.sql": {
     "mtime": 1791812472.480884,
     "seen": 1791842886.9884892,
-    "ast_hash": "ccad6f7ae95685f6775c6f252fd9d3bf",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "apps/editor/src/auth/pages/LoginPage/LoginPage.tsx": {
@@ -3170,7 +3170,7 @@
   "supabase/migrations/20261012010000_minimal_user_data.sql": {
     "mtime": 1791812472.4823902,
     "seen": 1791842886.9884892,
-    "ast_hash": "9e75198e27e9fb7557e5f8d51487ac55",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "apps/editor/src/sprites/features/properties/components/PositionFields/PositionFields.tsx": {
@@ -3318,15 +3318,15 @@
     "semantic_hash": ""
   },
   "apps/editor/src/lib/animation-harness.test.ts": {
-    "mtime": 1791841938.2710326,
-    "seen": 1791841998.0785284,
-    "ast_hash": "6c05c70a884a809179f64493d4a637a9",
+    "mtime": 1791844039.5283437,
+    "seen": 1791844268.9658983,
+    "ast_hash": "9964331393addc5f0f42e0a95f1d478a",
     "semantic_hash": ""
   },
   "apps/editor/src/lib/animation-harness.ts": {
-    "mtime": 1791841933.1975994,
-    "seen": 1791841998.0785284,
-    "ast_hash": "45da8eb2bc591982a21193bce3d426fb",
+    "mtime": 1791844048.9996848,
+    "seen": 1791844268.9658983,
+    "ast_hash": "8bfba0f3948cec2cccb05dd2f6e5709c",
     "semantic_hash": ""
   },
   "apps/editor/src/lib/animation-limits.test.ts": {
@@ -3530,7 +3530,7 @@
   "supabase/migrations/20261012030000_ai_jobs.sql": {
     "mtime": 1791824825.8134427,
     "seen": 1791842886.9884892,
-    "ast_hash": "f6396829dc95e5ddf9f5be045da6b2d3",
+    "ast_hash": "",
     "semantic_hash": ""
   }
 }
