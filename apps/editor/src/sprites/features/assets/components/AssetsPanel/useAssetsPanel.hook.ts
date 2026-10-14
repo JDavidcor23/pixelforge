@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 
-import { animationSheetCache } from '@/lib/animation-sheet-cache'
+import { composeHorizontalSheet } from '@/lib/compose-horizontal-sheet'
 import { downloadFromHref, downloadJson } from '@/lib/download-file'
 import { useApplyAsset } from '@/sprites/hooks/useApplyAsset.hook'
 import { useImportLibraryAssets } from '@/sprites/hooks/useImportLibraryAssets.hook'
@@ -19,7 +19,6 @@ export interface UseAssetsPanelParams {
 export const useAssetsPanel = ({ search }: UseAssetsPanelParams) => {
   const generations = useAssetsStore((s) => s.generations)
   const animations = useAssetsStore((s) => s.animations)
-  const sheetsAvailableForDownload = useAssetsStore((s) => s.sheetsAvailableForDownload)
   const removeGeneration = useAssetsStore((s) => s.removeGeneration)
   const removeAnimation = useAssetsStore((s) => s.removeAnimation)
   const { applyGeneration, applyAnimation } = useApplyAsset()
@@ -50,7 +49,6 @@ export const useAssetsPanel = ({ search }: UseAssetsPanelParams) => {
           thumbnailSrc: gen.base64,
           assetType: gen.assetType ?? DEFAULT_ASSET_TYPE,
           isAnimated: false,
-          canDownloadSheet: false,
         },
       })),
       ...animations.map((anim) => ({
@@ -62,12 +60,11 @@ export const useAssetsPanel = ({ search }: UseAssetsPanelParams) => {
           thumbnailSrc: anim.frames[0] ?? '',
           assetType: anim.assetType ?? DEFAULT_ASSET_TYPE,
           isAnimated: true,
-          canDownloadSheet: sheetsAvailableForDownload.has(anim.id),
         },
       })),
     ]
     return combined.sort((a, b) => b.timestamp - a.timestamp).map((entry) => entry.item)
-  }, [generations, animations, sheetsAvailableForDownload])
+  }, [generations, animations])
 
   const folderCounts = useMemo(() => {
     const counts: Partial<Record<FolderId, number>> = {}
@@ -132,13 +129,17 @@ export const useAssetsPanel = ({ search }: UseAssetsPanelParams) => {
         return
       }
 
-      const sheet = animationSheetCache.get(item.id)
-      if (!sheet) return
       const animation = animations.find((anim) => anim.id === item.id)
-      downloadFromHref(
-        sheet,
-        `animation-${(animation?.label ?? item.label).replace(/\s+/g, '-').toLowerCase()}-${animation?.timestamp ?? Date.now()}.png`,
-      )
+      if (!animation) return
+      composeHorizontalSheet(animation.frames)
+        .then((sheet) => {
+          if (!sheet) return
+          downloadFromHref(
+            sheet,
+            `animation-${animation.label.replace(/\s+/g, '-').toLowerCase()}-${animation.timestamp}.png`,
+          )
+        })
+        .catch((e: unknown) => console.error('Failed to compose animation sheet for download', e))
     },
     [generations, animations],
   )

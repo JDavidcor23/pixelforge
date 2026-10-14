@@ -638,3 +638,14 @@ export const useRetroDiffusionApiKey = () => useEditorPrefsStore((s) => s.retroD
  */
 export const useSetRetroDiffusionApiKey = () =>
   useEditorPrefsStore((s) => s.setRetroDiffusionApiKey)
+
+/**
+ * Returns the user's own PixelLab API key (BYOK, animations). Null means the
+ * server falls back to its own PIXELLAB_API_KEY.
+ */
+export const usePixelLabApiKey = () => useEditorPrefsStore((s) => s.pixelLabApiKey)
+
+/**
+ * Action to update the PixelLab API key in preferences.
+ */
+export const useSetPixelLabApiKey = () => useEditorPrefsStore((s) => s.setPixelLabApiKey)

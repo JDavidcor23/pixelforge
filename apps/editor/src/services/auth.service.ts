@@ -100,8 +100,17 @@ async function deleteAccount(): Promise<DeleteAccountResult> {
   }
 }
 
+/** The current session's access token (refreshed by Supabase when expired), or null when signed out. */
+async function getAccessToken(): Promise<string | null> {
+  const { data, error } = await supabase.auth.getSession()
+  if (error) return null
+  return data.session?.access_token ?? null
+}
+
 export const authService = {
   getSession: () => supabase.auth.getSession(),
+
+  getAccessToken,
 
   onAuthStateChange: (callback: (event: AuthChangeEvent, session: Session | null) => void) =>
     supabase.auth.onAuthStateChange(callback),

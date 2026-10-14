@@ -2,20 +2,20 @@ import { Film, X } from 'lucide-react'
 
 import { AiResultCard } from '../AiResultCard/AiResultCard'
 import { AssetTypeSelector } from '../CreateTab/AssetTypeSelector'
+import { UnfinishedJobs } from './UnfinishedJobs'
 import { useAnimateTab } from './useAnimateTab.hook'
-import { ANIMATE_CUSTOM_MOTION_PLACEHOLDER, SPRITE_ANIMATION } from '@/constants'
+import { SECONDARY_BUTTON, SECTION_LABEL } from './animate-tab.classes'
+import { ANIMATE_CUSTOM_MOTION_PLACEHOLDER } from '@/constants'
+import {
+  ANIMATION_BUSY_MESSAGE,
+  ANIMATION_CHECK_AGAIN_LABEL,
+  ANIMATION_DISCARD_HINT,
+  ANIMATION_DISCARD_LABEL,
+} from '@/constants/animation'
 import { FOCUS_RING } from '@/constants/focus-ring'
 import { MOTION } from '@/constants/motion'
-import type { AnimationDirection } from '@/types'
 
 const FIELD = 'w-full rounded border border-line bg-sunken px-2 py-1.5 text-xs text-ink outline-none focus:border-accent'
-const SECTION_LABEL = 'font-mono text-3xs uppercase tracking-wider text-subtle'
-
-const capitalizeWords = (value: string) =>
-  value
-    .split('-')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ')
 
 export const AnimateTab = () => {
   const {
@@ -26,14 +26,23 @@ export const AnimateTab = () => {
     setMotionId,
     motion,
     isCharacter,
-    direction,
-    setDirection,
     nFrames,
     setNFrames,
+    frameOptions,
+    canvasSize,
+    canvasSizeError,
     customText,
     setCustomText,
     isGenerating,
+    elapsedLabel,
+    runningLabel,
+    progressHint,
+    isStalled,
+    stalledMessage,
+    handleCheckAgain,
+    handleDiscardJob,
     animError,
+    isBusyError,
     handleGenerateAnimation,
     previewRef,
     handlePreviewReference,
@@ -46,7 +55,8 @@ export const AnimateTab = () => {
     handleSeeAllAssets,
   } = useAnimateTab()
 
-  const isGenerateDisabled = isGenerating || (motion.isCustomInput && !customText.trim())
+  const isGenerateDisabled =
+    isGenerating || isStalled || !!canvasSizeError || (motion.isCustomInput && !customText.trim())
 
   return (
     <div className="flex flex-col gap-3">
@@ -66,7 +76,7 @@ export const AnimateTab = () => {
       {previewRef && (
         <div className="flex flex-col items-center gap-2 rounded-sm border border-line bg-sunken p-2">
           <span className="font-mono text-3xs font-bold uppercase tracking-widest text-subtle">
-            AI input preview (64x64)
+            AI input preview ({canvasSize.width}x{canvasSize.height})
           </span>
           {/* eslint-disable-next-line @next/next/no-img-element -- Vite SPA, no next/image available */}
           <img src={previewRef} alt="Reference preview" className="image-pixelated h-16 w-16 border border-line-strong" />
@@ -75,37 +85,19 @@ export const AnimateTab = () => {
 
       <p className="text-xs text-muted">
         {isCharacter
-          ? 'Uses the current frame as the exact reference of the character and generates the chosen frames.'
-          : `Uses the current frame as the exact reference of this ${assetType} and generates the chosen frames.`}
+          ? 'Uses the current frame as the exact reference — same character, angle and size — and generates the chosen frames.'
+          : `Uses the current frame as the exact reference of this ${assetType} — same angle and size — and generates the chosen frames.`}
       </p>
 
-      <div className={`grid gap-2 ${isCharacter ? 'grid-cols-2' : 'grid-cols-1'}`}>
-        <div>
-          <label className={`mb-1 block ${SECTION_LABEL}`}>Motion</label>
-          <select value={motionId} onChange={(e) => setMotionId(e.target.value)} className={FIELD}>
-            {motions.map((option) => (
-              <option key={option.id} value={option.id}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        {isCharacter && (
-          <div>
-            <label className={`mb-1 block ${SECTION_LABEL}`}>Direction</label>
-            <select
-              value={direction}
-              onChange={(e) => setDirection(e.target.value as AnimationDirection)}
-              className={FIELD}
-            >
-              {SPRITE_ANIMATION.DIRECTIONS.map((d) => (
-                <option key={d} value={d}>
-                  {capitalizeWords(d)}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
+      <div>
+        <label className={`mb-1 block ${SECTION_LABEL}`}>Motion</label>
+        <select value={motionId} onChange={(e) => setMotionId(e.target.value)} className={FIELD}>
+          {motions.map((option) => (
+            <option key={option.id} value={option.id}>
+              {option.label}
+            </option>
+          ))}
+        </select>
       </div>
 
       {motion.isCustomInput && (
@@ -126,7 +118,7 @@ export const AnimateTab = () => {
       <div>
         <label className={`mb-1 block ${SECTION_LABEL}`}>Frames</label>
         <div className="flex gap-1">
-          {SPRITE_ANIMATION.FRAME_OPTIONS.map((n) => (
+          {frameOptions.map((n) => (
             <button
               key={n}
               type="button"
@@ -143,10 +135,39 @@ export const AnimateTab = () => {
         </div>
       </div>
 
-      {animError && (
+      {canvasSizeError && (
         <div className="rounded-sm border border-danger/40 bg-danger/10 p-2">
-          <p className="text-xs text-danger">{animError}</p>
+          <p className="text-xs text-danger">{canvasSizeError}</p>
         </div>
+      )}
+
+      {isStalled && (
+        <div className="flex flex-col gap-2 rounded-sm border border-ai/40 bg-ai/10 p-2">
+          <p className="text-xs text-ai-ink">{stalledMessage}</p>
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={handleCheckAgain} className={SECONDARY_BUTTON}>
+              {ANIMATION_CHECK_AGAIN_LABEL}
+            </button>
+            <button type="button" onClick={handleDiscardJob} className={SECONDARY_BUTTON}>
+              {ANIMATION_DISCARD_LABEL}
+            </button>
+          </div>
+          <p className="text-2xs text-subtle">{ANIMATION_DISCARD_HINT}</p>
+        </div>
+      )}
+
+      {!canvasSizeError && !isStalled && animError && (
+        <>
+          {isBusyError ? (
+            <div className="rounded-sm border border-ai/40 bg-ai/10 p-2">
+              <p className="text-xs text-ai-ink">{ANIMATION_BUSY_MESSAGE}</p>
+            </div>
+          ) : (
+            <div className="rounded-sm border border-danger/40 bg-danger/10 p-2">
+              <p className="text-xs text-danger">{animError}</p>
+            </div>
+          )}
+        </>
       )}
 
       <button
@@ -158,7 +179,7 @@ export const AnimateTab = () => {
         {isGenerating ? (
           <>
             <div className="size-3 animate-spin rounded-full border-2 border-ink border-t-transparent motion-reduce:animate-none" />
-            Generating…
+            {runningLabel} {elapsedLabel}
           </>
         ) : (
           <>
@@ -167,6 +188,10 @@ export const AnimateTab = () => {
           </>
         )}
       </button>
+
+      {isGenerating && <p className="text-center text-2xs text-subtle">{progressHint}</p>}
+
+      <UnfinishedJobs />
 
       {result && (
         <AiResultCard

@@ -21,12 +21,6 @@ import type { AIAnimation, AIGeneration, AssetLibraryRepository } from '@/types'
 export interface AssetsState {
   readonly generations: AIGeneration[]
   readonly animations: AIAnimation[]
-  /**
-   * Animation ids whose full-resolution source sheet is still in memory
-   * (`animationSheetCache`) and can therefore be downloaded. Session-only —
-   * never persisted, matching the pre-redesign behaviour.
-   */
-  readonly sheetsAvailableForDownload: ReadonlySet<string>
   /** `null` until `hydrate` succeeds — writes go to localStorage meanwhile. */
   readonly repository: AssetLibraryRepository | null
   addGeneration: (generation: Omit<AIGeneration, 'id' | 'timestamp'>) => AIGeneration
@@ -35,7 +29,6 @@ export interface AssetsState {
   removeGeneration: (id: string) => void
   /** Removes one animation from the library (Recent strip + Assets tab) and its IndexedDB/localStorage copy. */
   removeAnimation: (id: string) => void
-  markSheetAvailable: (animationId: string) => void
   /** Loads the library from `repository`, migrating the legacy localStorage history into it. */
   hydrate: (repository: AssetLibraryRepository) => Promise<void>
   /** Account deletion's "also delete what's saved in this browser" checkbox — wipes the AI generation/animation history and its browser storage. */
@@ -71,7 +64,6 @@ const initialAnimations = parseAnimationHistory(readStorage(ANIMATION_HISTORY_ST
 export const useAssetsStore = create<AssetsState>((set, get) => ({
   generations: initialGenerations,
   animations: initialAnimations,
-  sheetsAvailableForDownload: new Set<string>(),
   repository: null,
 
   addGeneration: (generation) => {
@@ -162,12 +154,6 @@ export const useAssetsStore = create<AssetsState>((set, get) => ({
     }
   },
 
-  markSheetAvailable: (animationId) => {
-    set((state) => ({
-      sheetsAvailableForDownload: new Set(state.sheetsAvailableForDownload).add(animationId),
-    }))
-  },
-
   hydrate: async (repository) => {
     // Attach first: anything generated while loading goes straight to IndexedDB.
     set({ repository })
@@ -200,7 +186,7 @@ export const useAssetsStore = create<AssetsState>((set, get) => ({
 
   clearLocalHistory: () => {
     const { repository } = get()
-    set({ generations: [], animations: [], sheetsAvailableForDownload: new Set<string>() })
+    set({ generations: [], animations: [] })
     repository?.clear().catch(reportWriteError('cleared library'))
     try {
       persistGenerationHistory(localStorage, [])

@@ -13,8 +13,6 @@ interface AssetTileProps {
 }
 
 export const AssetTile = ({ item, onSelect, onDownload, onDownloadSource, onDelete }: AssetTileProps) => {
-  const canDownload = item.kind === 'generation' || item.canDownloadSheet
-
   return (
     <div className="group flex w-23 flex-col gap-1">
       <button
@@ -58,22 +56,19 @@ export const AssetTile = ({ item, onSelect, onDownload, onDownloadSource, onDele
 
           <span
             role="button"
-            tabIndex={canDownload ? 0 : -1}
-            aria-disabled={!canDownload}
+            tabIndex={0}
             onClick={(e) => {
               e.stopPropagation()
-              if (canDownload) onDownload(item)
+              onDownload(item)
             }}
             onKeyDown={(e) => {
-              if ((e.key === 'Enter' || e.key === ' ') && canDownload) {
+              if (e.key === 'Enter' || e.key === ' ') {
                 e.stopPropagation()
                 onDownload(item)
               }
             }}
-            title={canDownload ? 'Download PNG' : 'Not available for download this session'}
-            className={`flex size-5 items-center justify-center rounded-sm bg-raised/90 text-ink hover:bg-accent hover:text-on-accent ${
-              canDownload ? '' : 'pointer-events-none opacity-40'
-            }`}
+            title="Download PNG"
+            className="flex size-5 items-center justify-center rounded-sm bg-raised/90 text-ink hover:bg-accent hover:text-on-accent"
           >
             <Download size={11} aria-hidden />
           </span>

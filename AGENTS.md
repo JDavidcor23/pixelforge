@@ -134,6 +134,14 @@ problem → prior art → options with tradeoffs → the owner decides → ADR i
 `docs/adr/` → phased plan → learning-log entry in `docs/learning-log/`.
 Research notes live in `docs/architecture/`.
 
+## Future improvements
+
+Postponed ideas live in `docs/ai-notes/future-improvements/README.md` — an
+index that links to one note per idea. Read the index before proposing a new
+feature; open a linked note only when the task touches its area. When an idea
+is postponed, add a note and a row there instead of building it. Urgency is
+the owner's call — leave it `Not decided` until he sets it.
+
 ## Authorship of documents
 
 Two layers, never mixed:

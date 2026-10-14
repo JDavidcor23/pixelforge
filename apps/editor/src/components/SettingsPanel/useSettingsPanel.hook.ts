@@ -20,6 +20,14 @@ interface UseSettingsPanelResult {
   isRetroSaved: boolean
   handleSaveRetroKey: () => void
   handleRemoveRetroKey: () => void
+  pixelLabKey: string
+  setPixelLabKey: (value: string) => void
+  showPixelLabKey: boolean
+  toggleShowPixelLabKey: () => void
+  hasPixelLabKey: boolean
+  isPixelLabSaved: boolean
+  handleSavePixelLabKey: () => void
+  handleRemovePixelLabKey: () => void
   elevenLabsKey: string
   setElevenLabsKey: (value: string) => void
   showElevenLabsKey: boolean
@@ -41,13 +49,17 @@ interface UseSettingsPanelResult {
 export const useSettingsPanel = (onClose: () => void): UseSettingsPanelResult => {
   const retroDiffusionApiKey = useEditorPrefsStore((s) => s.retroDiffusionApiKey)
   const setRetroDiffusionApiKey = useEditorPrefsStore((s) => s.setRetroDiffusionApiKey)
+  const pixelLabApiKey = useEditorPrefsStore((s) => s.pixelLabApiKey)
+  const setPixelLabApiKey = useEditorPrefsStore((s) => s.setPixelLabApiKey)
   const authStatus = useAuthStore((s) => s.status)
   const openDeleteAccountDialog = useEditorUIStore((s) => s.openDeleteAccountDialog)
 
   const [retroKey, setRetroKey] = useState(retroDiffusionApiKey ?? '')
+  const [pixelLabKey, setPixelLabKey] = useState(pixelLabApiKey ?? '')
   const [elevenLabsKey, setElevenLabsKey] = useState('')
   const [hasElevenLabsKey, setHasElevenLabsKey] = useState(false)
   const [showRetroKey, setShowRetroKey] = useState(false)
+  const [showPixelLabKey, setShowPixelLabKey] = useState(false)
   const [showElevenLabsKey, setShowElevenLabsKey] = useState(false)
   const [savedFeedback, setSavedFeedback] = useState<ApiKeyProvider | null>(null)
   const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -63,6 +75,10 @@ export const useSettingsPanel = (onClose: () => void): UseSettingsPanelResult =>
   useEffect(() => {
     setRetroKey(retroDiffusionApiKey ?? '')
   }, [retroDiffusionApiKey])
+
+  useEffect(() => {
+    setPixelLabKey(pixelLabApiKey ?? '')
+  }, [pixelLabApiKey])
 
   // Move focus into the dialog on open so Escape and Tab land inside it.
   useEffect(() => {
@@ -97,6 +113,17 @@ export const useSettingsPanel = (onClose: () => void): UseSettingsPanelResult =>
     setRetroDiffusionApiKey(null)
   }, [setRetroDiffusionApiKey])
 
+  const handleSavePixelLabKey = useCallback(() => {
+    const trimmed = pixelLabKey.trim()
+    setPixelLabApiKey(trimmed || null)
+    flashSaved(API_KEY_PROVIDER.PIXELLAB)
+  }, [pixelLabKey, setPixelLabApiKey, flashSaved])
+
+  const handleRemovePixelLabKey = useCallback(() => {
+    setPixelLabKey('')
+    setPixelLabApiKey(null)
+  }, [setPixelLabApiKey])
+
   const handleSaveElevenLabsKey = useCallback(() => {
     const trimmed = elevenLabsKey.trim()
     if (trimmed) {
@@ -115,6 +142,7 @@ export const useSettingsPanel = (onClose: () => void): UseSettingsPanelResult =>
   }, [])
 
   const toggleShowRetroKey = useCallback(() => setShowRetroKey((v) => !v), [])
+  const toggleShowPixelLabKey = useCallback(() => setShowPixelLabKey((v) => !v), [])
   const toggleShowElevenLabsKey = useCallback(() => setShowElevenLabsKey((v) => !v), [])
 
   const handleClose = useCallback(() => {
@@ -149,6 +177,14 @@ export const useSettingsPanel = (onClose: () => void): UseSettingsPanelResult =>
     isRetroSaved: savedFeedback === API_KEY_PROVIDER.RETRO_DIFFUSION,
     handleSaveRetroKey,
     handleRemoveRetroKey,
+    pixelLabKey,
+    setPixelLabKey,
+    showPixelLabKey,
+    toggleShowPixelLabKey,
+    hasPixelLabKey: !!pixelLabApiKey,
+    isPixelLabSaved: savedFeedback === API_KEY_PROVIDER.PIXELLAB,
+    handleSavePixelLabKey,
+    handleRemovePixelLabKey,
     elevenLabsKey,
     setElevenLabsKey,
     showElevenLabsKey,

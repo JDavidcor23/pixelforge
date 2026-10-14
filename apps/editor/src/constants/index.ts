@@ -1,8 +1,6 @@
 import type {
   RgbaColor,
   ToolDefinition,
-  AnimationDirection,
-  AnimateMotionOption,
   AssetType,
   InspectorTabId,
   BottomPanelTabId,
@@ -14,6 +12,7 @@ import type {
   QualityRecommendation,
 } from '@/types'
 import { COLORS } from '@pixelforge/tokens/colors'
+import { ANIMATION_FRAME_OPTIONS } from './animation'
 
 export const SPRITE_EDITOR_CANVAS = {
   // Batch 4: the AI minimum (see AI_SPRITE_SIZES below) — a brand-new, empty
@@ -129,13 +128,10 @@ export const SPRITE_EDITOR_KEYBOARD = {
 } as const
 
 export const SPRITE_ANIMATION = {
-  DEFAULT_N_FRAMES: 6,
-  DEFAULT_DIRECTION: 'right',
   DEFAULT_FRAME_DURATION_MS: 120,
-  DIRECTIONS: ['left', 'right'],
-  // Retro Diffusion bills an animation FLAT regardless of frame count, so a
-  // longer cycle costs the same as a short one. All values verified accepted.
-  FRAME_OPTIONS: [4, 6, 8, 12, 16],
+  // PixelLab (ADR 0009): even counts 4..16 only. The default per motion lives
+  // in the animation harness (`lib/animation-harness.ts`), not here.
+  FRAME_OPTIONS: ANIMATION_FRAME_OPTIONS,
 } as const
 
 export const AI_SPRITE_SIZES = [64, 128] as const
@@ -191,7 +187,8 @@ export const QUANTIZE_DEFAULTS = {
 export const ALPHA_TRANSPARENT_THRESHOLD = 16
 
 /* ── Retro Diffusion ────────────────────────────────────────────────────────
- * The sprite and animation generation engine.
+ * The base-sprite generation engine. Animations moved to PixelLab (ADR 0009,
+ * see constants/animation.ts and lib/animation-harness.ts).
  *
  * Two properties shape this whole path: it takes width/height as real
  * parameters, and it returns a true RGBA PNG at exactly that resolution.
@@ -226,100 +223,9 @@ export const RETRO_DIFFUSION_PRO_MAX_SIZE = 256
 export const RETRO_DIFFUSION_DEFAULT_STRENGTH = 0.6
 // Measured live: a 64px sprite took 15.6s end to end. 120s leaves room for queueing.
 export const RETRO_DIFFUSION_TIMEOUT_MS = 120000
-/**
- * Animations are far heavier than single sprites and MUST NOT share the sprite
- * timeout. A 6-frame request blew straight past 60s, the route aborted, and
- * Retro Diffusion still billed the $0.14 — the generation succeeded upstream and
- * was thrown away on our side. Aborting an animation costs real money, so this
- * is deliberately generous.
- */
-export const RETRO_DIFFUSION_ANIMATION_TIMEOUT_MS = 300000
-/* ── Retro Diffusion: animation ─────────────────────────────────────────────
- * Retro Diffusion returns the frames as ONE grid sheet (4 frames of 64px arrive
- * as a single 128x128 PNG, 2x2), with exact even cells and no gutters. Slicing
- * is therefore plain division — no gap or valley detection is needed.
- */
-export const RETRO_DIFFUSION_ANIMATION_STYLE_PREFIX = 'rd_advanced_animation__'
-/** Billed FLAT regardless of frame count (2..16 all verified at the same price). */
-export const RETRO_DIFFUSION_ANIMATION_COST_USD = 0.14
 export const RETRO_DIFFUSION_NO_IMAGE_ERROR = 'Retro Diffusion did not return an image.'
 export const RETRO_DIFFUSION_MISSING_KEY_ERROR =
   'Missing Retro Diffusion API key. Add it in settings or set API_RETRO_DIFFUSION.'
-/** Shown instead of the raw upstream error when an unverified motion is rejected. */
-export const RETRO_DIFFUSION_MOTION_REJECTED_HINT =
-  'Retro Diffusion rejected this motion. Try Custom.'
-
-export const RETRO_DIFFUSION_CHARACTER_ANIMATION_PROMPT = (
-  motionText: string,
-  direction: AnimationDirection,
-): string =>
-  `${motionText} animation cycle, character facing ${direction}, side view, ` +
-  'keep the exact character from the reference image: same palette, face, costume ' +
-  'and body proportions. Only the pose changes.'
-
-export const RETRO_DIFFUSION_OBJECT_ANIMATION_PROMPT = (motionText: string, assetType: AssetType): string =>
-  `${motionText} animation, ${assetType} object, keep the exact object from the reference image: ` +
-  'same palette, shape and proportions.'
-
-/**
- * Animate tab, Sprite Studio v2 batch 2 — the motion catalogue per asset type.
- * `idle`, `walking`, `jump` and `attack` were probed live against the Retro
- * Diffusion API and accepted. `crouch`, `destroy` and `subtle_motion` were
- * NOT probed live (only a subset of advanced-animation styles were verified
- * — see `RetroDiffusionAnimationAction`); `custom_action` is always accepted
- * since it carries free-text intent instead of naming a style. `run`,
- * `running`, `die` and `hurt` are confirmed REJECTED as style names, which is
- * why "Run" maps to `custom_action` and puts the word in the prompt instead.
- */
-export const ANIMATE_CHARACTER_MOTIONS: readonly AnimateMotionOption[] = [
-  { id: 'idle', label: 'Idle', rdAction: 'idle' },
-  { id: 'walk', label: 'Walk', rdAction: 'walking' },
-  { id: 'run', label: 'Run', rdAction: 'custom_action' },
-  { id: 'jump', label: 'Jump', rdAction: 'jump' },
-  { id: 'attack', label: 'Attack', rdAction: 'attack' },
-  { id: 'crouch', label: 'Crouch', rdAction: 'crouch' }, // unverified, see comment above
-  { id: 'custom', label: 'Custom', rdAction: 'custom_action', isCustomInput: true },
-] as const
-
-export const ANIMATE_OBJECT_MOTIONS: readonly AnimateMotionOption[] = [
-  {
-    id: 'breathe',
-    label: 'Breathe',
-    rdAction: 'subtle_motion', // unverified, see comment above
-    fixedMotionText: 'subtle idle breathing',
-  },
-  {
-    id: 'squash',
-    label: 'Squash & stretch',
-    rdAction: 'custom_action',
-    fixedMotionText: 'rubber-hose squash and stretch idle loop, bouncy, cartoon',
-  },
-  { id: 'spin', label: 'Spin', rdAction: 'custom_action', fixedMotionText: 'spinning in place loop' },
-  {
-    id: 'break',
-    label: 'Break apart',
-    rdAction: 'destroy', // unverified, see comment above
-    fixedMotionText: 'breaking apart',
-  },
-  { id: 'custom', label: 'Custom', rdAction: 'custom_action', isCustomInput: true },
-] as const
-
-/** object/weapon/costume/effect all share the same non-character motion set. */
-export const ANIMATE_MOTIONS_BY_ASSET_TYPE: Readonly<Record<AssetType, readonly AnimateMotionOption[]>> = {
-  character: ANIMATE_CHARACTER_MOTIONS,
-  object: ANIMATE_OBJECT_MOTIONS,
-  weapon: ANIMATE_OBJECT_MOTIONS,
-  costume: ANIMATE_OBJECT_MOTIONS,
-  effect: ANIMATE_OBJECT_MOTIONS,
-}
-
-export const ANIMATE_DEFAULT_MOTION_ID: Readonly<Record<AssetType, string>> = {
-  character: 'idle',
-  object: 'breathe',
-  weapon: 'breathe',
-  costume: 'breathe',
-  effect: 'breathe',
-}
 
 /** Only `character` gets a character-flavoured example — every other type shares a generic one. */
 export const ANIMATE_CUSTOM_MOTION_PLACEHOLDER: Readonly<Record<AssetType, string>> = {
@@ -613,6 +519,12 @@ export const CANVAS_SIZE_AI_HINT: Readonly<Partial<Record<number, string>>> = {
   64: 'Matches AI output',
   128: 'Matches AI output',
 }
+/**
+ * Create > Import, "Original" size (ADR 0009): an imported PNG keeps its own
+ * resolution up to the largest canvas the size picker offers; only a bigger
+ * image is scaled down to it.
+ */
+export const SPRITE_IMPORT_MAX_NATIVE_SIZE: number = CANVAS_SIZE_OPTIONS[CANVAS_SIZE_OPTIONS.length - 1]
 
 /** Keyboard step sizes for the Color Picker's SV square / hue slider (role="slider"). */
 export const COLOR_PICKER = {

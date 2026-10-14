@@ -2,6 +2,8 @@
 
 # Deferred: scaling the sound editor to thousands of assets
 
+Listed in the [future improvements index](./future-improvements/README.md).
+
 **Status:** deferred on 2026-10-11 (YAGNI). The editor must become functional
 first: assets module, game building, real use. Come back here only when a
 trigger below fires.

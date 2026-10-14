@@ -25,6 +25,7 @@ export const useEditorPrefsStore = create<EditorPrefsStore>()(
         showGrid: state.showGrid,
         onionSkinEnabled: state.onionSkinEnabled,
         retroDiffusionApiKey: state.retroDiffusionApiKey,
+        pixelLabApiKey: state.pixelLabApiKey,
       }),
     }
   )

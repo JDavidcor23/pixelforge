@@ -42,7 +42,7 @@ const contentBox = (pixels: PixelBuffer): [x0: number, y0: number, x1: number, y
   return x1 < x0 ? null : [x0, y0, x1, y1]
 }
 
-/** Crops to [x0..x1] x [y0..y1], all inclusive. Exported: reused by retro-diffusion-utils sheet slicing. */
+/** Crops to [x0..x1] x [y0..y1], all inclusive. */
 export const cropRegion = (pixels: PixelBuffer, x0: number, x1: number, y0: number, y1: number): PixelBuffer => {
   const width = x1 - x0 + 1
   const height = y1 - y0 + 1
@@ -193,7 +193,52 @@ export async function decodeSheetToFrames(
   size: number,
   quantize: boolean,
 ): Promise<PixelBuffer[]> {
+  return sliceSheet(await base64ToNativePixels(base64), frameCount, size, quantize)
+}
+
+/**
+ * Side of the square grid an image keeps at its NATIVE resolution: the longer
+ * side of one cell (`frameCount` cells laid out in one row), or `null` when it
+ * exceeds `maxSize` and must be scaled down instead.
+ */
+export const nativeGridSize = (pixels: PixelBuffer, frameCount: number, maxSize: number): number | null => {
+  const cellWidth = Math.floor(pixels.w / Math.max(1, frameCount))
+  const side = Math.max(cellWidth, pixels.h)
+  return side >= 1 && side <= maxSize ? side : null
+}
+
+/**
+ * "Original" import size (ADR 0009): the image keeps its own resolution — a
+ * 128px PNG becomes a 128px canvas instead of being downscaled to a default.
+ * A square image within `maxSize` is used verbatim; a non-square one is padded
+ * to a square WITHOUT scaling. Only an image larger than `maxSize` is scaled,
+ * through the same fit used for an explicit size.
+ */
+export async function decodeAtNativeSize(base64: string, maxSize: number, quantize: boolean): Promise<PixelBuffer> {
+  const native: PixelBuffer = await base64ToNativePixels(base64)
+  const side = nativeGridSize(native, 1, maxSize)
+  if (side === null) return quantizeIfNeeded(await fitSpriteCentered(native, maxSize), quantize)
+  const square = native.w === side && native.h === side ? native : composeCentered(native, side)
+  return quantizeIfNeeded(square, quantize)
+}
+
+/** Sheet counterpart of {@link decodeAtNativeSize}: frames keep the cell's own size (capped at `maxSize`). */
+export async function decodeSheetAtNativeSize(
+  base64: string,
+  frameCount: number,
+  maxSize: number,
+  quantize: boolean,
+): Promise<PixelBuffer[]> {
   const sheet: PixelBuffer = await base64ToNativePixels(base64)
+  return sliceSheet(sheet, frameCount, nativeGridSize(sheet, frameCount, maxSize) ?? maxSize, quantize)
+}
+
+async function sliceSheet(
+  sheet: PixelBuffer,
+  frameCount: number,
+  size: number,
+  quantize: boolean,
+): Promise<PixelBuffer[]> {
   const sheetHeight = sheet.h
   const sheetWidth = sheet.w
   if (sheetHeight === 0 || sheetWidth === 0 || frameCount <= 0 || size <= 0) return []

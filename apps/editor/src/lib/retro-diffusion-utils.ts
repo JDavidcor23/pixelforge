@@ -1,14 +1,12 @@
 import type {
   PixelBuffer,
-  RetroDiffusionAnimationAction,
   RetroDiffusionCostEstimate,
   RetroDiffusionGenerationResult,
   RetroDiffusionRequestBody,
-  RetroDiffusionStyle,
 } from '@/types'
-import { RETRO_DIFFUSION_ROUTE, RETRO_DIFFUSION_ANIMATION_STYLE_PREFIX } from '@/constants'
+import { RETRO_DIFFUSION_ROUTE } from '@/constants'
 import { base64ToNativePixels } from './image-decode'
-import { decodeToPixels, cropRegion } from './sprite-pipeline'
+import { decodeToPixels } from './sprite-pipeline'
 
 async function postToRetroDiffusion<T>(body: RetroDiffusionRequestBody): Promise<T> {
   const res = await fetch(RETRO_DIFFUSION_ROUTE, {
@@ -59,79 +57,4 @@ export async function decodeGeneratedSprite(base64: string, size: number): Promi
   const native: PixelBuffer = await base64ToNativePixels(base64)
   if (native.w === size && native.h === size) return native
   return decodeToPixels(base64, size, true)
-}
-
-export interface GenerateAnimationParams {
-  /** Fully-built prompt text (see RETRO_DIFFUSION_CHARACTER_ANIMATION_PROMPT / _OBJECT_ANIMATION_PROMPT). */
-  readonly prompt: string
-  readonly rdAction: RetroDiffusionAnimationAction
-  readonly frames: number
-  readonly size: number
-  readonly referenceBase64: string
-  readonly apiKey?: string
-}
-
-/**
- * Generates an animation sheet. `framesDuration` is billed flat, so ask for
- * plenty. Prompt-building lives in the caller (constants + the Animate tab's
- * hook) — this function only talks to the API, it does not know about asset
- * types, motions or directions.
- */
-export async function generateAnimationWithRetroDiffusion({
-  prompt,
-  rdAction,
-  frames,
-  size,
-  referenceBase64,
-  apiKey,
-}: GenerateAnimationParams): Promise<RetroDiffusionGenerationResult> {
-  return postToRetroDiffusion<RetroDiffusionGenerationResult>({
-    prompt,
-    style: `${RETRO_DIFFUSION_ANIMATION_STYLE_PREFIX}${rdAction}` as RetroDiffusionStyle,
-    width: size,
-    height: size,
-    framesDuration: frames,
-    // Otherwise the answer is a GIF, which a canvas cannot decompose into frames.
-    returnSpritesheet: true,
-    inputImageBase64: referenceBase64,
-    apiKey,
-    checkCost: false,
-  })
-}
-
-/**
- * Cuts a Retro Diffusion animation sheet into individual frames.
- *
- * The grid is derived from the sheet's REAL dimensions divided by the frame size
- * that was requested — 4 frames of 64px come back as a 128x128 sheet, so cols and
- * rows both resolve to 2. Cells are exact and evenly spaced with no gutters, so
- * this is division, not detection: no column projection, valley splitting or run
- * repair is involved.
- *
- * Frames are read row-major (left to right, top to bottom) and capped at
- * `expectedFrames`, since a grid can hold more cells than were asked for.
- */
-export async function sliceAnimationSheet(
-  sheetBase64: string,
-  frameSize: number,
-  expectedFrames: number,
-): Promise<PixelBuffer[]> {
-  const sheet: PixelBuffer = await base64ToNativePixels(sheetBase64)
-  const sheetHeight = sheet.h
-  const sheetWidth = sheet.w
-  if (sheetHeight === 0 || sheetWidth === 0 || frameSize <= 0) return []
-
-  const cols = Math.max(1, Math.floor(sheetWidth / frameSize))
-  const rows = Math.max(1, Math.floor(sheetHeight / frameSize))
-  const available = cols * rows
-
-  const frames: PixelBuffer[] = []
-  for (let index = 0; index < Math.min(expectedFrames, available); index++) {
-    const originX = (index % cols) * frameSize
-    const originY = Math.floor(index / cols) * frameSize
-    // cols/rows are floor(sheetDim / frameSize), so this region is always
-    // fully inside the sheet — no ragged final row to guard against.
-    frames.push(cropRegion(sheet, originX, originX + frameSize - 1, originY, originY + frameSize - 1))
-  }
-  return frames
 }

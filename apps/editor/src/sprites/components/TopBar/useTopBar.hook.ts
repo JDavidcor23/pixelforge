@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { useExport } from '@/sprites/features/properties/hooks/useExport.hook'
+import { useImportSpriteSheet } from '@/sprites/hooks/useImportSpriteSheet.hook'
 import {
   useCanRedo,
   useCanUndo,
@@ -11,10 +12,51 @@ import {
   useUndo,
 } from '@/sprites/hooks/useSpriteEditorStore.hook'
 import { RESIZABLE_PANELS, SPRITE_DOCUMENT_DEFAULT_NAME } from '@/constants'
+import {
+  FILE_MENU_DISMISS_KEY,
+  FILE_MENU_ENTRY_KIND,
+  FILE_MENU_ITEM_IDS,
+  FILE_MENU_LABELS,
+} from '@/constants/file-menu'
+import type { FileMenuActions, FileMenuEntry } from '@/types'
+
+/** File menu rows, in menubar order. Every action closes the menu after it runs. */
+export const buildFileMenuEntries = (actions: FileMenuActions): FileMenuEntry[] => {
+  const runAndClose = (action: () => void) => () => {
+    action()
+    actions.closeMenu()
+  }
+  return [
+    {
+      kind: FILE_MENU_ENTRY_KIND.ITEM,
+      id: FILE_MENU_ITEM_IDS.IMPORT_SPRITE_SHEET,
+      label: FILE_MENU_LABELS.IMPORT_SPRITE_SHEET,
+      onSelect: runAndClose(actions.openImportSpriteSheet),
+    },
+    { kind: FILE_MENU_ENTRY_KIND.SEPARATOR, id: FILE_MENU_ITEM_IDS.SEPARATOR_EXPORT },
+    {
+      kind: FILE_MENU_ENTRY_KIND.ITEM,
+      id: FILE_MENU_ITEM_IDS.EXPORT_FRAME,
+      label: FILE_MENU_LABELS.EXPORT_FRAME,
+      onSelect: runAndClose(actions.exportFrame),
+    },
+    {
+      kind: FILE_MENU_ENTRY_KIND.ITEM,
+      id: FILE_MENU_ITEM_IDS.EXPORT_SPRITE_SHEET,
+      label: FILE_MENU_LABELS.EXPORT_SPRITE_SHEET,
+      onSelect: runAndClose(actions.exportSpriteSheet),
+    },
+  ]
+}
+
+export const isMenuDismissKey = (key: string): boolean => key === FILE_MENU_DISMISS_KEY
+
+export const isOutsideMenu = (menu: Pick<Node, 'contains'> | null, target: Node | null): boolean =>
+  menu !== null && !menu.contains(target)
 
 /**
  * TopBar shell logic — document name, frame count, undo/redo, layout reset
- * and the Export menu. The canvas-size popover and the save-status indicator
+ * and the File menu (import + export). The canvas-size popover and the save-status indicator
  * each own their own hook (`CanvasSizePopover/useCanvasSizePopover.hook.ts`,
  * `SaveIndicator/useSaveIndicator.hook.ts`) so this hook doesn't also carry
  * their open/pending state.
@@ -29,41 +71,43 @@ export const useTopBar = () => {
   const redo = useRedo()
   const { handleExportFrame, handleExportSpriteSheet } = useExport()
 
-  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false)
-  const exportMenuRef = useRef<HTMLDivElement>(null)
-  const exportTriggerRef = useRef<HTMLButtonElement>(null)
+  const importSpriteSheet = useImportSpriteSheet()
+
+  const [isFileMenuOpen, setIsFileMenuOpen] = useState(false)
+  const fileMenuRef = useRef<HTMLDivElement>(null)
+  const fileTriggerRef = useRef<HTMLButtonElement>(null)
 
   const frameCountLabel = `${frameCount} ${frameCount === 1 ? 'FRAME' : 'FRAMES'}`
 
   // `returnFocus` is false for the outside-click/blur-equivalent paths (the
   // trigger isn't focused there anyway) and true for Escape, which should
   // hand focus straight back to the button that opened the menu.
-  const closeExportMenu = useCallback((returnFocus = false) => {
-    setIsExportMenuOpen(false)
-    if (returnFocus) exportTriggerRef.current?.focus()
+  const closeFileMenu = useCallback((returnFocus = false) => {
+    setIsFileMenuOpen(false)
+    if (returnFocus) fileTriggerRef.current?.focus()
   }, [])
-  const toggleExportMenu = useCallback(() => setIsExportMenuOpen((open) => !open), [])
+  const toggleFileMenu = useCallback(() => setIsFileMenuOpen((open) => !open), [])
 
-  const handleExportFrameClick = useCallback(() => {
-    handleExportFrame()
-    closeExportMenu()
-  }, [handleExportFrame, closeExportMenu])
-
-  const handleExportSpriteSheetClick = useCallback(() => {
-    handleExportSpriteSheet()
-    closeExportMenu()
-  }, [handleExportSpriteSheet, closeExportMenu])
+  const { openFilePicker } = importSpriteSheet
+  const fileMenuEntries = useMemo(
+    () =>
+      buildFileMenuEntries({
+        openImportSpriteSheet: openFilePicker,
+        exportFrame: handleExportFrame,
+        exportSpriteSheet: handleExportSpriteSheet,
+        closeMenu: () => closeFileMenu(),
+      }),
+    [openFilePicker, handleExportFrame, handleExportSpriteSheet, closeFileMenu],
+  )
 
   useEffect(() => {
-    if (!isExportMenuOpen) return
+    if (!isFileMenuOpen) return
 
     const handlePointerDown = (event: MouseEvent) => {
-      if (exportMenuRef.current && !exportMenuRef.current.contains(event.target as Node)) {
-        closeExportMenu()
-      }
+      if (isOutsideMenu(fileMenuRef.current, event.target as Node)) closeFileMenu()
     }
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') closeExportMenu(true)
+      if (isMenuDismissKey(event.key)) closeFileMenu(true)
     }
 
     document.addEventListener('mousedown', handlePointerDown)
@@ -72,7 +116,7 @@ export const useTopBar = () => {
       document.removeEventListener('mousedown', handlePointerDown)
       document.removeEventListener('keydown', handleKeyDown)
     }
-  }, [isExportMenuOpen, closeExportMenu])
+  }, [isFileMenuOpen, closeFileMenu])
 
   // Enabled only when restoring defaults would actually change something —
   // otherwise it's a dead click the owner doesn't need to make.
@@ -97,11 +141,14 @@ export const useTopBar = () => {
     redo,
     isLayoutCustomized,
     handleResetLayout,
-    isExportMenuOpen,
-    exportMenuRef,
-    exportTriggerRef,
-    toggleExportMenu,
-    handleExportFrameClick,
-    handleExportSpriteSheetClick,
+    isFileMenuOpen,
+    fileMenuRef,
+    fileTriggerRef,
+    toggleFileMenu,
+    fileMenuEntries,
+    importFileInputRef: importSpriteSheet.fileInputRef,
+    handleImportFileSelected: importSpriteSheet.handleFileSelected,
+    importDialogProps: importSpriteSheet.dialogProps,
+    importFileErrorProps: importSpriteSheet.fileErrorProps,
   }
 }
