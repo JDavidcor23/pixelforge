@@ -21,6 +21,8 @@ export const useAssetsPanel = ({ search }: UseAssetsPanelParams) => {
   const animations = useAssetsStore((s) => s.animations)
   const removeGeneration = useAssetsStore((s) => s.removeGeneration)
   const removeAnimation = useAssetsStore((s) => s.removeAnimation)
+  const renameItem = useAssetsStore((s) => s.renameItem)
+  const setItemAssetType = useAssetsStore((s) => s.setItemAssetType)
   const { applyGeneration, applyAnimation } = useApplyAsset()
   const setInspectorTab = useSetInspectorTab()
   const requestFocusPrompt = useRequestFocusPrompt()
@@ -176,6 +178,19 @@ export const useAssetsPanel = ({ search }: UseAssetsPanelParams) => {
     [removeGeneration, removeAnimation],
   )
 
+  // ADR 0010, Phase 2 — rename / "move to" icon buttons on AssetTile. `renameItem`
+  // and `setItemAssetType` already route by `item.kind` internally, same as how
+  // `item.kind` picks `removeGeneration` vs `removeAnimation` above.
+  const handleRenameItem = useCallback(
+    (item: AssetLibraryItem, label: string) => renameItem(item.id, item.kind, label),
+    [renameItem],
+  )
+
+  const handleMoveItem = useCallback(
+    (item: AssetLibraryItem, assetType: AssetType) => setItemAssetType(item.id, item.kind, assetType),
+    [setItemAssetType],
+  )
+
   return {
     folders: ASSET_FOLDERS,
     selectedFolderId,
@@ -188,6 +203,8 @@ export const useAssetsPanel = ({ search }: UseAssetsPanelParams) => {
     handleDownloadItem,
     handleDownloadSource,
     handleDeleteItem,
+    handleRenameItem,
+    handleMoveItem,
     handleOpenCreate,
     importFileInputRef,
     isImporting,

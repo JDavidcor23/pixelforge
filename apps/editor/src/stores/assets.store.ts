@@ -4,9 +4,12 @@ import { ANIMATION_HISTORY_STORAGE_KEY, GENERATION_HISTORY_STORAGE_KEY } from '@
 import { ASSET_LIBRARY_LIMIT } from '@/constants/persistence'
 import { parseAnimationHistory, persistAnimationHistory } from '@/lib/animation-history'
 import { parseGenerationHistory, persistGenerationHistory } from '@/lib/generation-history'
-import type { AIAnimation, AIGeneration, AssetLibraryRepository } from '@/types'
+import type { AIAnimation, AIGeneration, AssetLibraryRepository, AssetType } from '@/types'
 
 type NewGeneration = Omit<AIGeneration, 'id' | 'timestamp'>
+
+/** Every origin an `AssetLibraryItem` can have — mirrors `AssetLibraryItem['kind']` without importing that view-model type into the persistence layer. */
+type AssetItemKind = 'generation' | 'drawing' | 'animation'
 
 /**
  * Shared Assets library (Sprite Studio v2): sprite generations and
@@ -35,6 +38,20 @@ export interface AssetsState {
    */
   addDrawing: (drawing: Omit<NewGeneration, 'kind'>) => AIGeneration
   addAnimation: (animation: AIAnimation) => void
+  /**
+   * Rename an existing Assets item (ADR 0010, Phase 2 — `AssetTile`'s rename pencil).
+   * Updates `AIGeneration.prompt` (`'generation'`/`'drawing'`) or `AIAnimation.label`
+   * (`'animation'`) and persists through the same repository/localStorage path
+   * `addGeneration`/`addAnimation` already use. No-op if `id` isn't found in the
+   * slice `kind` points to, or the trimmed label is empty.
+   */
+  renameItem: (id: string, kind: AssetItemKind, label: string) => void
+  /**
+   * Move an existing Assets item to a different `AssetType` folder (ADR 0010,
+   * Phase 2 — `AssetTile`'s "move to" folder icon). Same persistence path as
+   * `renameItem`. No-op if `id` isn't found in the slice `kind` points to.
+   */
+  setItemAssetType: (id: string, kind: AssetItemKind, assetType: AssetType) => void
   /** Removes one generation from the library (Recent strip + Assets tab) and its IndexedDB/localStorage copy. */
   removeGeneration: (id: string) => void
   /** Removes one animation from the library (Recent strip + Assets tab) and its IndexedDB/localStorage copy. */
@@ -64,6 +81,18 @@ const mergeNewest = <T extends LibraryEntry>(...lists: readonly (readonly T[])[]
 
 const evictedIds = <T extends LibraryEntry>(entries: readonly T[]): string[] =>
   entries.slice(ASSET_LIBRARY_LIMIT).map((entry) => entry.id)
+
+/** Finds `id` in `list` and returns the patched entry plus the full list with it replaced, or `null` if missing. */
+const updateEntry = <T extends LibraryEntry>(
+  list: readonly T[],
+  id: string,
+  patch: Partial<T>,
+): { readonly next: T[]; readonly updated: T } | null => {
+  const target = list.find((entry) => entry.id === id)
+  if (!target) return null
+  const updated = { ...target, ...patch }
+  return { next: list.map((entry) => (entry.id === id ? updated : entry)), updated }
+}
 
 const reportWriteError = (what: string) => (e: unknown) => console.error(`Failed to save ${what}`, e)
 const reportDeleteError = (what: string) => (e: unknown) => console.error(`Failed to delete ${what}`, e)
@@ -136,6 +165,75 @@ export const useAssetsStore = create<AssetsState>((set, get) => {
       }
     },
   
+    renameItem: (id, kind, label) => {
+      const trimmed = label.trim()
+      if (!trimmed) return
+
+      if (kind === 'animation') {
+        const { repository, animations } = get()
+        const result = updateEntry(animations, id, { label: trimmed })
+        if (!result) return
+        set({ animations: result.next })
+        if (repository) {
+          repository.putAnimations([result.updated]).catch(reportWriteError('animation rename'))
+          return
+        }
+        try {
+          persistAnimationHistory(localStorage, result.next)
+        } catch (e) {
+          console.error('Failed to persist animation history', e)
+        }
+        return
+      }
+
+      const { repository, generations } = get()
+      const result = updateEntry(generations, id, { prompt: trimmed })
+      if (!result) return
+      set({ generations: result.next })
+      if (repository) {
+        repository.putGenerations([result.updated]).catch(reportWriteError('generation rename'))
+        return
+      }
+      try {
+        persistGenerationHistory(localStorage, result.next)
+      } catch (e) {
+        console.error('Failed to persist generation history', e)
+      }
+    },
+
+    setItemAssetType: (id, kind, assetType) => {
+      if (kind === 'animation') {
+        const { repository, animations } = get()
+        const result = updateEntry(animations, id, { assetType })
+        if (!result) return
+        set({ animations: result.next })
+        if (repository) {
+          repository.putAnimations([result.updated]).catch(reportWriteError('animation move'))
+          return
+        }
+        try {
+          persistAnimationHistory(localStorage, result.next)
+        } catch (e) {
+          console.error('Failed to persist animation history', e)
+        }
+        return
+      }
+
+      const { repository, generations } = get()
+      const result = updateEntry(generations, id, { assetType })
+      if (!result) return
+      set({ generations: result.next })
+      if (repository) {
+        repository.putGenerations([result.updated]).catch(reportWriteError('generation move'))
+        return
+      }
+      try {
+        persistGenerationHistory(localStorage, result.next)
+      } catch (e) {
+        console.error('Failed to persist generation history', e)
+      }
+    },
+
     removeGeneration: (id) => {
       const { repository, generations } = get()
       const next = generations.filter((g) => g.id !== id)

@@ -19,6 +19,8 @@ export const AssetsPanel = ({ search }: AssetsPanelProps) => {
     handleDownloadItem,
     handleDownloadSource,
     handleDeleteItem,
+    handleRenameItem,
+    handleMoveItem,
     handleOpenCreate,
     importFileInputRef,
     isImporting,
@@ -44,6 +46,8 @@ export const AssetsPanel = ({ search }: AssetsPanelProps) => {
         onDownloadItem={handleDownloadItem}
         onDownloadSource={handleDownloadSource}
         onDeleteItem={handleDeleteItem}
+        onRenameItem={handleRenameItem}
+        onMoveItem={handleMoveItem}
         onOpenCreate={handleOpenCreate}
         importFileInputRef={importFileInputRef}
         isImporting={isImporting}
