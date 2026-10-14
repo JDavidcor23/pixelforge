@@ -4,11 +4,7 @@ import { animationSheetCache } from '@/lib/animation-sheet-cache'
 import { downloadFromHref, downloadJson } from '@/lib/download-file'
 import { useApplyAsset } from '@/sprites/hooks/useApplyAsset.hook'
 import { useImportLibraryAssets } from '@/sprites/hooks/useImportLibraryAssets.hook'
-import {
-  useRequestFocusPrompt,
-  useSetCreateMethod,
-  useSetInspectorTab,
-} from '@/sprites/hooks/useSpriteEditorStore.hook'
+import { useRequestFocusPrompt, useSetInspectorTab } from '@/sprites/hooks/useSpriteEditorStore.hook'
 import { useAssetsStore } from '@/stores/assets.store'
 import { ASSET_FOLDERS, DEFAULT_ASSET_TYPE } from '@/constants'
 import type { AssetLibraryItem, AssetType } from '@/types'
@@ -28,7 +24,6 @@ export const useAssetsPanel = ({ search }: UseAssetsPanelParams) => {
   const removeAnimation = useAssetsStore((s) => s.removeAnimation)
   const { applyGeneration, applyAnimation } = useApplyAsset()
   const setInspectorTab = useSetInspectorTab()
-  const setCreateMethod = useSetCreateMethod()
   const requestFocusPrompt = useRequestFocusPrompt()
 
   const [selectedFolderId, setSelectedFolderId] = useState<FolderId>('all')
@@ -102,9 +97,8 @@ export const useAssetsPanel = ({ search }: UseAssetsPanelParams) => {
   // method was last active) and ask the Generate panel to focus its prompt.
   const handleOpenCreate = useCallback(() => {
     setInspectorTab('create')
-    setCreateMethod('generate')
     requestFocusPrompt()
-  }, [setInspectorTab, setCreateMethod, requestFocusPrompt])
+  }, [setInspectorTab, requestFocusPrompt])
 
   const handleSelectItem = useCallback(
     async (item: AssetLibraryItem) => {

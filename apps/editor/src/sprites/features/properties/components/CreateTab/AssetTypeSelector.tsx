@@ -2,7 +2,7 @@ import { Box, Shirt, Sparkles, Sword, User } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 import { useAssetTypeSelector } from './useAssetTypeSelector.hook'
-import { FOCUS_RING } from '@/constants/focus-ring'
+import { DISABLED_STATE, FOCUS_RING } from '@/constants/focus-ring'
 import { MOTION } from '@/constants/motion'
 import type { AssetType } from '@/types'
 
@@ -13,10 +13,12 @@ interface AssetTypeSelectorProps {
   readonly onChange: (value: AssetType) => void
   /** Smaller chips, icon-first — used where the full-size selector would crowd the panel (Animate tab). */
   readonly compact?: boolean
+  /** Locks the asset type while a generation is in flight — mirrors `QualitySelector`'s `disabled` prop. */
+  readonly disabled?: boolean
 }
 
-export const AssetTypeSelector = ({ value, onChange, compact = false }: AssetTypeSelectorProps) => {
-  const { options, registerRef, handleKeyDown } = useAssetTypeSelector({ onChange })
+export const AssetTypeSelector = ({ value, onChange, compact = false, disabled = false }: AssetTypeSelectorProps) => {
+  const { options, registerRef, handleKeyDown } = useAssetTypeSelector({ onChange, disabled })
 
   return (
     <div role="radiogroup" aria-label="Asset type" className="flex flex-wrap gap-1.5">
@@ -32,9 +34,10 @@ export const AssetTypeSelector = ({ value, onChange, compact = false }: AssetTyp
             role="radio"
             aria-checked={isSelected}
             tabIndex={isSelected ? 0 : -1}
+            disabled={disabled}
             onClick={() => onChange(option.id)}
             onKeyDown={(event) => handleKeyDown(event, index)}
-            className={`flex items-center gap-1.5 rounded border font-medium ${MOTION.COLORS} ${FOCUS_RING.SURFACE} ${
+            className={`flex items-center gap-1.5 rounded border font-medium ${MOTION.COLORS} ${FOCUS_RING.SURFACE} ${DISABLED_STATE} ${
               compact ? 'px-2 py-1 text-2xs' : 'px-2.5 py-1.5 text-xs'
             } ${
               isSelected

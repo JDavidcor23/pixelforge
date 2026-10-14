@@ -1,4 +1,4 @@
-import { FolderOpen, GalleryHorizontal, Search, Upload } from 'lucide-react'
+import { FolderOpen, GalleryHorizontal, Search } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 import { useBottomPanel } from './useBottomPanel.hook'
@@ -18,7 +18,6 @@ export const BottomPanel = () => {
     handleTabKeyDown,
     search,
     handleSearchChange,
-    handleImportClick,
   } = useBottomPanel()
 
   return (
@@ -57,30 +56,20 @@ export const BottomPanel = () => {
         <div className="flex-1" />
 
         {activeTab === 'assets' && (
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <Search
-                size={12}
-                className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-subtle"
-                aria-hidden
-              />
-              <input
-                type="search"
-                value={search}
-                onChange={(e) => handleSearchChange(e.target.value)}
-                placeholder="Search assets"
-                aria-label="Search assets"
-                className="h-6.5 w-55 rounded border border-line bg-sunken pl-6.5 pr-2 text-2xs text-ink placeholder:text-subtle outline-none focus:border-accent"
-              />
-            </div>
-            <button
-              type="button"
-              onClick={handleImportClick}
-              className={`flex items-center gap-1.5 rounded border border-line-strong px-2.5 py-1 text-2xs text-muted hover:bg-hover hover:text-ink ${MOTION.COLORS} ${FOCUS_RING.SURFACE}`}
-            >
-              <Upload size={12} aria-hidden />
-              Import
-            </button>
+          <div className="relative">
+            <Search
+              size={12}
+              className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-subtle"
+              aria-hidden
+            />
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              placeholder="Search assets"
+              aria-label="Search assets"
+              className="h-6.5 w-55 rounded border border-line bg-sunken pl-6.5 pr-2 text-2xs text-ink placeholder:text-subtle outline-none focus:border-accent"
+            />
           </div>
         )}
       </div>

@@ -131,9 +131,6 @@ export interface ImportedLibraryImage {
  */
 export type AssetType = 'character' | 'object' | 'weapon' | 'costume' | 'effect'
 
-/** How the user wants to produce the asset selected in step 1 of the Create tab. */
-export type CreateMethod = 'draw' | 'generate' | 'import'
-
 /**
  * Create tab > Generate, "Quality" selector (Sprite Studio v2). Flat USD price
  * per tier, measured live with `check_cost` — generation size does NOT change
@@ -261,15 +258,6 @@ export interface AIJob<TResult> {
   readonly isRunning: boolean
   readonly error: string | null
   readonly result: TResult | null
-}
-
-/** Create tab > Generate "Recent" strip entry — one `AIGeneration` from the Assets library. */
-export interface RecentGenerationItem {
-  readonly id: string
-  readonly title: string
-  readonly thumbnailSrc: string
-  readonly base64: string
-  readonly width: number
 }
 
 /** Animate tab "Recent" strip entry — one `AIAnimation` from the Assets library. */

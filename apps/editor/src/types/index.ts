@@ -6,7 +6,7 @@ export * from './mascot.types'
 export * from './account-deletion.types'
 
 import type { Command, DispatchResult } from '@/lib/core/commands'
-import type { AssetType, CreateMethod, QualityTier } from './ai-generation'
+import type { AssetType, QualityTier } from './ai-generation'
 import type { DocumentPayload } from './document'
 
 export interface RgbaColor {
@@ -259,8 +259,6 @@ export interface EditorUIState {
     readonly toolbarPosition: { readonly x: number; readonly y: number } | null
     readonly inspectorTab: InspectorTabId
     readonly bottomPanelTab: BottomPanelTabId
-    /** Create tab, step 2 — how the user wants to produce the asset (draw/generate/import). */
-    readonly createMethod: CreateMethod
     /**
      * Create tab, step 1 — lifted out of `CreateTab` local state (Sprite
      * Studio v2 batch 2) so the Animate tab can read/edit the same asset type
@@ -302,7 +300,6 @@ export interface EditorUIActions {
   setToolbarPosition: (position: { x: number; y: number } | null) => void
   setInspectorTab: (tab: InspectorTabId) => void
   setBottomPanelTab: (tab: BottomPanelTabId) => void
-  setCreateMethod: (method: CreateMethod) => void
   setCreateAssetType: (assetType: AssetType) => void
   setCreateQualityTier: (tier: QualityTier) => void
   requestFocusPrompt: () => void

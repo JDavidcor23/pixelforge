@@ -505,16 +505,6 @@ export const useBottomPanelTab = () => useEditorUIStore((s) => s.ui.bottomPanelT
 export const useSetBottomPanelTab = () => useEditorUIStore((s) => s.setBottomPanelTab)
 
 /**
- * Returns the Create tab's active method (draw/generate/import).
- */
-export const useCreateMethod = () => useEditorUIStore((s) => s.ui.createMethod)
-
-/**
- * Action to switch the Create tab's active method.
- */
-export const useSetCreateMethod = () => useEditorUIStore((s) => s.setCreateMethod)
-
-/**
  * Returns the one-shot nonce the Create > Generate panel watches to focus its
  * prompt textarea (bumped by `useRequestFocusPrompt`).
  */

@@ -2,19 +2,12 @@ import { useCallback, useRef, useState } from 'react'
 import type { KeyboardEvent } from 'react'
 
 import { BOTTOM_PANEL_TABS } from '@/constants'
-import {
-  useBottomPanelTab,
-  useSetBottomPanelTab,
-  useSetCreateMethod,
-  useSetInspectorTab,
-} from '@/sprites/hooks/useSpriteEditorStore.hook'
+import { useBottomPanelTab, useSetBottomPanelTab } from '@/sprites/hooks/useSpriteEditorStore.hook'
 import type { BottomPanelTabId } from '@/types'
 
 export const useBottomPanel = () => {
   const activeTab = useBottomPanelTab()
   const setActiveTab = useSetBottomPanelTab()
-  const setInspectorTab = useSetInspectorTab()
-  const setCreateMethod = useSetCreateMethod()
 
   const [search, setSearch] = useState('')
   const tabRefs = useRef<Partial<Record<BottomPanelTabId, HTMLButtonElement | null>>>({})
@@ -44,10 +37,6 @@ export const useBottomPanel = () => {
   )
 
   const handleSearchChange = useCallback((value: string) => setSearch(value), [])
-  const handleImportClick = useCallback(() => {
-    setInspectorTab('create')
-    setCreateMethod('import')
-  }, [setInspectorTab, setCreateMethod])
 
   return {
     tabs: BOTTOM_PANEL_TABS,
@@ -57,6 +46,5 @@ export const useBottomPanel = () => {
     handleTabKeyDown,
     search,
     handleSearchChange,
-    handleImportClick,
   }
 }

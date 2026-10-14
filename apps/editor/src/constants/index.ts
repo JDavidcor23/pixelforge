@@ -4,7 +4,6 @@ import type {
   AnimationDirection,
   AnimateMotionOption,
   AssetType,
-  CreateMethod,
   InspectorTabId,
   BottomPanelTabId,
   RetroDiffusionStyle,
@@ -579,14 +578,6 @@ export const ASSET_TYPE_EXAMPLE_CHIPS: Readonly<Record<AssetType, readonly { rea
   ],
 }
 
-export const CREATE_METHODS: readonly { readonly id: CreateMethod; readonly label: string; readonly iconName: string }[] = [
-  { id: 'draw', label: 'Draw', iconName: 'Pencil' },
-  { id: 'generate', label: 'Generate', iconName: 'WandSparkles' },
-  { id: 'import', label: 'Import', iconName: 'Upload' },
-] as const
-
-export const DEFAULT_CREATE_METHOD: CreateMethod = 'generate'
-
 /** Assets tab folder tree — `assetType: null` is the "All assets" root folder. */
 export const ASSET_FOLDERS: readonly {
   readonly id: 'all' | AssetType
@@ -674,4 +665,13 @@ export const GAME_TEMPLATE_TOOLTIP =
  * asset type, not just character.
  */
 export const PROMPT_WORD_LIMIT = 40
-export const PROMPT_WORD_LIMIT_WARNING = `Long prompts crop the character. Keep it under ${PROMPT_WORD_LIMIT} words.`
+
+/**
+ * Average Latin-script word length including its trailing space — used only
+ * to express the verified `PROMPT_WORD_LIMIT` (words) in characters, since
+ * the visible prompt counter (`promptCharCount`) is character-based and its
+ * overage warning must share that same unit instead of mixing words/chars.
+ */
+const AVERAGE_CHARS_PER_WORD = 6
+export const PROMPT_CHAR_LIMIT = PROMPT_WORD_LIMIT * AVERAGE_CHARS_PER_WORD
+export const PROMPT_CHAR_LIMIT_WARNING = `Long prompts crop the character. Keep it under ${PROMPT_CHAR_LIMIT} characters.`

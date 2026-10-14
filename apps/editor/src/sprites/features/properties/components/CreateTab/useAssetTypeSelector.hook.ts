@@ -6,10 +6,12 @@ import type { AssetType } from '@/types'
 
 export interface UseAssetTypeSelectorParams {
   readonly onChange: (value: AssetType) => void
+  /** When true, arrow-key navigation is a no-op — mirrors the chips' own `disabled` prop. */
+  readonly disabled?: boolean
 }
 
 /** Roving-tabindex keyboard navigation for the asset-type radiogroup. */
-export const useAssetTypeSelector = ({ onChange }: UseAssetTypeSelectorParams) => {
+export const useAssetTypeSelector = ({ onChange, disabled = false }: UseAssetTypeSelectorParams) => {
   const itemRefs = useRef<Partial<Record<AssetType, HTMLButtonElement | null>>>({})
 
   const registerRef = useCallback(
@@ -21,6 +23,8 @@ export const useAssetTypeSelector = ({ onChange }: UseAssetTypeSelectorParams) =
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+      if (disabled) return
+
       const isNext = event.key === 'ArrowRight' || event.key === 'ArrowDown'
       const isPrev = event.key === 'ArrowLeft' || event.key === 'ArrowUp'
       if (!isNext && !isPrev) return
@@ -33,7 +37,7 @@ export const useAssetTypeSelector = ({ onChange }: UseAssetTypeSelectorParams) =
       onChange(nextType)
       itemRefs.current[nextType]?.focus()
     },
-    [onChange],
+    [onChange, disabled],
   )
 
   return { options: ASSET_TYPES, registerRef, handleKeyDown }

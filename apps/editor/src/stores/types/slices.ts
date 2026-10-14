@@ -2,7 +2,6 @@ import type {
   AnimationFrame,
   AssetType,
   BottomPanelTabId,
-  CreateMethod,
   DocStatus,
   InspectorTabId,
   Layer,
@@ -130,7 +129,6 @@ export interface UISlice {
     toolbarPosition: { x: number; y: number } | null
     inspectorTab: InspectorTabId
     bottomPanelTab: BottomPanelTabId
-    createMethod: CreateMethod
     createAssetType: AssetType
     /** Create tab > Generate, "Quality" selector — persisted like `createAssetType` above. */
     createQualityTier: QualityTier
@@ -147,7 +145,6 @@ export interface UISlice {
   setToolbarPosition: (position: { x: number; y: number } | null) => void
   setInspectorTab: (tab: InspectorTabId) => void
   setBottomPanelTab: (tab: BottomPanelTabId) => void
-  setCreateMethod: (method: CreateMethod) => void
   setCreateAssetType: (assetType: AssetType) => void
   setCreateQualityTier: (tier: QualityTier) => void
   requestFocusPrompt: () => void

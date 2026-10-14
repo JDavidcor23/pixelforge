@@ -21,8 +21,8 @@ export const useEditorUIStore = create<EditorUIStore>()(
       }),
       // Default zustand/persist merge replaces `ui` wholesale with whatever
       // was persisted. Deep-merge it instead so a persisted snapshot taken
-      // before a new `ui` field existed (e.g. `createMethod`) doesn't leave
-      // that field `undefined` after hydration.
+      // before a new `ui` field existed doesn't leave that field `undefined`
+      // after hydration.
       merge: (persistedState, currentState) => {
         const persisted = persistedState as Partial<EditorUIStore> | undefined
         return {

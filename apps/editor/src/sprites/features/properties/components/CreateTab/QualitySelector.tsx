@@ -29,7 +29,7 @@ export const QualitySelector = ({ assetType, value, onChange, disabled }: Qualit
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-center justify-between">
-        <span className={SECTION_LABEL}>Quality</span>
+        <span className={SECTION_LABEL}>2 · Quality</span>
         <button
           ref={compareTriggerRef}
           type="button"
@@ -43,6 +43,8 @@ export const QualitySelector = ({ assetType, value, onChange, disabled }: Qualit
       <div role="radiogroup" aria-label="Generation quality" className="mt-2 grid grid-cols-3 gap-1.5">
         {tiers.map((tier, index) => {
           const isSelected = tier.id === value
+          const isRecommended = tier.id === recommendedTier
+          const recommendedBadgeId = `${tier.id}-recommended-badge`
           return (
             <button
               key={tier.id}
@@ -50,6 +52,7 @@ export const QualitySelector = ({ assetType, value, onChange, disabled }: Qualit
               type="button"
               role="radio"
               aria-checked={isSelected}
+              aria-describedby={isRecommended ? recommendedBadgeId : undefined}
               tabIndex={isSelected ? 0 : -1}
               disabled={disabled}
               onClick={() => onChange(tier.id)}
@@ -60,8 +63,16 @@ export const QualitySelector = ({ assetType, value, onChange, disabled }: Qualit
                   : 'border-transparent bg-hover hover:border-line-strong'
               }`}
             >
-              {tier.id === recommendedTier && (
-                <span className="absolute -top-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-sm border border-ai-ink bg-raised px-1 font-mono text-3xs uppercase tracking-wider text-ai-ink">
+              {isRecommended && (
+                // "Recommended" at text-3xs/tracking-wider needs more room than a
+                // single tile at the panel's MIN width (RESIZABLE_PANELS.RIGHT.MIN)
+                // — borrow the two adjacent gaps (gap-1.5 on this grid, doubled) so
+                // the word itself never gets ellipsized; `truncate` stays only as a
+                // safety clip for extreme cases (browser zoom, long localizations).
+                <span
+                  id={recommendedBadgeId}
+                  className="absolute -top-2 left-1/2 max-w-[calc(100%+0.75rem)] -translate-x-1/2 truncate rounded-sm border border-ai-ink bg-raised px-1 font-mono text-3xs uppercase tracking-wider text-ai-ink"
+                >
                   Recommended
                 </span>
               )}
