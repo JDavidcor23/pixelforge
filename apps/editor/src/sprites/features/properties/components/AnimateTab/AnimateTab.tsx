@@ -10,6 +10,8 @@ import { SECONDARY_BUTTON, SECTION_LABEL } from './animate-tab.classes'
 import { ANIMATE_CUSTOM_MOTION_PLACEHOLDER } from '@/constants'
 import {
   ANIMATION_BUSY_MESSAGE,
+  ANIMATION_CANCEL_HINT,
+  ANIMATION_CANCEL_LABEL,
   ANIMATION_CHECK_AGAIN_LABEL,
   ANIMATION_DISCARD_HINT,
   ANIMATION_DISCARD_LABEL,
@@ -182,7 +184,15 @@ export const AnimateTab = () => {
         )}
       </button>
 
-      {isGenerating && <p className="text-center text-2xs text-subtle">{progressHint}</p>}
+      {isGenerating && !isStalled && (
+        <div className="flex flex-col items-center gap-1">
+          <p className="text-center text-2xs text-subtle">{progressHint}</p>
+          <button type="button" onClick={handleDiscardJob} className={SECONDARY_BUTTON}>
+            {ANIMATION_CANCEL_LABEL}
+          </button>
+          <p className="text-2xs text-subtle">{ANIMATION_CANCEL_HINT}</p>
+        </div>
+      )}
 
       {isReferencePickerOpen && <ReferencePicker onClose={handleCloseReferencePicker} />}
 

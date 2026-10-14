@@ -89,6 +89,11 @@ export const ANIMATION_DISCARD_LABEL = 'Discard'
 export const ANIMATION_DISCARD_HINT =
   'Discard stops tracking this job. PixelLab may still bill the generation.'
 
+/** Cancel control shown while a job is actively generating (not stalled) — S1/T3, ADR 0011 log. */
+export const ANIMATION_CANCEL_LABEL = 'Cancel'
+export const ANIMATION_CANCEL_HINT =
+  'Cancel stops tracking this job. PixelLab may still bill the generation.'
+
 /** "Unfinished jobs" section of the Animate tab (animation job ledger). */
 export const ANIMATION_UNFINISHED_TITLE = 'Unfinished jobs'
 export const ANIMATION_UNFINISHED_HINT =
