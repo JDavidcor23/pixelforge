@@ -2,7 +2,7 @@
 
 **Area**: sprite editor
 **Status**: decided
-**Related**: ADR 0010, `docs/sprite-save-as-implementation-plan.md`
+**Related**: ADR 0010 (`docs/adr/0010-canvas-is-always-an-asset.md`)
 
 ## The problem (one paragraph, no jargon)
 
@@ -60,9 +60,9 @@ measured signal to justify building the richer version.
 
 ## Result
 
-Not built yet — this is the decision record. Implementation is tracked in
-`docs/sprite-save-as-implementation-plan.md`, phase 1 first (Save As with a
-name and a type), phase 2 next (rename/move icon buttons).
+Not built yet — this is the decision record. The phased build plan lives
+inside ADR 0010 itself, phase 1 first (Save As with a name and a type),
+phase 2 next (rename/move icon buttons).
 
 ## What I learned
 
