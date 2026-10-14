@@ -6,6 +6,7 @@ import { SaveIndicator } from './SaveIndicator/SaveIndicator'
 import { AccountMenu } from './AccountMenu/AccountMenu'
 import { ImportSpriteSheetDialog } from './ImportSpriteSheetDialog/ImportSpriteSheetDialog'
 import { ImportErrorNotice } from './ImportErrorNotice/ImportErrorNotice'
+import { SaveAsDialog } from './SaveAsDialog/SaveAsDialog'
 import { SPRITE_IMPORT_ACCEPT } from '@/constants'
 import { FILE_MENU_COPY, FILE_MENU_ENTRY_KIND } from '@/constants/file-menu'
 import { DISABLED_STATE, FOCUS_RING } from '@/constants/focus-ring'
@@ -38,6 +39,7 @@ export const TopBar = () => {
     fileTriggerRef,
     toggleFileMenu,
     fileMenuEntries,
+    saveAsDialogProps,
     importFileInputRef,
     handleImportFileSelected,
     importDialogProps,
@@ -142,6 +144,7 @@ export const TopBar = () => {
 
       <AccountMenu />
 
+      {saveAsDialogProps && <SaveAsDialog {...saveAsDialogProps} />}
       {importDialogProps && <ImportSpriteSheetDialog {...importDialogProps} />}
       {importFileErrorProps && <ImportErrorNotice {...importFileErrorProps} />}
     </header>

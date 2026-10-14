@@ -10,6 +10,8 @@ export const FILE_MENU_COPY = {
 } as const
 
 export const FILE_MENU_ITEM_IDS = {
+  SAVE_AS: 'save-as',
+  SEPARATOR_SAVE_AS: 'separator-save-as',
   IMPORT_SPRITE_SHEET: 'import-sprite-sheet',
   SEPARATOR_EXPORT: 'separator-export',
   EXPORT_FRAME: 'export-frame',
@@ -17,6 +19,7 @@ export const FILE_MENU_ITEM_IDS = {
 } as const
 
 export const FILE_MENU_LABELS = {
+  SAVE_AS: 'Save As…',
   IMPORT_SPRITE_SHEET: 'Import sprite sheet…',
   EXPORT_FRAME: 'Export current frame',
   EXPORT_SPRITE_SHEET: 'Export sprite sheet',
@@ -68,3 +71,22 @@ export const IMPORT_SPRITE_SHEET_FIELD_IDS = {
 
 /** Strips the last extension: "hero-run.png" -> "hero-run". */
 export const FILE_EXTENSION_PATTERN = /\.[^./\\]+$/
+
+/** File > Save As… dialog (ADR 0010, Phase 1) — snapshots the canvas into Assets under a name and type. */
+export const SAVE_AS_COPY = {
+  TITLE: 'Save As',
+  DESCRIPTION: 'Saves the current canvas to Assets under a name and type.',
+  NAME_LABEL: 'Name',
+  TYPE_LABEL: 'Type',
+  CANCEL_BUTTON: 'Cancel',
+  CONFIRM_BUTTON: 'Save',
+} as const
+
+export const SAVE_AS_ERRORS = {
+  NAME_REQUIRED: 'Enter a name for this asset.',
+} as const
+
+/** Name input id, so the `<label htmlFor>` matches its control. */
+export const SAVE_AS_FIELD_IDS = {
+  NAME: 'save-as-name',
+} as const

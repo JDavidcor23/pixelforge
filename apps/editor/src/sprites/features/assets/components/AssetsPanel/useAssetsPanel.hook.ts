@@ -44,7 +44,10 @@ export const useAssetsPanel = ({ search }: UseAssetsPanelParams) => {
         timestamp: gen.timestamp,
         item: {
           id: gen.id,
-          kind: 'generation' as const,
+          // ADR 0010 (Phase 1): `File > Save As…` persists a canvas snapshot
+          // through this same `generations` slice/object store, tagged
+          // `kind: 'drawing'` — everything else about it is a generation.
+          kind: gen.kind ?? ('generation' as const),
           label: gen.prompt,
           thumbnailSrc: gen.base64,
           assetType: gen.assetType ?? DEFAULT_ASSET_TYPE,
@@ -101,7 +104,9 @@ export const useAssetsPanel = ({ search }: UseAssetsPanelParams) => {
     async (item: AssetLibraryItem) => {
       try {
         setIsApplying(true)
-        if (item.kind === 'generation') {
+        // 'drawing' items live in the same `generations` slice as 'generation'
+        // ones (ADR 0010, Phase 1) — only 'animation' needs the other branch.
+        if (item.kind !== 'animation') {
           const generation = generations.find((gen) => gen.id === item.id)
           if (!generation) return
           await applyGeneration({ base64: generation.base64, width: generation.width })
@@ -119,7 +124,7 @@ export const useAssetsPanel = ({ search }: UseAssetsPanelParams) => {
 
   const handleDownloadItem = useCallback(
     (item: AssetLibraryItem) => {
-      if (item.kind === 'generation') {
+      if (item.kind !== 'animation') {
         const generation = generations.find((gen) => gen.id === item.id)
         if (!generation) return
         downloadFromHref(
@@ -146,7 +151,7 @@ export const useAssetsPanel = ({ search }: UseAssetsPanelParams) => {
 
   const handleDownloadSource = useCallback(
     (item: AssetLibraryItem) => {
-      if (item.kind !== 'generation') return
+      if (item.kind === 'animation') return
       const generation = generations.find((gen) => gen.id === item.id)
       if (!generation) return
       downloadJson(
@@ -165,8 +170,8 @@ export const useAssetsPanel = ({ search }: UseAssetsPanelParams) => {
 
   const handleDeleteItem = useCallback(
     (item: AssetLibraryItem) => {
-      if (item.kind === 'generation') removeGeneration(item.id)
-      else removeAnimation(item.id)
+      if (item.kind === 'animation') removeAnimation(item.id)
+      else removeGeneration(item.id)
     },
     [removeGeneration, removeAnimation],
   )

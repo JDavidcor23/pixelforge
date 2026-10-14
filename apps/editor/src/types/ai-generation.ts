@@ -85,6 +85,14 @@ export interface AIGeneration {
   readonly height: number
   /** See `AIAnimation.assetType` — same back-compat rule applies. */
   readonly assetType?: AssetType
+  /**
+   * ADR 0010 (Phase 1): `File > Save As…` persists a canvas snapshot through
+   * the same store action/object store as an AI generation — this is the
+   * only field that tells the two origins apart. Absent means `'generation'`
+   * (back-compat: every entry persisted before this field existed, and every
+   * `useAssetsStore.addGeneration` call today, round-trips with no `kind`).
+   */
+  readonly kind?: 'generation' | 'drawing'
 }
 
 /**
@@ -149,7 +157,7 @@ export interface QualityRecommendation {
  */
 export interface AssetLibraryItem {
   readonly id: string
-  readonly kind: 'generation' | 'animation'
+  readonly kind: 'generation' | 'animation' | 'drawing'
   readonly label: string
   readonly thumbnailSrc: string
   /** Back-compat default applied here (not in storage) — untyped history counts as `'character'`. */

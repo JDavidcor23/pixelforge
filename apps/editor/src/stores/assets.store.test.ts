@@ -166,3 +166,77 @@ describe('useAssetsStore.hydrate (IndexedDB library)', () => {
     })
   })
 })
+
+describe('useAssetsStore.addDrawing (ADR 0010, Phase 1 — File > Save As…)', () => {
+  const storage = createMemoryStorage()
+
+  beforeEach(() => {
+    storage.clear()
+    vi.stubGlobal('localStorage', storage)
+    useAssetsStore.setState({ generations: [], animations: [], repository: null })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('adds a kind: "drawing" entry to the same generations slice as addGeneration', () => {
+    const added = useAssetsStore.getState().addDrawing({
+      prompt: 'my hand-drawn hero',
+      base64: PIXEL_PNG,
+      width: 16,
+      height: 16,
+      assetType: 'character',
+    })
+
+    expect(added.kind).toBe('drawing')
+    expect(useAssetsStore.getState().generations.map((g) => g.id)).toEqual([added.id])
+  })
+
+  it('persists through the Assets repository, same as a generation (S2: survives reload)', async () => {
+    const repository = createInMemoryAssetLibraryRepository()
+    await useAssetsStore.getState().hydrate(repository)
+
+    const added = useAssetsStore.getState().addDrawing({
+      prompt: 'blank canvas sketch',
+      base64: PIXEL_PNG,
+      width: 8,
+      height: 8,
+      assetType: 'object',
+    })
+
+    await vi.waitFor(async () => {
+      const stored = (await repository.loadAll()).generations
+      expect(stored.map((g) => g.id)).toEqual([added.id])
+      expect(stored[0]?.kind).toBe('drawing')
+    })
+  })
+
+  it('does not touch the autosave draft or any animation state (S3)', () => {
+    useAssetsStore.getState().addDrawing({
+      prompt: 'untitled drawing',
+      base64: PIXEL_PNG,
+      width: 4,
+      height: 4,
+      assetType: 'effect',
+    })
+
+    expect(useAssetsStore.getState().animations).toEqual([])
+  })
+
+  it('leaves addGeneration/addAnimation producing plain, kind-less generations (S4 regression)', () => {
+    const generated = useAssetsStore.getState().addGeneration({
+      prompt: 'a cute dragon',
+      base64: PIXEL_PNG,
+      width: 1,
+      height: 1,
+    })
+
+    expect(generated.kind).toBeUndefined()
+    useAssetsStore.getState().addDrawing({ prompt: 'a sketch', base64: PIXEL_PNG, width: 1, height: 1, assetType: 'object' })
+
+    const [drawing, generation] = useAssetsStore.getState().generations
+    expect(generation.kind).toBeUndefined()
+    expect(drawing.kind).toBe('drawing')
+  })
+})
