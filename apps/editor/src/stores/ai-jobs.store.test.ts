@@ -21,20 +21,57 @@ const IDLE_ANIMATE = { ...IDLE, errorCode: null, stall: null, progress: null }
 const PENDING = { jobId: 'job-1', startedAt: 1, label: 'Walk', assetType: 'character' as const }
 const PROCESSING = { state: 'processing' as const, queuePosition: 2, estimatedWaitSeconds: 60 }
 
+const REFERENCE = {
+  source: { kind: 'canvas' as const, frameIndex: 0 },
+  imageBase64: 'data:image/png;base64,REF',
+  label: 'Frame 1',
+}
+
 describe('useAIJobsStore', () => {
   beforeEach(() => {
-    useAIJobsStore.setState({ generate: IDLE, animate: IDLE_ANIMATE, animatePending: null, generatePrompt: '' })
+    useAIJobsStore.setState({
+      generate: IDLE,
+      animate: IDLE_ANIMATE,
+      animatePending: null,
+      generatePrompt: '',
+      animationReference: null,
+    })
   })
 
   // A PixelLab job keeps running (and is billed) after a reload, so only its
   // id is persisted — the spinner/result state is not.
-  it('persists only the pending animate job', () => {
+  it('persists only the pending animate job and the locked reference', () => {
     const pending = { jobId: 'job-1', startedAt: 1, label: 'Walk', assetType: 'character' as const }
     useAIJobsStore.getState().setAnimatePending(pending)
     useAIJobsStore.getState().setAnimateJob({ isRunning: true })
 
     const saved = JSON.parse(storage.get(AI_JOBS_STORAGE_KEY) ?? '{}') as { state: Record<string, unknown> }
-    expect(saved.state).toEqual({ animatePending: pending })
+    expect(saved.state).toEqual({ animatePending: pending, animationReference: null })
+  })
+
+  // ADR 0011: the locked reference survives a reload like `animatePending`
+  // already does, so a mid-session refresh doesn't silently unlock it.
+  describe('animation reference lock', () => {
+    it('starts unlocked', () => {
+      expect(useAIJobsStore.getState().animationReference).toBeNull()
+    })
+
+    it('locks a reference and persists it to sessionStorage', () => {
+      useAIJobsStore.getState().setAnimationReference(REFERENCE)
+
+      expect(useAIJobsStore.getState().animationReference).toEqual(REFERENCE)
+      const saved = JSON.parse(storage.get(AI_JOBS_STORAGE_KEY) ?? '{}') as { state: Record<string, unknown> }
+      expect(saved.state).toEqual({ animatePending: null, animationReference: REFERENCE })
+    })
+
+    it('replaces the locked reference when the user picks a different one', () => {
+      useAIJobsStore.getState().setAnimationReference(REFERENCE)
+      const next = { ...REFERENCE, source: { kind: 'asset' as const, assetId: 'asset-1' }, label: 'Wizard idle' }
+
+      useAIJobsStore.getState().setAnimationReference(next)
+
+      expect(useAIJobsStore.getState().animationReference).toEqual(next)
+    })
   })
 
   // The tab that started the request may be unmounted when it resolves; the
@@ -85,7 +122,7 @@ describe('useAIJobsStore', () => {
       expect(state.animate.isRunning).toBe(false)
       expect(state.animate.stall).toBe('timeout')
       const saved = JSON.parse(storage.get(AI_JOBS_STORAGE_KEY) ?? '{}') as { state: Record<string, unknown> }
-      expect(saved.state).toEqual({ animatePending: PENDING })
+      expect(saved.state).toEqual({ animatePending: PENDING, animationReference: null })
     })
 
     it('a network stall keeps the pending job too', () => {

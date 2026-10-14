@@ -56,7 +56,7 @@ export const ANIMATION_ELAPSED_TICK_MS = 1000
 export const ANIMATION_FRAME_OPTIONS = [4, 6, 8, 12, 16] as const
 
 export const ANIMATION_ALREADY_RUNNING_ERROR = 'An animation is already being generated. Wait for it to finish.'
-export const ANIMATION_REFERENCE_EXPORT_ERROR = 'Could not export the current frame as a reference.'
+export const ANIMATION_REFERENCE_EXPORT_ERROR = 'Could not read the locked reference image.'
 export const ANIMATION_GENERIC_ERROR = 'Animation generation failed.'
 export const ANIMATION_NOT_SQUARE_ERROR = 'Animations need a square canvas. Resize the canvas first.'
 export const ANIMATION_TOO_LARGE_ERROR = `Animations support canvases up to ${PIXELLAB_MAX_SIZE}x${PIXELLAB_MAX_SIZE}. Resize the canvas first.`
@@ -108,3 +108,15 @@ export const ANIMATION_LEDGER_TIME_FORMAT: Intl.DateTimeFormatOptions = { dateSt
 
 /** Elapsed-time formatting (m:ss) for the Generate button while a job runs. */
 export const ANIMATION_SECONDS_PER_MINUTE = 60
+
+/** Animation reference lock (ADR 0011) — chip + picker copy. */
+export const ANIMATION_REFERENCE_CHIP_PROMPT = 'Pick a reference to generate from'
+export const ANIMATION_REFERENCE_CHIP_PREFIX = 'Reference: '
+export const ANIMATION_REFERENCE_PICKER_TITLE = 'Choose animation reference'
+export const ANIMATION_REFERENCE_PICKER_DESCRIPTION =
+  'Every animation you generate this session reuses this exact image.'
+export const ANIMATION_REFERENCE_SOURCE_CANVAS = 'Canvas'
+export const ANIMATION_REFERENCE_SOURCE_ASSETS = 'Assets'
+export const ANIMATION_REFERENCE_CANVAS_EMPTY = 'No frames yet — add one on the timeline first.'
+export const ANIMATION_REFERENCE_ASSETS_EMPTY = 'No assets yet — generate or save one first.'
+export const ANIMATION_REFERENCE_CLOSE_LABEL = 'Close'

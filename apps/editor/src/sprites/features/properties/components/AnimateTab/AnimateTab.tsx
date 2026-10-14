@@ -2,6 +2,8 @@ import { Film, X } from 'lucide-react'
 
 import { AiResultCard } from '../AiResultCard/AiResultCard'
 import { AssetTypeSelector } from '../CreateTab/AssetTypeSelector'
+import { ReferenceChip } from './ReferenceChip/ReferenceChip'
+import { ReferencePicker } from './ReferencePicker/ReferencePicker'
 import { UnfinishedJobs } from './UnfinishedJobs'
 import { useAnimateTab } from './useAnimateTab.hook'
 import { SECONDARY_BUTTON, SECTION_LABEL } from './animate-tab.classes'
@@ -29,7 +31,6 @@ export const AnimateTab = () => {
     nFrames,
     setNFrames,
     frameOptions,
-    canvasSize,
     canvasSizeError,
     customText,
     setCustomText,
@@ -44,8 +45,10 @@ export const AnimateTab = () => {
     animError,
     isBusyError,
     handleGenerateAnimation,
-    previewRef,
-    handlePreviewReference,
+    animationReference,
+    isReferencePickerOpen,
+    handleOpenReferencePicker,
+    handleCloseReferencePicker,
     result,
     handleUseResult,
     handleDismissResult,
@@ -56,32 +59,17 @@ export const AnimateTab = () => {
   } = useAnimateTab()
 
   const isGenerateDisabled =
-    isGenerating || isStalled || !!canvasSizeError || (motion.isCustomInput && !customText.trim())
+    isGenerating ||
+    isStalled ||
+    !!canvasSizeError ||
+    !animationReference ||
+    (motion.isCustomInput && !customText.trim())
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between gap-2">
-        <span className={SECTION_LABEL}>Animate sprite</span>
-        <button
-          type="button"
-          onClick={handlePreviewReference}
-          className={`text-2xs text-subtle hover:text-muted ${MOTION.COLORS}`}
-        >
-          Preview reference
-        </button>
-      </div>
+      <span className={SECTION_LABEL}>Animate sprite</span>
 
       <AssetTypeSelector value={assetType} onChange={setAssetType} compact />
-
-      {previewRef && (
-        <div className="flex flex-col items-center gap-2 rounded-sm border border-line bg-sunken p-2">
-          <span className="font-mono text-3xs font-bold uppercase tracking-widest text-subtle">
-            AI input preview ({canvasSize.width}x{canvasSize.height})
-          </span>
-          {/* eslint-disable-next-line @next/next/no-img-element -- Vite SPA, no next/image available */}
-          <img src={previewRef} alt="Reference preview" className="image-pixelated h-16 w-16 border border-line-strong" />
-        </div>
-      )}
 
       <p className="text-xs text-muted">
         {isCharacter
@@ -170,6 +158,8 @@ export const AnimateTab = () => {
         </>
       )}
 
+      <ReferenceChip reference={animationReference} onOpenPicker={handleOpenReferencePicker} />
+
       <button
         type="button"
         onClick={handleGenerateAnimation}
@@ -190,6 +180,8 @@ export const AnimateTab = () => {
       </button>
 
       {isGenerating && <p className="text-center text-2xs text-subtle">{progressHint}</p>}
+
+      {isReferencePickerOpen && <ReferencePicker onClose={handleCloseReferencePicker} />}
 
       <UnfinishedJobs />
 

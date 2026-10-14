@@ -240,6 +240,28 @@ export interface AnimationRecoverNotice {
   readonly message: string
 }
 
+// ── Animation reference lock (ADR 0011) ─────────────────────────────────────
+
+/** Where a locked `AnimationReference` was picked from. */
+export type AnimationReferenceSource =
+  | { readonly kind: 'canvas'; readonly frameIndex: number }
+  | { readonly kind: 'asset'; readonly assetId: string }
+
+/**
+ * The reference image locked for the rest of the session (ADR 0011): a
+ * SNAPSHOT captured at pick time, never a live pointer back to the canvas or
+ * an Asset — so later edits to either can't drift what the next "Generate
+ * Animation" submits. `handleGenerateAnimation` reads `imageBase64` here
+ * instead of re-exporting the live canvas.
+ */
+export interface AnimationReference {
+  readonly source: AnimationReferenceSource
+  /** PNG data URI, captured once at pick time. */
+  readonly imageBase64: string
+  /** Shown on the chip and in the picker, e.g. "Frame 3" or "Wizard idle". */
+  readonly label: string
+}
+
 /** What one Recover attempt of a ledger entry found. */
 export type AnimationRecoverOutcome =
   | { readonly kind: 'recovered'; readonly animationId: string }

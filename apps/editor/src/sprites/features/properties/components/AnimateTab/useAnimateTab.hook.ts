@@ -17,6 +17,7 @@ import { useAIJobsStore } from '@/stores/ai-jobs.store'
 import { useAnimationJobLedgerStore } from '@/stores/animation-job-ledger.store'
 import { useAuthStore } from '@/stores/auth.store'
 import { useFinishAnimation } from './useFinishAnimation.hook'
+import { resolveAnimationReferenceImage } from './animation-reference'
 import { ANIMATION_HARNESS, buildAnimationAction, findAnimationMotion } from '@/lib/animation-harness'
 import { findLedgerEntry, isLedgerEntrySaved } from '@/lib/animation-job-ledger'
 import { allowedFrameCounts, getAnimationFrameCountError, getAnimationSizeError } from '@/lib/animation-limits'
@@ -44,6 +45,7 @@ import type {
   AnimationActiveJobState,
   AnimationErrorCode,
   AnimationMotionPreset,
+  AnimationReference,
   AssetType,
   PendingAnimationJob,
   RecentAnimationItem,
@@ -99,8 +101,11 @@ export interface UseAnimateTabReturn {
    */
   isBusyError: boolean
   handleGenerateAnimation: () => Promise<void>
-  previewRef: string | null
-  handlePreviewReference: () => Promise<void>
+  /** The session's locked reference (ADR 0011), or null until the user has picked one. */
+  animationReference: AnimationReference | null
+  isReferencePickerOpen: boolean
+  handleOpenReferencePicker: () => void
+  handleCloseReferencePicker: () => void
   result: AnimateResult | null
   handleUseResult: () => Promise<void>
   handleDismissResult: () => void
@@ -130,13 +135,6 @@ const formatElapsedTime = (seconds: number): string => {
   const minutes = Math.floor(seconds / ANIMATION_SECONDS_PER_MINUTE)
   const remainingSeconds = seconds % ANIMATION_SECONDS_PER_MINUTE
   return `${minutes}:${String(remainingSeconds).padStart(2, '0')}`
-}
-
-const exportCanvasReference = async (): Promise<string> => {
-  const { layersToBase64 } = await import('@/lib/export-utils')
-  // Read at call time — subscribing to `layers` would re-render this tab on every stroke.
-  const { canvasWidth, canvasHeight, layers } = useSpriteEditorStore.getState()
-  return layersToBase64(canvasWidth, canvasHeight, layers)
 }
 
 /**
@@ -177,7 +175,7 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
     pickFrameCount(findAnimationMotion(assetType, defaultMotionId).defaultFrames, frameOptions),
   )
   const [customText, setCustomText] = useState('')
-  const [previewRef, setPreviewRef] = useState<string | null>(null)
+  const [isReferencePickerOpen, setIsReferencePickerOpen] = useState(false)
   const [now, setNow] = useState(() => Date.now())
 
   // Request state lives in `useAIJobsStore` so it survives this tab unmounting.
@@ -188,6 +186,7 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
   const stall = useAIJobsStore((s) => s.animate.stall)
   const progress = useAIJobsStore((s) => s.animate.progress)
   const pendingJob = useAIJobsStore((s) => s.animatePending)
+  const animationReference = useAIJobsStore((s) => s.animationReference)
   const setAnimateJob = useAIJobsStore((s) => s.setAnimateJob)
   const setAnimatePending = useAIJobsStore((s) => s.setAnimatePending)
   const stallAnimate = useAIJobsStore((s) => s.stallAnimate)
@@ -338,9 +337,8 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
   // message text, which is free to change.
   const isBusyError = animErrorCode === 'ALREADY_RUNNING' || animErrorCode === 'BUSY'
 
-  const handlePreviewReference = useCallback(async () => {
-    setPreviewRef((await exportCanvasReference()) || null)
-  }, [])
+  const handleOpenReferencePicker = useCallback(() => setIsReferencePickerOpen(true), [])
+  const handleCloseReferencePicker = useCallback(() => setIsReferencePickerOpen(false), [])
 
   const handleGenerateAnimation = useCallback(async () => {
     if (motion.isCustomInput && !customText.trim()) return
@@ -364,7 +362,8 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
 
     setAnimateJob({ isRunning: true, error: null, result: null, errorCode: null, stall: null, progress: null })
     try {
-      const firstFrameBase64 = await exportCanvasReference()
+      // ADR 0011: the locked session reference, never a fresh live-canvas export.
+      const firstFrameBase64 = resolveAnimationReferenceImage(animationReference)
       if (!firstFrameBase64) throw new Error(ANIMATION_REFERENCE_EXPORT_ERROR)
 
       const { jobId } = await provider.submit({
@@ -397,6 +396,7 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
     assetType,
     nFrames,
     provider,
+    animationReference,
     pollUntilDone,
     setAnimateJob,
     setAnimatePending,
@@ -464,8 +464,10 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
     animError,
     isBusyError,
     handleGenerateAnimation,
-    previewRef,
-    handlePreviewReference,
+    animationReference,
+    isReferencePickerOpen,
+    handleOpenReferencePicker,
+    handleCloseReferencePicker,
     result,
     handleUseResult,
     handleDismissResult,
