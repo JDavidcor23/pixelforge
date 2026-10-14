@@ -158,7 +158,10 @@ export const AnimateTab = () => {
         </>
       )}
 
-      <ReferenceChip reference={animationReference} onOpenPicker={handleOpenReferencePicker} />
+      <div>
+        <label className={`mb-1 block ${SECTION_LABEL}`}>Reference</label>
+        <ReferenceChip reference={animationReference} onOpenPicker={handleOpenReferencePicker} />
+      </div>
 
       <button
         type="button"

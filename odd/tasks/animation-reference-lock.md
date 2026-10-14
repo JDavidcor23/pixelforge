@@ -38,6 +38,14 @@ Test runner: `pnpm --filter @pixelforge/editor test`.
   Y después, si tengo algo que corregir, modificas otra vez el documento y
   modificas el código." Owner authorized ADR + implementation, unattended;
   corrections happen in a follow-up pass.
+- S7 (design feedback): "la verdad se le pondría un poquito más de diseño
+  porque está muy simple y se ve horrible." The chip/picker shipped in T2
+  needed a real visual pass against `DESIGN.md` (label-caps caption, `ai`
+  marker for the AI-feeding control, mono/sans split for machine vs
+  human-authored labels, visible tile captions).
+- S8 (follow-up ask): "¿Y qué pasó con el botón de cancelar que no lo estoy
+  viendo?... ¿No lo integraste?" Owner clarified S1 should be implemented
+  now (it had been explicitly deferred/not authorized until this message).
 
 ## Tasks
 
@@ -47,8 +55,13 @@ Test runner: `pnpm --filter @pixelforge/editor test`.
   chip (S3, S4, S5). Route: delegated (frontend-agent → cleancode-agent;
   design-agent step skipped — see L7, the file doesn't exist in this repo).
   Status: done, reviewed, tests/typecheck green.
-- T3 — S1 (cancel while generating): deferred, not authorized.
-- T4 — S2 (frame count reset on motion change): deferred, not authorized.
+- T3 — S1 (cancel while generating): authorized by S8. Route: delegated
+  (frontend-agent → cleancode-agent). Status: in progress.
+- T4 — S2 (frame count reset on motion change): still deferred, not
+  authorized.
+- T5 — Visual pass on Reference chip/picker (S7). Route: delegated
+  (frontend-agent → cleancode-agent; design-agent step skipped, see L7).
+  Status: done, reviewed, tests/typecheck green.
 
 ## Log
 
@@ -80,3 +93,15 @@ Test runner: `pnpm --filter @pixelforge/editor test`.
   lines) because that file was outside this task's authorized surface.
   Left as-is; follow-up candidate once ADR-0010's `kind: 'drawing'` lands on
   this branch and both hooks need updating anyway.
+- L9 (2026-10-14): Owner found the shipped chip/picker too plain (S7). Read
+  `DESIGN.md` myself (acting in design-agent's place) and wrote a concrete
+  spec: label-caps "Reference" caption, `ai`-token marking for the
+  unset/call-to-action state (this control feeds the AI generation call),
+  trailing change-affordance icon on the set state, mono/sans split for
+  machine-computed vs human-authored labels, visible tile captions in the
+  picker grid. frontend-agent implemented it (markup/className only, no
+  logic changes); cleancode-agent reviewed and removed one dead `group`
+  class with no `group-hover` consumer. Tests: 658 passed, typecheck clean.
+- L10 (2026-10-14): Owner asked why S1 (cancel while generating) wasn't
+  done — clarified it was deferred/unauthorized, not forgotten; owner's
+  follow-up message authorized it, now T3.

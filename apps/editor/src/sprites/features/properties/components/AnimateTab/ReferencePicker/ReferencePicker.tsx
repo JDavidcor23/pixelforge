@@ -1,6 +1,8 @@
+import { Sparkles } from 'lucide-react'
+
 import { ModalPortal } from '@/components/ModalPortal/ModalPortal'
 import { useReferencePicker } from './useReferencePicker.hook'
-import { REFERENCE_PICKER_TILE, SECONDARY_BUTTON } from '../animate-tab.classes'
+import { REFERENCE_PICKER_TILE, REFERENCE_PICKER_TILE_CAPTION, SECONDARY_BUTTON } from '../animate-tab.classes'
 import {
   ANIMATION_REFERENCE_ASSETS_EMPTY,
   ANIMATION_REFERENCE_CANVAS_EMPTY,
@@ -54,7 +56,8 @@ export const ReferencePicker = ({ onClose }: ReferencePickerProps) => {
           onKeyDown={handleKeyDown}
           className={`flex w-full max-w-md flex-col gap-3 rounded-md border border-line-strong bg-raised p-5 shadow-popover outline-none ${MOTION.ENTER}`}
         >
-          <h2 id={titleId} className="text-sm font-semibold text-ink">
+          <h2 id={titleId} className="flex items-center gap-1.5 text-sm font-semibold text-ink">
+            <Sparkles size={16} className="shrink-0 text-ai-ink" aria-hidden />
             {ANIMATION_REFERENCE_PICKER_TITLE}
           </h2>
           <p id={descriptionId} className="text-xs leading-relaxed text-muted">
@@ -84,6 +87,7 @@ export const ReferencePicker = ({ onClose }: ReferencePickerProps) => {
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element -- Vite SPA, no next/image available */}
                     <img src={frame.thumbnailSrc} alt="" className="image-pixelated h-full w-full object-contain" />
+                    <span className={`${REFERENCE_PICKER_TILE_CAPTION} font-mono`}>{frame.label}</span>
                   </button>
                 ))
               ) : (
@@ -105,6 +109,7 @@ export const ReferencePicker = ({ onClose }: ReferencePickerProps) => {
                       // eslint-disable-next-line @next/next/no-img-element -- Vite SPA, no next/image available
                       <img src={item.thumbnailSrc} alt="" className="image-pixelated h-full w-full object-contain" />
                     )}
+                    <span className={REFERENCE_PICKER_TILE_CAPTION}>{item.label}</span>
                   </button>
                 ))
               ) : (
