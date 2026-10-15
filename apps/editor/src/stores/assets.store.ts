@@ -4,7 +4,12 @@ import { ANIMATION_HISTORY_STORAGE_KEY, GENERATION_HISTORY_STORAGE_KEY } from '@
 import { ASSET_LIBRARY_LIMIT } from '@/constants/persistence'
 import { parseAnimationHistory, persistAnimationHistory } from '@/lib/animation-history'
 import { parseGenerationHistory, persistGenerationHistory } from '@/lib/generation-history'
-import type { AIAnimation, AIGeneration, AssetLibraryRepository } from '@/types'
+import type { AIAnimation, AIGeneration, AssetLibraryRepository, AssetType } from '@/types'
+
+type NewGeneration = Omit<AIGeneration, 'id' | 'timestamp'>
+
+/** Every origin an `AssetLibraryItem` can have — mirrors `AssetLibraryItem['kind']` without importing that view-model type into the persistence layer. */
+type AssetItemKind = 'generation' | 'drawing' | 'animation'
 
 /**
  * Shared Assets library (Sprite Studio v2): sprite generations and
@@ -23,8 +28,30 @@ export interface AssetsState {
   readonly animations: AIAnimation[]
   /** `null` until `hydrate` succeeds — writes go to localStorage meanwhile. */
   readonly repository: AssetLibraryRepository | null
-  addGeneration: (generation: Omit<AIGeneration, 'id' | 'timestamp'>) => AIGeneration
+  addGeneration: (generation: NewGeneration) => AIGeneration
+  /**
+   * `File > Save As…` (ADR 0010, Phase 1) — persists a canvas snapshot through
+   * the exact same store slice/object store as `addGeneration`, tagged
+   * `kind: 'drawing'` so the Assets grid can tell the two origins apart. Not a
+   * new IndexedDB store: the existing `generations` store keys by `id`
+   * regardless of `kind`, so there's nothing else to add.
+   */
+  addDrawing: (drawing: Omit<NewGeneration, 'kind'>) => AIGeneration
   addAnimation: (animation: AIAnimation) => void
+  /**
+   * Rename an existing Assets item (ADR 0010, Phase 2 — `AssetTile`'s rename pencil).
+   * Updates `AIGeneration.prompt` (`'generation'`/`'drawing'`) or `AIAnimation.label`
+   * (`'animation'`) and persists through the same repository/localStorage path
+   * `addGeneration`/`addAnimation` already use. No-op if `id` isn't found in the
+   * slice `kind` points to, or the trimmed label is empty.
+   */
+  renameItem: (id: string, kind: AssetItemKind, label: string) => void
+  /**
+   * Move an existing Assets item to a different `AssetType` folder (ADR 0010,
+   * Phase 2 — `AssetTile`'s "move to" folder icon). Same persistence path as
+   * `renameItem`. No-op if `id` isn't found in the slice `kind` points to.
+   */
+  setItemAssetType: (id: string, kind: AssetItemKind, assetType: AssetType) => void
   /** Removes one generation from the library (Recent strip + Assets tab) and its IndexedDB/localStorage copy. */
   removeGeneration: (id: string) => void
   /** Removes one animation from the library (Recent strip + Assets tab) and its IndexedDB/localStorage copy. */
@@ -55,18 +82,27 @@ const mergeNewest = <T extends LibraryEntry>(...lists: readonly (readonly T[])[]
 const evictedIds = <T extends LibraryEntry>(entries: readonly T[]): string[] =>
   entries.slice(ASSET_LIBRARY_LIMIT).map((entry) => entry.id)
 
+/** Finds `id` in `list` and returns the patched entry plus the full list with it replaced, or `null` if missing. */
+const updateEntry = <T extends LibraryEntry>(
+  list: readonly T[],
+  id: string,
+  patch: Partial<T>,
+): { readonly next: T[]; readonly updated: T } | null => {
+  const target = list.find((entry) => entry.id === id)
+  if (!target) return null
+  const updated = { ...target, ...patch }
+  return { next: list.map((entry) => (entry.id === id ? updated : entry)), updated }
+}
+
 const reportWriteError = (what: string) => (e: unknown) => console.error(`Failed to save ${what}`, e)
 const reportDeleteError = (what: string) => (e: unknown) => console.error(`Failed to delete ${what}`, e)
 
 const initialGenerations = parseGenerationHistory(readStorage(GENERATION_HISTORY_STORAGE_KEY)).generations
 const initialAnimations = parseAnimationHistory(readStorage(ANIMATION_HISTORY_STORAGE_KEY)).animations
 
-export const useAssetsStore = create<AssetsState>((set, get) => ({
-  generations: initialGenerations,
-  animations: initialAnimations,
-  repository: null,
-
-  addGeneration: (generation) => {
+export const useAssetsStore = create<AssetsState>((set, get) => {
+  /** Shared by `addGeneration` and `addDrawing` — same slice, same object store, only `kind` differs. */
+  const addGenerationEntry = (generation: NewGeneration, errorLabel: string): AIGeneration => {
     const sanitizedBase64 = generation.base64.startsWith('data:')
       ? generation.base64
       : `data:image/png;base64,${generation.base64}`
@@ -86,7 +122,7 @@ export const useAssetsStore = create<AssetsState>((set, get) => ({
       repository
         .putGenerations([next])
         .then(() => repository.removeGenerations(evictedIds(all)))
-        .catch(reportWriteError('generation'))
+        .catch(reportWriteError(errorLabel))
       return next
     }
 
@@ -97,102 +133,181 @@ export const useAssetsStore = create<AssetsState>((set, get) => ({
       console.error('Failed to persist generation history', e)
     }
     return next
-  },
+  }
 
-  addAnimation: (animation) => {
-    const all = [animation, ...get().animations]
-    const { repository } = get()
+  return {
+    generations: initialGenerations,
+    animations: initialAnimations,
+    repository: null,
+  
+    addGeneration: (generation) => addGenerationEntry(generation, 'generation'),
+  
+    addDrawing: (drawing) => addGenerationEntry({ ...drawing, kind: 'drawing' }, 'drawing'),
+  
+    addAnimation: (animation) => {
+      const all = [animation, ...get().animations]
+      const { repository } = get()
+  
+      if (repository) {
+        set({ animations: all.slice(0, ASSET_LIBRARY_LIMIT) })
+        repository
+          .putAnimations([animation])
+          .then(() => repository.removeAnimations(evictedIds(all)))
+          .catch(reportWriteError('animation'))
+        return
+      }
+  
+      set({ animations: all })
+      try {
+        persistAnimationHistory(localStorage, all)
+      } catch (e) {
+        console.error('Failed to persist animation history', e)
+      }
+    },
+  
+    renameItem: (id, kind, label) => {
+      const trimmed = label.trim()
+      if (!trimmed) return
 
-    if (repository) {
-      set({ animations: all.slice(0, ASSET_LIBRARY_LIMIT) })
-      repository
-        .putAnimations([animation])
-        .then(() => repository.removeAnimations(evictedIds(all)))
-        .catch(reportWriteError('animation'))
-      return
-    }
+      if (kind === 'animation') {
+        const { repository, animations } = get()
+        const result = updateEntry(animations, id, { label: trimmed })
+        if (!result) return
+        set({ animations: result.next })
+        if (repository) {
+          repository.putAnimations([result.updated]).catch(reportWriteError('animation rename'))
+          return
+        }
+        try {
+          persistAnimationHistory(localStorage, result.next)
+        } catch (e) {
+          console.error('Failed to persist animation history', e)
+        }
+        return
+      }
 
-    set({ animations: all })
-    try {
-      persistAnimationHistory(localStorage, all)
-    } catch (e) {
-      console.error('Failed to persist animation history', e)
-    }
-  },
+      const { repository, generations } = get()
+      const result = updateEntry(generations, id, { prompt: trimmed })
+      if (!result) return
+      set({ generations: result.next })
+      if (repository) {
+        repository.putGenerations([result.updated]).catch(reportWriteError('generation rename'))
+        return
+      }
+      try {
+        persistGenerationHistory(localStorage, result.next)
+      } catch (e) {
+        console.error('Failed to persist generation history', e)
+      }
+    },
 
-  removeGeneration: (id) => {
-    const { repository, generations } = get()
-    const next = generations.filter((g) => g.id !== id)
-    set({ generations: next })
+    setItemAssetType: (id, kind, assetType) => {
+      if (kind === 'animation') {
+        const { repository, animations } = get()
+        const result = updateEntry(animations, id, { assetType })
+        if (!result) return
+        set({ animations: result.next })
+        if (repository) {
+          repository.putAnimations([result.updated]).catch(reportWriteError('animation move'))
+          return
+        }
+        try {
+          persistAnimationHistory(localStorage, result.next)
+        } catch (e) {
+          console.error('Failed to persist animation history', e)
+        }
+        return
+      }
 
-    if (repository) {
-      repository.removeGenerations([id]).catch(reportDeleteError('generation'))
-      return
-    }
+      const { repository, generations } = get()
+      const result = updateEntry(generations, id, { assetType })
+      if (!result) return
+      set({ generations: result.next })
+      if (repository) {
+        repository.putGenerations([result.updated]).catch(reportWriteError('generation move'))
+        return
+      }
+      try {
+        persistGenerationHistory(localStorage, result.next)
+      } catch (e) {
+        console.error('Failed to persist generation history', e)
+      }
+    },
 
-    try {
-      persistGenerationHistory(localStorage, next)
-    } catch (e) {
-      console.error('Failed to persist generation history', e)
-    }
-  },
-
-  removeAnimation: (id) => {
-    const { repository, animations } = get()
-    const next = animations.filter((a) => a.id !== id)
-    set({ animations: next })
-
-    if (repository) {
-      repository.removeAnimations([id]).catch(reportDeleteError('animation'))
-      return
-    }
-
-    try {
-      persistAnimationHistory(localStorage, next)
-    } catch (e) {
-      console.error('Failed to persist animation history', e)
-    }
-  },
-
-  hydrate: async (repository) => {
-    // Attach first: anything generated while loading goes straight to IndexedDB.
-    set({ repository })
-    const stored = await repository.loadAll()
-
-    // In-memory entries IndexedDB doesn't have yet: the legacy localStorage
-    // history on first run, plus anything added before `loadAll` resolved.
-    const { generations: current, animations: currentAnimations } = get()
-    const storedGenerationIds = new Set(stored.generations.map((g) => g.id))
-    const storedAnimationIds = new Set(stored.animations.map((a) => a.id))
-    await repository.putGenerations(current.filter((g) => !storedGenerationIds.has(g.id)))
-    await repository.putAnimations(currentAnimations.filter((a) => !storedAnimationIds.has(a.id)))
-
-    const generations = mergeNewest(get().generations, stored.generations)
-    const animations = mergeNewest(get().animations, stored.animations)
-    await repository.removeGenerations(evictedIds(generations))
-    await repository.removeAnimations(evictedIds(animations))
-
-    set({
-      generations: generations.slice(0, ASSET_LIBRARY_LIMIT),
-      animations: animations.slice(0, ASSET_LIBRARY_LIMIT),
-    })
-
-    // Only drop the legacy copy once IndexedDB holds it.
-    if (typeof localStorage !== 'undefined') {
-      persistGenerationHistory(localStorage, [])
-      persistAnimationHistory(localStorage, [])
-    }
-  },
-
-  clearLocalHistory: () => {
-    const { repository } = get()
-    set({ generations: [], animations: [] })
-    repository?.clear().catch(reportWriteError('cleared library'))
-    try {
-      persistGenerationHistory(localStorage, [])
-      persistAnimationHistory(localStorage, [])
-    } catch (e) {
-      console.error('Failed to clear local AI history', e)
-    }
-  },
-}))
+    removeGeneration: (id) => {
+      const { repository, generations } = get()
+      const next = generations.filter((g) => g.id !== id)
+      set({ generations: next })
+  
+      if (repository) {
+        repository.removeGenerations([id]).catch(reportDeleteError('generation'))
+        return
+      }
+  
+      try {
+        persistGenerationHistory(localStorage, next)
+      } catch (e) {
+        console.error('Failed to persist generation history', e)
+      }
+    },
+  
+    removeAnimation: (id) => {
+      const { repository, animations } = get()
+      const next = animations.filter((a) => a.id !== id)
+      set({ animations: next })
+  
+      if (repository) {
+        repository.removeAnimations([id]).catch(reportDeleteError('animation'))
+        return
+      }
+  
+      try {
+        persistAnimationHistory(localStorage, next)
+      } catch (e) {
+        console.error('Failed to persist animation history', e)
+      }
+    },
+  
+    hydrate: async (repository) => {
+      // Attach first: anything generated while loading goes straight to IndexedDB.
+      set({ repository })
+      const stored = await repository.loadAll()
+  
+      // In-memory entries IndexedDB doesn't have yet: the legacy localStorage
+      // history on first run, plus anything added before `loadAll` resolved.
+      const { generations: current, animations: currentAnimations } = get()
+      const storedGenerationIds = new Set(stored.generations.map((g) => g.id))
+      const storedAnimationIds = new Set(stored.animations.map((a) => a.id))
+      await repository.putGenerations(current.filter((g) => !storedGenerationIds.has(g.id)))
+      await repository.putAnimations(currentAnimations.filter((a) => !storedAnimationIds.has(a.id)))
+  
+      const generations = mergeNewest(get().generations, stored.generations)
+      const animations = mergeNewest(get().animations, stored.animations)
+      await repository.removeGenerations(evictedIds(generations))
+      await repository.removeAnimations(evictedIds(animations))
+  
+      set({
+        generations: generations.slice(0, ASSET_LIBRARY_LIMIT),
+        animations: animations.slice(0, ASSET_LIBRARY_LIMIT),
+      })
+  
+      // Only drop the legacy copy once IndexedDB holds it.
+      if (typeof localStorage !== 'undefined') {
+        persistGenerationHistory(localStorage, [])
+        persistAnimationHistory(localStorage, [])
+      }
+    },
+  
+    clearLocalHistory: () => {
+      const { repository } = get()
+      set({ generations: [], animations: [] })
+      repository?.clear().catch(reportWriteError('cleared library'))
+      try {
+        persistGenerationHistory(localStorage, [])
+        persistAnimationHistory(localStorage, [])
+      } catch (e) {
+        console.error('Failed to clear local AI history', e)
+      }
+    },
+  }
+})

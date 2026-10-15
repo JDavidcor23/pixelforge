@@ -21,6 +21,8 @@ export const useAssetsPanel = ({ search }: UseAssetsPanelParams) => {
   const animations = useAssetsStore((s) => s.animations)
   const removeGeneration = useAssetsStore((s) => s.removeGeneration)
   const removeAnimation = useAssetsStore((s) => s.removeAnimation)
+  const renameItem = useAssetsStore((s) => s.renameItem)
+  const setItemAssetType = useAssetsStore((s) => s.setItemAssetType)
   const { applyGeneration, applyAnimation } = useApplyAsset()
   const setInspectorTab = useSetInspectorTab()
   const requestFocusPrompt = useRequestFocusPrompt()
@@ -44,7 +46,10 @@ export const useAssetsPanel = ({ search }: UseAssetsPanelParams) => {
         timestamp: gen.timestamp,
         item: {
           id: gen.id,
-          kind: 'generation' as const,
+          // ADR 0010 (Phase 1): `File > Save As…` persists a canvas snapshot
+          // through this same `generations` slice/object store, tagged
+          // `kind: 'drawing'` — everything else about it is a generation.
+          kind: gen.kind ?? ('generation' as const),
           label: gen.prompt,
           thumbnailSrc: gen.base64,
           assetType: gen.assetType ?? DEFAULT_ASSET_TYPE,
@@ -101,7 +106,9 @@ export const useAssetsPanel = ({ search }: UseAssetsPanelParams) => {
     async (item: AssetLibraryItem) => {
       try {
         setIsApplying(true)
-        if (item.kind === 'generation') {
+        // 'drawing' items live in the same `generations` slice as 'generation'
+        // ones (ADR 0010, Phase 1) — only 'animation' needs the other branch.
+        if (item.kind !== 'animation') {
           const generation = generations.find((gen) => gen.id === item.id)
           if (!generation) return
           await applyGeneration({ base64: generation.base64, width: generation.width })
@@ -119,7 +126,7 @@ export const useAssetsPanel = ({ search }: UseAssetsPanelParams) => {
 
   const handleDownloadItem = useCallback(
     (item: AssetLibraryItem) => {
-      if (item.kind === 'generation') {
+      if (item.kind !== 'animation') {
         const generation = generations.find((gen) => gen.id === item.id)
         if (!generation) return
         downloadFromHref(
@@ -146,7 +153,7 @@ export const useAssetsPanel = ({ search }: UseAssetsPanelParams) => {
 
   const handleDownloadSource = useCallback(
     (item: AssetLibraryItem) => {
-      if (item.kind !== 'generation') return
+      if (item.kind === 'animation') return
       const generation = generations.find((gen) => gen.id === item.id)
       if (!generation) return
       downloadJson(
@@ -165,10 +172,23 @@ export const useAssetsPanel = ({ search }: UseAssetsPanelParams) => {
 
   const handleDeleteItem = useCallback(
     (item: AssetLibraryItem) => {
-      if (item.kind === 'generation') removeGeneration(item.id)
-      else removeAnimation(item.id)
+      if (item.kind === 'animation') removeAnimation(item.id)
+      else removeGeneration(item.id)
     },
     [removeGeneration, removeAnimation],
+  )
+
+  // ADR 0010, Phase 2 — rename / "move to" icon buttons on AssetTile. `renameItem`
+  // and `setItemAssetType` already route by `item.kind` internally, same as how
+  // `item.kind` picks `removeGeneration` vs `removeAnimation` above.
+  const handleRenameItem = useCallback(
+    (item: AssetLibraryItem, label: string) => renameItem(item.id, item.kind, label),
+    [renameItem],
+  )
+
+  const handleMoveItem = useCallback(
+    (item: AssetLibraryItem, assetType: AssetType) => setItemAssetType(item.id, item.kind, assetType),
+    [setItemAssetType],
   )
 
   return {
@@ -183,6 +203,8 @@ export const useAssetsPanel = ({ search }: UseAssetsPanelParams) => {
     handleDownloadItem,
     handleDownloadSource,
     handleDeleteItem,
+    handleRenameItem,
+    handleMoveItem,
     handleOpenCreate,
     importFileInputRef,
     isImporting,

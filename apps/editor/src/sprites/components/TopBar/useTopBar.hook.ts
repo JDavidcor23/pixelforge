@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { ChangeEvent } from 'react'
 
 import { useExport } from '@/sprites/features/properties/hooks/useExport.hook'
 import { useImportSpriteSheet } from '@/sprites/hooks/useImportSpriteSheet.hook'
@@ -11,14 +12,18 @@ import {
   useUIState,
   useUndo,
 } from '@/sprites/hooks/useSpriteEditorStore.hook'
-import { RESIZABLE_PANELS, SPRITE_DOCUMENT_DEFAULT_NAME } from '@/constants'
+import { useAssetsStore } from '@/stores/assets.store'
+import { useSpriteEditorStore } from '@/stores'
+import { layersToBase64 } from '@/lib'
+import { DEFAULT_ASSET_TYPE, RESIZABLE_PANELS, SPRITE_DOCUMENT_DEFAULT_NAME } from '@/constants'
 import {
   FILE_MENU_DISMISS_KEY,
   FILE_MENU_ENTRY_KIND,
   FILE_MENU_ITEM_IDS,
   FILE_MENU_LABELS,
+  SAVE_AS_ERRORS,
 } from '@/constants/file-menu'
-import type { FileMenuActions, FileMenuEntry } from '@/types'
+import type { AssetType, FileMenuActions, FileMenuEntry, SaveAsDeps, SaveAsDialogProps, SaveAsRequest } from '@/types'
 
 /** File menu rows, in menubar order. Every action closes the menu after it runs. */
 export const buildFileMenuEntries = (actions: FileMenuActions): FileMenuEntry[] => {
@@ -27,6 +32,13 @@ export const buildFileMenuEntries = (actions: FileMenuActions): FileMenuEntry[] 
     actions.closeMenu()
   }
   return [
+    {
+      kind: FILE_MENU_ENTRY_KIND.ITEM,
+      id: FILE_MENU_ITEM_IDS.SAVE_AS,
+      label: FILE_MENU_LABELS.SAVE_AS,
+      onSelect: runAndClose(actions.openSaveAs),
+    },
+    { kind: FILE_MENU_ENTRY_KIND.SEPARATOR, id: FILE_MENU_ITEM_IDS.SEPARATOR_SAVE_AS },
     {
       kind: FILE_MENU_ENTRY_KIND.ITEM,
       id: FILE_MENU_ITEM_IDS.IMPORT_SPRITE_SHEET,
@@ -54,6 +66,28 @@ export const isMenuDismissKey = (key: string): boolean => key === FILE_MENU_DISM
 export const isOutsideMenu = (menu: Pick<Node, 'contains'> | null, target: Node | null): boolean =>
   menu !== null && !menu.contains(target)
 
+/** First reason Save As can't confirm yet, or null when it's allowed. */
+export const validateSaveAsName = (name: string): string | null =>
+  name.trim() === '' ? SAVE_AS_ERRORS.NAME_REQUIRED : null
+
+/**
+ * File > Save As… (ADR 0010, Phase 1): snapshots whatever's on the canvas
+ * right now and adds it to Assets as a new `kind: 'drawing'` item. Does NOT
+ * touch the hidden autosave draft (S3) — `getCanvasState` is a one-off read,
+ * never a subscription.
+ */
+export const runSaveAs = (request: SaveAsRequest, deps: SaveAsDeps): void => {
+  const { canvasWidth, canvasHeight, layers } = deps.getCanvasState()
+  const base64 = deps.exportCanvas(canvasWidth, canvasHeight, layers)
+  deps.addDrawing({
+    prompt: request.name.trim(),
+    base64,
+    width: canvasWidth,
+    height: canvasHeight,
+    assetType: request.assetType,
+  })
+}
+
 /**
  * TopBar shell logic — document name, frame count, undo/redo, layout reset
  * and the File menu (import + export). The canvas-size popover and the save-status indicator
@@ -72,10 +106,68 @@ export const useTopBar = () => {
   const { handleExportFrame, handleExportSpriteSheet } = useExport()
 
   const importSpriteSheet = useImportSpriteSheet()
+  const addDrawing = useAssetsStore((state) => state.addDrawing)
 
   const [isFileMenuOpen, setIsFileMenuOpen] = useState(false)
   const fileMenuRef = useRef<HTMLDivElement>(null)
   const fileTriggerRef = useRef<HTMLButtonElement>(null)
+
+  // File > Save As… (ADR 0010, Phase 1). Modal mechanics live in
+  // `SaveAsDialog/useSaveAsDialog.hook.ts`; this is just the open/name/type state.
+  const [isSaveAsOpen, setIsSaveAsOpen] = useState(false)
+  const [saveAsName, setSaveAsName] = useState('')
+  const [saveAsAssetType, setSaveAsAssetType] = useState<AssetType>(DEFAULT_ASSET_TYPE)
+
+  const handleOpenSaveAs = useCallback(() => {
+    setSaveAsName('')
+    setSaveAsAssetType(DEFAULT_ASSET_TYPE)
+    setIsSaveAsOpen(true)
+  }, [])
+  const handleCancelSaveAs = useCallback(() => setIsSaveAsOpen(false), [])
+  const handleSaveAsNameChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => setSaveAsName(event.target.value),
+    [],
+  )
+  const handleSaveAsAssetTypeChange = useCallback((assetType: AssetType) => setSaveAsAssetType(assetType), [])
+
+  const saveAsErrorMessage = validateSaveAsName(saveAsName)
+  const canSaveAs = saveAsErrorMessage === null
+
+  const handleConfirmSaveAs = useCallback(() => {
+    if (!canSaveAs) return
+    runSaveAs(
+      { name: saveAsName, assetType: saveAsAssetType },
+      { getCanvasState: () => useSpriteEditorStore.getState(), exportCanvas: layersToBase64, addDrawing },
+    )
+    setIsSaveAsOpen(false)
+  }, [canSaveAs, saveAsName, saveAsAssetType, addDrawing])
+
+  const saveAsDialogProps = useMemo<SaveAsDialogProps | null>(
+    () =>
+      isSaveAsOpen
+        ? {
+            name: saveAsName,
+            assetType: saveAsAssetType,
+            errorMessage: saveAsErrorMessage,
+            canSave: canSaveAs,
+            onNameChange: handleSaveAsNameChange,
+            onAssetTypeChange: handleSaveAsAssetTypeChange,
+            onCancel: handleCancelSaveAs,
+            onConfirm: handleConfirmSaveAs,
+          }
+        : null,
+    [
+      isSaveAsOpen,
+      saveAsName,
+      saveAsAssetType,
+      saveAsErrorMessage,
+      canSaveAs,
+      handleSaveAsNameChange,
+      handleSaveAsAssetTypeChange,
+      handleCancelSaveAs,
+      handleConfirmSaveAs,
+    ],
+  )
 
   const frameCountLabel = `${frameCount} ${frameCount === 1 ? 'FRAME' : 'FRAMES'}`
 
@@ -92,12 +184,13 @@ export const useTopBar = () => {
   const fileMenuEntries = useMemo(
     () =>
       buildFileMenuEntries({
+        openSaveAs: handleOpenSaveAs,
         openImportSpriteSheet: openFilePicker,
         exportFrame: handleExportFrame,
         exportSpriteSheet: handleExportSpriteSheet,
         closeMenu: () => closeFileMenu(),
       }),
-    [openFilePicker, handleExportFrame, handleExportSpriteSheet, closeFileMenu],
+    [handleOpenSaveAs, openFilePicker, handleExportFrame, handleExportSpriteSheet, closeFileMenu],
   )
 
   useEffect(() => {
@@ -146,6 +239,7 @@ export const useTopBar = () => {
     fileTriggerRef,
     toggleFileMenu,
     fileMenuEntries,
+    saveAsDialogProps,
     importFileInputRef: importSpriteSheet.fileInputRef,
     handleImportFileSelected: importSpriteSheet.handleFileSelected,
     importDialogProps: importSpriteSheet.dialogProps,

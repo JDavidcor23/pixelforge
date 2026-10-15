@@ -5,7 +5,7 @@ import { AssetTile } from '../AssetTile/AssetTile'
 import { ASSET_LIBRARY_IMPORT_ACCEPT } from '@/constants'
 import { FOCUS_RING } from '@/constants/focus-ring'
 import { MOTION } from '@/constants/motion'
-import type { AssetLibraryItem } from '@/types'
+import type { AssetLibraryItem, AssetType } from '@/types'
 
 interface AssetGridProps {
   readonly folderLabel: string
@@ -16,6 +16,8 @@ interface AssetGridProps {
   readonly onDownloadItem: (item: AssetLibraryItem) => void
   readonly onDownloadSource: (item: AssetLibraryItem) => void
   readonly onDeleteItem: (item: AssetLibraryItem) => void
+  readonly onRenameItem: (item: AssetLibraryItem, label: string) => void
+  readonly onMoveItem: (item: AssetLibraryItem, assetType: AssetType) => void
   readonly onOpenCreate: () => void
   readonly importFileInputRef: RefObject<HTMLInputElement | null>
   readonly isImporting: boolean
@@ -35,6 +37,8 @@ export const AssetGrid = ({
   onDownloadItem,
   onDownloadSource,
   onDeleteItem,
+  onRenameItem,
+  onMoveItem,
   onOpenCreate,
   importFileInputRef,
   isImporting,
@@ -98,6 +102,8 @@ export const AssetGrid = ({
               onDownload={onDownloadItem}
               onDownloadSource={onDownloadSource}
               onDelete={onDeleteItem}
+              onRename={onRenameItem}
+              onMoveToType={onMoveItem}
             />
           ))}
         </div>
