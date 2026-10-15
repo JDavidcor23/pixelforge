@@ -79,6 +79,18 @@ Test runner: `pnpm --filter @pixelforge/editor test`.
   (frontend-agent → cleancode-agent; design-agent step skipped). Status:
   done, reviewed (opacity corrected to match the project's one danger-card
   convention), tests/typecheck green (666 passed, 77 files).
+- T8 — Merge `feat/sprite-save-as` (ADR 0010 Phase 1+2 implementation) into
+  `feat/animations`. Owner: "mergéalo con el ADR0010, que está en master,
+  creo... averiguá todo y mergéalo." Found it was NOT on master — it lived
+  on `feat/sprite-save-as`, checked out directly in the main checkout
+  (not a worktree), 3 commits ahead of the common ancestor, never merged
+  anywhere. Clean merge, no conflicts. Status: done.
+- T9 — Fix the asset-merge duplication the T8 merge exposed: `kind:
+  'drawing'` (Save As) items were invisible to the reference picker.
+  Extracted `buildAssetLibraryItems()` in `lib/asset-library-items.ts`,
+  used by both `useAssetsPanel.hook.ts` and `useReferencePicker.hook.ts`.
+  Route: delegated (frontend-agent → cleancode-agent). Status: done,
+  reviewed, tests/typecheck green (690 passed, 78 files).
 
 ## Log
 
