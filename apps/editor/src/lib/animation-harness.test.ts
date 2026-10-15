@@ -28,6 +28,23 @@ describe('buildAnimationAction', () => {
     expect(action).toBe(`${ANIMATION_HARNESS.character.identityRules} shoots the pistol and recoils`)
   })
 
+  it('appends extra detail after the preset motion', () => {
+    const walk = findAnimationMotion('character', 'walk')
+    const action = buildAnimationAction(walk, 'character', 'drags the left leg slightly')
+
+    expect(action).toBe(`${ANIMATION_HARNESS.character.identityRules} ${walk.motion} drags the left leg slightly`)
+  })
+
+  it('ignores blank extra detail', () => {
+    const walk = findAnimationMotion('character', 'walk')
+    expect(buildAnimationAction(walk, 'character', '   ')).toBe(buildAnimationAction(walk, 'character'))
+  })
+
+  it('appends extra detail to custom text too', () => {
+    const action = buildAnimationAction('shoots the pistol', 'character', 'recoils hard')
+    expect(action).toBe(`${ANIMATION_HARNESS.character.identityRules} shoots the pistol recoils hard`)
+  })
+
   it('uses the asset type’s own rules', () => {
     expect(buildAnimationAction('glows', 'weapon')).toBe(`${ANIMATION_HARNESS.weapon.identityRules} glows`)
     expect(ANIMATION_HARNESS.weapon.identityRules).toContain('weapon')
@@ -63,6 +80,19 @@ describe('ANIMATION_HARNESS', () => {
         expect(preset.motion.trim().length).toBeGreaterThan(0)
       }
     }
+  })
+
+  it('gives every non-custom preset a detail placeholder suggesting what to describe', () => {
+    for (const { id } of ASSET_TYPES) {
+      for (const preset of ANIMATION_HARNESS[id].motions.filter((p) => !p.isCustomInput)) {
+        expect(preset.detailPlaceholder?.trim().length).toBeGreaterThan(0)
+      }
+    }
+  })
+
+  it('describes the attack as a gradual swing through a mid-point, not an instant pose jump', () => {
+    const { motion } = findAnimationMotion('character', 'attack')
+    expect(motion).toContain('through a clear mid-swing position before the strike')
   })
 
   it('offers idle, walk, run, jump, attack and crouch for characters', () => {

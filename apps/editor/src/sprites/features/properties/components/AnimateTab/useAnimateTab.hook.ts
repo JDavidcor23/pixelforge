@@ -66,6 +66,9 @@ export interface UseAnimateTabReturn {
   frameOptions: readonly number[]
   customText: string
   setCustomText: Dispatch<SetStateAction<string>>
+  /** Optional extra detail appended to the current non-custom preset's prompt. Never persists. */
+  motionDetail: string
+  setMotionDetail: Dispatch<SetStateAction<string>>
   /** The animation is generated at — and returns — the current canvas size. */
   canvasSize: { readonly width: number; readonly height: number }
   /** Non-null when the canvas cannot be animated as-is (not square, too large). */
@@ -175,6 +178,7 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
     pickFrameCount(findAnimationMotion(assetType, defaultMotionId).defaultFrames, frameOptions),
   )
   const [customText, setCustomText] = useState('')
+  const [motionDetail, setMotionDetail] = useState('')
   const [isReferencePickerOpen, setIsReferencePickerOpen] = useState(false)
   const [now, setNow] = useState(() => Date.now())
 
@@ -213,6 +217,7 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
     (id: string) => {
       setMotionIdState(id)
       setNFrames(pickFrameCount(findAnimationMotion(assetType, id).defaultFrames, frameOptions))
+      setMotionDetail('')
     },
     [assetType, frameOptions],
   )
@@ -227,6 +232,7 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
       setMotionIdState(nextDefault)
       setNFrames(pickFrameCount(findAnimationMotion(next, nextDefault).defaultFrames, frameOptions))
       setCustomText('')
+      setMotionDetail('')
     },
     [setCreateAssetType, frameOptions],
   )
@@ -368,7 +374,11 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
 
       const { jobId } = await provider.submit({
         firstFrameBase64,
-        action: buildAnimationAction(motion.isCustomInput ? customText : motion, assetType),
+        action: buildAnimationAction(
+          motion.isCustomInput ? customText : motion,
+          assetType,
+          motion.isCustomInput ? undefined : motionDetail,
+        ),
         frameCount: nFrames,
         enhancePrompt: motion.enhancePrompt,
         driftThreshold: motion.driftThreshold,
@@ -393,6 +403,7 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
   }, [
     motion,
     customText,
+    motionDetail,
     assetType,
     nFrames,
     provider,
@@ -448,6 +459,8 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
     frameOptions,
     customText,
     setCustomText,
+    motionDetail,
+    setMotionDetail,
     canvasSize,
     canvasSizeError,
     isGenerating,

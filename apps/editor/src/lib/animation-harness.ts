@@ -53,6 +53,7 @@ const CHARACTER_MOTIONS: readonly AnimationMotionPreset[] = [
     motion: 'idle breathing loop in place: chest rises and falls, head and shoulders bob slightly, feet stay planted, clothing sways gently',
     defaultFrames: 4,
     loopToFirstFrame: true,
+    detailPlaceholder: 'Add detail if this character idles in a specific way, e.g. "taps one foot" or "looks around slowly"',
   },
   {
     // The measured best prompt (2026-10-12), with "robe" generalized to clothing.
@@ -60,12 +61,14 @@ const CHARACTER_MOTIONS: readonly AnimationMotionPreset[] = [
     label: 'Walk',
     motion: 'walking cycle in place: legs alternate clear steps, clothing swings with each step, body bobs slightly',
     defaultFrames: 8,
+    detailPlaceholder: 'Add detail if this character walks in a specific way, e.g. "limps on the right leg" or "floats, feet barely touch the ground"',
   },
   {
     id: 'run',
     label: 'Run',
     motion: 'running cycle in place: long fast strides with both feet leaving the ground, arms pump opposite to the legs, body leans slightly forward, clothing flaps with each stride',
     defaultFrames: 8,
+    detailPlaceholder: 'Add detail if this character runs in a specific way, e.g. "on all fours" or "drags a wounded leg"',
   },
   {
     id: 'jump',
@@ -74,18 +77,21 @@ const CHARACTER_MOTIONS: readonly AnimationMotionPreset[] = [
     defaultFrames: 8,
     // Starts and ends standing, so the last frame can anchor to the first (as idle).
     loopToFirstFrame: true,
+    detailPlaceholder: 'Add detail if this character jumps in a specific way, e.g. "jumps off only the right leg" or "flaps wings to gain height"',
   },
   {
     id: 'attack',
     label: 'Attack',
-    motion: 'attack in place: wind up the held item or fist, strike forward in one fast swing, then return to the start pose',
+    motion: 'attack in place: raise the held item or fist back first, then swing it forward through a clear mid-swing position before the strike, then return to the start pose',
     defaultFrames: 6,
+    detailPlaceholder: 'Describe how THIS character attacks: melee swing or ranged shot, which weapon or body part, and the pose — the provider cannot guess this from "attack" alone',
   },
   {
     id: 'crouch',
     label: 'Crouch',
     motion: 'crouch in place: bend the knees and lower the body, hold the low pose, then rise back to standing',
     defaultFrames: 4,
+    detailPlaceholder: 'Add detail if this character crouches in a specific way, e.g. "kneels on one knee" or "curls into a ball"',
   },
   customPreset(8),
 ]
@@ -97,24 +103,28 @@ const SUBJECT_MOTIONS: readonly AnimationMotionPreset[] = [
     label: 'Breathe',
     motion: 'subtle idle loop in place: it gently expands and contracts a little, nothing else moves',
     defaultFrames: 4,
+    detailPlaceholder: 'Add detail if it breathes in a specific way, e.g. "pulses with a faint inner glow"',
   },
   {
     id: 'squash',
     label: 'Squash & stretch',
     motion: 'squash and stretch loop in place: squashes down wide, stretches up tall, then returns to its original shape, bouncy cartoon timing',
     defaultFrames: 6,
+    detailPlaceholder: 'Add detail if it squashes in a specific way, e.g. "wobbles like jelly" or "only the top half stretches"',
   },
   {
     id: 'spin',
     label: 'Spin',
     motion: 'spins in place around its vertical axis for one full turn and ends facing the same way as the first frame',
     defaultFrames: 8,
+    detailPlaceholder: 'Add detail if it spins in a specific way, e.g. "trails a ribbon of light" or "spins faster near the end"',
   },
   {
     id: 'break',
     label: 'Break apart',
     motion: 'breaks apart: cracks appear, it splits into pieces, the pieces fall and scatter into debris',
     defaultFrames: 8,
+    detailPlaceholder: 'Add detail if it breaks in a specific way, e.g. "shatters into glass shards" or "melts instead of cracking"',
   },
   customPreset(6),
 ]
@@ -139,11 +149,19 @@ export function findAnimationMotion(assetType: AssetType, motionId: string): Ani
 
 /**
  * The action text sent to the provider: identity rules FIRST, then the motion
- * (same idea as `buildPrompt`). Custom text still gets the rules — the user
+ * (same idea as `buildPrompt`), then the user's own extra detail for THIS
+ * generation (e.g. how a specific character attacks) — concatenated, never
+ * replacing the preset motion. Custom text still gets the rules — the user
  * describes the motion, the harness keeps the subject stable.
  */
-export function buildAnimationAction(input: AnimationMotionPreset | string, assetType: AssetType): string {
+export function buildAnimationAction(
+  input: AnimationMotionPreset | string,
+  assetType: AssetType,
+  extraDetail?: string,
+): string {
   const motion = (typeof input === 'string' ? input : input.motion).trim()
+  const detail = extraDetail?.trim()
   const { identityRules } = ANIMATION_HARNESS[assetType]
-  return motion ? `${identityRules} ${motion}` : identityRules
+  const action = motion ? `${identityRules} ${motion}` : identityRules
+  return detail ? `${action} ${detail}` : action
 }

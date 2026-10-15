@@ -26,6 +26,13 @@ export interface AnimationMotionPreset {
   readonly loopToFirstFrame?: boolean
   /** True only for "Custom" — the user writes the motion text; identity rules are still prepended. */
   readonly isCustomInput?: boolean
+  /**
+   * Placeholder for the optional "extra detail" field (never shown for the
+   * custom-input preset, which already is free text). Suggests what to
+   * describe for THIS motion — e.g. how the character attacks (weapon, melee
+   * vs ranged, pose) — because the provider cannot guess it from "attack".
+   */
+  readonly detailPlaceholder?: string
 }
 
 /** Per asset type: the identity rules that keep the subject stable, and the motions offered for it. */

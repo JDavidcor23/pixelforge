@@ -36,6 +36,8 @@ export const AnimateTab = () => {
     canvasSizeError,
     customText,
     setCustomText,
+    motionDetail,
+    setMotionDetail,
     isGenerating,
     elapsedLabel,
     runningLabel,
@@ -102,6 +104,22 @@ export const AnimateTab = () => {
             onPaste={(e) => e.stopPropagation()}
             className="w-full resize-y rounded border border-line-strong bg-sunken p-2.5 text-xs leading-relaxed text-ink placeholder:text-subtle focus:border-ai-ink focus:outline-none"
           />
+        </div>
+      )}
+
+      {!motion.isCustomInput && (
+        <div>
+          <label className={`mb-1 block ${SECTION_LABEL}`}>Extra detail (optional)</label>
+          <textarea
+            value={motionDetail}
+            onChange={(e) => setMotionDetail(e.target.value)}
+            rows={2}
+            placeholder={motion.detailPlaceholder}
+            onKeyDown={(e) => e.stopPropagation()}
+            onPaste={(e) => e.stopPropagation()}
+            className="w-full resize-y rounded border border-line-strong bg-sunken p-2.5 text-xs leading-relaxed text-ink placeholder:text-subtle focus:border-ai-ink focus:outline-none"
+          />
+          <p className="mt-1 text-2xs text-subtle">Adds to the motion above — it doesn't replace it.</p>
         </div>
       )}
 
