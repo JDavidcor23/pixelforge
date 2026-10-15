@@ -5,6 +5,8 @@ import { MOTION } from '@/constants/motion'
 export const SECTION_LABEL = 'font-mono text-3xs uppercase tracking-wider text-subtle'
 /** Same secondary button as AiResultCard. */
 export const SECONDARY_BUTTON = `flex h-8 shrink-0 items-center justify-center rounded border border-line-strong px-3 text-xs text-muted hover:text-ink ${MOTION.PRESS} ${FOCUS_RING.SURFACE} disabled:pointer-events-none disabled:opacity-40`
+/** Destructive action that stops a running, potentially billed job (`danger` tokens, no glow per DESIGN.md). */
+export const DANGER_BUTTON = `flex h-8 shrink-0 items-center gap-1.5 rounded border border-danger/40 px-3 text-xs text-danger hover:bg-danger/10 ${MOTION.PRESS} ${FOCUS_RING.SURFACE} disabled:pointer-events-none disabled:opacity-40`
 /**
  * The persistent reference chip (ADR 0011) — always visible near the Generate button, opens the picker.
  * Unset reads as an AI-surface call-to-action (`ai` tokens, same as the selected Frames chip below);

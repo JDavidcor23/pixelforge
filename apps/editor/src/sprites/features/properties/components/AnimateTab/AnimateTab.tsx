@@ -6,7 +6,7 @@ import { ReferenceChip } from './ReferenceChip/ReferenceChip'
 import { ReferencePicker } from './ReferencePicker/ReferencePicker'
 import { UnfinishedJobs } from './UnfinishedJobs'
 import { useAnimateTab } from './useAnimateTab.hook'
-import { SECONDARY_BUTTON, SECTION_LABEL } from './animate-tab.classes'
+import { DANGER_BUTTON, SECONDARY_BUTTON, SECTION_LABEL } from './animate-tab.classes'
 import { ANIMATE_CUSTOM_MOTION_PLACEHOLDER } from '@/constants'
 import {
   ANIMATION_BUSY_MESSAGE,
@@ -185,11 +185,14 @@ export const AnimateTab = () => {
       </button>
 
       {isGenerating && !isStalled && (
-        <div className="flex flex-col items-center gap-1">
-          <p className="text-center text-2xs text-subtle">{progressHint}</p>
-          <button type="button" onClick={handleDiscardJob} className={SECONDARY_BUTTON}>
-            {ANIMATION_CANCEL_LABEL}
-          </button>
+        <div className="flex flex-col gap-2 rounded-sm border border-danger/40 bg-danger/10 p-2">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-2xs text-subtle">{progressHint}</p>
+            <button type="button" onClick={handleDiscardJob} className={DANGER_BUTTON}>
+              <X size={12} aria-hidden />
+              {ANIMATION_CANCEL_LABEL}
+            </button>
+          </div>
           <p className="text-2xs text-subtle">{ANIMATION_CANCEL_HINT}</p>
         </div>
       )}

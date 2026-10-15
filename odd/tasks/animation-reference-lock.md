@@ -46,6 +46,15 @@ Test runner: `pnpm --filter @pixelforge/editor test`.
 - S8 (follow-up ask): "¿Y qué pasó con el botón de cancelar que no lo estoy
   viendo?... ¿No lo integraste?" Owner clarified S1 should be implemented
   now (it had been explicitly deferred/not authorized until this message).
+- S9 (bug, in scope): "el botón de center... cuando estoy en una animación
+  de 128, muere... demasiado zoom... el zoom creo que es de 600 y debería
+  ser de 400 por lo menos para 128." Root cause: `resetViewport` snapped to
+  a flat `SPRITE_EDITOR_CANVAS.RESET_VIEW_ZOOM = 9` (900%) regardless of
+  canvas size, tuned only for the 64px default.
+- S10 (design feedback): "el botón de cancel diseño es malísimo." The Cancel
+  control (T3) shipped with plain `SECONDARY_BUTTON` styling, identical to
+  the neutral "Check again" button, even though it stops a possibly-billed
+  job.
 
 ## Tasks
 
@@ -63,6 +72,13 @@ Test runner: `pnpm --filter @pixelforge/editor test`.
 - T5 — Visual pass on Reference chip/picker (S7). Route: delegated
   (frontend-agent → cleancode-agent; design-agent step skipped, see L7).
   Status: done, reviewed, tests/typecheck green.
+- T6 — Scale center-view zoom to canvas size (S9). Route: delegated
+  (frontend-agent → cleancode-agent). Status: done, reviewed, tests/
+  typecheck green (666 passed, 77 files).
+- T7 — Design pass on the Cancel button (S10). Route: delegated
+  (frontend-agent → cleancode-agent; design-agent step skipped). Status:
+  done, reviewed (opacity corrected to match the project's one danger-card
+  convention), tests/typecheck green (666 passed, 77 files).
 
 ## Log
 
@@ -106,6 +122,32 @@ Test runner: `pnpm --filter @pixelforge/editor test`.
 - L10 (2026-10-14): Owner asked why S1 (cancel while generating) wasn't
   done — clarified it was deferred/unauthorized, not forgotten; owner's
   follow-up message authorized it, now T3.
+- L11 (2026-10-14): frontend-agent implemented T3 (see L prior entries for
+  detail — superseded by this log's numbering; cancel control shipped,
+  reviewed, committed as `ae10745`).
+- L12 (2026-10-14): Owner reported S9 (zoom) while a separate design pass
+  was running. frontend-agent extracted `getCenterViewZoom(canvasWidth,
+  canvasHeight)` in `viewport.slice.ts`, anchored to the original 900%-at-
+  64px baseline (64→9, 128→4.5, 256→2.25, clamped). Updated `resetViewport`,
+  `useCanvasOverlay.hook.ts`'s label/centered-check, and the Ctrl+0 shortcut
+  to all derive from the same function — no leftover flat constant. Also
+  touched `types/index.ts` (outside the given surface) for a duplicate
+  `resetViewport` type signature required by `tsc`; authorized as necessary.
+  RED→GREEN via new `viewport.slice.test.ts`. Tests: 666 passed/77 files.
+  cleancode-agent reviewed, no fixes needed, confirmed single source of
+  truth across all three call sites.
+- L13 (2026-10-14): Owner reported S10 (Cancel button design) mid-flight,
+  while the zoom-fix agent was still running — confirmed no file overlap
+  (Cancel lives in `AnimateTab.tsx`/`animate-tab.classes.ts`, zoom fix
+  doesn't touch either) and ran both in parallel. frontend-agent gave Cancel
+  a `danger`-toned `DANGER_BUTTON` class and a card matching the `isStalled`
+  sibling block's shape, instead of the neutral `SECONDARY_BUTTON` it
+  shared with "Check again". One of its own verification steps used
+  `git stash push -u`/`apply` (never bare pop, per shared-stash-stack
+  safety) to isolate pre-existing failures for diagnosis; the resulting
+  duplicate stash entry was manually confirmed redundant (diff already
+  present in the working tree) and dropped. Both agents' work verified
+  intact afterward via full `git status`/`git diff --stat`.
 - L11 (2026-10-14): frontend-agent implemented T3. Confirmed the mechanism
   (`handleDiscardJob`, `pollUntilDone`'s `abandoned` outcome) already handled
   cancel-while-generating correctly before touching anything — this was a
