@@ -28,21 +28,12 @@ describe('buildAnimationAction', () => {
     expect(action).toBe(`${ANIMATION_HARNESS.character.identityRules} shoots the pistol and recoils`)
   })
 
-  it('appends extra detail after the preset motion', () => {
-    const walk = findAnimationMotion('character', 'walk')
-    const action = buildAnimationAction(walk, 'character', 'drags the left leg slightly')
-
-    expect(action).toBe(`${ANIMATION_HARNESS.character.identityRules} ${walk.motion} drags the left leg slightly`)
-  })
-
-  it('ignores blank extra detail', () => {
-    const walk = findAnimationMotion('character', 'walk')
-    expect(buildAnimationAction(walk, 'character', '   ')).toBe(buildAnimationAction(walk, 'character'))
-  })
-
-  it('appends extra detail to custom text too', () => {
-    const action = buildAnimationAction('shoots the pistol', 'character', 'recoils hard')
-    expect(action).toBe(`${ANIMATION_HARNESS.character.identityRules} shoots the pistol recoils hard`)
+  it('treats the preset motion as the default text — no separate detail argument', () => {
+    // ADR 0012: the preset's motion text is the editable box's prefill. A caller
+    // who wants to change it just passes different text — there is no third
+    // "extraDetail" argument to concatenate anymore.
+    const edited = buildAnimationAction('raises the staff then swings it in one motion', 'character')
+    expect(edited).toBe(`${ANIMATION_HARNESS.character.identityRules} raises the staff then swings it in one motion`)
   })
 
   it('uses the asset type’s own rules', () => {

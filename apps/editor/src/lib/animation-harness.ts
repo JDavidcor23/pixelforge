@@ -149,19 +149,15 @@ export function findAnimationMotion(assetType: AssetType, motionId: string): Ani
 
 /**
  * The action text sent to the provider: identity rules FIRST, then the motion
- * (same idea as `buildPrompt`), then the user's own extra detail for THIS
- * generation (e.g. how a specific character attacks) — concatenated, never
- * replacing the preset motion. Custom text still gets the rules — the user
- * describes the motion, the harness keeps the subject stable.
+ * (same idea as `buildPrompt`). `input` is either a preset — used as-is by the
+ * offline eval bench (`scripts/pixellab-animate-harness.ts`), which measures
+ * the unedited default — or the plain string the Animate tab sends, which is
+ * that same default text AFTER the user may have edited it in place (ADR
+ * 0012: the preset's `motion` is a prefill, not hidden boilerplate — there is
+ * no separate "extra detail" argument to concatenate anymore).
  */
-export function buildAnimationAction(
-  input: AnimationMotionPreset | string,
-  assetType: AssetType,
-  extraDetail?: string,
-): string {
+export function buildAnimationAction(input: AnimationMotionPreset | string, assetType: AssetType): string {
   const motion = (typeof input === 'string' ? input : input.motion).trim()
-  const detail = extraDetail?.trim()
   const { identityRules } = ANIMATION_HARNESS[assetType]
-  const action = motion ? `${identityRules} ${motion}` : identityRules
-  return detail ? `${action} ${detail}` : action
+  return motion ? `${identityRules} ${motion}` : identityRules
 }

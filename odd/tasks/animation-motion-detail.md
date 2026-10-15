@@ -24,11 +24,26 @@ Test runner: `pnpm --filter @pixelforge/editor test`.
   expliques cómo va a atacar el pingüino... cómo va a poner la pose." A
   per-preset placeholder suggesting what to describe, not a blocking
   requirement.
-- S4 (data model decision): "es un complemento, es una concatenación... Y el
-  custom es como para... una animación de victoria... algo que el usuario...
-  quiera hacer." The extra-detail field concatenates onto the chosen
-  preset's motion; the existing "Custom" preset (free text replacing the
-  whole prompt) stays unchanged and separate.
+- S4 (data model decision — SUPERSEDED 2026-10-15, see L6): "es un
+  complemento, es una concatenación... Y el custom es como para... una
+  animación de victoria... algo que el usuario... quiera hacer." (original
+  decision: the extra-detail field concatenated onto the chosen preset's
+  motion, never replacing it). New decision: the preset's motion text is now
+  the starting value of the SAME editable box the user types in — editing it
+  REPLACES the suggestion for this generation, nothing gets glued after it.
+  Identity rules stay fixed and invisible underneath (they protect the
+  character, not the chosen pose). "Custom" keeps starting empty, same box.
+- S8 (bug, in scope): owner tested the Attack preset on a real wizard sprite
+  with a full alternate 5-beat description (windup/thrust/flare/hold/
+  retract) typed into the old "extra detail" box, at 12 frames. Result:
+  near-static output, staff shrinks to an orb, only palette drifts between
+  frames. Root cause: the hidden generic preset text + the owner's own full
+  alternate description got concatenated into one contradictory `action`
+  string — PixelLab's `animate-with-text-v3` accepts only ONE holistic
+  action string + `frame_count` (confirmed in `AnimationRequest` /
+  `PixelLabAnimateRequestBody`, `apps/editor/src/types/animation.types.ts`;
+  no per-frame field exists). This is also the real-world validation T2's
+  rewrite never got (see L5) — it failed.
 - S5 (persistence decision): "Podrías guardarlo, pero... no sé cómo
   estructurarlo de una manera de que sea fácil de entender a la primera...
   Yo creo que es mejor resetearlo." The extra-detail field never persists —
@@ -63,6 +78,37 @@ Test runner: `pnpm --filter @pixelforge/editor test`.
 - T4 — all: cleancode-agent review of the full diff. Route: delegated.
   Status: done — no issues found, no fixes needed. `typecheck` clean,
   695/695 tests passed (re-verified).
+- T5 — S4,S8: simplify `buildAnimationAction` to a single action-text
+  argument (drop the 3rd `extraDetail` concat param); update its doc comment
+  and `AnimationMotionPreset.motion`'s comment to describe it as the
+  preset's suggested/default text, not mandatory hidden text. Update
+  `animation-harness.test.ts` (remove the two tests asserting the
+  superseded concatenation contract). Route: inline (parent). Status: done,
+  GREEN (693/693, `typecheck` isolates the one expected downstream break in
+  T6's file).
+- T6 — S4,S8: unify `useAnimateTab.hook.ts`'s `customText`/`motionDetail`
+  dual state into one `actionText`/`setActionText` field, seeded from
+  `motion.motion` on preset/type change (`''` for Custom, unchanged);
+  `handleGenerateAnimation` calls the simplified `buildAnimationAction` with
+  that one field; submit guard now blocks on empty `actionText` for every
+  preset. Route: delegated (frontend-agent). Status: done. `typecheck`
+  clean, 693/693 tests passed.
+- T7 — S4,S8: merge `AnimateTab.tsx`'s two mutually-exclusive textareas
+  ("Describe the motion" / "Extra detail (optional)") into one box bound to
+  `actionText`; drop the "Adds to the motion above — it doesn't replace it"
+  copy; `isGenerateDisabled` now requires non-empty text for every preset,
+  not just Custom. Route: delegated (frontend-agent). Status: done
+  (same pass as T6). `typecheck` clean, 693/693 tests passed.
+- T8 — all (T5-T7): cleancode-agent review of the full diff across all five
+  touched files. Route: delegated. Status: done — no issues found, no fixes
+  needed; confirmed zero leftover references to `customText`/`motionDetail`/
+  the old 3-arg `buildAnimationAction` call shape anywhere in the app.
+  `typecheck` clean, 693/693 tests passed (re-verified).
+- T9 (follow-up, NOT run automatically — spends real PixelLab credits):
+  validate the rewritten attack preset plus a typical user detail against
+  `scripts/pixellab-animate-harness.ts` on a real sprite, per project
+  convention ("every new motion must pass the eval script before it
+  ships"). Pending the owner's explicit go-ahead to spend credits.
 
 ## Log
 
@@ -99,3 +145,19 @@ Per project convention ("every new motion must pass the eval script on a
 real sprite before it ships"), this should be validated with a real
 generation before being considered fully proven — left as a follow-up, not
 run automatically because it spends real money.
+
+L6 (2026-10-15): Owner reported the real-world failure described in S8 and
+rejected the "just add UI guidance, keep the hidden concatenation" option —
+"no me sirve que yo le pase un prompt y diga, no, lo que pasa es que no te
+lo puede hacer. Hay que encontrar una manera de hacer que el arnés funcione
+de una manera correcta." Ran the `architecture-decision` skill: framed the
+problem with the numbers above, cited ADR 0009's own measurement (identity
+rules + ONE continuous motion sentence is what performed best; forcing
+`last_frame` killed motion) and PixelLab's `animate-with-text-v3` contract
+(single `action` string, no per-frame field) as prior art, presented 3
+options — (A) keep concatenation + add UI copy guidance, (B) make the
+preset's motion text the editable box's prefill so edits replace it instead
+of appending, (C) auto-translate a frame-by-frame script into one prose
+sentence. Owner chose **B**. Recorded as `docs/adr/0012-preset-motion-text-
+is-editable.md`. S4 revised above; new tasks T5–T9 added; T2 and T3's
+original intent stay valid, only superseded where S4 says so.
