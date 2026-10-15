@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 
+import { buildAssetLibraryItems } from '@/lib/asset-library-items'
 import { composeHorizontalSheet } from '@/lib/compose-horizontal-sheet'
 import { downloadFromHref, downloadJson } from '@/lib/download-file'
 import { useApplyAsset } from '@/sprites/hooks/useApplyAsset.hook'
@@ -40,36 +41,10 @@ export const useAssetsPanel = ({ search }: UseAssetsPanelParams) => {
     handleImportFiles,
   } = useImportLibraryAssets({ assetType: selectedFolder.assetType ?? DEFAULT_ASSET_TYPE })
 
-  const items = useMemo<AssetLibraryItem[]>(() => {
-    const combined = [
-      ...generations.map((gen) => ({
-        timestamp: gen.timestamp,
-        item: {
-          id: gen.id,
-          // ADR 0010 (Phase 1): `File > Save As…` persists a canvas snapshot
-          // through this same `generations` slice/object store, tagged
-          // `kind: 'drawing'` — everything else about it is a generation.
-          kind: gen.kind ?? ('generation' as const),
-          label: gen.prompt,
-          thumbnailSrc: gen.base64,
-          assetType: gen.assetType ?? DEFAULT_ASSET_TYPE,
-          isAnimated: false,
-        },
-      })),
-      ...animations.map((anim) => ({
-        timestamp: anim.timestamp,
-        item: {
-          id: anim.id,
-          kind: 'animation' as const,
-          label: anim.label,
-          thumbnailSrc: anim.frames[0] ?? '',
-          assetType: anim.assetType ?? DEFAULT_ASSET_TYPE,
-          isAnimated: true,
-        },
-      })),
-    ]
-    return combined.sort((a, b) => b.timestamp - a.timestamp).map((entry) => entry.item)
-  }, [generations, animations])
+  const items = useMemo<AssetLibraryItem[]>(
+    () => buildAssetLibraryItems({ generations, animations }),
+    [generations, animations],
+  )
 
   const folderCounts = useMemo(() => {
     const counts: Partial<Record<FolderId, number>> = {}

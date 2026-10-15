@@ -6,8 +6,8 @@ import { useSpriteEditorStore } from '@/stores'
 import { useAIJobsStore } from '@/stores/ai-jobs.store'
 import { useAssetsStore } from '@/stores/assets.store'
 import { buildAssetReference, buildCanvasReference, canvasFrameReferenceLabel } from '../animation-reference'
+import { buildAssetLibraryItems } from '@/lib/asset-library-items'
 import { layersToBase64 } from '@/lib/export-utils'
-import { DEFAULT_ASSET_TYPE } from '@/constants'
 import { DIALOG_FOCUS_TRAP_KEY, FILE_MENU_DISMISS_KEY } from '@/constants/file-menu'
 import type { AssetLibraryItem } from '@/types'
 
@@ -64,36 +64,13 @@ export const useReferencePicker = ({ onClose }: UseReferencePickerParams) => {
     }))
   }, [frameCount])
 
-  // Mirrors `useAssetsPanel.hook.ts`'s generation+animation merge (the Assets
-  // tab's view-model) — duplicated here rather than imported, since the
-  // picker only needs id/label/thumbnail, not that hook's folder/search/rename state.
-  const assetItems = useMemo<AssetLibraryItem[]>(() => {
-    const combined = [
-      ...generations.map((gen) => ({
-        timestamp: gen.timestamp,
-        item: {
-          id: gen.id,
-          kind: 'generation' as const,
-          label: gen.prompt,
-          thumbnailSrc: gen.base64,
-          assetType: gen.assetType ?? DEFAULT_ASSET_TYPE,
-          isAnimated: false,
-        },
-      })),
-      ...animations.map((anim) => ({
-        timestamp: anim.timestamp,
-        item: {
-          id: anim.id,
-          kind: 'animation' as const,
-          label: anim.label,
-          thumbnailSrc: anim.frames[0] ?? '',
-          assetType: anim.assetType ?? DEFAULT_ASSET_TYPE,
-          isAnimated: true,
-        },
-      })),
-    ]
-    return combined.sort((a, b) => b.timestamp - a.timestamp).map((entry) => entry.item)
-  }, [generations, animations])
+  // Same merge as `useAssetsPanel.hook.ts`'s Assets-tab view-model, shared via
+  // `buildAssetLibraryItems` (the picker only needs id/label/thumbnail, not
+  // that hook's folder/search/rename state built on top of it).
+  const assetItems = useMemo<AssetLibraryItem[]>(
+    () => buildAssetLibraryItems({ generations, animations }),
+    [generations, animations],
+  )
 
   const handlePickCanvasFrame = useCallback(
     (frame: CanvasFrameOption) => {
