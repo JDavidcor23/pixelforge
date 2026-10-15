@@ -12,6 +12,7 @@ import {
   useSetSelectionTransform,
   useSetViewportOffset,
   useResetViewport,
+  useCanvasDimensions,
   useCopySelection,
   useCutSelection,
   usePasteClipboard,
@@ -33,6 +34,7 @@ export const useKeyboardShortcuts = () => {
   const setSelectionTransform = useSetSelectionTransform()
   const setViewportOffset = useSetViewportOffset()
   const resetViewport = useResetViewport()
+  const { width: canvasWidth, height: canvasHeight } = useCanvasDimensions()
   const copySelection = useCopySelection()
   const cutSelection = useCutSelection()
   const pasteClipboard = usePasteClipboard()
@@ -92,7 +94,7 @@ export const useKeyboardShortcuts = () => {
       // fix for trackpad panning: no drag needed to get the sprite back.
       if (isCtrl && key === '0') {
         e.preventDefault()
-        resetViewport()
+        resetViewport(canvasWidth, canvasHeight)
         return
       }
 
@@ -194,6 +196,8 @@ export const useKeyboardShortcuts = () => {
     viewport,
     setViewportOffset,
     resetViewport,
+    canvasWidth,
+    canvasHeight,
     activeTool,
     selection,
     setSelectionTransform,

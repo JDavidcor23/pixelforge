@@ -324,7 +324,7 @@ export interface EditorPrefsState {
 export interface EditorPrefsActions {
   setZoom: (zoom: number) => void
   setViewportOffset: (x: number, y: number) => void
-  resetViewport: () => void
+  resetViewport: (canvasWidth: number, canvasHeight: number) => void
   saveColor: (color: RgbaColor) => void
   removeColor: (color: RgbaColor) => void
   setShowGrid: (show: boolean) => void

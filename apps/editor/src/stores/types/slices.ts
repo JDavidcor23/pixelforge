@@ -68,8 +68,12 @@ export interface ViewportSlice {
   viewport: ViewportState
   setZoom: (zoom: number) => void
   setViewportOffset: (x: number, y: number) => void
-  /** Recentres the sprite and snaps zoom to SPRITE_EDITOR_CANVAS.RESET_VIEW_ZOOM. */
-  resetViewport: () => void
+  /**
+   * Recentres the sprite and snaps zoom to the canvas-size-aware center-view
+   * value (see `getCenterViewZoom` in `viewport.slice.ts`) — callers must pass
+   * the document's current `canvasWidth`/`canvasHeight`.
+   */
+  resetViewport: (canvasWidth: number, canvasHeight: number) => void
 }
 
 // ── Timeline Slice (pure state only) ────────────────────────────────────────

@@ -27,10 +27,16 @@ export const SPRITE_EDITOR_CANVAS = {
   MAX_ZOOM: 40,
   DEFAULT_ZOOM: 16,
   /**
-   * Zoom the "center view" action snaps to — 900%, since zoom is a raw
-   * multiplier (see SPRITE_EDITOR_VIEWPORT.PERCENTAGE_MULTIPLIER).
-   * Chosen for live demos: the grid stays legible from a distance while the
-   * whole sprite still fits comfortably in the viewport.
+   * Baseline zoom the "center view" action targets at the DEFAULT_WIDTH/HEIGHT
+   * (64px) canvas size — 900%, since zoom is a raw multiplier (see
+   * SPRITE_EDITOR_VIEWPORT.PERCENTAGE_MULTIPLIER). Chosen for live demos: the
+   * grid stays legible from a distance while the whole sprite still fits
+   * comfortably in the viewport.
+   *
+   * The actual center-view zoom scales inversely with canvas size from this
+   * baseline (see `getCenterViewZoom` in `viewport.slice.ts`), so a 128x128 or
+   * 256x256 canvas renders at roughly the same ON-SCREEN pixel size instead of
+   * overflowing the viewport at a flat 900%.
    */
   RESET_VIEW_ZOOM: 9,
   GRID_LINE_COLOR: COLORS.CANVAS.GRID_LINE,
