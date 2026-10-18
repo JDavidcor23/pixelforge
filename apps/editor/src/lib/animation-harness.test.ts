@@ -81,9 +81,22 @@ describe('ANIMATION_HARNESS', () => {
     }
   })
 
-  it('describes the attack as a gradual swing through a mid-point, not an instant pose jump', () => {
+  it('describes the attack as a heavy overhead smash through a mid-point, not an instant pose jump', () => {
     const { motion } = findAnimationMotion('character', 'attack')
-    expect(motion).toContain('through a clear mid-swing position before the strike')
+    expect(motion).toContain('raise the held item high above the head')
+    expect(motion).toContain('through a clear mid-swing position')
+  })
+
+  it('offers a jump attack and a spell cast that swing the held item and close on the first frame', () => {
+    const jumpAttack = findAnimationMotion('character', 'jump-attack')
+    const castSpell = findAnimationMotion('character', 'cast-spell')
+    expect(jumpAttack.motion).toContain('at the top of the jump swing it down hard')
+    expect(castSpell.motion).toContain('release a burst of bright sparks')
+    for (const preset of [jumpAttack, castSpell]) {
+      expect(preset.swingsHeldItem).toBe(true)
+      expect(preset.loopToFirstFrame).toBe(true)
+      expect(preset.defaultFrames).toBe(8)
+    }
   })
 
   it('offers idle, walk, run, jump, attack and crouch for characters', () => {

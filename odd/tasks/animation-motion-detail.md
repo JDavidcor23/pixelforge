@@ -112,6 +112,9 @@ Test runner: `pnpm --filter @pixelforge/editor test`.
 - T10 — S1: attack drops the held-item angle rule (`swingsHeldItem`),
   closes on the first frame, 8 frames. Route: inline (parent). Status: done,
   RED then GREEN 695/695, eval PASS with notes (L8).
+- T11 — S1: overhead-smash attack + new jump-attack and cast-spell presets.
+  Route: inline (parent). Status: done, RED then GREEN 696/696, evals in L9;
+  owner review pending.
 
 ## Log
 
@@ -194,3 +197,18 @@ flaws: frames 0-1 are near-identical (slow start), the crystal floats off the
 staff tip at the strike. PixelLab docs (official "Animate with text (New)"
 page): 4-16 even frames, no keyframe inputs; the Interpolation tool (64x64
 only) is the documented route if in-between control is ever needed.
+
+L9 (2026-10-18): Owner wanted more dramatic attacks ("que salte y le pegue a
+un malo, que salte o que lance unas chispas, un poder, algo"), shared an
+overhead-smash reference with a motion trail, and approved three tests ("Sí,
+dale, haz las tres pruebas"). T11: attack rewritten as an overhead smash; new
+presets `jump-attack` and `cast-spell` (both `swingsHeldItem`,
+`loopToFirstFrame`, 8 frames). RED then GREEN 696/696, typecheck clean.
+Eval on wizard-128 (sheet: `.harness-out/pixellab/attack-variants-2026-10-18.png`):
+- attack (0.030 USD): staff rises overhead and pushes forward level, but no
+  real downward smash; the crystal doubles at the strike. Weakest.
+- jump-attack (0.037 USD): big swing with a cyan slash trail, closest to the
+  owner's reference; feet barely leave the ground, so the "jump" is weak.
+- cast-spell (0.027 USD): tip glows, points forward, clear spark burst,
+  returns to the start pose. Cleanest and most readable.
+Owner to pick which stay.
