@@ -108,7 +108,10 @@ Test runner: `pnpm --filter @pixelforge/editor test`.
   validate the rewritten attack preset plus a typical user detail against
   `scripts/pixellab-animate-harness.ts` on a real sprite, per project
   convention ("every new motion must pass the eval script before it
-  ships"). Pending the owner's explicit go-ahead to spend credits.
+  ships"). Status: run 2026-10-18 (L7) — FAIL; re-run after T10 (L8) — PASS with notes.
+- T10 — S1: attack drops the held-item angle rule (`swingsHeldItem`),
+  closes on the first frame, 8 frames. Route: inline (parent). Status: done,
+  RED then GREEN 695/695, eval PASS with notes (L8).
 
 ## Log
 
@@ -161,3 +164,33 @@ of appending, (C) auto-translate a frame-by-frame script into one prose
 sentence. Owner chose **B**. Recorded as `docs/adr/0012-preset-motion-text-
 is-editable.md`. S4 revised above; new tasks T5–T9 added; T2 and T3's
 original intent stay valid, only superseded where S4 says so.
+
+L7 (2026-10-18): T9 run with the owner's go-ahead ("Sí, dale a ver qué
+sale."). `scripts/pixellab-animate-harness.ts` on the wizard-128 reference,
+`--motion=attack`, rewritten preset text only (no user detail). 6 frames,
+0.022 USD, 146s. Output:
+`.harness-out/pixellab/2026-10-18T22-38-25-574Z-reference/`. Result: FAIL.
+Frames 0-1 barely move (no visible windup), frame 2 jumps straight from
+upright staff to a horizontal thrust (the "clear mid-swing position" never
+appears), frames 3-5 hold the thrust and never return to the start pose, and
+the crystal orb turns into a cyan flame blob. The T2 text rewrite did not fix
+the snap between windup and strike. Next step pending the owner's decision.
+
+L8 (2026-10-18): Owner asked for a recommendation ("Pero entonces, ¿qué
+recomiendas tú?") and approved it ("Sí, dale, a ver qué pasa. También puedes
+buscar la documentación de Pixel Lab a ver qué pasa."). Diagnosis: the
+character identity rule "Held items keep the same angle as in the first
+frame, they never tilt or lie flat" (added for the jump) forbids the swing an
+attack needs; attack also lacked `last_frame` and had only 6 frames. T10:
+new preset flag `swingsHeldItem` drops that one rule (attack only),
+`buildAnimationAction` takes the selected preset as an optional 3rd arg so
+the Animate tab's edited text keeps the opt-out, attack gets
+`loopToFirstFrame: true` and `defaultFrames: 8`. RED observed, then GREEN
+695/695, typecheck clean. Re-run on wizard-128: 8 frames, 0.031 USD, 214s,
+`.harness-out/pixellab/2026-10-18T22-45-20-753Z-reference/`. Result: PASS
+with notes — staff goes upright -> diagonal over the shoulder -> forward
+strike (2 frames) -> diagonal recover -> back to the start pose. Remaining
+flaws: frames 0-1 are near-identical (slow start), the crystal floats off the
+staff tip at the strike. PixelLab docs (official "Animate with text (New)"
+page): 4-16 even frames, no keyframe inputs; the Interpolation tool (64x64
+only) is the documented route if in-between control is ever needed.

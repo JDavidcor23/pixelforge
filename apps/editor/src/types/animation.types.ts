@@ -31,6 +31,8 @@ export interface AnimationMotionPreset {
    * but leaves a walk almost static — enable it only for in-place motions.
    */
   readonly loopToFirstFrame?: boolean
+  /** Drops the "held items keep the same angle" rule — set it for motions that swing the item (Attack). */
+  readonly swingsHeldItem?: boolean
   /** True only for "Custom" — the user writes the motion text; identity rules are still prepended. */
   readonly isCustomInput?: boolean
   /**

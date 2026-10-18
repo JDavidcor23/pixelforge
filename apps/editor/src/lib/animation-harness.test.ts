@@ -106,6 +106,23 @@ describe('ANIMATION_HARNESS', () => {
     )
   })
 
+  it('lets the attack swing its held item: no angle lock, closes on the first frame, 8 frames', () => {
+    const attack = findAnimationMotion('character', 'attack')
+    const action = buildAnimationAction(attack.motion, 'character', attack)
+    expect(action).not.toContain('Held items keep the same angle as in the first frame')
+    expect(action).toContain('Held items keep their full length and shape in every frame')
+    expect(action.endsWith(attack.motion)).toBe(true)
+    expect(attack.loopToFirstFrame).toBe(true)
+    expect(attack.defaultFrames).toBe(8)
+  })
+
+  it('keeps the held-item angle lock for every other character motion', () => {
+    const walk = findAnimationMotion('character', 'walk')
+    expect(buildAnimationAction(walk.motion, 'character', walk)).toContain(
+      'Held items keep the same angle as in the first frame, they never tilt or lie flat.',
+    )
+  })
+
   it('jumps with lively free arms while the held item stays upright', () => {
     const { motion } = findAnimationMotion('character', 'jump')
     expect(motion).toContain('the free arm swings down on the bend and up on the rise')

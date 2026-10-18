@@ -23,12 +23,20 @@ import type { AnimationHarness, AnimationMotionPreset, AssetType } from '../type
 
 const CUSTOM_MOTION_ID = 'custom'
 
+/**
+ * Measured on the jump (2026-10-12): stops the staff lying flat mid-air. It
+ * contradicts any motion that swings the item, so presets with
+ * `swingsHeldItem` drop it (measured 2026-10-18: with it, the attack snapped
+ * from upright straight to the strike).
+ */
+const HELD_ITEM_ANGLE_RULE = 'Held items keep the same angle as in the first frame, they never tilt or lie flat.'
+
 /** Character identity rules — generalized from the measured wizard prompt ("same hand holds the staff"). */
 const CHARACTER_IDENTITY_RULES =
   'Keep the exact same character, facing angle and camera view as the first frame. ' +
   'Do not turn or rotate the body. Held items stay in the same hand in every frame. ' +
   'Held items keep their full length and shape in every frame, they never shrink or disappear. ' +
-  'Held items keep the same angle as in the first frame, they never tilt or lie flat.'
+  HELD_ITEM_ANGLE_RULE
 
 /**
  * Non-character subjects may legitimately turn (Spin), so their rules pin
@@ -83,7 +91,9 @@ const CHARACTER_MOTIONS: readonly AnimationMotionPreset[] = [
     id: 'attack',
     label: 'Attack',
     motion: 'attack in place: raise the held item or fist back first, then swing it forward through a clear mid-swing position before the strike, then return to the start pose',
-    defaultFrames: 6,
+    defaultFrames: 8,
+    loopToFirstFrame: true,
+    swingsHeldItem: true,
     detailPlaceholder: 'Describe how THIS character attacks: melee swing or ranged shot, which weapon or body part, and the pose — the provider cannot guess this from "attack" alone',
   },
   {
@@ -154,10 +164,17 @@ export function findAnimationMotion(assetType: AssetType, motionId: string): Ani
  * the unedited default — or the plain string the Animate tab sends, which is
  * that same default text AFTER the user may have edited it in place (ADR
  * 0012: the preset's `motion` is a prefill, not hidden boilerplate — there is
- * no separate "extra detail" argument to concatenate anymore).
+ * no separate "extra detail" argument to concatenate anymore). `preset` is the
+ * selected motion when `input` is that edited string, so its rule opt-outs
+ * (`swingsHeldItem`) still apply.
  */
-export function buildAnimationAction(input: AnimationMotionPreset | string, assetType: AssetType): string {
+export function buildAnimationAction(
+  input: AnimationMotionPreset | string,
+  assetType: AssetType,
+  preset: AnimationMotionPreset | undefined = typeof input === 'string' ? undefined : input,
+): string {
   const motion = (typeof input === 'string' ? input : input.motion).trim()
-  const { identityRules } = ANIMATION_HARNESS[assetType]
+  const baseRules = ANIMATION_HARNESS[assetType].identityRules
+  const identityRules = preset?.swingsHeldItem ? baseRules.replace(HELD_ITEM_ANGLE_RULE, '').trim() : baseRules
   return motion ? `${identityRules} ${motion}` : identityRules
 }

@@ -377,7 +377,7 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
 
       const { jobId } = await provider.submit({
         firstFrameBase64,
-        action: buildAnimationAction(actionText, assetType),
+        action: buildAnimationAction(actionText, assetType, motion),
         frameCount: nFrames,
         enhancePrompt: motion.enhancePrompt,
         driftThreshold: motion.driftThreshold,
