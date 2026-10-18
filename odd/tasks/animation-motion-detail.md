@@ -212,3 +212,17 @@ Eval on wizard-128 (sheet: `.harness-out/pixellab/attack-variants-2026-10-18.png
 - cast-spell (0.027 USD): tip glows, points forward, clear spark burst,
   returns to the start pose. Cleanest and most readable.
 Owner to pick which stay.
+
+L10 (2026-10-18): Owner asked to compare both providers and every model tier
+("¿Tú crees que podrías probar con los dos? ... puedes probar todos los
+específicos tipos de modelo"). Delegated benchmark, cap 3 USD, spent 1.42 USD
+(PixelLab 0.14, Retro Diffusion 1.28). Player:
+`.harness-out/bench-2026-10-18/player.html`. Findings: PixelLab
+`animate-pixminimax` (beta) is the only text option that jumps (23px lift),
+swings overhead with a trail, stays on-model and loops — billed as 1 trial
+generation, USD price after the trial unmeasured. The 128px wizard fills rows
+13-122, so jumps have no headroom (v3 on a 176px canvas: 0 -> 14px lift). The
+"same hand" identity rule blocks a two-hand grip (swapping it for "Grip the
+held item with both hands when swinging it." gave two fists on v3). RD
+custom_action had the best two-hand grip but costs 0.25 USD; other RD styles
+went off-model. Nothing shipped from this yet; owner decides next step.
