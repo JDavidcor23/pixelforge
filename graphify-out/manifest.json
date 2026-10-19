@@ -2616,9 +2616,9 @@
     "semantic_hash": ""
   },
   "apps/editor/src/sprites/features/properties/components/AnimateTab/useAnimateTab.hook.ts": {
-    "mtime": 1792368117.8742547,
-    "seen": 1792368126.8640668,
-    "ast_hash": "05b8ef69c9ef65920e48af1d8277187a",
+    "mtime": 1792368303.1104548,
+    "seen": 1792368335.8955786,
+    "ast_hash": "84c96af15e940b9f1b219bbda1fa863c",
     "semantic_hash": ""
   },
   "apps/editor/src/sprites/features/properties/components/CollapsibleSection/CollapsibleSection.tsx": {
@@ -3540,16 +3540,16 @@
     "semantic_hash": ""
   },
   "apps/editor/src/sprites/hooks/useImportSpriteSheet.hook.test.ts": {
-    "mtime": 1792368117.6558661,
-    "seen": 1792368126.8640668,
-    "ast_hash": "1bec0634b11910d47ad4ae65763c71e5",
+    "mtime": 1792368274.031324,
+    "seen": 1792368335.8955786,
+    "ast_hash": "f2c4808876face095b218b01a1947a5b",
     "semantic_hash": ""
   },
   "apps/editor/src/sprites/hooks/useImportSpriteSheet.hook.ts": {
-    "mtime": 1792368117.656867,
-    "seen": 1792368126.8640668,
-    "ast_hash": "bd9648e0594bae40f0b784813750a90b",
-    "semantic_hash": "bd9648e0594bae40f0b784813750a90b"
+    "mtime": 1792368274.032329,
+    "seen": 1792368335.8955786,
+    "ast_hash": "5f35b7682fb34833c6f51584c8bc8633",
+    "semantic_hash": ""
   },
   "apps/editor/src/types/file-menu.types.ts": {
     "mtime": 1792015575.6086056,
@@ -3675,6 +3675,42 @@
     "mtime": 1792027296.9919872,
     "seen": 1792368126.8640668,
     "ast_hash": "11487535ab1b774270927fa1e6960f9f",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/sprites/features/properties/components/AnimateTab/useAnimateTab.hook.test.ts": {
+    "mtime": 1792368274.0298145,
+    "seen": 1792368335.8955786,
+    "ast_hash": "1aaa71846902717f23e7f37d37f1de88",
+    "semantic_hash": ""
+  },
+  "docs/adr/0012-preset-motion-text-is-editable.md": {
+    "mtime": 1792368117.876255,
+    "seen": 1792368335.8970826,
+    "ast_hash": "1dc3e761d10d75339118aed8181c2462",
+    "semantic_hash": ""
+  },
+  "docs/learning-log/2026-10-15-preset-motion-text-is-editable.md": {
+    "mtime": 1792368117.876255,
+    "seen": 1792368335.8970826,
+    "ast_hash": "73f2fce53873fbb7623479f78e779162",
+    "semantic_hash": ""
+  },
+  "odd/handoffs/2026-10-18-attack-model-routing.md": {
+    "mtime": 1792368117.911894,
+    "seen": 1792368335.8970826,
+    "ast_hash": "9a74c60d5475cc76357b6dd02e16389f",
+    "semantic_hash": ""
+  },
+  "odd/handoffs/2026-10-18-merge-animation-editing.md": {
+    "mtime": 1792368117.911894,
+    "seen": 1792368335.8970826,
+    "ast_hash": "de872e04572a569bfdd45871bd95882f",
+    "semantic_hash": ""
+  },
+  "odd/tasks/animation-motion-detail.md": {
+    "mtime": 1792368117.9128947,
+    "seen": 1792368335.8970826,
+    "ast_hash": "01825f50953b4571d669be606ccc176c",
     "semantic_hash": ""
   }
 }
