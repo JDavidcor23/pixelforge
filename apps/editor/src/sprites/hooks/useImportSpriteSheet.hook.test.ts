@@ -143,14 +143,23 @@ describe('runSpriteSheetImport', () => {
     )
   })
 
-  it('a single-frame import goes to the canvas like the Create tab Import, without an Assets animation', async () => {
+  it('a single-frame import overwrites the canvas AND saves a one-frame animation labelled with the Name', async () => {
     const deps = makeDeps([])
 
-    await runSpriteSheetImport({ dataUrl: 'data:single', name: 'idle', frameCount: 1 }, deps)
+    await runSpriteSheetImport({ dataUrl: 'data:single', name: '  hero  ', frameCount: 1 }, deps)
 
     expect(deps.decodeSingle).toHaveBeenCalledWith('data:single')
     expect(deps.overwriteWithPixels).toHaveBeenCalledWith(buffer(128), 'data:single')
     expect(deps.importAnimationFrames).not.toHaveBeenCalled()
-    expect(deps.addAnimation).not.toHaveBeenCalled()
+    expect(deps.addAnimation).toHaveBeenCalledTimes(1)
+    expect(deps.addAnimation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'anim-1',
+        label: 'hero',
+        frames: ['data:image/png;base64,128'],
+        frameDurationMs: SPRITE_ANIMATION.DEFAULT_FRAME_DURATION_MS,
+        timestamp: 1000,
+      }),
+    )
   })
 })
