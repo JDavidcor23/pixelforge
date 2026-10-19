@@ -34,8 +34,8 @@ export const AnimateTab = () => {
     setNFrames,
     frameOptions,
     canvasSizeError,
-    customText,
-    setCustomText,
+    actionText,
+    setActionText,
     isGenerating,
     elapsedLabel,
     runningLabel,
@@ -65,7 +65,7 @@ export const AnimateTab = () => {
     isStalled ||
     !!canvasSizeError ||
     !animationReference ||
-    (motion.isCustomInput && !customText.trim())
+    !actionText.trim()
 
   return (
     <div className="flex flex-col gap-3">
@@ -90,20 +90,18 @@ export const AnimateTab = () => {
         </select>
       </div>
 
-      {motion.isCustomInput && (
-        <div>
-          <label className={`mb-1 block ${SECTION_LABEL}`}>Describe the motion</label>
-          <textarea
-            value={customText}
-            onChange={(e) => setCustomText(e.target.value)}
-            rows={2}
-            placeholder={ANIMATE_CUSTOM_MOTION_PLACEHOLDER[assetType]}
-            onKeyDown={(e) => e.stopPropagation()}
-            onPaste={(e) => e.stopPropagation()}
-            className="w-full resize-y rounded border border-line-strong bg-sunken p-2.5 text-xs leading-relaxed text-ink placeholder:text-subtle focus:border-ai-ink focus:outline-none"
-          />
-        </div>
-      )}
+      <div>
+        <label className={`mb-1 block ${SECTION_LABEL}`}>Describe the motion</label>
+        <textarea
+          value={actionText}
+          onChange={(e) => setActionText(e.target.value)}
+          rows={2}
+          placeholder={motion.isCustomInput ? ANIMATE_CUSTOM_MOTION_PLACEHOLDER[assetType] : motion.detailPlaceholder}
+          onKeyDown={(e) => e.stopPropagation()}
+          onPaste={(e) => e.stopPropagation()}
+          className="w-full resize-y rounded border border-line-strong bg-sunken p-2.5 text-xs leading-relaxed text-ink placeholder:text-subtle focus:border-ai-ink focus:outline-none"
+        />
+      </div>
 
       <div>
         <label className={`mb-1 block ${SECTION_LABEL}`}>Frames</label>

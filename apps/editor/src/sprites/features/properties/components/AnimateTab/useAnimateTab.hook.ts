@@ -64,8 +64,14 @@ export interface UseAnimateTabReturn {
   setNFrames: (frames: number) => void
   /** Even frame counts that fit the provider's pixel budget at the current canvas size. */
   frameOptions: readonly number[]
-  customText: string
-  setCustomText: Dispatch<SetStateAction<string>>
+  /**
+   * The editable action text sent to the provider as-is (ADR 0012). Seeded
+   * from the selected preset's `motion.motion` on preset/type change (empty
+   * for "Custom"); the user's edits replace that default, nothing
+   * concatenates. Never persists across preset or type changes.
+   */
+  actionText: string
+  setActionText: Dispatch<SetStateAction<string>>
   /** The animation is generated at — and returns — the current canvas size. */
   canvasSize: { readonly width: number; readonly height: number }
   /** Non-null when the canvas cannot be animated as-is (not square, too large). */
@@ -174,7 +180,7 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
   const [nFrames, setNFrames] = useState<number>(() =>
     pickFrameCount(findAnimationMotion(assetType, defaultMotionId).defaultFrames, frameOptions),
   )
-  const [customText, setCustomText] = useState('')
+  const [actionText, setActionText] = useState(() => findAnimationMotion(assetType, defaultMotionId).motion)
   const [isReferencePickerOpen, setIsReferencePickerOpen] = useState(false)
   const [now, setNow] = useState(() => Date.now())
 
@@ -212,7 +218,9 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
   const setMotionId = useCallback(
     (id: string) => {
       setMotionIdState(id)
-      setNFrames(pickFrameCount(findAnimationMotion(assetType, id).defaultFrames, frameOptions))
+      const nextMotion = findAnimationMotion(assetType, id)
+      setNFrames(pickFrameCount(nextMotion.defaultFrames, frameOptions))
+      setActionText(nextMotion.motion)
     },
     [assetType, frameOptions],
   )
@@ -223,10 +231,11 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
   const setAssetType = useCallback(
     (next: AssetType) => {
       const nextDefault = ANIMATION_HARNESS[next].defaultMotionId
+      const nextMotion = findAnimationMotion(next, nextDefault)
       setCreateAssetType(next)
       setMotionIdState(nextDefault)
-      setNFrames(pickFrameCount(findAnimationMotion(next, nextDefault).defaultFrames, frameOptions))
-      setCustomText('')
+      setNFrames(pickFrameCount(nextMotion.defaultFrames, frameOptions))
+      setActionText(nextMotion.motion)
     },
     [setCreateAssetType, frameOptions],
   )
@@ -341,7 +350,7 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
   const handleCloseReferencePicker = useCallback(() => setIsReferencePickerOpen(false), [])
 
   const handleGenerateAnimation = useCallback(async () => {
-    if (motion.isCustomInput && !customText.trim()) return
+    if (!actionText.trim()) return
 
     // A stalled job is still pending, so this also blocks a second (paid) submit
     // until the user checks again or discards it — and avoids PixelLab's 429.
@@ -368,7 +377,7 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
 
       const { jobId } = await provider.submit({
         firstFrameBase64,
-        action: buildAnimationAction(motion.isCustomInput ? customText : motion, assetType),
+        action: buildAnimationAction(actionText, assetType, motion),
         frameCount: nFrames,
         enhancePrompt: motion.enhancePrompt,
         driftThreshold: motion.driftThreshold,
@@ -392,7 +401,7 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
     }
   }, [
     motion,
-    customText,
+    actionText,
     assetType,
     nFrames,
     provider,
@@ -446,8 +455,8 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
     nFrames,
     setNFrames,
     frameOptions,
-    customText,
-    setCustomText,
+    actionText,
+    setActionText,
     canvasSize,
     canvasSizeError,
     isGenerating,

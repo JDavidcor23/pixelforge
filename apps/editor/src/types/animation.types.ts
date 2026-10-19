@@ -10,7 +10,14 @@ import type { AnimationJobMeta } from './ai-jobs.types'
 export interface AnimationMotionPreset {
   readonly id: string
   readonly label: string
-  /** Explicit motion text sent AFTER the asset type's identity rules. Empty for the custom-input preset. */
+  /**
+   * The suggested default text for this motion, sent AFTER the asset type's
+   * identity rules. The Animate tab prefills its one editable action box with
+   * this on preset change (ADR 0012) — the user's edits replace it for that
+   * generation, nothing concatenates. Empty for the custom-input preset,
+   * whose box starts blank. The offline eval bench
+   * (`scripts/pixellab-animate-harness.ts`) measures this text unedited.
+   */
   readonly motion: string
   /** Even, 4..16 (PixelLab `animate-with-text-v3` limits). */
   readonly defaultFrames: number
@@ -24,8 +31,18 @@ export interface AnimationMotionPreset {
    * but leaves a walk almost static — enable it only for in-place motions.
    */
   readonly loopToFirstFrame?: boolean
+  /** Drops the "held items keep the same angle" rule — set it for motions that swing the item (Attack). */
+  readonly swingsHeldItem?: boolean
   /** True only for "Custom" — the user writes the motion text; identity rules are still prepended. */
   readonly isCustomInput?: boolean
+  /**
+   * HTML placeholder for the action box, shown only if the user clears the
+   * prefilled `motion` text entirely (never shown for the custom-input
+   * preset, which has its own generic placeholder). Suggests what to
+   * describe for THIS motion — e.g. how the character attacks (weapon, melee
+   * vs ranged, pose) — because the provider cannot guess it from "attack".
+   */
+  readonly detailPlaceholder?: string
 }
 
 /** Per asset type: the identity rules that keep the subject stable, and the motions offered for it. */
