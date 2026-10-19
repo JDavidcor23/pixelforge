@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 
 import { useApplyAsset } from '@/sprites/hooks/useApplyAsset.hook'
@@ -117,11 +117,23 @@ export interface UseAnimateTabReturn {
 
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
 
-/** The preset's default frames if allowed at this size, else the largest allowed count below it. */
-const pickFrameCount = (preferred: number, options: readonly number[]): number =>
+/** The preferred frame count if allowed at this size, else the largest allowed count below it. */
+export const pickFrameCount = (preferred: number, options: readonly number[]): number =>
   options.includes(preferred)
     ? preferred
     : (options.filter((frames) => frames <= preferred).slice(-1)[0] ?? options[0] ?? preferred)
+
+/**
+ * Frame count after switching motion: keeps the user's own choice once they've
+ * touched the field by hand, only snapping to the new motion's default before
+ * that. Either way it stays clamped to what the current canvas size allows.
+ */
+export const nextFrameCount = (
+  current: number,
+  touched: boolean,
+  motionDefault: number,
+  options: readonly number[],
+): number => pickFrameCount(touched ? current : motionDefault, options)
 
 const errorMessage = (error: unknown): string =>
   error instanceof Error && error.message ? error.message : ANIMATION_GENERIC_ERROR
@@ -171,9 +183,17 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
   const canvasSizeError = getAnimationSizeError(canvasSize.width, canvasSize.height)
 
   const [motionId, setMotionIdState] = useState<string>(defaultMotionId)
-  const [nFrames, setNFrames] = useState<number>(() =>
+  const [nFrames, setNFramesState] = useState<number>(() =>
     pickFrameCount(findAnimationMotion(assetType, defaultMotionId).defaultFrames, frameOptions),
   )
+  // True once the user has picked a frame count by hand — after that, switching
+  // motion presets no longer overwrites it (owner feedback: "no puede ser que
+  // tenga que estar reconfirmando los sprites").
+  const nFramesTouchedRef = useRef(false)
+  const setNFrames = useCallback((frames: number) => {
+    nFramesTouchedRef.current = true
+    setNFramesState(frames)
+  }, [])
   const [customText, setCustomText] = useState('')
   const [isReferencePickerOpen, setIsReferencePickerOpen] = useState(false)
   const [now, setNow] = useState(() => Date.now())
@@ -212,20 +232,24 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
   const setMotionId = useCallback(
     (id: string) => {
       setMotionIdState(id)
-      setNFrames(pickFrameCount(findAnimationMotion(assetType, id).defaultFrames, frameOptions))
+      setNFramesState((current) =>
+        nextFrameCount(current, nFramesTouchedRef.current, findAnimationMotion(assetType, id).defaultFrames, frameOptions),
+      )
     },
     [assetType, frameOptions],
   )
 
   // Changing the type resets to ITS default motion — e.g. a `crouch`
   // selection carried over from `character` has no equivalent in the
-  // object/weapon/costume/effect motion list.
+  // object/weapon/costume/effect motion list. It also clears the manual frame
+  // count flag: the new type's default is a fresh baseline, not a stale choice.
   const setAssetType = useCallback(
     (next: AssetType) => {
       const nextDefault = ANIMATION_HARNESS[next].defaultMotionId
       setCreateAssetType(next)
       setMotionIdState(nextDefault)
-      setNFrames(pickFrameCount(findAnimationMotion(next, nextDefault).defaultFrames, frameOptions))
+      nFramesTouchedRef.current = false
+      setNFramesState(pickFrameCount(findAnimationMotion(next, nextDefault).defaultFrames, frameOptions))
       setCustomText('')
     },
     [setCreateAssetType, frameOptions],
