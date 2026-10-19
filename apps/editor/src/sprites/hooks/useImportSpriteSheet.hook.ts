@@ -51,30 +51,30 @@ export const validateSpriteSheetImport = (input: {
   return null
 }
 
+const saveAsAnimationAsset = (name: string, frames: readonly string[], deps: SpriteSheetImportDeps): void =>
+  deps.addAnimation(
+    buildAnimationAsset({ label: name.trim(), assetType: DEFAULT_ASSET_TYPE }, frames, deps.createId(), deps.now()),
+  )
+
 /**
- * Same flow as the Create tab Import ("Original" size, no quantize): one frame
- * overwrites the canvas, a sheet goes to the timeline. A sheet is also saved to
- * the Assets library as an animation named by the user.
+ * One frame overwrites the canvas, a sheet goes to the timeline. Either way the
+ * import is also saved to the Assets library as an animation named by the user,
+ * so a named import always has a findable, permanent slot (ADR 0010).
  */
 export const runSpriteSheetImport = async (
   request: SpriteSheetImportRequest,
   deps: SpriteSheetImportDeps,
 ): Promise<void> => {
   if (request.frameCount <= SPRITE_IMPORT_MIN_FRAMES) {
-    deps.overwriteWithPixels(await deps.decodeSingle(request.dataUrl), request.dataUrl)
+    const buffer = await deps.decodeSingle(request.dataUrl)
+    deps.overwriteWithPixels(buffer, request.dataUrl)
+    saveAsAnimationAsset(request.name, [deps.toDataUri(buffer)], deps)
     return
   }
 
   const frames = await deps.decodeSheet(request.dataUrl, request.frameCount)
   deps.importAnimationFrames(frames, SPRITE_ANIMATION.DEFAULT_FRAME_DURATION_MS)
-  deps.addAnimation(
-    buildAnimationAsset(
-      { label: request.name.trim(), assetType: DEFAULT_ASSET_TYPE },
-      frames.map(deps.toDataUri),
-      deps.createId(),
-      deps.now(),
-    ),
-  )
+  saveAsAnimationAsset(request.name, frames.map(deps.toDataUri), deps)
 }
 
 /**
