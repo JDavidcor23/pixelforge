@@ -74,6 +74,53 @@ describe('pixellab/animate Vercel Function', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 
+  it('sends v3 jobs to animate-with-text-v3 with an `action` field (default model)', async () => {
+    process.env.PIXELLAB_API_KEY = 'env-key'
+    const fetchMock = vi.fn(async (url: string, init: RequestInit) => {
+      const sent = JSON.parse(init.body as string)
+      expect(url.endsWith('/animate-with-text-v3')).toBe(true)
+      expect(sent.action).toBe('walk')
+      expect(sent).not.toHaveProperty('description')
+      return new Response(JSON.stringify({ background_job_id: 'job-v3' }), { status: 200 })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    expect((await handler(jsonRequest(validBody))).status).toBe(200)
+    expect((await handler(jsonRequest({ ...validBody, model: 'text-v3' }))).status).toBe(200)
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('sends pixminimax jobs to animate-pixminimax with a `description` field', async () => {
+    process.env.PIXELLAB_API_KEY = 'env-key'
+    const fetchMock = vi.fn(async (url: string, init: RequestInit) => {
+      const sent = JSON.parse(init.body as string)
+      expect(url.endsWith('/animate-pixminimax')).toBe(true)
+      expect(sent.description).toBe('jump attack')
+      expect(sent).not.toHaveProperty('action')
+      expect(sent.frame_count).toBe(8)
+      expect(sent.no_background).toBe(true)
+      expect(sent.last_frame).toEqual(sent.first_frame)
+      return new Response(JSON.stringify({ background_job_id: 'job-mm' }), { status: 200 })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const res = await handler(
+      jsonRequest({ ...validBody, action: ' jump attack ', model: 'pixminimax', loopToFirstFrame: true }),
+    )
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ jobId: 'job-mm' })
+  })
+
+  it('rejects pixminimax frame counts that are not a multiple of 4, and text over 1000 chars, before paying', async () => {
+    process.env.PIXELLAB_API_KEY = 'env-key'
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+
+    expect((await handler(jsonRequest({ ...validBody, model: 'pixminimax', frameCount: 6 }))).status).toBe(400)
+    expect((await handler(jsonRequest({ ...validBody, model: 'pixminimax', action: 'a'.repeat(1001) }))).status).toBe(400)
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
   it('maps an upstream 429 to a clear BUSY error', async () => {
     process.env.PIXELLAB_API_KEY = 'env-key'
     vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ detail: 'limit' }), { status: 429 })))

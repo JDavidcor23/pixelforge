@@ -7,9 +7,23 @@
  * response holds `frame_count + 1` images (index 0 is the input frame),
  * generation takes 110–160 s and the free tier allows ONE concurrent job.
  */
-export const PIXELLAB_API_BASE = 'https://api.pixellab.ai/v2'
-export const PIXELLAB_ANIMATE_PATH = '/animate-with-text-v3'
+import type { AnimationModel } from '../types/animation.types'
+
+export const PIXELLAB_API_BASE ='https://api.pixellab.ai/v2'
 export const PIXELLAB_JOB_PATH = '/background-jobs'
+
+/**
+ * ADR 0013: each motion preset picks its model. Both share the job shape
+ * above; pixminimax names the motion `description` (max 1000 chars) and only
+ * takes frame counts that are a multiple of 4, with no pixel budget.
+ */
+export const DEFAULT_ANIMATION_MODEL = 'text-v3' satisfies AnimationModel
+export const PIXELLAB_ANIMATE_PATHS: Readonly<Record<AnimationModel, string>> = {
+  'text-v3': '/animate-with-text-v3',
+  pixminimax: '/animate-pixminimax',
+}
+export const PIXMINIMAX_FRAME_STEP = 4
+export const PIXMINIMAX_DESCRIPTION_MAX_LENGTH = 1000
 
 /** Editor-side Vercel Functions. */
 export const PIXELLAB_ANIMATE_ROUTE = '/api/ai/pixellab/animate'
@@ -62,6 +76,8 @@ export const ANIMATION_NOT_SQUARE_ERROR = 'Animations need a square canvas. Resi
 export const ANIMATION_TOO_LARGE_ERROR = `Animations support canvases up to ${PIXELLAB_MAX_SIZE}x${PIXELLAB_MAX_SIZE}. Resize the canvas first.`
 export const ANIMATION_FRAMES_INVALID_ERROR = `Frame count must be an even number from ${PIXELLAB_MIN_FRAMES} to ${PIXELLAB_MAX_FRAMES}.`
 export const ANIMATION_FRAMES_OVER_BUDGET_ERROR = 'Too many frames for this canvas size. Pick fewer frames.'
+export const ANIMATION_FRAMES_NOT_MULTIPLE_OF_4_ERROR = `This motion needs a frame count that is a multiple of ${PIXMINIMAX_FRAME_STEP}.`
+export const ANIMATION_DESCRIPTION_TOO_LONG_ERROR = `This motion's text must be ${PIXMINIMAX_DESCRIPTION_MAX_LENGTH} characters or fewer.`
 
 /** Neutral copy for the "another job is running" state — distinct from the danger-styled error copy above. */
 export const ANIMATION_BUSY_MESSAGE =
