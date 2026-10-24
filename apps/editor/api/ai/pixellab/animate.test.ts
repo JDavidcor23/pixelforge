@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import handler from './animate'
+import { handler } from './animate'
 import { PIXELLAB_BUSY_ERROR } from '../../../src/constants/animation'
 
 const pngBase64 = (width: number, height: number): string => {

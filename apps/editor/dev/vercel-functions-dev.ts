@@ -55,10 +55,12 @@ export function vercelFunctionsDev(): Plugin {
         const match = ROUTE_PATTERN.exec(path)
         if (!match || !existsSync(resolve(server.config.root, `.${API_PREFIX}${match[1]}.ts`))) return next()
         try {
-          const mod = (await server.ssrLoadModule(`${API_PREFIX}${match[1]}.ts`)) as { default?: Handler }
-          if (typeof mod.default !== 'function') return next()
+          // Same entry shape Vercel requires for Web handlers: `export default { fetch }`.
+          const mod = (await server.ssrLoadModule(`${API_PREFIX}${match[1]}.ts`)) as { default?: { fetch?: Handler } }
+          const fetchHandler = mod.default?.fetch
+          if (typeof fetchHandler !== 'function') return next()
           const origin = `http://${req.headers.host ?? 'localhost'}`
-          await sendWebResponse(res, await mod.default(await toWebRequest(req, origin)))
+          await sendWebResponse(res, await fetchHandler(await toWebRequest(req, origin)))
         } catch (error) {
           console.error('[vercel-functions-dev]', path, error)
           res.statusCode = 500

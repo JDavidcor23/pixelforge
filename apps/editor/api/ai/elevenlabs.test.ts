@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import handler from './elevenlabs'
+import { handler } from './elevenlabs'
 
 const jsonRequest = (body: unknown, headers: Record<string, string> = {}): Request =>
   new Request('http://localhost/api/ai/elevenlabs', {
