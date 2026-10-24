@@ -119,14 +119,36 @@ describe('ANIMATION_HARNESS', () => {
     )
   })
 
-  it('lets the attack swing its held item: no angle lock, closes on the first frame, 8 frames', () => {
-    const attack = findAnimationMotion('character', 'attack')
-    const action = buildAnimationAction(attack.motion, 'character', attack)
+  it('lets a v3 swinging motion drop the angle lock but keep the other rules', () => {
+    const castSpell = findAnimationMotion('character', 'cast-spell')
+    const action = buildAnimationAction(castSpell.motion, 'character', castSpell)
     expect(action).not.toContain('Held items keep the same angle as in the first frame')
     expect(action).toContain('Held items keep their full length and shape in every frame')
-    expect(action.endsWith(attack.motion)).toBe(true)
+    expect(action.endsWith(castSpell.motion)).toBe(true)
+  })
+
+  it('closes the attack on the first frame with 8 frames', () => {
+    const attack = findAnimationMotion('character', 'attack')
     expect(attack.loopToFirstFrame).toBe(true)
     expect(attack.defaultFrames).toBe(8)
+  })
+
+  it('routes attack and jump-attack to pixminimax, every other motion to v3 (ADR 0013)', () => {
+    for (const id of ['attack', 'jump-attack']) {
+      expect(findAnimationMotion('character', id).model).toBe('pixminimax')
+    }
+    for (const preset of ANIMATION_HARNESS.character.motions.filter((p) => !['attack', 'jump-attack'].includes(p.id))) {
+      expect(preset.model ?? 'text-v3').toBe('text-v3')
+    }
+    for (const preset of ANIMATION_HARNESS.object.motions) {
+      expect(preset.model ?? 'text-v3').toBe('text-v3')
+    }
+  })
+
+  it('sends pixminimax only the motion text (movement, not appearance), including edited text', () => {
+    const attack = findAnimationMotion('character', 'attack')
+    expect(buildAnimationAction(attack, 'character')).toBe(attack.motion)
+    expect(buildAnimationAction('  spins then smashes  ', 'character', attack)).toBe('spins then smashes')
   })
 
   it('keeps the held-item angle lock for every other character motion', () => {

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // PixelLab animation eval bench (ADR 0009): animates a REAL sprite through
-// PixelLab's `animate-with-text-v3` endpoint using the SAME harness the editor
+// the PixelLab endpoint each preset's `model` picks (ADR 0013) using the SAME harness the editor
 // ships (`ANIMATION_HARNESS` + `buildAnimationAction`), saves every frame and
 // writes an HTML viewer. What is measured here is exactly what the Animate tab
 // sends. Run with:
@@ -16,7 +16,8 @@ import { basename, join, resolve } from 'node:path'
 // the `@/` alias nor extensionless imports — the harness file has no runtime
 // imports for exactly this reason.
 import { ANIMATION_HARNESS, buildAnimationAction } from '../apps/editor/src/lib/animation-harness.ts'
-import type { AnimationMotionPreset, AssetType } from '../apps/editor/src/types/index.ts'
+import { DEFAULT_ANIMATION_MODEL, PIXELLAB_ANIMATE_PATHS } from '../apps/editor/src/constants/animation.ts'
+import type { AnimationModel, AnimationMotionPreset, AssetType } from '../apps/editor/src/types/index.ts'
 
 const API_BASE = 'https://api.pixellab.ai/v2'
 const POLL_INTERVAL_MS = 3000
@@ -38,6 +39,7 @@ interface HarnessCase {
   readonly enhancePrompt: boolean
   readonly driftThreshold?: number
   readonly loopToFirstFrame: boolean
+  readonly model: AnimationModel
 }
 
 interface Base64Image {
@@ -97,6 +99,7 @@ const toCase = (preset: AnimationMotionPreset): HarnessCase => ({
   enhancePrompt: preset.enhancePrompt ?? false,
   driftThreshold: preset.driftThreshold,
   loopToFirstFrame: preset.loopToFirstFrame ?? false,
+  model: preset.model ?? DEFAULT_ANIMATION_MODEL,
 })
 
 /** The custom preset has no motion text of its own, so it is never benchmarked here. */
@@ -135,19 +138,21 @@ const runCase = async (harnessCase: HarnessCase, firstFrame: string, outDir: str
     // Same body as `api/ai/pixellab/animate.ts`, including `last_frame` only for
     // motions that opt in (`loopToFirstFrame`).
     const frame = { type: 'base64', base64: firstFrame, format: 'png' }
-    const submitted = await request<{ background_job_id: string }>('/animate-with-text-v3', {
+    // ADR 0013: the preset's model picks the endpoint; pixminimax names the motion `description`.
+    const isPixMiniMax = harnessCase.model === 'pixminimax'
+    const submitted = await request<{ background_job_id: string }>(PIXELLAB_ANIMATE_PATHS[harnessCase.model], {
       method: 'POST',
       body: JSON.stringify({
         first_frame: frame,
         ...(harnessCase.loopToFirstFrame ? { last_frame: frame } : {}),
-        action: harnessCase.action,
+        ...(isPixMiniMax ? { description: harnessCase.action } : { action: harnessCase.action }),
         frame_count: harnessCase.frameCount,
         no_background: true,
         enhance_prompt: harnessCase.enhancePrompt,
         ...(harnessCase.driftThreshold !== undefined ? { drift_threshold: harnessCase.driftThreshold } : {}),
       }),
     })
-    console.error(`[${harnessCase.id}] job ${submitted.background_job_id} submitted, polling...`)
+    console.error(`[${harnessCase.id}] ${harnessCase.model} job ${submitted.background_job_id} submitted, polling...`)
     const job = await pollJob(submitted.background_job_id)
     if (job.status === 'failed') throw new Error(JSON.stringify(job.last_response?.detail ?? job.last_response))
 
@@ -188,7 +193,7 @@ img{image-rendering:pixelated;background:repeating-conic-gradient(#333 0 25%,#2a
 .strip img{width:48px;height:48px;object-fit:contain}
 .err{color:#ff8080;white-space:pre-wrap}
 </style></head><body>
-<h1>PixelLab animate-with-text-v3 — ${sprite}</h1>
+<h1>PixelLab animation harness — ${sprite}</h1>
 <div class="grid">
 <div class="card"><h3>Reference</h3><img class="anim" src="reference.png"></div>
 ${results

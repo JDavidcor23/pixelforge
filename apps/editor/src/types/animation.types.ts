@@ -2,6 +2,12 @@ import type { AIJob, AnimateResult, AssetType } from './ai-generation'
 import type { AnimationJobMeta } from './ai-jobs.types'
 
 /**
+ * PixelLab animation model (ADR 0013): `text-v3` is `animate-with-text-v3`,
+ * `pixminimax` is `animate-pixminimax` (measured best for attacks, 2026-10-18).
+ */
+export type AnimationModel = 'text-v3' | 'pixminimax'
+
+/**
  * One motion of the animation harness (ADR 0009). The harness is DATA: the
  * product (Animate tab) and the offline eval script
  * (`scripts/pixellab-animate-harness.ts`) read the same entries, so what is
@@ -19,7 +25,7 @@ export interface AnimationMotionPreset {
    * (`scripts/pixellab-animate-harness.ts`) measures this text unedited.
    */
   readonly motion: string
-  /** Even, 4..16 (PixelLab `animate-with-text-v3` limits). */
+  /** Even, 4..16 (PixelLab `animate-with-text-v3` limits); a multiple of 4 for `pixminimax`. */
   readonly defaultFrames: number
   /** PixelLab `enhance_prompt`. Measured 2026-10-12: drifts a walk to side profile, so off unless a motion proves otherwise. */
   readonly enhancePrompt?: boolean
@@ -33,6 +39,8 @@ export interface AnimationMotionPreset {
   readonly loopToFirstFrame?: boolean
   /** Drops the "held items keep the same angle" rule — set it for motions that swing the item (Attack). */
   readonly swingsHeldItem?: boolean
+  /** PixelLab model this motion is generated with (ADR 0013). Omitted = `text-v3`. */
+  readonly model?: AnimationModel
   /** True only for "Custom" — the user writes the motion text; identity rules are still prepended. */
   readonly isCustomInput?: boolean
   /**
@@ -67,6 +75,8 @@ export interface AnimationRequest {
   readonly driftThreshold?: number
   /** Close the loop on the first frame (PixelLab `last_frame`). See `AnimationMotionPreset.loopToFirstFrame`. */
   readonly loopToFirstFrame?: boolean
+  /** Which model generates it. Omitted = `text-v3`. See `AnimationMotionPreset.model`. */
+  readonly model?: AnimationModel
   readonly seed?: number
   /** Name + folder of the asset, so a server-tracked job can be saved without the browser. */
   readonly job?: AnimationJobMeta
