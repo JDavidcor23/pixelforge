@@ -10,8 +10,8 @@ import {
   RETRO_DIFFUSION_TIMEOUT_MS,
   RETRO_DIFFUSION_NO_IMAGE_ERROR,
   RETRO_DIFFUSION_MISSING_KEY_ERROR,
-} from '../../src/constants'
-import type { RetroDiffusionRequestBody, RetroDiffusionStyle } from '../../src/types'
+} from '../../src/constants/retro-diffusion'
+import type { RetroDiffusionRequestBody, RetroDiffusionStyle } from '../../src/types/ai-generation'
 
 /** Shape of the upstream Retro Diffusion response we actually consume. */
 interface RetroDiffusionApiResponse {
