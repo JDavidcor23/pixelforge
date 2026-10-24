@@ -6,28 +6,28 @@
     "semantic_hash": "4441c34096690d406f51d6723f1e2f0a"
   },
   "apps/editor/api/ai/elevenlabs.test.ts": {
-    "mtime": 1791750852.3732936,
-    "seen": 1792368126.863545,
-    "ast_hash": "41f7f664f66f7253be6383d7025a4f9b",
-    "semantic_hash": "41f7f664f66f7253be6383d7025a4f9b"
+    "mtime": 1792843410.9823947,
+    "seen": 1792843457.6181655,
+    "ast_hash": "131a80a3502d1228b3e576c35e6b1e77",
+    "semantic_hash": ""
   },
   "apps/editor/api/ai/elevenlabs.ts": {
-    "mtime": 1791750852.3742943,
-    "seen": 1792368126.863545,
-    "ast_hash": "2be96c21caa2bcd0ccd12ad150a8c629",
-    "semantic_hash": "2be96c21caa2bcd0ccd12ad150a8c629"
+    "mtime": 1792843410.7429552,
+    "seen": 1792843457.6181655,
+    "ast_hash": "f2b00310413e2d43b5b9b43db5971fef",
+    "semantic_hash": ""
   },
   "apps/editor/api/ai/retro-diffusion.test.ts": {
-    "mtime": 1791812472.2181325,
-    "seen": 1792368126.863545,
-    "ast_hash": "b3ea6d91d18e017ac3ec3261e36a6b68",
-    "semantic_hash": "b3ea6d91d18e017ac3ec3261e36a6b68"
+    "mtime": 1792843411.0420213,
+    "seen": 1792843457.6181655,
+    "ast_hash": "265e71d91f4c2ef84bb05b92effc910f",
+    "semantic_hash": ""
   },
   "apps/editor/api/ai/retro-diffusion.ts": {
-    "mtime": 1791818721.4160068,
-    "seen": 1792368126.863545,
-    "ast_hash": "2126e601ef9f4a6ace5e7a16b4ffd5ec",
-    "semantic_hash": "2126e601ef9f4a6ace5e7a16b4ffd5ec"
+    "mtime": 1792843410.7991667,
+    "seen": 1792843457.6181655,
+    "ast_hash": "39a443a8429a07ab48a4e4e9d4233e2e",
+    "semantic_hash": ""
   },
   "apps/editor/bench/thresholds.json": {
     "mtime": 1791812472.219871,
@@ -2322,10 +2322,10 @@
     "semantic_hash": "7aca74bd1996e3dbd50bb32104026eb9"
   },
   "apps/editor/index.html": {
-    "mtime": 1791750852.376295,
-    "seen": 1792368126.8640668,
-    "ast_hash": "145056ddaea0b53716de623a49054e63",
-    "semantic_hash": "145056ddaea0b53716de623a49054e63"
+    "mtime": 1792843070.277675,
+    "seen": 1792843457.6201649,
+    "ast_hash": "d55145495ec58a3e431283ca2a31fc40",
+    "semantic_hash": ""
   },
   "apps/editor/src/lib/README.md": {
     "mtime": 1791818988.1075592,
@@ -2616,8 +2616,8 @@
     "semantic_hash": ""
   },
   "apps/editor/src/sprites/features/properties/components/AnimateTab/useAnimateTab.hook.ts": {
-    "mtime": 1792841059.7742038,
-    "seen": 1792841401.2177916,
+    "mtime": 1792843104.137156,
+    "seen": 1792843457.6191645,
     "ast_hash": "cf032f4129b490e8266789323a1b93e0",
     "semantic_hash": ""
   },
@@ -3054,10 +3054,10 @@
     "semantic_hash": "9a2b5230aea0bc89c1df33be2c420f9b"
   },
   "apps/editor/dev/vercel-functions-dev.ts": {
-    "mtime": 1791812472.219871,
-    "seen": 1792368126.863545,
-    "ast_hash": "5c477dcd70d267d6520702cea4751700",
-    "semantic_hash": "5c477dcd70d267d6520702cea4751700"
+    "mtime": 1792843423.4965484,
+    "seen": 1792843457.6181655,
+    "ast_hash": "fffcd65ad9df2e3e1ad347ba99a0e92e",
+    "semantic_hash": ""
   },
   "apps/editor/src/auth/components/DeleteAccountDialog/DeleteAccountDialog.tsx": {
     "mtime": 1791816529.467031,
@@ -3258,57 +3258,57 @@
     "semantic_hash": ""
   },
   "apps/editor/api/ai/pixellab/animate.test.ts": {
-    "mtime": 1792840930.6408167,
-    "seen": 1792841401.1340818,
-    "ast_hash": "b90f8a1617886a6749df73fa5594b6e5",
+    "mtime": 1792843411.1823733,
+    "seen": 1792843457.6181655,
+    "ast_hash": "5b5a28f573c10b4ac0c38e56a44e962d",
     "semantic_hash": ""
   },
   "apps/editor/api/ai/pixellab/animate.ts": {
-    "mtime": 1792841027.3855493,
-    "seen": 1792841401.1340818,
-    "ast_hash": "7a33883ec737c5231a9ff586682c4f9b",
+    "mtime": 1792843410.8574955,
+    "seen": 1792843457.6181655,
+    "ast_hash": "45930cd5b616c4d955085947de7425e5",
     "semantic_hash": ""
   },
   "apps/editor/api/ai/pixellab/job.test.ts": {
-    "mtime": 1791819036.8685706,
-    "seen": 1792368126.863545,
-    "ast_hash": "2d8af9f92f2929246822b6a44be568db",
+    "mtime": 1792843411.1209967,
+    "seen": 1792843457.6181655,
+    "ast_hash": "3b7aba64695a6887c49021ca0a71caca",
     "semantic_hash": ""
   },
   "apps/editor/api/ai/pixellab/job.ts": {
-    "mtime": 1791818835.044703,
-    "seen": 1792368126.863545,
-    "ast_hash": "c509be740cbacc53d3a530f5a22e364f",
+    "mtime": 1792843410.930613,
+    "seen": 1792843457.6181655,
+    "ast_hash": "f65a1652f1fd6ed4dc07108df10f5ac8",
     "semantic_hash": ""
   },
   "apps/editor/src/constants/animation.ts": {
-    "mtime": 1792840980.7512152,
-    "seen": 1792841401.1419597,
+    "mtime": 1792843104.1316469,
+    "seen": 1792843457.6191645,
     "ast_hash": "ba8372930e7f0c2b65738ab97e441de5",
     "semantic_hash": ""
   },
   "apps/editor/src/lib/animation-harness.test.ts": {
-    "mtime": 1792840949.0263765,
-    "seen": 1792841401.147469,
+    "mtime": 1792843104.1336496,
+    "seen": 1792843457.6191645,
     "ast_hash": "21ae3373e22eebebb894ae3121020a15",
     "semantic_hash": ""
   },
   "apps/editor/src/lib/animation-harness.ts": {
-    "mtime": 1792841005.1760926,
-    "seen": 1792841401.147469,
+    "mtime": 1792843104.1336496,
+    "seen": 1792843457.6191645,
     "ast_hash": "37b370c6b46fca9d89912e96fc3e2add",
     "semantic_hash": ""
   },
   "apps/editor/src/lib/animation-limits.test.ts": {
-    "mtime": 1792840949.7589471,
-    "seen": 1792841401.147469,
-    "ast_hash": "bef95a8ea5b0c006e3faa8fbb883349a",
+    "mtime": 1792843104.134647,
+    "seen": 1792843457.6191645,
+    "ast_hash": "e79c3c2fb60391a74d722a0b9662b336",
     "semantic_hash": ""
   },
   "apps/editor/src/lib/animation-limits.ts": {
-    "mtime": 1792841004.1259575,
-    "seen": 1792841401.147469,
-    "ast_hash": "f0c3a28a4e9dd051c0b5c9d2aacdaa0c",
+    "mtime": 1792843104.1356468,
+    "seen": 1792843457.6191645,
+    "ast_hash": "a72f584ba4b280b5f11be94d26d6f8a9",
     "semantic_hash": ""
   },
   "apps/editor/src/lib/pixellab-job.test.ts": {
@@ -3336,15 +3336,15 @@
     "semantic_hash": "c355793e86cde148c13264754bb5b98b"
   },
   "apps/editor/src/types/animation.types.ts": {
-    "mtime": 1792841081.2983794,
-    "seen": 1792841401.2418664,
+    "mtime": 1792843104.1381614,
+    "seen": 1792843457.6191645,
     "ast_hash": "52ed3ebbff38b7701c415cc54cc24abf",
     "semantic_hash": ""
   },
   "scripts/pixellab-animate-harness.ts": {
-    "mtime": 1792841081.2501311,
-    "seen": 1792841401.2610836,
-    "ast_hash": "6d3008b4764a8080836b6f5df5f784af",
+    "mtime": 1792843104.1729374,
+    "seen": 1792843457.6201649,
+    "ast_hash": "10a9496dbcc3582931f806abcd9e5dd0",
     "semantic_hash": ""
   },
   "docs/adr/0009-animation-provider-port-and-harness.md": {
@@ -3714,9 +3714,27 @@
     "semantic_hash": ""
   },
   "docs/adr/0013-per-preset-animation-model.md": {
-    "mtime": 1792840913.6173172,
-    "seen": 1792841401.268607,
-    "ast_hash": "4b411145b7c7e58cd7779ff1f4500f67",
+    "mtime": 1792843104.1386647,
+    "seen": 1792843457.6201649,
+    "ast_hash": "4a5555768fe69bf464a0f34a323928f8",
+    "semantic_hash": ""
+  },
+  "apps/editor/api/ai/vercel-entry.test.ts": {
+    "mtime": 1792843401.3234217,
+    "seen": 1792843457.6181655,
+    "ast_hash": "33fd29746e56781fd62bb47f99a43ac0",
+    "semantic_hash": ""
+  },
+  "apps/editor/public/favicon.svg": {
+    "mtime": 1792843070.2796934,
+    "seen": 1792843457.6201649,
+    "ast_hash": "3c07393bc639e371debbb2908f939f0b",
+    "semantic_hash": ""
+  },
+  "apps/landing/src/app/icon.svg": {
+    "mtime": 1792843070.2816968,
+    "seen": 1792843457.6201649,
+    "ast_hash": "3c07393bc639e371debbb2908f939f0b",
     "semantic_hash": ""
   }
 }
