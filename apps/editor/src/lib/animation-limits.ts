@@ -1,14 +1,18 @@
 import {
   ANIMATION_FRAME_OPTIONS,
   ANIMATION_FRAMES_INVALID_ERROR,
+  ANIMATION_FRAMES_NOT_MULTIPLE_OF_4_ERROR,
   ANIMATION_FRAMES_OVER_BUDGET_ERROR,
   ANIMATION_NOT_SQUARE_ERROR,
   ANIMATION_TOO_LARGE_ERROR,
+  DEFAULT_ANIMATION_MODEL,
   PIXELLAB_MAX_FRAMES,
   PIXELLAB_MAX_SIZE,
   PIXELLAB_MIN_FRAMES,
   PIXELLAB_PIXEL_BUDGET,
+  PIXMINIMAX_FRAME_STEP,
 } from '../constants/animation'
+import type { AnimationModel } from '../types/animation.types'
 
 /*
  * Animation size/frame limits (PixelLab `animate-with-text-v3`, measured
@@ -32,14 +36,22 @@ const isValidFrameCount = (frameCount: number): boolean =>
 
 const fitsPixelBudget = (size: number, frameCount: number): boolean => size * size * frameCount <= PIXELLAB_PIXEL_BUDGET
 
-/** Null when `frameCount` frames of `size` x `size` are accepted, otherwise the user-facing reason. */
-export function getAnimationFrameCountError(size: number, frameCount: number): string | null {
+/** ADR 0013: pixminimax has no pixel budget but only takes multiples of 4. */
+const fitsModel = (size: number, frameCount: number, model: AnimationModel): boolean =>
+  model === 'pixminimax' ? frameCount % PIXMINIMAX_FRAME_STEP === 0 : fitsPixelBudget(size, frameCount)
+
+/** Null when `frameCount` frames of `size` x `size` are accepted by `model`, otherwise the user-facing reason. */
+export function getAnimationFrameCountError(
+  size: number,
+  frameCount: number,
+  model: AnimationModel = DEFAULT_ANIMATION_MODEL,
+): string | null {
   if (!isValidFrameCount(frameCount)) return ANIMATION_FRAMES_INVALID_ERROR
-  if (!fitsPixelBudget(size, frameCount)) return ANIMATION_FRAMES_OVER_BUDGET_ERROR
-  return null
+  if (fitsModel(size, frameCount, model)) return null
+  return model === 'pixminimax' ? ANIMATION_FRAMES_NOT_MULTIPLE_OF_4_ERROR : ANIMATION_FRAMES_OVER_BUDGET_ERROR
 }
 
-/** Frame options that fit the pixel budget at this size (a 256px canvas tops out at 8). */
-export function allowedFrameCounts(size: number): readonly number[] {
-  return ANIMATION_FRAME_OPTIONS.filter((frameCount) => fitsPixelBudget(size, frameCount))
+/** Frame options `model` accepts at this size (v3 on a 256px canvas tops out at 8). */
+export function allowedFrameCounts(size: number, model: AnimationModel = DEFAULT_ANIMATION_MODEL): readonly number[] {
+  return ANIMATION_FRAME_OPTIONS.filter((frameCount) => fitsModel(size, frameCount, model))
 }

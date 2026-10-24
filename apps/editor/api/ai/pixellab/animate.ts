@@ -9,12 +9,15 @@ import {
   SERVER_SUPABASE_URL_ENV,
 } from '../../../src/constants/ai-jobs'
 import {
-  PIXELLAB_ANIMATE_PATH,
+  ANIMATION_DESCRIPTION_TOO_LONG_ERROR,
+  DEFAULT_ANIMATION_MODEL,
+  PIXELLAB_ANIMATE_PATHS,
   PIXELLAB_API_BASE,
   PIXELLAB_BUSY_ERROR,
   PIXELLAB_INVALID_PNG_ERROR,
   PIXELLAB_MISSING_KEY_ERROR,
   PIXELLAB_REQUEST_TIMEOUT_MS,
+  PIXMINIMAX_DESCRIPTION_MAX_LENGTH,
 } from '../../../src/constants/animation'
 import { getAnimationFrameCountError, getAnimationSizeError } from '../../../src/lib/animation-limits'
 import { buildAiJobInsertRow, serverJobOwnerToken } from '../../../src/lib/ai-job-record'
@@ -72,8 +75,11 @@ async function recordServerJob(accessToken: string, input: AiJobRecordInput): Pr
 }
 
 /**
- * Vercel Function — submits a PixelLab `animate-with-text-v3` job and returns
- * its id right away (ADR 0009: generation takes 110–160 s, so no function
+ * Vercel Function — submits a PixelLab animation job and returns its id right
+ * away. The request's `model` picks the endpoint (ADR 0013: `text-v3` →
+ * `animate-with-text-v3` with `action`, `pixminimax` → `animate-pixminimax`
+ * with `description`); both return the same background job shape.
+ * (ADR 0009: generation takes 110–160 s, so no function
  * waits for it; `api/ai/pixellab/job` reads the status). The PixelLab key is a
  * server-side env var (`PIXELLAB_API_KEY`, never `VITE_*`); BYOK `apiKey` from
  * the client wins when present.
@@ -93,6 +99,7 @@ export default async function handler(req: Request): Promise<Response> {
       enhancePrompt,
       driftThreshold,
       loopToFirstFrame,
+      model = DEFAULT_ANIMATION_MODEL,
       seed,
       apiKey: clientApiKey,
       job,
@@ -100,6 +107,14 @@ export default async function handler(req: Request): Promise<Response> {
 
     if (!action || !action.trim()) {
       return json({ error: 'Action is required' }, 400)
+    }
+    const animatePath = PIXELLAB_ANIMATE_PATHS[model]
+    if (!animatePath) {
+      return json({ error: 'Unknown animation model' }, 400)
+    }
+    const isPixMiniMax = model === 'pixminimax'
+    if (isPixMiniMax && action.trim().length > PIXMINIMAX_DESCRIPTION_MAX_LENGTH) {
+      return json({ error: ANIMATION_DESCRIPTION_TOO_LONG_ERROR }, 400)
     }
 
     // The real frame size comes off the PNG header, never from client numbers.
@@ -109,7 +124,7 @@ export default async function handler(req: Request): Promise<Response> {
     }
     const limitError =
       getAnimationSizeError(pngSize.width, pngSize.height) ??
-      getAnimationFrameCountError(pngSize.width, frameCount)
+      getAnimationFrameCountError(pngSize.width, frameCount, model)
     if (limitError) {
       return json({ error: limitError }, 400)
     }
@@ -120,13 +135,14 @@ export default async function handler(req: Request): Promise<Response> {
     }
 
     const firstFrame = { type: 'base64', base64: stripDataUri(firstFrameBase64), format: 'png' }
-    const upstream = await fetch(`${PIXELLAB_API_BASE}${PIXELLAB_ANIMATE_PATH}`, {
+    const upstream = await fetch(`${PIXELLAB_API_BASE}${animatePath}`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         first_frame: firstFrame,
         ...(loopToFirstFrame ? { last_frame: firstFrame } : {}),
-        action: action.trim(),
+        // No caption fields for pixminimax: PixelLab reads the subject off the image (ADR 0013).
+        ...(isPixMiniMax ? { description: action.trim() } : { action: action.trim() }),
         frame_count: frameCount,
         // Real alpha back, so the editor never keys out a background.
         no_background: true,
@@ -163,6 +179,7 @@ export default async function handler(req: Request): Promise<Response> {
         height: pngSize.height,
         params: {
           action: action.trim(),
+          model,
           ...(enhancePrompt !== undefined ? { enhance_prompt: enhancePrompt } : {}),
           ...(driftThreshold !== undefined ? { drift_threshold: driftThreshold } : {}),
           ...(loopToFirstFrame ? { loop_to_first_frame: true } : {}),

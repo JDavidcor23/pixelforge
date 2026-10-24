@@ -94,6 +94,8 @@ const CHARACTER_MOTIONS: readonly AnimationMotionPreset[] = [
     defaultFrames: 8,
     loopToFirstFrame: true,
     swingsHeldItem: true,
+    // ADR 0013: v3 barely swings; pixminimax won the 2026-10-18 attack benchmark.
+    model: 'pixminimax',
     detailPlaceholder: 'Describe how THIS character attacks: melee swing or ranged shot, which weapon or body part, and the pose — the provider cannot guess this from "attack" alone',
   },
   {
@@ -103,6 +105,8 @@ const CHARACTER_MOTIONS: readonly AnimationMotionPreset[] = [
     defaultFrames: 8,
     loopToFirstFrame: true,
     swingsHeldItem: true,
+    // ADR 0013: measured 2026-10-18, pixminimax jumps 23px; v3 barely left the ground.
+    model: 'pixminimax',
     detailPlaceholder: 'Describe how THIS character jump-attacks, e.g. "spins in the air before the strike" or "lands on one knee"',
   },
   {
@@ -185,6 +189,9 @@ export function findAnimationMotion(assetType: AssetType, motionId: string): Ani
  * no separate "extra detail" argument to concatenate anymore). `preset` is the
  * selected motion when `input` is that edited string, so its rule opt-outs
  * (`swingsHeldItem`) still apply.
+ *
+ * A `pixminimax` preset gets the motion text alone (ADR 0013): its field
+ * asks for "movement, not appearance" and the measured winner sent no rules.
  */
 export function buildAnimationAction(
   input: AnimationMotionPreset | string,
@@ -192,6 +199,7 @@ export function buildAnimationAction(
   preset: AnimationMotionPreset | undefined = typeof input === 'string' ? undefined : input,
 ): string {
   const motion = (typeof input === 'string' ? input : input.motion).trim()
+  if (preset?.model === 'pixminimax') return motion
   const baseRules = ANIMATION_HARNESS[assetType].identityRules
   const identityRules = preset?.swingsHeldItem ? baseRules.replace(HELD_ITEM_ANGLE_RULE, '').trim() : baseRules
   return motion ? `${identityRules} ${motion}` : identityRules

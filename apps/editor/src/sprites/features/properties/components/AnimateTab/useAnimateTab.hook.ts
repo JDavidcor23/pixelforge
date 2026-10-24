@@ -185,13 +185,18 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
   const setCreateAssetType = useSetCreateAssetType()
 
   const { motions, defaultMotionId } = ANIMATION_HARNESS[assetType]
-  const frameOptions = useMemo(() => allowedFrameCounts(canvasSize.width), [canvasSize.width])
+  // ADR 0013: frame options depend on the preset's model (pixminimax: multiples of 4).
+  const frameOptionsFor = useCallback(
+    (preset: AnimationMotionPreset) => allowedFrameCounts(canvasSize.width, preset.model),
+    [canvasSize.width],
+  )
   const canvasSizeError = getAnimationSizeError(canvasSize.width, canvasSize.height)
 
   const [motionId, setMotionIdState] = useState<string>(defaultMotionId)
-  const [nFrames, setNFramesState] = useState<number>(() =>
-    pickFrameCount(findAnimationMotion(assetType, defaultMotionId).defaultFrames, frameOptions),
-  )
+  const [nFrames, setNFramesState] = useState<number>(() => {
+    const initialMotion = findAnimationMotion(assetType, defaultMotionId)
+    return pickFrameCount(initialMotion.defaultFrames, frameOptionsFor(initialMotion))
+  })
   // True once the user has picked a frame count by hand — after that, switching
   // motion presets no longer overwrites it (owner feedback: "no puede ser que
   // tenga que estar reconfirmando los sprites").
@@ -232,6 +237,7 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
   )
 
   const motion = findAnimationMotion(assetType, motionId)
+  const frameOptions = useMemo(() => frameOptionsFor(motion), [frameOptionsFor, motion])
   const isCharacter = assetType === 'character'
   const jobStartedAt = pendingJob?.startedAt ?? null
 
@@ -240,11 +246,11 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
       setMotionIdState(id)
       const nextMotion = findAnimationMotion(assetType, id)
       setNFramesState((current) =>
-        nextFrameCount(current, nFramesTouchedRef.current, nextMotion.defaultFrames, frameOptions),
+        nextFrameCount(current, nFramesTouchedRef.current, nextMotion.defaultFrames, frameOptionsFor(nextMotion)),
       )
       setActionText(nextMotion.motion)
     },
-    [assetType, frameOptions],
+    [assetType, frameOptionsFor],
   )
 
   // Changing the type resets to ITS default motion — e.g. a `crouch`
@@ -258,10 +264,10 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
       setCreateAssetType(next)
       setMotionIdState(nextDefault)
       nFramesTouchedRef.current = false
-      setNFramesState(pickFrameCount(nextMotion.defaultFrames, frameOptions))
+      setNFramesState(pickFrameCount(nextMotion.defaultFrames, frameOptionsFor(nextMotion)))
       setActionText(nextMotion.motion)
     },
-    [setCreateAssetType, frameOptions],
+    [setCreateAssetType, frameOptionsFor],
   )
 
   const finishAnimation = useCallback(
@@ -387,7 +393,7 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
     // Fail before paying: size and frame limits are checked client-side too.
     const { canvasWidth, canvasHeight } = useSpriteEditorStore.getState()
     const limitError =
-      getAnimationSizeError(canvasWidth, canvasHeight) ?? getAnimationFrameCountError(canvasWidth, nFrames)
+      getAnimationSizeError(canvasWidth, canvasHeight) ?? getAnimationFrameCountError(canvasWidth, nFrames, motion.model)
     if (limitError) {
       setAnimateJob({ error: limitError, result: null, errorCode: null })
       return
@@ -406,6 +412,7 @@ export const useAnimateTab = (): UseAnimateTabReturn => {
         enhancePrompt: motion.enhancePrompt,
         driftThreshold: motion.driftThreshold,
         loopToFirstFrame: motion.loopToFirstFrame,
+        model: motion.model,
         job: { label: motion.label, assetType },
       })
       const pending: PendingAnimationJob = { jobId, startedAt: Date.now(), label: motion.label, assetType }
