@@ -69,7 +69,7 @@ async function proxyToElevenLabs(
  * forwarded via a request header (BYOK) — PixelForge IA holds no ElevenLabs key
  * of its own server-side.
  */
-export default async function handler(request: Request): Promise<Response> {
+export async function handler(request: Request): Promise<Response> {
   const apiKey = request.headers.get('X-ElevenLabs-Key')
 
   if (!apiKey) {
@@ -158,3 +158,6 @@ export default async function handler(request: Request): Promise<Response> {
     return json({ error: 'Internal server error' }, 500)
   }
 }
+
+/** Vercel only passes a Web `Request` to a `default { fetch }` export; a bare default function gets Node req/res and hangs. */
+export default { fetch: handler }

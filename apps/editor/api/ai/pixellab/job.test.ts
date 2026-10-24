@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import handler from './job'
+import { handler } from './job'
 
 const jobRequest = (query: string, headers: Record<string, string> = {}): Request =>
   new Request(`http://localhost/api/ai/pixellab/job${query}`, { headers })

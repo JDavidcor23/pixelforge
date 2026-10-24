@@ -23,7 +23,7 @@ const json = (body: unknown, status = 200): Response =>
  * client never sees PixelLab's wire format and the input frame never travels.
  * BYOK travels in the `x-pixellab-key` header, not the URL.
  */
-export default async function handler(req: Request): Promise<Response> {
+export async function handler(req: Request): Promise<Response> {
   try {
     const jobId = new URL(req.url).searchParams.get(PIXELLAB_JOB_ID_PARAM) ?? ''
     if (!PIXELLAB_JOB_ID_PATTERN.test(jobId)) {
@@ -55,3 +55,6 @@ export default async function handler(req: Request): Promise<Response> {
     return json({ error: message }, 500)
   }
 }
+
+/** Vercel only passes a Web `Request` to a `default { fetch }` export; a bare default function gets Node req/res and hangs. */
+export default { fetch: handler }

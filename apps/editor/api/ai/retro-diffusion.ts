@@ -54,7 +54,7 @@ const json = (body: unknown, status = 200): Response =>
  * stays a server-side-only env var (`API_RETRO_DIFFUSION`, not `VITE_*`), so
  * it never ships in the client bundle.
  */
-export default async function handler(req: Request): Promise<Response> {
+export async function handler(req: Request): Promise<Response> {
   try {
     const {
       prompt,
@@ -140,3 +140,6 @@ export default async function handler(req: Request): Promise<Response> {
     return json({ error: message }, 500)
   }
 }
+
+/** Vercel only passes a Web `Request` to a `default { fetch }` export; a bare default function gets Node req/res and hangs. */
+export default { fetch: handler }

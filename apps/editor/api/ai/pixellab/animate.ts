@@ -90,7 +90,7 @@ async function recordServerJob(accessToken: string, input: AiJobRecordInput): Pr
  * `last_frame` is sent only when the motion opts in (`loopToFirstFrame`):
  * measured 2026-10-12, it keeps an idle on-model but leaves a walk almost static.
  */
-export default async function handler(req: Request): Promise<Response> {
+export async function handler(req: Request): Promise<Response> {
   try {
     const {
       firstFrameBase64,
@@ -195,3 +195,6 @@ export default async function handler(req: Request): Promise<Response> {
     return json({ error: message }, 500)
   }
 }
+
+/** Vercel only passes a Web `Request` to a `default { fetch }` export; a bare default function gets Node req/res and hangs. */
+export default { fetch: handler }

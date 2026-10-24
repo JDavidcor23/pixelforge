@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import handler from './retro-diffusion'
+import { handler } from './retro-diffusion'
 
 const jsonRequest = (body: unknown): Request =>
   new Request('http://localhost/api/ai/retro-diffusion', {
