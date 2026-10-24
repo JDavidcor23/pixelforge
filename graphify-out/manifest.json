@@ -2616,9 +2616,9 @@
     "semantic_hash": ""
   },
   "apps/editor/src/sprites/features/properties/components/AnimateTab/useAnimateTab.hook.ts": {
-    "mtime": 1792368303.1104548,
-    "seen": 1792368335.8955786,
-    "ast_hash": "84c96af15e940b9f1b219bbda1fa863c",
+    "mtime": 1792841059.7742038,
+    "seen": 1792841401.2177916,
+    "ast_hash": "cf032f4129b490e8266789323a1b93e0",
     "semantic_hash": ""
   },
   "apps/editor/src/sprites/features/properties/components/CollapsibleSection/CollapsibleSection.tsx": {
@@ -2857,13 +2857,13 @@
   },
   "supabase/migrations/20261011000000_init_pixelforge.sql": {
     "mtime": 1791812472.480884,
-    "seen": 1792368126.8640668,
+    "seen": 1792842217.4427123,
     "ast_hash": "441faf36f811c0b13668c58640fb149d",
     "semantic_hash": ""
   },
   "supabase/migrations/20261012000000_account_deletions.sql": {
     "mtime": 1791812472.480884,
-    "seen": 1792368126.8640668,
+    "seen": 1792842217.4427123,
     "ast_hash": "ccad6f7ae95685f6775c6f252fd9d3bf",
     "semantic_hash": ""
   },
@@ -3139,7 +3139,7 @@
   },
   "supabase/migrations/20261012010000_minimal_user_data.sql": {
     "mtime": 1791812472.4823902,
-    "seen": 1792368126.8640668,
+    "seen": 1792842217.4427123,
     "ast_hash": "9e75198e27e9fb7557e5f8d51487ac55",
     "semantic_hash": ""
   },
@@ -3258,15 +3258,15 @@
     "semantic_hash": ""
   },
   "apps/editor/api/ai/pixellab/animate.test.ts": {
-    "mtime": 1791841947.8898375,
-    "seen": 1792368126.863545,
-    "ast_hash": "886e89a8b9458f4e00faa6c3df91581b",
-    "semantic_hash": "886e89a8b9458f4e00faa6c3df91581b"
+    "mtime": 1792840930.6408167,
+    "seen": 1792841401.1340818,
+    "ast_hash": "b90f8a1617886a6749df73fa5594b6e5",
+    "semantic_hash": ""
   },
   "apps/editor/api/ai/pixellab/animate.ts": {
-    "mtime": 1791841933.2519326,
-    "seen": 1792368126.863545,
-    "ast_hash": "75d28768e94d3474f2877f6020121193",
+    "mtime": 1792841027.3855493,
+    "seen": 1792841401.1340818,
+    "ast_hash": "7a33883ec737c5231a9ff586682c4f9b",
     "semantic_hash": ""
   },
   "apps/editor/api/ai/pixellab/job.test.ts": {
@@ -3282,33 +3282,33 @@
     "semantic_hash": ""
   },
   "apps/editor/src/constants/animation.ts": {
-    "mtime": 1792027296.9708767,
-    "seen": 1792368126.863545,
-    "ast_hash": "7e2ca89840b8a820f7f0d5af692932ae",
+    "mtime": 1792840980.7512152,
+    "seen": 1792841401.1419597,
+    "ast_hash": "ba8372930e7f0c2b65738ab97e441de5",
     "semantic_hash": ""
   },
   "apps/editor/src/lib/animation-harness.test.ts": {
-    "mtime": 1792368117.8697414,
-    "seen": 1792368126.8640668,
-    "ast_hash": "0d1e48f2ccd99272666aeda614dc4caa",
+    "mtime": 1792840949.0263765,
+    "seen": 1792841401.147469,
+    "ast_hash": "21ae3373e22eebebb894ae3121020a15",
     "semantic_hash": ""
   },
   "apps/editor/src/lib/animation-harness.ts": {
-    "mtime": 1792368117.8712487,
-    "seen": 1792368126.8640668,
-    "ast_hash": "8efa8d5997fde78e51826d05ed5e2170",
+    "mtime": 1792841005.1760926,
+    "seen": 1792841401.147469,
+    "ast_hash": "37b370c6b46fca9d89912e96fc3e2add",
     "semantic_hash": ""
   },
   "apps/editor/src/lib/animation-limits.test.ts": {
-    "mtime": 1791819017.2500834,
-    "seen": 1792368126.8640668,
-    "ast_hash": "6e3d35aa85ac9c0fdf36df6466f06ff2",
+    "mtime": 1792840949.7589471,
+    "seen": 1792841401.147469,
+    "ast_hash": "bef95a8ea5b0c006e3faa8fbb883349a",
     "semantic_hash": ""
   },
   "apps/editor/src/lib/animation-limits.ts": {
-    "mtime": 1791818796.9597695,
-    "seen": 1792368126.8640668,
-    "ast_hash": "590f2a12f737a250922696df465bab51",
+    "mtime": 1792841004.1259575,
+    "seen": 1792841401.147469,
+    "ast_hash": "f0c3a28a4e9dd051c0b5c9d2aacdaa0c",
     "semantic_hash": ""
   },
   "apps/editor/src/lib/pixellab-job.test.ts": {
@@ -3336,15 +3336,15 @@
     "semantic_hash": "c355793e86cde148c13264754bb5b98b"
   },
   "apps/editor/src/types/animation.types.ts": {
-    "mtime": 1792368117.8752563,
-    "seen": 1792368126.8640668,
-    "ast_hash": "e4ff81646968aebb27af4553bde3f66c",
+    "mtime": 1792841081.2983794,
+    "seen": 1792841401.2418664,
+    "ast_hash": "52ed3ebbff38b7701c415cc54cc24abf",
     "semantic_hash": ""
   },
   "scripts/pixellab-animate-harness.ts": {
-    "mtime": 1791841933.315731,
-    "seen": 1792368126.8640668,
-    "ast_hash": "817393384a8c7f2ae599844b739290f0",
+    "mtime": 1792841081.2501311,
+    "seen": 1792841401.2610836,
+    "ast_hash": "6d3008b4764a8080836b6f5df5f784af",
     "semantic_hash": ""
   },
   "docs/adr/0009-animation-provider-port-and-harness.md": {
@@ -3499,7 +3499,7 @@
   },
   "supabase/migrations/20261012030000_ai_jobs.sql": {
     "mtime": 1791824825.8134427,
-    "seen": 1792368126.8640668,
+    "seen": 1792842217.4427123,
     "ast_hash": "f6396829dc95e5ddf9f5be045da6b2d3",
     "semantic_hash": ""
   },
@@ -3711,6 +3711,12 @@
     "mtime": 1792368117.9128947,
     "seen": 1792368335.8970826,
     "ast_hash": "01825f50953b4571d669be606ccc176c",
+    "semantic_hash": ""
+  },
+  "docs/adr/0013-per-preset-animation-model.md": {
+    "mtime": 1792840913.6173172,
+    "seen": 1792841401.268607,
+    "ast_hash": "4b411145b7c7e58cd7779ff1f4500f67",
     "semantic_hash": ""
   }
 }
