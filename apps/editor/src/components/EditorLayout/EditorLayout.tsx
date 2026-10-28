@@ -7,7 +7,7 @@ import { DeleteAccountDialog } from '@/auth/components/DeleteAccountDialog/Delet
 import { useEditorLayout } from './useEditorLayout.hook'
 import { FOCUS_RING } from '@/constants/focus-ring'
 
-const RAIL_ITEM = `flex size-9 items-center justify-center rounded text-subtle hover:bg-hover hover:text-muted aria-[current=page]:bg-hover aria-[current=page]:text-accent ${FOCUS_RING.SURFACE}`
+const RAIL_ITEM = `flex size-9 items-center justify-center rounded text-muted hover:bg-hover aria-[current=page]:bg-hover aria-[current=page]:text-accent ${FOCUS_RING.SURFACE}`
 
 export function EditorLayout() {
   const {

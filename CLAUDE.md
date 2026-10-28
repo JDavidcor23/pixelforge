@@ -1,5 +1,10 @@
 @AGENTS.md
 
+## Product vision
+
+Where the product is going and what milestone 1 is: `docs/vision.md`. Read it
+before planning a new feature or milestone.
+
 ## Design system
 
 The visual language lives in `DESIGN.md` at the repository root — color tokens,
