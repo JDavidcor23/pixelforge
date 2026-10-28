@@ -131,8 +131,9 @@ internally, for dedupe or caching.
 
 | Metric | Before | Target | Measured after |
 |---|---|---|---|
-| Phaser in `/sprites` and `/sounds` initial bundle | 0 KB (not installed) | 0 KB | |
-| `/build` chunk size (gzip) | not measured | measure in phase 0, then set | |
+| Phaser in `/sprites` and `/sounds` initial bundle | 0 KB (not installed) | 0 KB | 0 KB (Phaser only in the lazy `BuildScreen` chunk) |
+| `/sprites` initial JS (gzip -9, raw) | 414.0 KB, 1,357.8 KB | unchanged | 414.3 KB, 1,359.0 KB (+0.3 KB: lazy route + rail item) |
+| `/build` chunk size (gzip) | 381 KB (1,696 KB raw, Phaser 4.2.1 + screen) | ≤ 400 KB | 381 KB |
 | Preview FPS with chat open | not measured | ≥ 55 on the owner's machine | |
 | Chat panel React commits while the game runs and nobody types | not measured | 0 per second | |
 | Edit in Sprite Studio → visible in preview | n/a | after returning to `/build`, no level restart | |

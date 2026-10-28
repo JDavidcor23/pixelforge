@@ -15,13 +15,18 @@ Branch `feat/build-screen`. Delivery: ask-on-risk. Test runner: vitest (`pnpm --
 ## Tasks
 
 - [x] T0 — commit ADR docs on `feat/build-screen` — inline — be220a1
-- [ ] T1 — S1, S2 bundle numbers (baseline + Phaser) — inline
-- [ ] T2 — S5, S6 game mount + typed EventBus with tests — inline
-- [ ] T3 — S3, S4 route, rail item, layout — design-agent → frontend-agent → cleancode-agent (project pipeline)
-- [ ] T4 — S2, S7 after-numbers: `/build` chunk, `/sprites` unchanged; FPS and commits/s need a browser run
+- [x] T1 — S1, S2 bundle numbers — inline — 3dafa87 + ADR table
+- [x] T2 — S5, S6 game mount + typed EventBus with tests — inline — 3dafa87 (RED: 3 files missing modules; GREEN 14/14; suite 728/728)
+- [x] T3 — S3, S4 route, rail item, layout — delegated: frontend-agent → cleancode-agent (project pipeline); tsc ok, suite 730/730
+- [~] T4 — S2, S7 after-numbers (bundle done; FPS + commits/s + toolbar in browser pending): `/build` chunk, `/sprites` unchanged; FPS and commits/s need a browser run
 
 ## Log
 
 - L1 (2026-10-28): "PixelForge, repo game-builder. Implementa la fase 0 y la fase 1 del plan docs/build-screen-implementation-plan.md (ADR 0014). Primero commitea los docs del ADR en una rama feat/build-screen. Sin explicaciones largas."
 - L2: baseline measurement build before Phaser (single entry chunk, no lazy routes yet): `index.js` 1,357.77 kB / 416.64 kB gzip; CSS 64.18 kB / 10.80 kB gzip; wasm 108.63 kB / 43.68 kB gzip.
 - L3: `phaser@4.2.1` installed in `apps/editor` (pinned exact).
+- L4: Phaser runs `runDestroy` inside `step`, so DESTROY fires on the next frame; `createGameMounter` chains each mount on the previous teardown, and a Strict Mode first mount is cancelled before it creates a game. Root `.gitignore` `build/` hid `apps/editor/src/build/`; added a negation.
+- L5: `.claude/agents/design-agent.md` does not exist; design role run as a read-only agent. Pencil desktop app not reachable, so frame `opmIw` could not be read. T3 blocked until Pencil is open.
+- L6: Pencil reconnected; spec read from `opmIw`/`w6xpSA`. Neither frame has empty states; rail item is `Gamepad2`; design has Play but no Pause.
+- L7 (2026-10-28, user decision): on frame vs DESIGN.md conflicts "Manda el frame (Recommended)" — chat 420px, input `bg-hover`, toolbar buttons `size-6`, rail icons `muted`, radius `rounded-lg`. DESIGN.md to be updated later. Defaults taken: Play/Pause toggle, rail label "Build", minimal empty states.
+- L8: after build (gzip -9): `/sprites` entry 414,007 → 414,296 B (+289 B, no Phaser); `BuildScreen` chunk 1,696,290 B raw / 380,901 B gzip. Target set to ≤ 400 KB gzip (owner may change). FPS and chat commits/s need a browser run.

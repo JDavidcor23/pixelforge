@@ -41,6 +41,22 @@ export interface ControllableGame {
   toggleFullscreen(): void
 }
 
+/** Tabs of the build screen's left panel. */
+export type BuildPanelTab = 'chat' | 'library'
+
+export interface BuildPanelTabItem {
+  id: BuildPanelTab
+  label: string
+}
+
+/** Asset kinds the library can be filtered by (static in phase 1, no filtering yet). */
+export type LibraryFilter = 'all' | 'sprites' | 'audio' | 'music' | 'video'
+
+export interface LibraryFilterItem {
+  id: LibraryFilter
+  label: string
+}
+
 /** What `mountGame` needs from a created game: a way to destroy it and learn when it is gone. */
 export interface MountedGame {
   destroy(): void
