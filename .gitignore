@@ -32,6 +32,8 @@ out/
 
 # production
 build/
+# The editor's /build screen feature tree (ADR 0014) is source, not output.
+!apps/editor/src/build/
 dist/
 
 # misc
