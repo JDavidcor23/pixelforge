@@ -18,7 +18,7 @@ Branch `feat/build-screen`. Delivery: ask-on-risk. Test runner: vitest (`pnpm --
 - [x] T1 — S1, S2 bundle numbers — inline — 3dafa87 + ADR table
 - [x] T2 — S5, S6 game mount + typed EventBus with tests — inline — 3dafa87 (RED: 3 files missing modules; GREEN 14/14; suite 728/728)
 - [x] T3 — S3, S4 route, rail item, layout — delegated: frontend-agent → cleancode-agent (project pipeline); tsc ok, suite 730/730
-- [~] T4 — S2, S7 after-numbers (bundle done; FPS + commits/s + toolbar in browser pending): `/build` chunk, `/sprites` unchanged; FPS and commits/s need a browser run
+- [x] T4 — S2, S7 after-numbers — inline — ADR table filled (bundle L8, browser L9)
 
 ## Log
 
@@ -30,3 +30,4 @@ Branch `feat/build-screen`. Delivery: ask-on-risk. Test runner: vitest (`pnpm --
 - L6: Pencil reconnected; spec read from `opmIw`/`w6xpSA`. Neither frame has empty states; rail item is `Gamepad2`; design has Play but no Pause.
 - L7 (2026-10-28, user decision): on frame vs DESIGN.md conflicts "Manda el frame (Recommended)" — chat 420px, input `bg-hover`, toolbar buttons `size-6`, rail icons `muted`, radius `rounded-lg`. DESIGN.md to be updated later. Defaults taken: Play/Pause toggle, rail label "Build", minimal empty states.
 - L8: after build (gzip -9): `/sprites` entry 414,007 → 414,296 B (+289 B, no Phaser); `BuildScreen` chunk 1,696,290 B raw / 380,901 B gzip. Target set to ≤ 400 KB gzip (owner may change). FPS and chat commits/s need a browser run.
+- L9: Playwright (headed Chromium, dev server, `/build`, 5 s window): 60.0 FPS; 0 React commits/s for the whole app; Pause stops canvas changes, Resume restarts them, Restart changes the frame, Fullscreen sets `document.fullscreenElement`; 0 page errors. S7 met. Phase 0 and 1 complete.
