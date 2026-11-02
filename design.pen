@@ -25340,6 +25340,4310 @@
           ]
         }
       ]
+    },
+    {
+      "type": "frame",
+      "id": "opmIw",
+      "x": 7027.200000000001,
+      "y": 6220,
+      "name": "Build Flow · A · Split Chat + Preview",
+      "clip": true,
+      "width": 1440,
+      "height": 900,
+      "fill": "$base",
+      "children": [
+        {
+          "type": "frame",
+          "id": "m1FoK",
+          "name": "App Rail",
+          "width": 56,
+          "height": "fill_container",
+          "fill": "$surface",
+          "layout": "vertical",
+          "gap": 8,
+          "padding": [
+            12,
+            0
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "fv5os",
+              "name": "brush nav",
+              "width": 36,
+              "height": 36,
+              "fill": "#00000000",
+              "cornerRadius": 8,
+              "layout": "vertical",
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "mpFqj",
+                  "name": "brush icon",
+                  "width": 18,
+                  "height": 18,
+                  "icon": "brush",
+                  "library": "lucide",
+                  "fill": "$muted"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "v8s5Z",
+              "name": "audio-lines nav",
+              "width": 36,
+              "height": 36,
+              "fill": "#00000000",
+              "cornerRadius": 8,
+              "layout": "vertical",
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "E9iW0",
+                  "name": "audio-lines icon",
+                  "width": 18,
+                  "height": 18,
+                  "icon": "audio-lines",
+                  "library": "lucide",
+                  "fill": "$muted"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "UXvcI",
+              "name": "gamepad-2 nav",
+              "width": 36,
+              "height": 36,
+              "fill": "$hover",
+              "cornerRadius": 8,
+              "layout": "vertical",
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "ZsO1y",
+                  "name": "gamepad-2 icon",
+                  "width": 18,
+                  "height": 18,
+                  "icon": "gamepad-2",
+                  "library": "lucide",
+                  "fill": "$accent"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "qL9JP",
+              "name": "rail spacer",
+              "width": 1,
+              "height": "fill_container"
+            },
+            {
+              "type": "frame",
+              "id": "k3thr",
+              "name": "settings nav",
+              "width": 36,
+              "height": 36,
+              "fill": "#00000000",
+              "cornerRadius": 8,
+              "layout": "vertical",
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "REfnE",
+                  "name": "settings icon",
+                  "width": 18,
+                  "height": 18,
+                  "icon": "settings",
+                  "library": "lucide",
+                  "fill": "$muted"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "EUQvU",
+          "name": "Workspace",
+          "width": "fill_container",
+          "height": "fill_container",
+          "layout": "vertical",
+          "children": [
+            {
+              "type": "frame",
+              "id": "peQAh",
+              "name": "Top Bar",
+              "width": "fill_container",
+              "height": 44,
+              "fill": "$surface",
+              "gap": 10,
+              "padding": [
+                0,
+                16
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "rOHn2",
+                  "name": "PIXELFORGE",
+                  "fill": "$accent",
+                  "content": "PIXELFORGE",
+                  "fontFamily": "$font-mono",
+                  "fontSize": 11,
+                  "fontWeight": "normal",
+                  "letterSpacing": 1
+                },
+                {
+                  "type": "frame",
+                  "id": "GXBVo",
+                  "name": "divider",
+                  "width": 1,
+                  "height": 16,
+                  "fill": "$line-strong"
+                },
+                {
+                  "type": "text",
+                  "id": "HfWqI",
+                  "name": "project name",
+                  "fill": "$ink",
+                  "content": "Simón Bolívar — El Libertador",
+                  "fontFamily": "$font-sans",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "o5Tcg8",
+                  "name": "level chip",
+                  "fill": "$hover",
+                  "cornerRadius": 999,
+                  "padding": [
+                    3,
+                    8
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "ePMBz",
+                      "name": "level label",
+                      "fill": "$muted",
+                      "content": "Nivel 3 de 6",
+                      "fontFamily": "$font-mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "v863aL",
+                  "name": "top spacer",
+                  "width": "fill_container",
+                  "height": 1
+                },
+                {
+                  "type": "frame",
+                  "id": "p2349",
+                  "name": "Publish",
+                  "fill": "$accent",
+                  "cornerRadius": 6,
+                  "gap": 6,
+                  "padding": [
+                    6,
+                    12
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "fJU8Q",
+                      "name": "Publish label",
+                      "fill": "$on-accent",
+                      "content": "Publicar",
+                      "fontFamily": "$font-sans",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "x0jTq",
+              "name": "Main",
+              "width": "fill_container",
+              "height": "fill_container",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "HACgi",
+                  "name": "Chat Panel",
+                  "width": 420,
+                  "height": "fill_container",
+                  "fill": "$surface",
+                  "layout": "vertical",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "DgOSJ",
+                      "name": "Thread",
+                      "width": "fill_container",
+                      "height": "fill_container",
+                      "layout": "vertical",
+                      "gap": 16,
+                      "padding": 16,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "c4B85",
+                          "name": "user bubble row",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 6,
+                          "alignItems": "end",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "nVEET",
+                              "name": "user bubble",
+                              "fill": "$hover",
+                              "cornerRadius": 10,
+                              "layout": "vertical",
+                              "gap": 8,
+                              "padding": 12,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "APm2z",
+                                  "name": "text",
+                                  "fill": "$ink",
+                                  "textGrowth": "fixed-width",
+                                  "width": 280,
+                                  "content": "Que Bolívar cruce un río con cocodrilos antes de llegar al campamento.",
+                                  "lineHeight": 1.4,
+                                  "fontFamily": "$font-sans",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "H5ssIN",
+                          "name": "ai bubble row",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 6,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "QYQG4",
+                              "name": "ai bubble",
+                              "fill": "$raised",
+                              "cornerRadius": 10,
+                              "layout": "vertical",
+                              "gap": 8,
+                              "padding": 12,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "SeiGx",
+                                  "name": "text",
+                                  "fill": "$ink",
+                                  "textGrowth": "fixed-width",
+                                  "width": 280,
+                                  "content": "Agregué el Cruce del Magdalena: 3 plataformas flotantes y cocodrilos que patrullan. Generé estos assets nuevos:",
+                                  "lineHeight": 1.4,
+                                  "fontFamily": "$font-sans",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "aINw7",
+                                  "name": "assets",
+                                  "gap": 6,
+                                  "children": [
+                                    {
+                                      "type": "frame",
+                                      "id": "VQiO7",
+                                      "name": "sprite chip",
+                                      "width": 40,
+                                      "height": 40,
+                                      "fill": "$hover",
+                                      "cornerRadius": 6,
+                                      "stroke": "$line-strong",
+                                      "strokeWidth": 1,
+                                      "layout": "vertical",
+                                      "justifyContent": "center",
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "icon",
+                                          "id": "e5RuJy",
+                                          "name": "sprite icon",
+                                          "width": 16,
+                                          "height": 16,
+                                          "icon": "image",
+                                          "library": "lucide",
+                                          "fill": "$ai-ink"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "v98BvN",
+                                      "name": "tile chip",
+                                      "width": 40,
+                                      "height": 40,
+                                      "fill": "$hover",
+                                      "cornerRadius": 6,
+                                      "stroke": "$line-strong",
+                                      "strokeWidth": 1,
+                                      "layout": "vertical",
+                                      "justifyContent": "center",
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "icon",
+                                          "id": "Srd7r",
+                                          "name": "tile icon",
+                                          "width": 16,
+                                          "height": 16,
+                                          "icon": "layout-grid",
+                                          "library": "lucide",
+                                          "fill": "$ai-ink"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "BOrBq",
+                                      "name": "sfx chip",
+                                      "width": 40,
+                                      "height": 40,
+                                      "fill": "$hover",
+                                      "cornerRadius": 6,
+                                      "stroke": "$line-strong",
+                                      "strokeWidth": 1,
+                                      "layout": "vertical",
+                                      "justifyContent": "center",
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "icon",
+                                          "id": "siOB7",
+                                          "name": "sfx icon",
+                                          "width": 16,
+                                          "height": 16,
+                                          "icon": "music",
+                                          "library": "lucide",
+                                          "fill": "$ai-ink"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "bnlXl",
+                          "name": "user bubble row",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 6,
+                          "alignItems": "end",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "jZXeu",
+                              "name": "user bubble",
+                              "fill": "$hover",
+                              "cornerRadius": 10,
+                              "layout": "vertical",
+                              "gap": 8,
+                              "padding": 12,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "jx6qd",
+                                  "name": "text",
+                                  "fill": "$ink",
+                                  "textGrowth": "fixed-width",
+                                  "width": 280,
+                                  "content": "Perfecto, ahora el siguiente nivel: la Batalla de Boyacá.",
+                                  "lineHeight": 1.4,
+                                  "fontFamily": "$font-sans",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "xiWuZ",
+                          "name": "ai bubble row",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 6,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "hoOO4",
+                              "name": "ai bubble",
+                              "fill": "$raised",
+                              "cornerRadius": 10,
+                              "layout": "vertical",
+                              "gap": 8,
+                              "padding": 12,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "JfBSR",
+                                  "name": "text",
+                                  "fill": "$ink",
+                                  "textGrowth": "fixed-width",
+                                  "width": 280,
+                                  "content": "Creando el nivel 4 — Batalla de Boyacá. Esto tomará unos segundos.",
+                                  "lineHeight": 1.4,
+                                  "fontFamily": "$font-sans",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "lrzTs",
+                      "name": "Input Bar",
+                      "width": "fill_container",
+                      "fill": "$raised",
+                      "gap": 8,
+                      "padding": 12,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "kflql",
+                          "name": "Field",
+                          "width": "fill_container",
+                          "fill": "$hover",
+                          "cornerRadius": 8,
+                          "padding": [
+                            8,
+                            12
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "wpdcF",
+                              "name": "placeholder",
+                              "fill": "$subtle",
+                              "content": "Describe el siguiente momento de la historia…",
+                              "fontFamily": "$font-sans",
+                              "fontSize": 13,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "wkLbw",
+                          "name": "Send",
+                          "width": 32,
+                          "height": 32,
+                          "fill": "$accent",
+                          "cornerRadius": 8,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "zhtCf",
+                              "name": "send icon",
+                              "width": 16,
+                              "height": 16,
+                              "icon": "arrow-up",
+                              "library": "lucide",
+                              "fill": "$on-accent"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "b6Xq6",
+                  "name": "Live Preview",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "layout": "vertical",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "IbGML",
+                      "name": "Preview Toolbar",
+                      "width": "fill_container",
+                      "height": 36,
+                      "fill": "$surface",
+                      "gap": 10,
+                      "padding": [
+                        0,
+                        12
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "PZXis",
+                          "name": "live dot",
+                          "width": 6,
+                          "height": 6,
+                          "fill": "$success",
+                          "cornerRadius": 3
+                        },
+                        {
+                          "type": "text",
+                          "id": "H9jXr",
+                          "name": "live label",
+                          "fill": "$muted",
+                          "content": "En vivo",
+                          "fontFamily": "$font-mono",
+                          "fontSize": 11,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "L64Gxs",
+                          "name": "toolbar spacer",
+                          "width": "fill_container",
+                          "height": 1
+                        },
+                        {
+                          "type": "frame",
+                          "id": "g6QM0",
+                          "name": "rotate-ccw btn",
+                          "width": 26,
+                          "height": 26,
+                          "cornerRadius": 6,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "v6QqTL",
+                              "name": "rotate-ccw icon",
+                              "width": 14,
+                              "height": 14,
+                              "icon": "rotate-ccw",
+                              "library": "lucide",
+                              "fill": "$muted"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "iP0j0",
+                          "name": "play btn",
+                          "width": 26,
+                          "height": 26,
+                          "cornerRadius": 6,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "ZboZq",
+                              "name": "play icon",
+                              "width": 14,
+                              "height": 14,
+                              "icon": "play",
+                              "library": "lucide",
+                              "fill": "$muted"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "yZzYJ",
+                          "name": "maximize btn",
+                          "width": 26,
+                          "height": 26,
+                          "cornerRadius": 6,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "Ac4of",
+                              "name": "maximize icon",
+                              "width": 14,
+                              "height": 14,
+                              "icon": "maximize",
+                              "library": "lucide",
+                              "fill": "$muted"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "YpaMz",
+                      "name": "Phaser Scene",
+                      "width": "fill_container",
+                      "height": "fill_container",
+                      "fill": "$base",
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "SutUh",
+                          "x": 0,
+                          "y": 0,
+                          "name": "sky",
+                          "width": 964,
+                          "height": 820,
+                          "fill": {
+                            "type": "gradient",
+                            "gradientType": "linear",
+                            "enabled": true,
+                            "rotation": 180,
+                            "size": {
+                              "height": 1
+                            },
+                            "colors": [
+                              {
+                                "color": "#0a0c10",
+                                "position": 0
+                              },
+                              {
+                                "color": "#141a24",
+                                "position": 1
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "type": "frame",
+                          "id": "g0yFd",
+                          "x": 0,
+                          "y": 620,
+                          "name": "river",
+                          "width": 964,
+                          "height": 200,
+                          "fill": "#0f2a33"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "TNTQ2",
+                          "x": 0,
+                          "y": 580,
+                          "name": "ground L",
+                          "width": 220,
+                          "height": 40,
+                          "fill": "$hover",
+                          "cornerRadius": [
+                            4,
+                            4,
+                            0,
+                            0
+                          ],
+                          "stroke": "$line-strong",
+                          "strokeWidth": 1
+                        },
+                        {
+                          "type": "frame",
+                          "id": "KC4aL",
+                          "x": 300,
+                          "y": 540,
+                          "name": "platform 1",
+                          "width": 120,
+                          "height": 20,
+                          "fill": "$hover",
+                          "cornerRadius": 4,
+                          "stroke": "$line-strong",
+                          "strokeWidth": 1
+                        },
+                        {
+                          "type": "frame",
+                          "id": "Y9H15",
+                          "x": 480,
+                          "y": 480,
+                          "name": "platform 2",
+                          "width": 120,
+                          "height": 20,
+                          "fill": "$hover",
+                          "cornerRadius": 4,
+                          "stroke": "$line-strong",
+                          "strokeWidth": 1
+                        },
+                        {
+                          "type": "frame",
+                          "id": "FP4hH",
+                          "x": 720,
+                          "y": 580,
+                          "name": "ground R",
+                          "width": 244,
+                          "height": 40,
+                          "fill": "$hover",
+                          "cornerRadius": [
+                            4,
+                            4,
+                            0,
+                            0
+                          ],
+                          "stroke": "$line-strong",
+                          "strokeWidth": 1
+                        },
+                        {
+                          "type": "frame",
+                          "id": "sxeby",
+                          "x": 340,
+                          "y": 490,
+                          "name": "player",
+                          "width": 24,
+                          "height": 40,
+                          "fill": "$accent",
+                          "cornerRadius": 4
+                        },
+                        {
+                          "type": "ellipse",
+                          "id": "g9QdN",
+                          "x": 60,
+                          "y": 660,
+                          "name": "croc 1",
+                          "fill": "$ai",
+                          "width": 60,
+                          "height": 20
+                        },
+                        {
+                          "type": "text",
+                          "id": "nIix9",
+                          "x": 16,
+                          "y": 780,
+                          "name": "caption",
+                          "fill": "$subtle",
+                          "content": "preview · Cruce del río Magdalena",
+                          "fontFamily": "$font-mono",
+                          "fontSize": 11,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "A2WWt",
+      "x": 8607.2,
+      "y": 6220,
+      "name": "Build Flow · B · Hero Preview + Command Bar",
+      "clip": true,
+      "width": 1440,
+      "height": 900,
+      "fill": "$base",
+      "children": [
+        {
+          "type": "frame",
+          "id": "O0iPK",
+          "name": "App Rail",
+          "width": 56,
+          "height": "fill_container",
+          "fill": "$surface",
+          "layout": "vertical",
+          "gap": 8,
+          "padding": [
+            12,
+            0
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "f7xBab",
+              "name": "brush nav",
+              "width": 36,
+              "height": 36,
+              "fill": "#00000000",
+              "cornerRadius": 8,
+              "layout": "vertical",
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "VA0x9",
+                  "name": "brush icon",
+                  "width": 18,
+                  "height": 18,
+                  "icon": "brush",
+                  "library": "lucide",
+                  "fill": "$muted"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "DbK09",
+              "name": "audio-lines nav",
+              "width": 36,
+              "height": 36,
+              "fill": "#00000000",
+              "cornerRadius": 8,
+              "layout": "vertical",
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "a9z8T",
+                  "name": "audio-lines icon",
+                  "width": 18,
+                  "height": 18,
+                  "icon": "audio-lines",
+                  "library": "lucide",
+                  "fill": "$muted"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "K1tb4",
+              "name": "gamepad-2 nav",
+              "width": 36,
+              "height": 36,
+              "fill": "$hover",
+              "cornerRadius": 8,
+              "layout": "vertical",
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "C33pzo",
+                  "name": "gamepad-2 icon",
+                  "width": 18,
+                  "height": 18,
+                  "icon": "gamepad-2",
+                  "library": "lucide",
+                  "fill": "$accent"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "QYnxO",
+              "name": "rail spacer",
+              "width": 1,
+              "height": "fill_container"
+            },
+            {
+              "type": "frame",
+              "id": "G7UPLM",
+              "name": "settings nav",
+              "width": 36,
+              "height": 36,
+              "fill": "#00000000",
+              "cornerRadius": 8,
+              "layout": "vertical",
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "q4a6st",
+                  "name": "settings icon",
+                  "width": 18,
+                  "height": 18,
+                  "icon": "settings",
+                  "library": "lucide",
+                  "fill": "$muted"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "gXnL7",
+          "name": "Workspace",
+          "width": "fill_container",
+          "height": "fill_container",
+          "layout": "vertical",
+          "children": [
+            {
+              "type": "frame",
+              "id": "NTjP3",
+              "name": "Top Bar",
+              "width": "fill_container",
+              "height": 44,
+              "fill": "$surface",
+              "gap": 10,
+              "padding": [
+                0,
+                16
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "VNLH6",
+                  "name": "PIXELFORGE",
+                  "fill": "$accent",
+                  "content": "PIXELFORGE",
+                  "fontFamily": "$font-mono",
+                  "fontSize": 11,
+                  "fontWeight": "normal",
+                  "letterSpacing": 1
+                },
+                {
+                  "type": "frame",
+                  "id": "vjiS6",
+                  "name": "divider",
+                  "width": 1,
+                  "height": 16,
+                  "fill": "$line-strong"
+                },
+                {
+                  "type": "text",
+                  "id": "I7bGN3",
+                  "name": "project name",
+                  "fill": "$ink",
+                  "content": "Simón Bolívar — El Libertador",
+                  "fontFamily": "$font-sans",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "AsGpe",
+                  "name": "top spacer",
+                  "width": "fill_container",
+                  "height": 1
+                },
+                {
+                  "type": "frame",
+                  "id": "dMvls",
+                  "name": "Publish",
+                  "fill": "$accent",
+                  "cornerRadius": 6,
+                  "gap": 6,
+                  "padding": [
+                    6,
+                    12
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "oS0cm",
+                      "name": "Publish label",
+                      "fill": "$on-accent",
+                      "content": "Publicar",
+                      "fontFamily": "$font-sans",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "me25c",
+              "name": "Hero Preview",
+              "width": "fill_container",
+              "height": 580,
+              "fill": "$base",
+              "layout": "none",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "wYR2M",
+                  "x": 0,
+                  "y": 0,
+                  "name": "sky",
+                  "width": 1384,
+                  "height": 580,
+                  "fill": {
+                    "type": "gradient",
+                    "gradientType": "linear",
+                    "enabled": true,
+                    "rotation": 180,
+                    "size": {
+                      "height": 1
+                    },
+                    "colors": [
+                      {
+                        "color": "#0a0c10",
+                        "position": 0
+                      },
+                      {
+                        "color": "#141a24",
+                        "position": 1
+                      }
+                    ]
+                  }
+                },
+                {
+                  "type": "frame",
+                  "id": "EAc36",
+                  "x": 0,
+                  "y": 420,
+                  "name": "river",
+                  "width": 1384,
+                  "height": 160,
+                  "fill": "#0f2a33"
+                },
+                {
+                  "type": "frame",
+                  "id": "BApWv",
+                  "x": 0,
+                  "y": 390,
+                  "name": "ground L",
+                  "width": 380,
+                  "height": 30,
+                  "fill": "$hover",
+                  "cornerRadius": [
+                    4,
+                    4,
+                    0,
+                    0
+                  ],
+                  "stroke": "$line-strong",
+                  "strokeWidth": 1
+                },
+                {
+                  "type": "frame",
+                  "id": "ZOzBw",
+                  "x": 500,
+                  "y": 360,
+                  "name": "platform 1",
+                  "width": 140,
+                  "height": 20,
+                  "fill": "$hover",
+                  "cornerRadius": 4,
+                  "stroke": "$line-strong",
+                  "strokeWidth": 1
+                },
+                {
+                  "type": "frame",
+                  "id": "yGkgO",
+                  "x": 760,
+                  "y": 300,
+                  "name": "platform 2",
+                  "width": 140,
+                  "height": 20,
+                  "fill": "$hover",
+                  "cornerRadius": 4,
+                  "stroke": "$line-strong",
+                  "strokeWidth": 1
+                },
+                {
+                  "type": "frame",
+                  "id": "hR0c1",
+                  "x": 1070,
+                  "y": 390,
+                  "name": "ground R",
+                  "width": 314,
+                  "height": 30,
+                  "fill": "$hover",
+                  "cornerRadius": [
+                    4,
+                    4,
+                    0,
+                    0
+                  ],
+                  "stroke": "$line-strong",
+                  "strokeWidth": 1
+                },
+                {
+                  "type": "frame",
+                  "id": "S2WYsr",
+                  "x": 540,
+                  "y": 310,
+                  "name": "player",
+                  "width": 26,
+                  "height": 44,
+                  "fill": "$accent",
+                  "cornerRadius": 4
+                },
+                {
+                  "type": "ellipse",
+                  "id": "dSJOf",
+                  "x": 120,
+                  "y": 450,
+                  "name": "croc 1",
+                  "fill": "$ai",
+                  "width": 70,
+                  "height": 24
+                },
+                {
+                  "type": "ellipse",
+                  "id": "H4gMAy",
+                  "x": 280,
+                  "y": 460,
+                  "name": "croc 2",
+                  "fill": "$ai",
+                  "width": 70,
+                  "height": 24
+                },
+                {
+                  "type": "frame",
+                  "id": "K14IF",
+                  "x": 20,
+                  "y": 20,
+                  "name": "HUD chip",
+                  "fill": "#0a0c10cc",
+                  "cornerRadius": 999,
+                  "gap": 8,
+                  "padding": [
+                    6,
+                    10
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "CUe1a",
+                      "name": "live dot",
+                      "width": 6,
+                      "height": 6,
+                      "fill": "$success",
+                      "cornerRadius": 3
+                    },
+                    {
+                      "type": "text",
+                      "id": "MsTm4",
+                      "name": "hud label",
+                      "fill": "$ink",
+                      "content": "Nivel 4 · Batalla de Boyacá",
+                      "fontFamily": "$font-mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "i6pldY",
+                  "x": 612,
+                  "y": 516,
+                  "name": "Playback Pill",
+                  "fill": "#0a0c10cc",
+                  "cornerRadius": 999,
+                  "gap": 16,
+                  "padding": [
+                    8,
+                    16
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "AYMbh",
+                      "name": "rotate-ccw icon",
+                      "width": 16,
+                      "height": 16,
+                      "icon": "rotate-ccw",
+                      "library": "lucide",
+                      "fill": "$ink"
+                    },
+                    {
+                      "type": "icon",
+                      "id": "WT3mx",
+                      "name": "pause icon",
+                      "width": 16,
+                      "height": 16,
+                      "icon": "pause",
+                      "library": "lucide",
+                      "fill": "$ink"
+                    },
+                    {
+                      "type": "icon",
+                      "id": "GYOon",
+                      "name": "maximize icon",
+                      "width": 16,
+                      "height": 16,
+                      "icon": "maximize",
+                      "library": "lucide",
+                      "fill": "$ink"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "w6jFO",
+              "name": "Assets Tray",
+              "width": "fill_container",
+              "height": 120,
+              "fill": "$surface",
+              "gap": 12,
+              "padding": 16,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "eVaAN",
+                  "name": "Bolívar — correr chip",
+                  "width": 170,
+                  "height": 88,
+                  "fill": "$raised",
+                  "cornerRadius": 8,
+                  "layout": "vertical",
+                  "gap": 8,
+                  "padding": 10,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "Dowfu",
+                      "name": "row",
+                      "width": "fill_container",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "kjWpl",
+                          "name": "thumb",
+                          "width": 36,
+                          "height": 36,
+                          "fill": "$hover",
+                          "cornerRadius": 6,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "ksGAo",
+                              "name": "thumb icon",
+                              "width": 16,
+                              "height": 16,
+                              "icon": "image",
+                              "library": "lucide",
+                              "fill": "$ai-ink"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "W0zwh",
+                          "name": "title",
+                          "fill": "$ink",
+                          "textGrowth": "fixed-width",
+                          "width": 110,
+                          "content": "Bolívar — correr",
+                          "fontFamily": "$font-sans",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "mTVXg",
+                      "name": "cap row",
+                      "gap": 4,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "NFH2P",
+                          "name": "ai dot",
+                          "width": 5,
+                          "height": 5,
+                          "fill": "$ai",
+                          "cornerRadius": 3
+                        },
+                        {
+                          "type": "text",
+                          "id": "y69n7",
+                          "name": "caption",
+                          "fill": "$subtle",
+                          "content": "generado por IA",
+                          "fontFamily": "$font-sans",
+                          "fontSize": 10,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "BQups",
+                  "name": "Selva Magdalena chip",
+                  "width": 170,
+                  "height": 88,
+                  "fill": "$raised",
+                  "cornerRadius": 8,
+                  "layout": "vertical",
+                  "gap": 8,
+                  "padding": 10,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "OJU45",
+                      "name": "row",
+                      "width": "fill_container",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "PMNQj",
+                          "name": "thumb",
+                          "width": 36,
+                          "height": 36,
+                          "fill": "$hover",
+                          "cornerRadius": 6,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "M0a57",
+                              "name": "thumb icon",
+                              "width": 16,
+                              "height": 16,
+                              "icon": "layout-grid",
+                              "library": "lucide",
+                              "fill": "$ai-ink"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "meDUt",
+                          "name": "title",
+                          "fill": "$ink",
+                          "textGrowth": "fixed-width",
+                          "width": 110,
+                          "content": "Selva Magdalena",
+                          "fontFamily": "$font-sans",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "Bl5vz",
+                      "name": "cap row",
+                      "gap": 4,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "K3gxF",
+                          "name": "ai dot",
+                          "width": 5,
+                          "height": 5,
+                          "fill": "$ai",
+                          "cornerRadius": 3
+                        },
+                        {
+                          "type": "text",
+                          "id": "HR1ia",
+                          "name": "caption",
+                          "fill": "$subtle",
+                          "content": "generado por IA",
+                          "fontFamily": "$font-sans",
+                          "fontSize": 10,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "K06igm",
+                  "name": "Rugido de cocodrilo chip",
+                  "width": 170,
+                  "height": 88,
+                  "fill": "$raised",
+                  "cornerRadius": 8,
+                  "layout": "vertical",
+                  "gap": 8,
+                  "padding": 10,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "JPHpr",
+                      "name": "row",
+                      "width": "fill_container",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "VX1OY",
+                          "name": "thumb",
+                          "width": 36,
+                          "height": 36,
+                          "fill": "$hover",
+                          "cornerRadius": 6,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "T85Dju",
+                              "name": "thumb icon",
+                              "width": 16,
+                              "height": 16,
+                              "icon": "music",
+                              "library": "lucide",
+                              "fill": "$ai-ink"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "Vfb4h",
+                          "name": "title",
+                          "fill": "$ink",
+                          "textGrowth": "fixed-width",
+                          "width": 110,
+                          "content": "Rugido de cocodrilo",
+                          "fontFamily": "$font-sans",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "GTYXk",
+                      "name": "cap row",
+                      "gap": 4,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "ab2X7",
+                          "name": "ai dot",
+                          "width": 5,
+                          "height": 5,
+                          "fill": "$ai",
+                          "cornerRadius": 3
+                        },
+                        {
+                          "type": "text",
+                          "id": "Jh0ug",
+                          "name": "caption",
+                          "fill": "$subtle",
+                          "content": "generado por IA",
+                          "fontFamily": "$font-sans",
+                          "fontSize": 10,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "VLlOQ",
+                  "name": "Cocodrilo chip",
+                  "width": 170,
+                  "height": 88,
+                  "fill": "$raised",
+                  "cornerRadius": 8,
+                  "layout": "vertical",
+                  "gap": 8,
+                  "padding": 10,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "C8S63v",
+                      "name": "row",
+                      "width": "fill_container",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "CfaX9",
+                          "name": "thumb",
+                          "width": 36,
+                          "height": 36,
+                          "fill": "$hover",
+                          "cornerRadius": 6,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "uTxte",
+                              "name": "thumb icon",
+                              "width": 16,
+                              "height": 16,
+                              "icon": "image",
+                              "library": "lucide",
+                              "fill": "$ai-ink"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "y2kVe",
+                          "name": "title",
+                          "fill": "$ink",
+                          "textGrowth": "fixed-width",
+                          "width": 110,
+                          "content": "Cocodrilo",
+                          "fontFamily": "$font-sans",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "uOf1F",
+                      "name": "cap row",
+                      "gap": 4,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "tSpUN",
+                          "name": "ai dot",
+                          "width": 5,
+                          "height": 5,
+                          "fill": "$ai",
+                          "cornerRadius": 3
+                        },
+                        {
+                          "type": "text",
+                          "id": "o54ho",
+                          "name": "caption",
+                          "fill": "$subtle",
+                          "content": "generado por IA",
+                          "fontFamily": "$font-sans",
+                          "fontSize": 10,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "x980Z3",
+              "name": "Chat Command Bar",
+              "width": "fill_container",
+              "height": 156,
+              "fill": "$raised",
+              "layout": "vertical",
+              "gap": 10,
+              "padding": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "AhvZC",
+                  "name": "last message",
+                  "gap": 8,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "zc7Im",
+                      "name": "sparkles icon",
+                      "width": 14,
+                      "height": 14,
+                      "icon": "sparkles",
+                      "library": "lucide",
+                      "fill": "$ai-ink"
+                    },
+                    {
+                      "type": "text",
+                      "id": "J6NkQg",
+                      "name": "last message text",
+                      "fill": "$ai-ink",
+                      "content": "Agregué un segundo cocodrilo que patrulla el río.",
+                      "fontFamily": "$font-sans",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "D1Rii9",
+                  "name": "Input Row",
+                  "width": "fill_container",
+                  "gap": 8,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "zKz15",
+                      "name": "Field",
+                      "width": "fill_container",
+                      "fill": "$hover",
+                      "cornerRadius": 999,
+                      "padding": [
+                        10,
+                        14
+                      ],
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "D3BX6",
+                          "name": "placeholder",
+                          "fill": "$subtle",
+                          "content": "Pídele a la IA el próximo momento de la historia…",
+                          "fontFamily": "$font-sans",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "U15cVd",
+                      "name": "Send",
+                      "width": 36,
+                      "height": 36,
+                      "fill": "$accent",
+                      "cornerRadius": 999,
+                      "layout": "vertical",
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "L93PBE",
+                          "name": "send icon",
+                          "width": 16,
+                          "height": 16,
+                          "icon": "arrow-up",
+                          "library": "lucide",
+                          "fill": "$on-accent"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "StDZb",
+      "x": 10187.2,
+      "y": 6220,
+      "name": "Build Flow · C · Story Rail + Preview + Chat",
+      "clip": true,
+      "width": 1440,
+      "height": 900,
+      "fill": "$base",
+      "children": [
+        {
+          "type": "frame",
+          "id": "M1vT7D",
+          "name": "App Rail",
+          "width": 56,
+          "height": "fill_container",
+          "fill": "$surface",
+          "layout": "vertical",
+          "gap": 8,
+          "padding": [
+            12,
+            0
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "hDVQO",
+              "name": "brush nav",
+              "width": 36,
+              "height": 36,
+              "fill": "#00000000",
+              "cornerRadius": 8,
+              "layout": "vertical",
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "vs4lB",
+                  "name": "brush icon",
+                  "width": 18,
+                  "height": 18,
+                  "icon": "brush",
+                  "library": "lucide",
+                  "fill": "$muted"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "zagZX",
+              "name": "audio-lines nav",
+              "width": 36,
+              "height": 36,
+              "fill": "#00000000",
+              "cornerRadius": 8,
+              "layout": "vertical",
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "Yd61e",
+                  "name": "audio-lines icon",
+                  "width": 18,
+                  "height": 18,
+                  "icon": "audio-lines",
+                  "library": "lucide",
+                  "fill": "$muted"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "O0MkT",
+              "name": "gamepad-2 nav",
+              "width": 36,
+              "height": 36,
+              "fill": "$hover",
+              "cornerRadius": 8,
+              "layout": "vertical",
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "csrPw",
+                  "name": "gamepad-2 icon",
+                  "width": 18,
+                  "height": 18,
+                  "icon": "gamepad-2",
+                  "library": "lucide",
+                  "fill": "$accent"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "z0kd2M",
+              "name": "rail spacer",
+              "width": 1,
+              "height": "fill_container"
+            },
+            {
+              "type": "frame",
+              "id": "k7ebQH",
+              "name": "settings nav",
+              "width": 36,
+              "height": 36,
+              "fill": "#00000000",
+              "cornerRadius": 8,
+              "layout": "vertical",
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "z2mBJ",
+                  "name": "settings icon",
+                  "width": 18,
+                  "height": 18,
+                  "icon": "settings",
+                  "library": "lucide",
+                  "fill": "$muted"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "qks2m",
+          "name": "Workspace",
+          "width": "fill_container",
+          "height": "fill_container",
+          "layout": "vertical",
+          "children": [
+            {
+              "type": "frame",
+              "id": "g8DkU",
+              "name": "Top Bar",
+              "width": "fill_container",
+              "height": 44,
+              "fill": "$surface",
+              "gap": 10,
+              "padding": [
+                0,
+                16
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "l8ItKf",
+                  "name": "PIXELFORGE",
+                  "fill": "$accent",
+                  "content": "PIXELFORGE",
+                  "fontFamily": "$font-mono",
+                  "fontSize": 11,
+                  "fontWeight": "normal",
+                  "letterSpacing": 1
+                },
+                {
+                  "type": "frame",
+                  "id": "bTYID",
+                  "name": "divider",
+                  "width": 1,
+                  "height": 16,
+                  "fill": "$line-strong"
+                },
+                {
+                  "type": "text",
+                  "id": "vCuLW",
+                  "name": "project name",
+                  "fill": "$ink",
+                  "content": "Simón Bolívar — El Libertador",
+                  "fontFamily": "$font-sans",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "tHXJd",
+                  "name": "top spacer",
+                  "width": "fill_container",
+                  "height": 1
+                },
+                {
+                  "type": "frame",
+                  "id": "S00PNT",
+                  "name": "Publish",
+                  "fill": "$accent",
+                  "cornerRadius": 6,
+                  "gap": 6,
+                  "padding": [
+                    6,
+                    12
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "sOE6f",
+                      "name": "Publish label",
+                      "fill": "$on-accent",
+                      "content": "Publicar",
+                      "fontFamily": "$font-sans",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "Pqdku",
+              "name": "Main",
+              "width": "fill_container",
+              "height": "fill_container",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "eAI9w",
+                  "name": "Story Rail",
+                  "width": 240,
+                  "height": "fill_container",
+                  "fill": "$surface",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "padding": 12,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "X8jwz",
+                      "name": "story label",
+                      "fill": "$subtle",
+                      "content": "LA HISTORIA",
+                      "fontFamily": "$font-mono",
+                      "fontSize": 10,
+                      "fontWeight": "normal",
+                      "letterSpacing": 1
+                    },
+                    {
+                      "type": "frame",
+                      "id": "pIA9G",
+                      "name": "1. Caracas · Niñez card",
+                      "width": "fill_container",
+                      "fill": "#00000000",
+                      "cornerRadius": 6,
+                      "gap": 10,
+                      "padding": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "Q3PAY9",
+                          "name": "thumb",
+                          "width": 28,
+                          "height": 28,
+                          "fill": "$raised",
+                          "cornerRadius": 6,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "tTWuT",
+                              "name": "status icon",
+                              "width": 14,
+                              "height": 14,
+                              "icon": "check",
+                              "library": "lucide",
+                              "fill": "$success"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "A5EaqH",
+                          "name": "title",
+                          "fill": "$ink",
+                          "textGrowth": "fixed-width",
+                          "width": 150,
+                          "content": "1. Caracas · Niñez",
+                          "fontFamily": "$font-sans",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "UIjMT",
+                      "name": "2. Europa · Ideales card",
+                      "width": "fill_container",
+                      "fill": "#00000000",
+                      "cornerRadius": 6,
+                      "gap": 10,
+                      "padding": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "lT8eg",
+                          "name": "thumb",
+                          "width": 28,
+                          "height": 28,
+                          "fill": "$raised",
+                          "cornerRadius": 6,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "T7YTh",
+                              "name": "status icon",
+                              "width": 14,
+                              "height": 14,
+                              "icon": "check",
+                              "library": "lucide",
+                              "fill": "$success"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "Ht8jZ",
+                          "name": "title",
+                          "fill": "$ink",
+                          "textGrowth": "fixed-width",
+                          "width": 150,
+                          "content": "2. Europa · Ideales",
+                          "fontFamily": "$font-sans",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "AiVSa",
+                      "name": "3. Cruce de los Andes card",
+                      "width": "fill_container",
+                      "fill": "#00000000",
+                      "cornerRadius": 6,
+                      "gap": 10,
+                      "padding": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "xMpye",
+                          "name": "thumb",
+                          "width": 28,
+                          "height": 28,
+                          "fill": "$raised",
+                          "cornerRadius": 6,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "I8IzP6",
+                              "name": "status icon",
+                              "width": 14,
+                              "height": 14,
+                              "icon": "check",
+                              "library": "lucide",
+                              "fill": "$success"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "k3Y7Q",
+                          "name": "title",
+                          "fill": "$ink",
+                          "textGrowth": "fixed-width",
+                          "width": 150,
+                          "content": "3. Cruce de los Andes",
+                          "fontFamily": "$font-sans",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "tEDMv",
+                      "name": "4. Batalla de Boyacá card",
+                      "width": "fill_container",
+                      "fill": "$hover",
+                      "cornerRadius": 6,
+                      "stroke": "$accent",
+                      "strokeWidth": {
+                        "left": 2
+                      },
+                      "gap": 10,
+                      "padding": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "VS6X9",
+                          "name": "thumb",
+                          "width": 28,
+                          "height": 28,
+                          "fill": "$raised",
+                          "cornerRadius": 6,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "twYm9",
+                              "name": "status icon",
+                              "width": 14,
+                              "height": 14,
+                              "icon": "play",
+                              "library": "lucide",
+                              "fill": "$accent"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "ccHKD",
+                          "name": "title",
+                          "fill": "$ink",
+                          "textGrowth": "fixed-width",
+                          "width": 150,
+                          "content": "4. Batalla de Boyacá",
+                          "fontFamily": "$font-sans",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "IVOgu",
+                      "name": "5. Congreso de Angostura card",
+                      "width": "fill_container",
+                      "fill": "#00000000",
+                      "cornerRadius": 6,
+                      "gap": 10,
+                      "padding": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "sQIfp",
+                          "name": "thumb",
+                          "width": 28,
+                          "height": 28,
+                          "fill": "$raised",
+                          "cornerRadius": 6,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "psqy5",
+                              "name": "status icon",
+                              "width": 14,
+                              "height": 14,
+                              "icon": "lock",
+                              "library": "lucide",
+                              "fill": "$subtle"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "w7gqs",
+                          "name": "title",
+                          "fill": "$subtle",
+                          "textGrowth": "fixed-width",
+                          "width": 150,
+                          "content": "5. Congreso de Angostura",
+                          "fontFamily": "$font-sans",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "Snb5r",
+                      "name": "6. Legado card",
+                      "width": "fill_container",
+                      "fill": "#00000000",
+                      "cornerRadius": 6,
+                      "gap": 10,
+                      "padding": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "JeOpI",
+                          "name": "thumb",
+                          "width": 28,
+                          "height": 28,
+                          "fill": "$raised",
+                          "cornerRadius": 6,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "M8TmlM",
+                              "name": "status icon",
+                              "width": 14,
+                              "height": 14,
+                              "icon": "lock",
+                              "library": "lucide",
+                              "fill": "$subtle"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "k2sY8c",
+                          "name": "title",
+                          "fill": "$subtle",
+                          "textGrowth": "fixed-width",
+                          "width": 150,
+                          "content": "6. Legado",
+                          "fontFamily": "$font-sans",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "I6JSRW",
+                  "name": "Live Preview",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "layout": "vertical",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "cBiz2",
+                      "name": "Preview Toolbar",
+                      "width": "fill_container",
+                      "height": 36,
+                      "fill": "$surface",
+                      "gap": 10,
+                      "padding": [
+                        0,
+                        12
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "XFzXq",
+                          "name": "live dot",
+                          "width": 6,
+                          "height": 6,
+                          "fill": "$success",
+                          "cornerRadius": 3
+                        },
+                        {
+                          "type": "text",
+                          "id": "vs5RH",
+                          "name": "live label",
+                          "fill": "$muted",
+                          "content": "En vivo",
+                          "fontFamily": "$font-mono",
+                          "fontSize": 11,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "SaCDq",
+                          "name": "toolbar spacer",
+                          "width": "fill_container",
+                          "height": 1
+                        },
+                        {
+                          "type": "frame",
+                          "id": "slY4u",
+                          "name": "rotate-ccw btn",
+                          "width": 26,
+                          "height": 26,
+                          "cornerRadius": 6,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "t6RuhV",
+                              "name": "rotate-ccw icon",
+                              "width": 14,
+                              "height": 14,
+                              "icon": "rotate-ccw",
+                              "library": "lucide",
+                              "fill": "$muted"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "g3mdaH",
+                          "name": "play btn",
+                          "width": 26,
+                          "height": 26,
+                          "cornerRadius": 6,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "oPRdt",
+                              "name": "play icon",
+                              "width": 14,
+                              "height": 14,
+                              "icon": "play",
+                              "library": "lucide",
+                              "fill": "$muted"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "HeMSw",
+                          "name": "maximize btn",
+                          "width": 26,
+                          "height": 26,
+                          "cornerRadius": 6,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "OSv1G",
+                              "name": "maximize icon",
+                              "width": 14,
+                              "height": 14,
+                              "icon": "maximize",
+                              "library": "lucide",
+                              "fill": "$muted"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "Oo676",
+                      "name": "Phaser Scene",
+                      "width": "fill_container",
+                      "height": "fill_container",
+                      "fill": "$base",
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "SSskF",
+                          "x": 0,
+                          "y": 0,
+                          "name": "sky",
+                          "width": 844,
+                          "height": 820,
+                          "fill": {
+                            "type": "gradient",
+                            "gradientType": "linear",
+                            "enabled": true,
+                            "rotation": 180,
+                            "size": {
+                              "height": 1
+                            },
+                            "colors": [
+                              {
+                                "color": "#0a0c10",
+                                "position": 0
+                              },
+                              {
+                                "color": "#141a24",
+                                "position": 1
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "type": "frame",
+                          "id": "j5ZY7",
+                          "x": 0,
+                          "y": 580,
+                          "name": "ground L",
+                          "width": 260,
+                          "height": 40,
+                          "fill": "$hover",
+                          "cornerRadius": [
+                            4,
+                            4,
+                            0,
+                            0
+                          ],
+                          "stroke": "$line-strong",
+                          "strokeWidth": 1
+                        },
+                        {
+                          "type": "frame",
+                          "id": "rWoNZ",
+                          "x": 340,
+                          "y": 540,
+                          "name": "platform 1",
+                          "width": 140,
+                          "height": 20,
+                          "fill": "$hover",
+                          "cornerRadius": 4,
+                          "stroke": "$line-strong",
+                          "strokeWidth": 1
+                        },
+                        {
+                          "type": "frame",
+                          "id": "iiuLG",
+                          "x": 580,
+                          "y": 580,
+                          "name": "ground R",
+                          "width": 264,
+                          "height": 40,
+                          "fill": "$hover",
+                          "cornerRadius": [
+                            4,
+                            4,
+                            0,
+                            0
+                          ],
+                          "stroke": "$line-strong",
+                          "strokeWidth": 1
+                        },
+                        {
+                          "type": "frame",
+                          "id": "nDYkz",
+                          "x": 380,
+                          "y": 490,
+                          "name": "player",
+                          "width": 24,
+                          "height": 40,
+                          "fill": "$accent",
+                          "cornerRadius": 4
+                        },
+                        {
+                          "type": "text",
+                          "id": "fY7XB",
+                          "x": 16,
+                          "y": 780,
+                          "name": "caption",
+                          "fill": "$subtle",
+                          "content": "preview · Batalla de Boyacá",
+                          "fontFamily": "$font-mono",
+                          "fontSize": 11,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "wxZof",
+                  "name": "Chat Panel",
+                  "width": 300,
+                  "height": "fill_container",
+                  "fill": "$surface",
+                  "layout": "vertical",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "S9sHo",
+                      "name": "Thread",
+                      "width": "fill_container",
+                      "height": "fill_container",
+                      "layout": "vertical",
+                      "gap": 14,
+                      "padding": 14,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "J1cFpm",
+                          "name": "user bubble row",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "alignItems": "end",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "P6qvqV",
+                              "name": "user bubble",
+                              "fill": "$hover",
+                              "cornerRadius": 8,
+                              "layout": "vertical",
+                              "padding": 10,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "usHLz",
+                                  "name": "text",
+                                  "fill": "$ink",
+                                  "textGrowth": "fixed-width",
+                                  "width": 200,
+                                  "content": "Ahora Boyacá: que se sienta una batalla.",
+                                  "lineHeight": 1.4,
+                                  "fontFamily": "$font-sans",
+                                  "fontSize": 12,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "qQ2JK",
+                          "name": "ai bubble row",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "CM72F",
+                              "name": "ai bubble",
+                              "fill": "$raised",
+                              "cornerRadius": 8,
+                              "layout": "vertical",
+                              "padding": 10,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "H69j8",
+                                  "name": "text",
+                                  "fill": "$ink",
+                                  "textGrowth": "fixed-width",
+                                  "width": 200,
+                                  "content": "Hecho. Agregué tropas realistas y un puente que cruzar.",
+                                  "lineHeight": 1.4,
+                                  "fontFamily": "$font-sans",
+                                  "fontSize": 12,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "H1nKP",
+                      "name": "Input Bar",
+                      "width": "fill_container",
+                      "fill": "$raised",
+                      "gap": 8,
+                      "padding": 12,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "w0Giah",
+                          "name": "Field",
+                          "width": "fill_container",
+                          "fill": "$hover",
+                          "cornerRadius": 8,
+                          "padding": [
+                            8,
+                            10
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "K0Qheo",
+                              "name": "placeholder",
+                              "fill": "$subtle",
+                              "content": "Siguiente momento…",
+                              "fontFamily": "$font-sans",
+                              "fontSize": 12,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "gxCFn",
+                          "name": "Send",
+                          "width": 28,
+                          "height": 28,
+                          "fill": "$accent",
+                          "cornerRadius": 8,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "AnWMK",
+                              "name": "send icon",
+                              "width": 14,
+                              "height": 14,
+                              "icon": "arrow-up",
+                              "library": "lucide",
+                              "fill": "$on-accent"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "w6xpSA",
+      "x": 10187.2,
+      "y": 7260,
+      "name": "Build Flow · A · Split Chat + Preview (pestaña Biblioteca)",
+      "clip": true,
+      "width": 1440,
+      "height": 900,
+      "fill": "$base",
+      "children": [
+        {
+          "type": "frame",
+          "id": "Gr8hb",
+          "name": "App Rail",
+          "width": 56,
+          "height": "fill_container",
+          "fill": "$surface",
+          "layout": "vertical",
+          "gap": 8,
+          "padding": [
+            12,
+            0
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "uNirN",
+              "name": "brush nav",
+              "width": 36,
+              "height": 36,
+              "fill": "#00000000",
+              "cornerRadius": 8,
+              "layout": "vertical",
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "ZKZ1I",
+                  "name": "brush icon",
+                  "width": 18,
+                  "height": 18,
+                  "icon": "brush",
+                  "library": "lucide",
+                  "fill": "$muted"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "lMzop",
+              "name": "audio-lines nav",
+              "width": 36,
+              "height": 36,
+              "fill": "#00000000",
+              "cornerRadius": 8,
+              "layout": "vertical",
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "C3Ha5",
+                  "name": "audio-lines icon",
+                  "width": 18,
+                  "height": 18,
+                  "icon": "audio-lines",
+                  "library": "lucide",
+                  "fill": "$muted"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "Y1eo5",
+              "name": "gamepad-2 nav",
+              "width": 36,
+              "height": 36,
+              "fill": "$hover",
+              "cornerRadius": 8,
+              "layout": "vertical",
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "a7uZl",
+                  "name": "gamepad-2 icon",
+                  "width": 18,
+                  "height": 18,
+                  "icon": "gamepad-2",
+                  "library": "lucide",
+                  "fill": "$accent"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "jcBdx",
+              "name": "rail spacer",
+              "width": 1,
+              "height": "fill_container"
+            },
+            {
+              "type": "frame",
+              "id": "cmTy3",
+              "name": "settings nav",
+              "width": 36,
+              "height": 36,
+              "fill": "#00000000",
+              "cornerRadius": 8,
+              "layout": "vertical",
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "bJ3K3",
+                  "name": "settings icon",
+                  "width": 18,
+                  "height": 18,
+                  "icon": "settings",
+                  "library": "lucide",
+                  "fill": "$muted"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "Ipt0H",
+          "name": "Workspace",
+          "width": "fill_container",
+          "height": "fill_container",
+          "layout": "vertical",
+          "children": [
+            {
+              "type": "frame",
+              "id": "FL9lj",
+              "name": "Top Bar",
+              "width": "fill_container",
+              "height": 44,
+              "fill": "$surface",
+              "gap": 10,
+              "padding": [
+                0,
+                16
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "ic7ft",
+                  "name": "PIXELFORGE",
+                  "fill": "$accent",
+                  "content": "PIXELFORGE",
+                  "fontFamily": "$font-mono",
+                  "fontSize": 11,
+                  "fontWeight": "normal",
+                  "letterSpacing": 1
+                },
+                {
+                  "type": "frame",
+                  "id": "xCYez",
+                  "name": "divider",
+                  "width": 1,
+                  "height": 16,
+                  "fill": "$line-strong"
+                },
+                {
+                  "type": "text",
+                  "id": "M4Aoaa",
+                  "name": "project name",
+                  "fill": "$ink",
+                  "content": "Simón Bolívar — El Libertador",
+                  "fontFamily": "$font-sans",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "hsQye",
+                  "name": "level chip",
+                  "fill": "$hover",
+                  "cornerRadius": 999,
+                  "padding": [
+                    3,
+                    8
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "aVgL4",
+                      "name": "level label",
+                      "fill": "$muted",
+                      "content": "Nivel 3 de 6",
+                      "fontFamily": "$font-mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "ssiCK",
+                  "name": "top spacer",
+                  "width": "fill_container",
+                  "height": 1
+                },
+                {
+                  "type": "frame",
+                  "id": "E0auqn",
+                  "name": "Publish",
+                  "fill": "$accent",
+                  "cornerRadius": 6,
+                  "gap": 6,
+                  "padding": [
+                    6,
+                    12
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "bqAlL",
+                      "name": "Publish label",
+                      "fill": "$on-accent",
+                      "content": "Publicar",
+                      "fontFamily": "$font-sans",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "LZgL3",
+              "name": "Main",
+              "width": "fill_container",
+              "height": "fill_container",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "PUD08",
+                  "name": "Chat Panel",
+                  "width": 420,
+                  "height": "fill_container",
+                  "fill": "$surface",
+                  "layout": "vertical",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "HVtQl",
+                      "name": "Tabs",
+                      "width": "fill_container",
+                      "height": 40,
+                      "fill": "$surface",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "E2C01",
+                          "name": "Chat tab",
+                          "height": "fill_container",
+                          "layout": "vertical",
+                          "padding": [
+                            0,
+                            16
+                          ],
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "B5a8VL",
+                              "name": "chat tab label",
+                              "fill": "$muted",
+                              "content": "Chat",
+                              "fontFamily": "$font-sans",
+                              "fontSize": 13,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "oacci",
+                          "name": "Biblioteca tab",
+                          "height": "fill_container",
+                          "stroke": "$accent",
+                          "strokeWidth": {
+                            "bottom": 2
+                          },
+                          "layout": "vertical",
+                          "padding": [
+                            0,
+                            16
+                          ],
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "dlaCt",
+                              "name": "lib tab label",
+                              "fill": "$accent",
+                              "content": "Biblioteca",
+                              "fontFamily": "$font-sans",
+                              "fontSize": 13,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "tCYSq",
+                          "name": "tabs spacer",
+                          "width": "fill_container",
+                          "height": 1
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "tzrUA",
+                      "name": "Search Row",
+                      "width": "fill_container",
+                      "fill": "$surface",
+                      "padding": 12,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "bDdcc",
+                          "name": "Search Field",
+                          "width": "fill_container",
+                          "fill": "$hover",
+                          "cornerRadius": 8,
+                          "gap": 8,
+                          "padding": [
+                            8,
+                            10
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "LrcoD",
+                              "name": "search icon",
+                              "width": 14,
+                              "height": 14,
+                              "icon": "search",
+                              "library": "lucide",
+                              "fill": "$subtle"
+                            },
+                            {
+                              "type": "text",
+                              "id": "Fro4h",
+                              "name": "search placeholder",
+                              "fill": "$subtle",
+                              "content": "Buscar sprite, audio, música…",
+                              "fontFamily": "$font-sans",
+                              "fontSize": 12,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "xmCfc",
+                      "name": "Filters Row",
+                      "width": "fill_container",
+                      "fill": "$surface",
+                      "gap": 8,
+                      "padding": [
+                        0,
+                        12,
+                        12,
+                        12
+                      ],
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "u85PnI",
+                          "name": "Todos filter",
+                          "fill": "$accent",
+                          "cornerRadius": 999,
+                          "padding": [
+                            5,
+                            10
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "bP7HD",
+                              "name": "Todos filter label",
+                              "fill": "$on-accent",
+                              "content": "Todos",
+                              "fontFamily": "$font-sans",
+                              "fontSize": 11,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "lYkK2",
+                          "name": "Sprites filter",
+                          "fill": "$hover",
+                          "cornerRadius": 999,
+                          "padding": [
+                            5,
+                            10
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "oQDrv",
+                              "name": "Sprites filter label",
+                              "fill": "$muted",
+                              "content": "Sprites",
+                              "fontFamily": "$font-sans",
+                              "fontSize": 11,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "b03EA4",
+                          "name": "Audio filter",
+                          "fill": "$hover",
+                          "cornerRadius": 999,
+                          "padding": [
+                            5,
+                            10
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "oyAcl",
+                              "name": "Audio filter label",
+                              "fill": "$muted",
+                              "content": "Audio",
+                              "fontFamily": "$font-sans",
+                              "fontSize": 11,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "C4bF8S",
+                          "name": "Música filter",
+                          "fill": "$hover",
+                          "cornerRadius": 999,
+                          "padding": [
+                            5,
+                            10
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "V9TbD",
+                              "name": "Música filter label",
+                              "fill": "$muted",
+                              "content": "Música",
+                              "fontFamily": "$font-sans",
+                              "fontSize": 11,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "WsT2R",
+                          "name": "Video filter",
+                          "fill": "$hover",
+                          "cornerRadius": 999,
+                          "padding": [
+                            5,
+                            10
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "Rejro",
+                              "name": "Video filter label",
+                              "fill": "$muted",
+                              "content": "Video",
+                              "fontFamily": "$font-sans",
+                              "fontSize": 11,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "M9kP1q",
+                      "name": "Library List",
+                      "width": "fill_container",
+                      "height": "fill_container",
+                      "fill": "$surface",
+                      "layout": "vertical",
+                      "gap": 2,
+                      "padding": [
+                        4,
+                        8
+                      ],
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "UkFEb",
+                          "name": "NIVEL 3 — CRUCE DEL MAGDALENA header",
+                          "width": "fill_container",
+                          "padding": [
+                            10,
+                            8,
+                            4,
+                            8
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "K2E1K",
+                              "name": "NIVEL 3 — CRUCE DEL MAGDALENA header text",
+                              "fill": "$subtle",
+                              "content": "NIVEL 3 — CRUCE DEL MAGDALENA",
+                              "fontFamily": "$font-mono",
+                              "fontSize": 10,
+                              "fontWeight": "normal",
+                              "letterSpacing": 0.5
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "dHnTy",
+                          "name": "Bolívar — nadar row",
+                          "width": "fill_container",
+                          "cornerRadius": 6,
+                          "gap": 10,
+                          "padding": 8,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "DEt50",
+                              "name": "thumb",
+                              "width": 32,
+                              "height": 32,
+                              "fill": "$hover",
+                              "cornerRadius": 6,
+                              "layout": "vertical",
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "R6Bow",
+                                  "name": "thumb icon",
+                                  "width": 14,
+                                  "height": 14,
+                                  "icon": "image",
+                                  "library": "lucide",
+                                  "fill": "$ai-ink"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "qNJoM",
+                              "name": "name",
+                              "fill": "$ink",
+                              "textGrowth": "fixed-width",
+                              "width": 150,
+                              "content": "Bolívar — nadar",
+                              "fontFamily": "$font-sans",
+                              "fontSize": 12,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "S8outX",
+                              "name": "row spacer",
+                              "width": "fill_container",
+                              "height": 1
+                            },
+                            {
+                              "type": "text",
+                              "id": "ofWXP",
+                              "name": "meta",
+                              "fill": "$subtle",
+                              "content": "64×64",
+                              "fontFamily": "$font-mono",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "ITXxg",
+                          "name": "Cocodrilo row",
+                          "width": "fill_container",
+                          "cornerRadius": 6,
+                          "gap": 10,
+                          "padding": 8,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "kPWUY",
+                              "name": "thumb",
+                              "width": 32,
+                              "height": 32,
+                              "fill": "$hover",
+                              "cornerRadius": 6,
+                              "layout": "vertical",
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "luai2",
+                                  "name": "thumb icon",
+                                  "width": 14,
+                                  "height": 14,
+                                  "icon": "image",
+                                  "library": "lucide",
+                                  "fill": "$ai-ink"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "hJYnu",
+                              "name": "name",
+                              "fill": "$ink",
+                              "textGrowth": "fixed-width",
+                              "width": 150,
+                              "content": "Cocodrilo",
+                              "fontFamily": "$font-sans",
+                              "fontSize": 12,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "EHO3G",
+                              "name": "row spacer",
+                              "width": "fill_container",
+                              "height": 1
+                            },
+                            {
+                              "type": "text",
+                              "id": "sHhjS",
+                              "name": "meta",
+                              "fill": "$subtle",
+                              "content": "48×48",
+                              "fontFamily": "$font-mono",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "k74yW1",
+                          "name": "Rugido cocodrilo row",
+                          "width": "fill_container",
+                          "cornerRadius": 6,
+                          "gap": 10,
+                          "padding": 8,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "H48Z4F",
+                              "name": "play btn",
+                              "width": 26,
+                              "height": 26,
+                              "fill": "$accent",
+                              "cornerRadius": 999,
+                              "layout": "vertical",
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "jdCpH",
+                                  "name": "play icon",
+                                  "width": 11,
+                                  "height": 11,
+                                  "icon": "play",
+                                  "library": "lucide",
+                                  "fill": "$on-accent"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "uFkVl",
+                              "name": "name",
+                              "fill": "$ink",
+                              "textGrowth": "fixed-width",
+                              "width": 100,
+                              "content": "Rugido cocodrilo",
+                              "fontFamily": "$font-sans",
+                              "fontSize": 12,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "lNfMe",
+                              "name": "waveform",
+                              "width": "fill_container",
+                              "height": 20,
+                              "gap": 2,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "sz8MR",
+                                  "name": "bar",
+                                  "width": 3,
+                                  "height": 6,
+                                  "fill": "$line-strong",
+                                  "cornerRadius": 2
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "ui7Qq",
+                                  "name": "bar",
+                                  "width": 3,
+                                  "height": 10,
+                                  "fill": "$line-strong",
+                                  "cornerRadius": 2
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "GAr6C",
+                                  "name": "bar",
+                                  "width": 3,
+                                  "height": 16,
+                                  "fill": "$line-strong",
+                                  "cornerRadius": 2
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "wrqTw",
+                                  "name": "bar",
+                                  "width": 3,
+                                  "height": 9,
+                                  "fill": "$line-strong",
+                                  "cornerRadius": 2
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "Cr8zN",
+                                  "name": "bar",
+                                  "width": 3,
+                                  "height": 18,
+                                  "fill": "$line-strong",
+                                  "cornerRadius": 2
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "hSV7A",
+                                  "name": "bar",
+                                  "width": 3,
+                                  "height": 8,
+                                  "fill": "$line-strong",
+                                  "cornerRadius": 2
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "s9zbN6",
+                                  "name": "bar",
+                                  "width": 3,
+                                  "height": 14,
+                                  "fill": "$line-strong",
+                                  "cornerRadius": 2
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "ugd2E",
+                                  "name": "bar",
+                                  "width": 3,
+                                  "height": 11,
+                                  "fill": "$line-strong",
+                                  "cornerRadius": 2
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "zbE3d",
+                                  "name": "bar",
+                                  "width": 3,
+                                  "height": 17,
+                                  "fill": "$line-strong",
+                                  "cornerRadius": 2
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "MNLsV",
+                                  "name": "bar",
+                                  "width": 3,
+                                  "height": 7,
+                                  "fill": "$line-strong",
+                                  "cornerRadius": 2
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "k2Eke",
+                                  "name": "bar",
+                                  "width": 3,
+                                  "height": 12,
+                                  "fill": "$line-strong",
+                                  "cornerRadius": 2
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "BxH4C",
+                                  "name": "bar",
+                                  "width": 3,
+                                  "height": 9,
+                                  "fill": "$line-strong",
+                                  "cornerRadius": 2
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "DFdqN",
+                              "name": "meta",
+                              "fill": "$subtle",
+                              "content": "0:03",
+                              "fontFamily": "$font-mono",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "A0Ztzr",
+                          "name": "Tema — Río row",
+                          "width": "fill_container",
+                          "cornerRadius": 6,
+                          "gap": 10,
+                          "padding": 8,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "xVvaE",
+                              "name": "play btn",
+                              "width": 26,
+                              "height": 26,
+                              "fill": "$accent",
+                              "cornerRadius": 999,
+                              "layout": "vertical",
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "pPHHI",
+                                  "name": "play icon",
+                                  "width": 11,
+                                  "height": 11,
+                                  "icon": "play",
+                                  "library": "lucide",
+                                  "fill": "$on-accent"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "avHSI",
+                              "name": "name",
+                              "fill": "$ink",
+                              "textGrowth": "fixed-width",
+                              "width": 100,
+                              "content": "Tema — Río",
+                              "fontFamily": "$font-sans",
+                              "fontSize": 12,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "RQGnN",
+                              "name": "waveform",
+                              "width": "fill_container",
+                              "height": 20,
+                              "gap": 2,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "PI92n",
+                                  "name": "bar",
+                                  "width": 3,
+                                  "height": 6,
+                                  "fill": "$line-strong",
+                                  "cornerRadius": 2
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "UL12m",
+                                  "name": "bar",
+                                  "width": 3,
+                                  "height": 10,
+                                  "fill": "$line-strong",
+                                  "cornerRadius": 2
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "vIRYU",
+                                  "name": "bar",
+                                  "width": 3,
+                                  "height": 16,
+                                  "fill": "$line-strong",
+                                  "cornerRadius": 2
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "PrV9H",
+                                  "name": "bar",
+                                  "width": 3,
+                                  "height": 9,
+                                  "fill": "$line-strong",
+                                  "cornerRadius": 2
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "AWeIA",
+                                  "name": "bar",
+                                  "width": 3,
+                                  "height": 18,
+                                  "fill": "$line-strong",
+                                  "cornerRadius": 2
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "XmEt8",
+                                  "name": "bar",
+                                  "width": 3,
+                                  "height": 8,
+                                  "fill": "$line-strong",
+                                  "cornerRadius": 2
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "e5CEG",
+                                  "name": "bar",
+                                  "width": 3,
+                                  "height": 14,
+                                  "fill": "$line-strong",
+                                  "cornerRadius": 2
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "ZeloD",
+                                  "name": "bar",
+                                  "width": 3,
+                                  "height": 11,
+                                  "fill": "$line-strong",
+                                  "cornerRadius": 2
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "P6jh3x",
+                                  "name": "bar",
+                                  "width": 3,
+                                  "height": 17,
+                                  "fill": "$line-strong",
+                                  "cornerRadius": 2
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "ptdd5",
+                                  "name": "bar",
+                                  "width": 3,
+                                  "height": 7,
+                                  "fill": "$line-strong",
+                                  "cornerRadius": 2
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "u6seF",
+                                  "name": "bar",
+                                  "width": 3,
+                                  "height": 12,
+                                  "fill": "$line-strong",
+                                  "cornerRadius": 2
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "FxU9z",
+                                  "name": "bar",
+                                  "width": 3,
+                                  "height": 9,
+                                  "fill": "$line-strong",
+                                  "cornerRadius": 2
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "o04JfT",
+                              "name": "meta",
+                              "fill": "$subtle",
+                              "content": "1:24",
+                              "fontFamily": "$font-mono",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "rU3x1",
+                          "name": "Clip — captura nivel 3 row",
+                          "width": "fill_container",
+                          "cornerRadius": 6,
+                          "gap": 10,
+                          "padding": 8,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "h6TKt",
+                              "name": "thumb",
+                              "width": 32,
+                              "height": 32,
+                              "fill": "$hover",
+                              "cornerRadius": 6,
+                              "layout": "vertical",
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "bteaH",
+                                  "name": "thumb icon",
+                                  "width": 14,
+                                  "height": 14,
+                                  "icon": "video",
+                                  "library": "lucide",
+                                  "fill": "$ai-ink"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "iaNLv",
+                              "name": "name",
+                              "fill": "$ink",
+                              "textGrowth": "fixed-width",
+                              "width": 150,
+                              "content": "Clip — captura nivel 3",
+                              "fontFamily": "$font-sans",
+                              "fontSize": 12,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "bRjYV",
+                              "name": "row spacer",
+                              "width": "fill_container",
+                              "height": 1
+                            },
+                            {
+                              "type": "text",
+                              "id": "vEPgS",
+                              "name": "meta",
+                              "fill": "$subtle",
+                              "content": "0:08",
+                              "fontFamily": "$font-mono",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "I8bbU",
+                          "name": "NIVEL 2 — EUROPA header",
+                          "width": "fill_container",
+                          "padding": [
+                            10,
+                            8,
+                            4,
+                            8
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "iVX3c",
+                              "name": "NIVEL 2 — EUROPA header text",
+                              "fill": "$subtle",
+                              "content": "NIVEL 2 — EUROPA",
+                              "fontFamily": "$font-mono",
+                              "fontSize": 10,
+                              "fontWeight": "normal",
+                              "letterSpacing": 0.5
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "RAFDT",
+                          "name": "Bolívar — joven row",
+                          "width": "fill_container",
+                          "cornerRadius": 6,
+                          "gap": 10,
+                          "padding": 8,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "ikhNR",
+                              "name": "thumb",
+                              "width": 32,
+                              "height": 32,
+                              "fill": "$hover",
+                              "cornerRadius": 6,
+                              "layout": "vertical",
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "Flxwa",
+                                  "name": "thumb icon",
+                                  "width": 14,
+                                  "height": 14,
+                                  "icon": "image",
+                                  "library": "lucide",
+                                  "fill": "$ai-ink"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "Y3xuc",
+                              "name": "name",
+                              "fill": "$ink",
+                              "textGrowth": "fixed-width",
+                              "width": 150,
+                              "content": "Bolívar — joven",
+                              "fontFamily": "$font-sans",
+                              "fontSize": 12,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "msJVV",
+                              "name": "row spacer",
+                              "width": "fill_container",
+                              "height": 1
+                            },
+                            {
+                              "type": "text",
+                              "id": "z4MeZR",
+                              "name": "meta",
+                              "fill": "$subtle",
+                              "content": "64×64",
+                              "fontFamily": "$font-mono",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "erEXV",
+                          "name": "Tema — Europa row",
+                          "width": "fill_container",
+                          "cornerRadius": 6,
+                          "gap": 10,
+                          "padding": 8,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "m9ppF",
+                              "name": "play btn",
+                              "width": 26,
+                              "height": 26,
+                              "fill": "$accent",
+                              "cornerRadius": 999,
+                              "layout": "vertical",
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "e5VHw",
+                                  "name": "play icon",
+                                  "width": 11,
+                                  "height": 11,
+                                  "icon": "play",
+                                  "library": "lucide",
+                                  "fill": "$on-accent"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "uDkL2",
+                              "name": "name",
+                              "fill": "$ink",
+                              "textGrowth": "fixed-width",
+                              "width": 100,
+                              "content": "Tema — Europa",
+                              "fontFamily": "$font-sans",
+                              "fontSize": 12,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "U0BoUd",
+                              "name": "waveform",
+                              "width": "fill_container",
+                              "height": 20,
+                              "gap": 2,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "G3mKgn",
+                                  "name": "bar",
+                                  "width": 3,
+                                  "height": 6,
+                                  "fill": "$line-strong",
+                                  "cornerRadius": 2
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "l9Pla",
+                                  "name": "bar",
+                                  "width": 3,
+                                  "height": 10,
+                                  "fill": "$line-strong",
+                                  "cornerRadius": 2
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "rE7mq",
+                                  "name": "bar",
+                                  "width": 3,
+                                  "height": 16,
+                                  "fill": "$line-strong",
+                                  "cornerRadius": 2
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "p4Mbe",
+                                  "name": "bar",
+                                  "width": 3,
+                                  "height": 9,
+                                  "fill": "$line-strong",
+                                  "cornerRadius": 2
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "l42SkP",
+                                  "name": "bar",
+                                  "width": 3,
+                                  "height": 18,
+                                  "fill": "$line-strong",
+                                  "cornerRadius": 2
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "j25Qtv",
+                                  "name": "bar",
+                                  "width": 3,
+                                  "height": 8,
+                                  "fill": "$line-strong",
+                                  "cornerRadius": 2
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "jDKQM",
+                                  "name": "bar",
+                                  "width": 3,
+                                  "height": 14,
+                                  "fill": "$line-strong",
+                                  "cornerRadius": 2
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "ZU7Op",
+                                  "name": "bar",
+                                  "width": 3,
+                                  "height": 11,
+                                  "fill": "$line-strong",
+                                  "cornerRadius": 2
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "lG05E",
+                                  "name": "bar",
+                                  "width": 3,
+                                  "height": 17,
+                                  "fill": "$line-strong",
+                                  "cornerRadius": 2
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "Nuqbj",
+                                  "name": "bar",
+                                  "width": 3,
+                                  "height": 7,
+                                  "fill": "$line-strong",
+                                  "cornerRadius": 2
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "hKKnD",
+                                  "name": "bar",
+                                  "width": 3,
+                                  "height": 12,
+                                  "fill": "$line-strong",
+                                  "cornerRadius": 2
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "EVdDq",
+                                  "name": "bar",
+                                  "width": 3,
+                                  "height": 9,
+                                  "fill": "$line-strong",
+                                  "cornerRadius": 2
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "FgKRD",
+                              "name": "meta",
+                              "fill": "$subtle",
+                              "content": "2:10",
+                              "fontFamily": "$font-mono",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "K8E4TE",
+                  "name": "Live Preview",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "layout": "vertical",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "VH3Ga",
+                      "name": "Preview Toolbar",
+                      "width": "fill_container",
+                      "height": 36,
+                      "fill": "$surface",
+                      "gap": 10,
+                      "padding": [
+                        0,
+                        12
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "pmXzP",
+                          "name": "live dot",
+                          "width": 6,
+                          "height": 6,
+                          "fill": "$success",
+                          "cornerRadius": 3
+                        },
+                        {
+                          "type": "text",
+                          "id": "bxZfv",
+                          "name": "live label",
+                          "fill": "$muted",
+                          "content": "En vivo",
+                          "fontFamily": "$font-mono",
+                          "fontSize": 11,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "p7BrV",
+                          "name": "toolbar spacer",
+                          "width": "fill_container",
+                          "height": 1
+                        },
+                        {
+                          "type": "frame",
+                          "id": "z88FAE",
+                          "name": "rotate-ccw btn",
+                          "width": 26,
+                          "height": 26,
+                          "cornerRadius": 6,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "Z2AVe",
+                              "name": "rotate-ccw icon",
+                              "width": 14,
+                              "height": 14,
+                              "icon": "rotate-ccw",
+                              "library": "lucide",
+                              "fill": "$muted"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "iwOnW",
+                          "name": "play btn",
+                          "width": 26,
+                          "height": 26,
+                          "cornerRadius": 6,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "DWwx8",
+                              "name": "play icon",
+                              "width": 14,
+                              "height": 14,
+                              "icon": "play",
+                              "library": "lucide",
+                              "fill": "$muted"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "F3rzl",
+                          "name": "maximize btn",
+                          "width": 26,
+                          "height": 26,
+                          "cornerRadius": 6,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "xOfwt",
+                              "name": "maximize icon",
+                              "width": 14,
+                              "height": 14,
+                              "icon": "maximize",
+                              "library": "lucide",
+                              "fill": "$muted"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "MCk3V",
+                      "name": "Phaser Scene",
+                      "width": "fill_container",
+                      "height": "fill_container",
+                      "fill": "$base",
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "eokeX",
+                          "x": 0,
+                          "y": 0,
+                          "name": "sky",
+                          "width": 964,
+                          "height": 820,
+                          "fill": {
+                            "type": "gradient",
+                            "gradientType": "linear",
+                            "enabled": true,
+                            "rotation": 180,
+                            "size": {
+                              "height": 1
+                            },
+                            "colors": [
+                              {
+                                "color": "#0a0c10",
+                                "position": 0
+                              },
+                              {
+                                "color": "#141a24",
+                                "position": 1
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "type": "frame",
+                          "id": "fGNC4",
+                          "x": 0,
+                          "y": 620,
+                          "name": "river",
+                          "width": 964,
+                          "height": 200,
+                          "fill": "#0f2a33"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "RMNX3",
+                          "x": 0,
+                          "y": 580,
+                          "name": "ground L",
+                          "width": 220,
+                          "height": 40,
+                          "fill": "$hover",
+                          "cornerRadius": [
+                            4,
+                            4,
+                            0,
+                            0
+                          ],
+                          "stroke": "$line-strong",
+                          "strokeWidth": 1
+                        },
+                        {
+                          "type": "frame",
+                          "id": "NqmTv",
+                          "x": 300,
+                          "y": 540,
+                          "name": "platform 1",
+                          "width": 120,
+                          "height": 20,
+                          "fill": "$hover",
+                          "cornerRadius": 4,
+                          "stroke": "$line-strong",
+                          "strokeWidth": 1
+                        },
+                        {
+                          "type": "frame",
+                          "id": "AxljQ",
+                          "x": 480,
+                          "y": 480,
+                          "name": "platform 2",
+                          "width": 120,
+                          "height": 20,
+                          "fill": "$hover",
+                          "cornerRadius": 4,
+                          "stroke": "$line-strong",
+                          "strokeWidth": 1
+                        },
+                        {
+                          "type": "frame",
+                          "id": "uWWKN",
+                          "x": 720,
+                          "y": 580,
+                          "name": "ground R",
+                          "width": 244,
+                          "height": 40,
+                          "fill": "$hover",
+                          "cornerRadius": [
+                            4,
+                            4,
+                            0,
+                            0
+                          ],
+                          "stroke": "$line-strong",
+                          "strokeWidth": 1
+                        },
+                        {
+                          "type": "frame",
+                          "id": "Z9zyTK",
+                          "x": 340,
+                          "y": 490,
+                          "name": "player",
+                          "width": 24,
+                          "height": 40,
+                          "fill": "$accent",
+                          "cornerRadius": 4
+                        },
+                        {
+                          "type": "ellipse",
+                          "id": "MfsrM",
+                          "x": 60,
+                          "y": 660,
+                          "name": "croc 1",
+                          "fill": "$ai",
+                          "width": 60,
+                          "height": 20
+                        },
+                        {
+                          "type": "text",
+                          "id": "S5112",
+                          "x": 16,
+                          "y": 780,
+                          "name": "caption",
+                          "fill": "$subtle",
+                          "content": "preview · Cruce del río Magdalena",
+                          "fontFamily": "$font-mono",
+                          "fontSize": 11,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ],
   "variables": {

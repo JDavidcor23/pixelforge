@@ -1,5 +1,70 @@
+/** A point in level pixels (origin top-left, y grows down). */
+export interface LevelPoint {
+  x: number
+  y: number
+}
+
+/** An axis-aligned box in level pixels; `x`/`y` is its top-left corner. */
+export interface LevelRect extends LevelPoint {
+  width: number
+  height: number
+}
+
+/** A hand-made level (`public/levels/*.json`), validated by `parseLevel` before use. */
+export interface Level {
+  version: 1
+  name: string
+  width: number
+  height: number
+  spawn: LevelPoint
+  platforms: LevelRect[]
+  hazards: LevelRect[]
+  goal: LevelRect
+}
+
+/** Feel knobs for run and jump; speeds in px/s, accelerations in px/s². */
+export interface PlatformerTuning {
+  RUN_SPEED: number
+  GROUND_ACCELERATION: number
+  AIR_ACCELERATION: number
+  JUMP_VELOCITY: number
+  /** Upward speed is multiplied by this when jump is released early (variable jump height). */
+  JUMP_CUT_FACTOR: number
+  /** A jump still counts this long after walking off a ledge. */
+  COYOTE_MS: number
+  /** A jump pressed this long before landing fires on landing. */
+  JUMP_BUFFER_MS: number
+}
+
+/** One frame of input and body state handed to the controller (y grows down). */
+export interface PlatformerFrame {
+  deltaMs: number
+  left: boolean
+  right: boolean
+  jumpHeld: boolean
+  grounded: boolean
+  velocityX: number
+  velocityY: number
+}
+
+export interface PlatformerVelocity {
+  velocityX: number
+  velocityY: number
+}
+
+/** Where a level run stands; anything but `playing` is final until the scene restarts. */
+export type LevelOutcome = 'playing' | 'died' | 'complete'
+
+/** What `LevelScene` is started with. */
+export interface LevelSceneData {
+  level: Level
+}
+
+export type LevelResult = { ok: true; level: Level } | { ok: false; error: string }
+
 /** Commands React sends to the running game (toolbar → Phaser). */
 export interface GameCommandMap {
+  'load-level': Level
   pause: void
   resume: void
   restart: void
@@ -35,6 +100,7 @@ export interface GameBus {
 
 /** The slice of `Phaser.Game` the command binding drives — kept narrow so it is testable without WebGL. */
 export interface ControllableGame {
+  loadLevel(level: Level): void
   pause(): void
   resume(): void
   restartActiveScene(): void

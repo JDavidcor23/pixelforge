@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "name": "First steps",
+  "width": 1280,
+  "height": 360,
+  "spawn": { "x": 40, "y": 290 },
+  "platforms": [
+    { "x": 0, "y": 328, "width": 320, "height": 32 },
+    { "x": 400, "y": 328, "width": 240, "height": 32 },
+    { "x": 520, "y": 272, "width": 80, "height": 12 },
+    { "x": 700, "y": 328, "width": 260, "height": 32 },
+    { "x": 990, "y": 284, "width": 64, "height": 12 },
+    { "x": 1084, "y": 248, "width": 64, "height": 12 },
+    { "x": 1170, "y": 328, "width": 110, "height": 32 }
+  ],
+  "hazards": [
+    { "x": 200, "y": 316, "width": 32, "height": 12 },
+    { "x": 800, "y": 316, "width": 48, "height": 12 }
+  ],
+  "goal": { "x": 1236, "y": 288, "width": 24, "height": 40 }
+}
