@@ -6,6 +6,7 @@ export function bindGameCommands(
   commands: TypedBus<GameCommandMap>,
 ): Unsubscribe {
   const unsubscribers = [
+    commands.on('load-level', (level) => game.loadLevel(level)),
     commands.on('pause', () => game.pause()),
     commands.on('resume', () => game.resume()),
     commands.on('restart', () => {

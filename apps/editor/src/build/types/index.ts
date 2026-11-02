@@ -55,10 +55,16 @@ export interface PlatformerVelocity {
 /** Where a level run stands; anything but `playing` is final until the scene restarts. */
 export type LevelOutcome = 'playing' | 'died' | 'complete'
 
+/** What `LevelScene` is started with. */
+export interface LevelSceneData {
+  level: Level
+}
+
 export type LevelResult = { ok: true; level: Level } | { ok: false; error: string }
 
 /** Commands React sends to the running game (toolbar → Phaser). */
 export interface GameCommandMap {
+  'load-level': Level
   pause: void
   resume: void
   restart: void
@@ -94,6 +100,7 @@ export interface GameBus {
 
 /** The slice of `Phaser.Game` the command binding drives — kept narrow so it is testable without WebGL. */
 export interface ControllableGame {
+  loadLevel(level: Level): void
   pause(): void
   resume(): void
   restartActiveScene(): void

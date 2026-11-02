@@ -11,7 +11,7 @@ design-agent → frontend-agent → cleancode-agent.
 |---|---|---|
 | 0 — Measure | Done | `037f2e4` (ADR 0014 budget table) |
 | 1 — Empty screen + Phaser | Done | `3dafa87`, `1a67a94` |
-| 2 — Hand-made level | Not started | |
+| 2 — Hand-made level | Automated done; manual playtest pending | `odd/tasks/build-level.md` |
 | 3 — Sprite is an asset + deep link | Not started | |
 | 4 — Asset catalog | Not started, one decision open | |
 
