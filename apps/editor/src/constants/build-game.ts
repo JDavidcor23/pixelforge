@@ -7,6 +7,13 @@ export const BUILD_GAME = {
   BACKGROUND: COLORS.SURFACE.BASE,
 } as const
 
+/** Hand-made level files (`public/levels/*.json`), see `parseLevel`. */
+export const LEVEL_FORMAT = {
+  VERSION: 1,
+  /** The level the build screen loads on open (phase 2: one hand-made level). */
+  DEFAULT_URL: '/levels/level-1.json',
+} as const
+
 /**
  * Phase 1 placeholder scene: one bouncing block so pause, restart and FPS are
  * observable before the hand-made level of phase 2 replaces it.
