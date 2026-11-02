@@ -16,7 +16,7 @@ Branch `feat/build-level`. Test runner: vitest (`pnpm --filter @pixelforge/edito
 - [x] T2 — S4 run/jump controller (coyote, buffer, variable jump), pure — inline — RED (module removed) → GREEN 13/13 — dd053fa
 - [x] T3 — S3, S5 level rules (hazard, fall, goal → events), pure — inline — RED → GREEN 6/6 — dd053fa
 - [x] T4 — S1, S2, S3 `LevelScene` replaces `PreviewScene`; preview loads and sends the level — inline — tsc ok, suite 767/767 — 215df48
-- [ ] T5 — S5, S6 browser smoke check done (L4); manual playtest is the owner's — open
+- [x] T5 — S5, S6 browser smoke check (L4) + owner playtest (L5) — done
 
 ## Log
 
@@ -24,3 +24,4 @@ Branch `feat/build-level`. Test runner: vitest (`pnpm --filter @pixelforge/edito
 - L2: #19 title says "with our own sprites"; the plan's phase 2 does not list sprites (assets arrive in phases 3–4). Level drawn with token-colored rectangles.
 - L3: keys are added with `enableCapture: false` so Phaser does not swallow Space/arrows for the page; side effect: WASD/arrows also move the player while typing in the chat (chat input is disabled in this phase). A failed level load is reported with `console.error` only; an in-UI error state needs design-agent.
 - L4: Playwright (headed Chromium, dev server, `/build`): level-1 renders; walking into the first spike emits `player-died`; via `load-level` test levels, reaching the goal emits `level-complete` and shows "Level complete", falling off emits `player-died`, idling emits nothing; `restart` returns the player to spawn (x 140 → 48); 0 page/console errors. A blind scripted full run of level-1 did not reach the goal (timing), so S6 stays with the owner.
+- L5 (2026-11-02, owner playtest of `/build`): "Me encanta el juego, se siente muy fluido, así que ya terminamos con el T5." S6 met.
