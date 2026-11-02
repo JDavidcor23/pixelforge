@@ -2448,10 +2448,10 @@
     "semantic_hash": "fa8e04ea5dce57653fd197177232e10c"
   },
   "docs/learning-log/README.md": {
-    "mtime": 1791812472.352992,
-    "seen": 1792368126.8640668,
-    "ast_hash": "f4dd37d94359141b5aade16e7ab58d76",
-    "semantic_hash": "f4dd37d94359141b5aade16e7ab58d76"
+    "mtime": 1793223473.6915972,
+    "seen": 1793640373.4629385,
+    "ast_hash": "17a2218ab29e3a6679a7da9d878e78bf",
+    "semantic_hash": ""
   },
   "openspec/changes/migrate-to-rust-core/baseline-bench.md": {
     "mtime": 1791750852.6406746,
@@ -3570,9 +3570,9 @@
     "semantic_hash": ""
   },
   "docs/adr/0010-canvas-is-always-an-asset.md": {
-    "mtime": 1792014679.5984066,
-    "seen": 1792368126.8640668,
-    "ast_hash": "2050d0bcc26a0e5dcb3446443959cdf6",
+    "mtime": 1793223473.6915972,
+    "seen": 1793640373.4629385,
+    "ast_hash": "50a4fbb56c0f5649e05292a082aed476",
     "semantic_hash": ""
   },
   "docs/ai-notes/future-improvements/cancel-ai-generation.md": {
@@ -3744,15 +3744,15 @@
     "semantic_hash": ""
   },
   "docs/adr/0014-build-screen-chat-preview-and-asset-catalog.md": {
-    "mtime": 1793218339.809622,
-    "seen": 1793218357.2661142,
-    "ast_hash": "e45d91e77df860c1df7ff1aa1bb1ada6",
+    "mtime": 1793223493.1148753,
+    "seen": 1793640373.4629385,
+    "ast_hash": "73f657b359d020d635ee8675f553eda8",
     "semantic_hash": ""
   },
   "docs/build-screen-implementation-plan.md": {
-    "mtime": 1793216755.033733,
-    "seen": 1793217079.9454591,
-    "ast_hash": "46f394348eac13fdd0e513217159545d",
+    "mtime": 1793640362.980239,
+    "seen": 1793640373.4629385,
+    "ast_hash": "a99f0e1055dbd3120dfd9017bed31a43",
     "semantic_hash": ""
   },
   "docs/learning-log/2026-10-28-build-screen-architecture.md": {
@@ -3768,21 +3768,45 @@
     "semantic_hash": ""
   },
   "apps/editor/src/constants/build-game.ts": {
-    "mtime": 1793217304.5469277,
-    "seen": 1793217347.9062698,
-    "ast_hash": "83d4a00a2247eac008aedbfdf9684f68",
+    "mtime": 1793640363.1109362,
+    "seen": 1793640373.4619389,
+    "ast_hash": "280124d5ded62ce387c7c52d15fe4a49",
     "semantic_hash": ""
   },
   "odd/tasks/build-screen.md": {
-    "mtime": 1793218349.5975218,
-    "seen": 1793218357.2661142,
-    "ast_hash": "95d84c8a096312ebd201b38545aa0541",
+    "mtime": 1793221590.0142949,
+    "seen": 1793640373.4629385,
+    "ast_hash": "2fd306cb55f53c5400eeae30344d8f31",
     "semantic_hash": ""
   },
   "apps/editor/src/constants/build-screen.ts": {
     "mtime": 1793218265.221063,
     "seen": 1793218357.2661142,
     "ast_hash": "6423f09d257bb75ce4bc5b97b34a86bb",
+    "semantic_hash": ""
+  },
+  "apps/editor/public/levels/level-1.json": {
+    "mtime": 1793640354.4657245,
+    "seen": 1793640373.4619389,
+    "ast_hash": "606d6943ba569603a87bf873b723e3fd",
+    "semantic_hash": ""
+  },
+  "docs/adr/0015-every-sprite-is-an-asset-from-creation.md": {
+    "mtime": 1793223473.6915972,
+    "seen": 1793640373.4629385,
+    "ast_hash": "ef4979a51374b4d9cb49cffaead6f9c8",
+    "semantic_hash": ""
+  },
+  "docs/learning-log/2026-10-28-every-sprite-is-an-asset.md": {
+    "mtime": 1793223473.6915972,
+    "seen": 1793640373.4629385,
+    "ast_hash": "ca89f8fbf3c32152f69c841dc35d26a2",
+    "semantic_hash": ""
+  },
+  "odd/tasks/build-level.md": {
+    "mtime": 1793640374.3512015,
+    "seen": 1793640379.2809944,
+    "ast_hash": "e08e62de6db3ebc949aef69afb67e257",
     "semantic_hash": ""
   }
 }
