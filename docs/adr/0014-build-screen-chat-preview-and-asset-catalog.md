@@ -121,7 +121,8 @@ internally, for dedupe or caching.
 - Open (phase 4): Sprite Studio today always opens `'local-draft'`. Opening
   an asset by ID must not lose unsaved draft work; check how ADR 0010
   ("the canvas is always a named Assets item") already handles it before
-  building.
+  building. Resolved by [ADR 0015](0015-every-sprite-is-an-asset-from-creation.md):
+  there is no draft; every sprite is an asset from creation.
 - Moving to multi-game later is a route wrapper plus a `gameId` tag on the
   catalog. Not planned.
 - Reuse: the catalog is the base for the scene/level builder and for

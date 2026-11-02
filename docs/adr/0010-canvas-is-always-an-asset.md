@@ -1,6 +1,8 @@
 # 0010 — The canvas is always a named Assets item
 
-**Status**: Accepted (phase 1, **D13**)
+**Status**: Accepted (phase 1, **D13**). The hidden single draft and "Save As always
+creates a copy" are superseded by [ADR 0015](0015-every-sprite-is-an-asset-from-creation.md);
+rename and re-type (phase 2) still apply.
 
 ## Context
 
