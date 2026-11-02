@@ -3750,9 +3750,9 @@
     "semantic_hash": ""
   },
   "docs/build-screen-implementation-plan.md": {
-    "mtime": 1793640362.980239,
-    "seen": 1793640373.4629385,
-    "ast_hash": "a99f0e1055dbd3120dfd9017bed31a43",
+    "mtime": 1793640930.9530056,
+    "seen": 1793640935.8722365,
+    "ast_hash": "caf8dedf22d792e730552c21a749418d",
     "semantic_hash": ""
   },
   "docs/learning-log/2026-10-28-build-screen-architecture.md": {
@@ -3804,9 +3804,9 @@
     "semantic_hash": ""
   },
   "odd/tasks/build-level.md": {
-    "mtime": 1793640374.3512015,
-    "seen": 1793640379.2809944,
-    "ast_hash": "e08e62de6db3ebc949aef69afb67e257",
+    "mtime": 1793640930.9530056,
+    "seen": 1793640935.8722365,
+    "ast_hash": "7d99ad5034a88806ffdf9a1cb1b83b44",
     "semantic_hash": ""
   }
 }
