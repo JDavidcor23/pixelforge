@@ -120,10 +120,10 @@
     "semantic_hash": "58df57805fcd819442320c7754699642"
   },
   "apps/editor/src/constants/persistence.ts": {
-    "mtime": 1791824400.6500127,
-    "seen": 1792368126.8640668,
-    "ast_hash": "b8045760e447dcaa9e595e68b6bf8ea0",
-    "semantic_hash": "b8045760e447dcaa9e595e68b6bf8ea0"
+    "mtime": 1793739990.7531652,
+    "seen": 1793740253.8268895,
+    "ast_hash": "8d6dcc7155de9e13ba127798f0d3f71b",
+    "semantic_hash": ""
   },
   "apps/editor/src/constants/routes.ts": {
     "mtime": 1793218094.7620018,
@@ -162,10 +162,10 @@
     "semantic_hash": "f41140c93c80f8d8ee5a840fa61f5f2c"
   },
   "apps/editor/src/hooks/useDocumentPersistence.hook.ts": {
-    "mtime": 1791812472.2449667,
-    "seen": 1792368126.8640668,
-    "ast_hash": "74b2d7f8f3a912e0e6393213090b9aeb",
-    "semantic_hash": "74b2d7f8f3a912e0e6393213090b9aeb"
+    "mtime": 1793740143.4666467,
+    "seen": 1793740253.8268895,
+    "ast_hash": "d2094e6ce7bdcbdba9fd0ea160b59404",
+    "semantic_hash": ""
   },
   "apps/editor/src/lib/animation-history.test.ts": {
     "mtime": 1791750852.396295,
@@ -660,10 +660,10 @@
     "semantic_hash": "8f8a513691c71a65151b97ddb0bc4fe0"
   },
   "apps/editor/src/services/document-persistence.controller.ts": {
-    "mtime": 1791812472.2707276,
-    "seen": 1792368126.8640668,
-    "ast_hash": "622a21e118953b20bc4e7306c2fafb36",
-    "semantic_hash": "622a21e118953b20bc4e7306c2fafb36"
+    "mtime": 1793740113.8352268,
+    "seen": 1793740253.8268895,
+    "ast_hash": "bfbaf6db7a14c65e9b2ec57bb6acfaaf",
+    "semantic_hash": ""
   },
   "apps/editor/src/services/document-persistence.controller.wasm-gate.test.ts": {
     "mtime": 1791750852.4448144,
@@ -1806,10 +1806,10 @@
     "semantic_hash": "a7f7ef7c27cb14ea6f74781884a275db"
   },
   "apps/editor/src/types/document.ts": {
-    "mtime": 1791750852.5910041,
-    "seen": 1792368126.8640668,
-    "ast_hash": "0aa292717b479058ff430e5fcc356f13",
-    "semantic_hash": "0aa292717b479058ff430e5fcc356f13"
+    "mtime": 1793740000.8934107,
+    "seen": 1793740253.8278937,
+    "ast_hash": "48ef680403fa6ade9516303cd3df550b",
+    "semantic_hash": ""
   },
   "apps/editor/src/types/index.ts": {
     "mtime": 1792027296.9904504,
@@ -3828,9 +3828,51 @@
     "semantic_hash": ""
   },
   "odd/tasks/sprite-asset-deep-link.md": {
-    "mtime": 1793739297.2101996,
-    "seen": 1793739304.6394715,
-    "ast_hash": "300bade9a784881f265e7bb2d5f8545e",
+    "mtime": 1793740246.1300237,
+    "seen": 1793740253.8278937,
+    "ast_hash": "ccc5d5c05f6e08eadcb2c2356d1213af",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/lib/document-preview.test.ts": {
+    "mtime": 1793739888.212616,
+    "seen": 1793740253.8268895,
+    "ast_hash": "943b7ab69e48df769805ce1db92ffc50",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/lib/document-preview.ts": {
+    "mtime": 1793740017.6957207,
+    "seen": 1793740253.8268895,
+    "ast_hash": "e137ab5c96a48fac7838fd69e58bce9b",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/services/document-asset-bus.service.test.ts": {
+    "mtime": 1793739913.108939,
+    "seen": 1793740253.8268895,
+    "ast_hash": "2c0963cec036be9d67a358b8bc10a280",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/services/document-asset-bus.service.ts": {
+    "mtime": 1793740037.6752179,
+    "seen": 1793740253.8268895,
+    "ast_hash": "67732f97beb7447df58184f1302a0865",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/services/document-persistence.controller.assets.test.ts": {
+    "mtime": 1793739983.8797524,
+    "seen": 1793740253.8268895,
+    "ast_hash": "e662213df9b9702ce9b58e3826cf5efb",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/services/draft-to-asset-migration.service.test.ts": {
+    "mtime": 1793739906.8023083,
+    "seen": 1793740253.8268895,
+    "ast_hash": "6e87748608b26792a07c026c28cdad94",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/services/draft-to-asset-migration.service.ts": {
+    "mtime": 1793740030.937756,
+    "seen": 1793740253.8268895,
+    "ast_hash": "df6576d7eea39b06d818df6904af046d",
     "semantic_hash": ""
   }
 }
