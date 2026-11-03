@@ -393,3 +393,136 @@ describe('useAssetsStore.renameItem / setItemAssetType (ADR 0010, Phase 2)', () 
     })
   })
 })
+
+describe('useAssetsStore.updateDrawingContent (ADR 0015: autosave writes to the open asset)', () => {
+  const storage = createMemoryStorage()
+
+  beforeEach(() => {
+    storage.clear()
+    vi.stubGlobal('localStorage', storage)
+    useAssetsStore.setState({ generations: [], animations: [], repository: null, openAssetId: null })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  const OTHER_PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAEklEQVR42mP8z8DwnwEJMBIWAAAEAAH/BhsdgAAAAABJRU5ErkJggg=='
+
+  it('replaces the content, bumps the revision and keeps name, kind and position', () => {
+    const drawing = useAssetsStore.getState().addDrawing({ prompt: 'Untitled 1', base64: PIXEL_PNG, width: 1, height: 1 })
+    useAssetsStore.getState().addGeneration({ prompt: 'newer', base64: PIXEL_PNG, width: 1, height: 1 })
+
+    useAssetsStore.getState().updateDrawingContent(drawing.id, { base64: OTHER_PNG, width: 2, height: 2 })
+    useAssetsStore.getState().updateDrawingContent(drawing.id, { base64: OTHER_PNG, width: 2, height: 2 })
+
+    const generations = useAssetsStore.getState().generations
+    const updated = generations[1]
+    expect(updated).toMatchObject({
+      id: drawing.id,
+      prompt: 'Untitled 1',
+      kind: 'drawing',
+      timestamp: drawing.timestamp,
+      base64: OTHER_PNG,
+      width: 2,
+      height: 2,
+      revision: 2,
+    })
+    expect(updated.updatedAt).toEqual(expect.any(Number))
+    expect(generations[0].prompt).toBe('newer')
+  })
+
+  it('adds the data URI prefix to raw base64, like addDrawing', () => {
+    const drawing = useAssetsStore.getState().addDrawing({ prompt: 'Untitled 1', base64: PIXEL_PNG, width: 1, height: 1 })
+
+    useAssetsStore.getState().updateDrawingContent(drawing.id, { base64: OTHER_PNG.replace('data:image/png;base64,', ''), width: 2, height: 2 })
+
+    expect(useAssetsStore.getState().generations[0].base64).toBe(OTHER_PNG)
+  })
+
+  it('is a no-op when the id does not exist', () => {
+    useAssetsStore.getState().addDrawing({ prompt: 'Untitled 1', base64: PIXEL_PNG, width: 1, height: 1 })
+    const before = useAssetsStore.getState().generations
+
+    useAssetsStore.getState().updateDrawingContent('missing', { base64: OTHER_PNG, width: 2, height: 2 })
+
+    expect(useAssetsStore.getState().generations).toBe(before)
+  })
+
+  it('persists the new content through the repository (survives reload)', async () => {
+    const repository = createInMemoryAssetLibraryRepository()
+    await useAssetsStore.getState().hydrate(repository)
+    const drawing = useAssetsStore.getState().addDrawing({ prompt: 'Untitled 1', base64: PIXEL_PNG, width: 1, height: 1 })
+
+    useAssetsStore.getState().updateDrawingContent(drawing.id, { base64: OTHER_PNG, width: 2, height: 2 })
+
+    await vi.waitFor(async () => {
+      const [stored] = (await repository.loadAll()).generations
+      expect(stored).toMatchObject({ id: drawing.id, base64: OTHER_PNG, revision: 1 })
+    })
+  })
+
+  it('persists the new content to localStorage before hydrate', () => {
+    const drawing = useAssetsStore.getState().addDrawing({ prompt: 'Untitled 1', base64: PIXEL_PNG, width: 1, height: 1 })
+
+    useAssetsStore.getState().updateDrawingContent(drawing.id, { base64: OTHER_PNG, width: 2, height: 2 })
+
+    const stored = JSON.parse(storage.getItem(GENERATION_HISTORY_STORAGE_KEY) ?? '[]') as AIGeneration[]
+    expect(stored[0]).toMatchObject({ id: drawing.id, base64: OTHER_PNG, revision: 1, kind: 'drawing' })
+  })
+})
+
+describe('useAssetsStore eviction never removes the open asset (ADR 0015)', () => {
+  const storage = createMemoryStorage()
+
+  beforeEach(() => {
+    storage.clear()
+    vi.stubGlobal('localStorage', storage)
+    useAssetsStore.setState({ generations: [], animations: [], repository: null, openAssetId: null })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  const fullLibrary = () => Array.from({ length: ASSET_LIBRARY_LIMIT + 5 }, (_, i) => generation(`g${i}`, i))
+
+  it('keeps the open asset when hydrate trims the library', async () => {
+    const repository = createInMemoryAssetLibraryRepository()
+    await repository.putGenerations(fullLibrary())
+    useAssetsStore.getState().setOpenAssetId('g0')
+
+    await useAssetsStore.getState().hydrate(repository)
+
+    const ids = useAssetsStore.getState().generations.map((g) => g.id)
+    expect(ids).toContain('g0')
+    expect(ids).not.toContain('g1')
+    expect((await repository.loadAll()).generations.map((g) => g.id)).toContain('g0')
+  })
+
+  it('keeps the open asset when a new item pushes the library over the limit', async () => {
+    const repository = createInMemoryAssetLibraryRepository()
+    await repository.putGenerations(fullLibrary().slice(0, ASSET_LIBRARY_LIMIT))
+    await useAssetsStore.getState().hydrate(repository)
+    useAssetsStore.getState().setOpenAssetId('g0')
+
+    useAssetsStore.getState().addGeneration({ prompt: 'new', base64: PIXEL_PNG, width: 1, height: 1 })
+
+    expect(useAssetsStore.getState().generations.map((g) => g.id)).toContain('g0')
+    await vi.waitFor(async () => {
+      const ids = (await repository.loadAll()).generations.map((g) => g.id)
+      expect(ids).toContain('g0')
+      expect(ids).not.toContain('g1')
+    })
+  })
+
+  it('still evicts the oldest when nothing is open (regression)', async () => {
+    const repository = createInMemoryAssetLibraryRepository()
+    await repository.putGenerations(fullLibrary())
+
+    await useAssetsStore.getState().hydrate(repository)
+
+    expect(useAssetsStore.getState().generations.map((g) => g.id)).not.toContain('g0')
+    expect(useAssetsStore.getState().generations).toHaveLength(ASSET_LIBRARY_LIMIT)
+  })
+})

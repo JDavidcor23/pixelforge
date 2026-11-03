@@ -18,6 +18,9 @@ const isFiniteNumber = (value: unknown): value is number =>
 const isPngDataUri = (value: unknown): value is string =>
   isNonEmptyString(value) && value.startsWith(PNG_DATA_URI_PREFIX)
 
+const isGenerationKind = (value: unknown): value is NonNullable<AIGeneration['kind']> =>
+  value === 'generation' || value === 'drawing'
+
 const isAssetType = (value: unknown): value is AssetType =>
   typeof value === 'string' && (ASSET_TYPES as readonly string[]).includes(value)
 
@@ -50,6 +53,9 @@ const normalizeGeneration = (value: unknown): AIGeneration | null => {
     width: candidate.width,
     height: candidate.height,
     ...(isAssetType(candidate.assetType) ? { assetType: candidate.assetType } : {}),
+    ...(isGenerationKind(candidate.kind) ? { kind: candidate.kind } : {}),
+    ...(isFiniteNumber(candidate.revision) ? { revision: candidate.revision } : {}),
+    ...(isFiniteNumber(candidate.updatedAt) ? { updatedAt: candidate.updatedAt } : {}),
   }
 }
 

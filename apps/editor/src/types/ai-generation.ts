@@ -93,6 +93,13 @@ export interface AIGeneration {
    * `useAssetsStore.addGeneration` call today, round-trips with no `kind`).
    */
   readonly kind?: 'generation' | 'drawing'
+  /**
+   * ADR 0015: bumped by every autosave that writes new content into this
+   * asset. Absent means 0 — every entry persisted before this field existed.
+   */
+  readonly revision?: number
+  /** ADR 0015: when the content last changed. Absent until the first content update. */
+  readonly updatedAt?: number
 }
 
 /**
