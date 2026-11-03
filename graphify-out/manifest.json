@@ -108,9 +108,9 @@
     "semantic_hash": "c8d97509dc8d6568121ac57a74e20cc4"
   },
   "apps/editor/src/constants/index.ts": {
-    "mtime": 1792844406.6910274,
-    "seen": 1793217079.9444587,
-    "ast_hash": "314b4dc19a27030d7ffed817d230941a",
+    "mtime": 1793739223.6495042,
+    "seen": 1793739304.6384714,
+    "ast_hash": "bb4ce4498377e92f6d6aeb6c0d7e099f",
     "semantic_hash": ""
   },
   "apps/editor/src/constants/motion.ts": {
@@ -1794,9 +1794,9 @@
     "semantic_hash": ""
   },
   "apps/editor/src/types/ai-generation.ts": {
-    "mtime": 1792015319.8740711,
-    "seen": 1792368126.8640668,
-    "ast_hash": "68a726002dbe6e18ec700769bf3b6d6d",
+    "mtime": 1793739228.7226038,
+    "seen": 1793739304.6384714,
+    "ast_hash": "e12c629ec0d4935ee49ef3229bdaa247",
     "semantic_hash": ""
   },
   "apps/editor/src/types/audio.ts": {
@@ -2538,10 +2538,10 @@
     "semantic_hash": "e65418ec88320997f1bc684156a293ed"
   },
   "apps/editor/src/lib/generation-history.ts": {
-    "mtime": 1791812472.2568128,
-    "seen": 1792368126.8640668,
-    "ast_hash": "09e69ecb630c489b9b0325ed9b814623",
-    "semantic_hash": "09e69ecb630c489b9b0325ed9b814623"
+    "mtime": 1793739232.1605606,
+    "seen": 1793739304.6384714,
+    "ast_hash": "b6c93921f4253cf8ad96d4f64c928883",
+    "semantic_hash": ""
   },
   "apps/editor/src/sprites/components/BottomPanel/BottomPanel.tsx": {
     "mtime": 1792014408.928257,
@@ -2700,9 +2700,9 @@
     "semantic_hash": "a1cc528325e34153578d2d785ffb33a0"
   },
   "apps/editor/src/stores/assets.store.ts": {
-    "mtime": 1792016294.3762972,
-    "seen": 1792368126.8640668,
-    "ast_hash": "74ceabfb06349a0e4c9da00f0a2a6899",
+    "mtime": 1793739262.5433333,
+    "seen": 1793739304.6384714,
+    "ast_hash": "c76f5632a4c745d66073f7bb7dbfda34",
     "semantic_hash": ""
   },
   "apps/editor/src/sprites/components/ResizeHandle/ResizeHandle.tsx": {
@@ -3126,9 +3126,9 @@
     "semantic_hash": "c59f0ef5bc89d42a301e6cb7098f97e2"
   },
   "apps/editor/src/stores/assets.store.test.ts": {
-    "mtime": 1792016317.3747222,
-    "seen": 1792368126.8640668,
-    "ast_hash": "b21ec6398948ca1dbb84910102928775",
+    "mtime": 1793739215.0697958,
+    "seen": 1793739304.6384714,
+    "ast_hash": "508337770a21efe08d8ac988af29a03a",
     "semantic_hash": ""
   },
   "apps/editor/src/types/account-deletion.types.ts": {
@@ -3807,6 +3807,30 @@
     "mtime": 1793640930.9530056,
     "seen": 1793640935.8722365,
     "ast_hash": "7d99ad5034a88806ffdf9a1cb1b83b44",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/lib/generation-history.test.ts": {
+    "mtime": 1793739195.7785752,
+    "seen": 1793739304.6384714,
+    "ast_hash": "bd827dc348cf754abbf27c4407c41dab",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/lib/untitled-name.test.ts": {
+    "mtime": 1793739191.5793505,
+    "seen": 1793739304.6384714,
+    "ast_hash": "38b7fb126f43bec0d4c7d32876fb7097",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/lib/untitled-name.ts": {
+    "mtime": 1793739226.688052,
+    "seen": 1793739304.6384714,
+    "ast_hash": "0eed6cef812efd269f50df8923c9b564",
+    "semantic_hash": ""
+  },
+  "odd/tasks/sprite-asset-deep-link.md": {
+    "mtime": 1793739297.2101996,
+    "seen": 1793739304.6394715,
+    "ast_hash": "300bade9a784881f265e7bb2d5f8545e",
     "semantic_hash": ""
   }
 }
