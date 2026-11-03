@@ -1,5 +1,19 @@
-/** Phase 1 uses exactly one local draft — multi-document support is out of scope. */
+/**
+ * Phase 1's single hidden draft. ADR 0015 replaced it with one document per
+ * sprite asset (keyed by the asset id); this id is only read once more, by
+ * `draft-to-asset-migration.service.ts`, to move an old draft into Assets.
+ */
 export const LOCAL_DRAFT_DOCUMENT_ID = 'local-draft'
+
+/** ADR 0015: localStorage key holding the id of the sprite asset Sprite Studio has open, so a reload reopens it. */
+export const OPEN_SPRITE_ASSET_STORAGE_KEY = 'sprite-editor-open-asset'
+
+/**
+ * ADR 0015 draft migration marker: the asset id the old `local-draft` was
+ * saved under, kept until the draft is removed, so a run interrupted between
+ * the save and the remove never creates a second asset.
+ */
+export const DRAFT_MIGRATION_ASSET_STORAGE_KEY = 'sprite-editor-draft-migration-asset'
 
 /** Autosave debounce: how long to wait after the last edit before writing to IndexedDB. */
 export const DOCUMENT_AUTOSAVE_DEBOUNCE_MS = 800

@@ -14,6 +14,8 @@
  * requires a byte-identical restore of frames, not just pixels.
  */
 
+import type { AIGeneration } from './ai-generation'
+
 export type DocumentId = string
 
 export interface DocumentLayerPayload {
@@ -57,4 +59,32 @@ export interface DocumentRepository {
   load(id: DocumentId): Promise<StoredDocument | null>
   save(doc: StoredDocument): Promise<void>
   remove(id: DocumentId): Promise<void>
+}
+
+/** ADR 0015: the flattened PNG of a sprite document, as its Assets item stores it. */
+export interface SpritePreview {
+  readonly base64: string
+  readonly width: number
+  readonly height: number
+}
+
+/** A new editor-made sprite asset, as `useAssetsStore.addDrawing` takes it. */
+export type NewSpriteDrawing = Omit<AIGeneration, 'id' | 'timestamp' | 'kind'>
+
+/**
+ * The slice of `useAssetsStore` the document layer needs (ADR 0015). The
+ * store itself satisfies it, so the persistence controller and the draft
+ * migration stay testable without React and never import the store module.
+ */
+export interface DocumentAssetsState {
+  readonly generations: readonly AIGeneration[]
+  readonly openAssetId: string | null
+  addDrawing: (drawing: NewSpriteDrawing) => AIGeneration
+  updateDrawingContent: (id: string, content: SpritePreview) => void
+  removeGeneration: (id: string) => void
+  setOpenAssetId: (id: string | null) => void
+}
+
+export interface DocumentAssetsApi {
+  getState: () => DocumentAssetsState
 }

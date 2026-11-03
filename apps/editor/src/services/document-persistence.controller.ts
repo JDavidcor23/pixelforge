@@ -1,7 +1,10 @@
-import type { DocStatus, RgbaColor, SaveStatus } from '@/types'
-import type { DocumentPayload, DocumentRepository } from '@/types/document'
+import type { DocStatus, PixelBuffer, RgbaColor, SaveStatus } from '@/types'
+import type { DocumentAssetsApi, DocumentId, DocumentPayload, DocumentRepository, StoredDocument } from '@/types/document'
 import { migrateLegacyDraft } from './legacy-draft-migration.service'
-import { LOCAL_DRAFT_DOCUMENT_ID } from '@/constants/persistence'
+import { migrateDraftToAsset } from './draft-to-asset-migration.service'
+import { LOCAL_DRAFT_DOCUMENT_ID, OPEN_SPRITE_ASSET_STORAGE_KEY } from '@/constants/persistence'
+import { SPRITE_EDITOR_CANVAS } from '@/constants'
+import { blankDocument, createUntitledSprite, documentFromPixels, documentPreview } from '@/lib/document-preview'
 import { resolveCoreImpl } from '@/lib/core/core-config'
 import { waitForWasmModule } from '@/lib/core/wasm-pixel-core-resolver'
 
@@ -50,6 +53,23 @@ export interface DocumentPersistenceStoreApi {
  */
 let sessionRevision = 0
 
+/**
+ * ADR 0015: binds the document to the OPEN SPRITE ASSET instead of one fixed
+ * hidden draft. Everything browser-only is injected (PNG encode/decode,
+ * localStorage), so the controller stays testable in node.
+ */
+export interface DocumentAssetBinding {
+  /** `useAssetsStore` (or a fake): creates, updates and opens sprite assets. */
+  readonly assets: DocumentAssetsApi
+  /** Keeps the open asset id across reloads (`OPEN_SPRITE_ASSET_STORAGE_KEY`) and the draft migration marker. */
+  readonly openAssetStorage: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>
+  /** The frame the user is looking at — the one flattened into the asset's PNG preview. */
+  readonly currentFrameIndex: () => number
+  readonly encodePng: (pixels: PixelBuffer) => string
+  /** Decodes an asset's PNG, for an asset that has no stored document yet (e.g. an AI generation). */
+  readonly decodePng: (base64: string) => Promise<PixelBuffer>
+}
+
 export interface DocumentPersistenceDeps {
   resolveRepository: () => Promise<{ repository: DocumentRepository; isPersistent: boolean }>
   storage: Pick<Storage, 'getItem' | 'removeItem'>
@@ -75,6 +95,12 @@ export interface DocumentPersistenceDeps {
    * (e.g. this file's own tests, which never remount).
    */
   isCancelled?: () => boolean
+  /**
+   * ADR 0015. Without it the controller keeps phase 1's single document
+   * under `LOCAL_DRAFT_DOCUMENT_ID` — only the autosave-core tests that
+   * predate the asset model run that way; the editor always passes one.
+   */
+  assetBinding?: DocumentAssetBinding
 }
 
 export interface DocumentPersistenceController {
@@ -82,13 +108,27 @@ export interface DocumentPersistenceController {
   flush: () => void
   /** Unsubscribes and cancels any pending debounce. Call on unmount. */
   stop: () => void
+  /**
+   * ADR 0015: saves the current asset's pending edits, then opens asset `id`
+   * (its stored document, or one built from its PNG). Resolves `false` and
+   * changes nothing when `id` has neither, or without an asset binding.
+   */
+  openAsset: (id: DocumentId) => Promise<boolean>
+  /** ADR 0015: saves pending edits, then starts a blank default-size sprite with no open asset (stored on its first edit). */
+  newSprite: () => void
 }
 
-const NOOP_CONTROLLER: DocumentPersistenceController = { flush: () => {}, stop: () => {} }
+const NOOP_CONTROLLER: DocumentPersistenceController = {
+  flush: () => {},
+  stop: () => {},
+  openAsset: async () => false,
+  newSprite: () => {},
+}
 
 /**
- * Orchestrates the local-draft lifecycle (D8): resolve a repository, run the
- * one-time legacy migration, restore the draft and hydrate the store, flip
+ * Orchestrates the document lifecycle (D8): resolve a repository, run the
+ * one-time migrations (pre-phase-1 localStorage draft, then ADR 0015's
+ * `local-draft` → Assets item), restore the open asset and hydrate the store, flip
  * `docStatus` to `'ready'`, and ONLY THEN start the debounced autosave
  * subscription. This ordering is the whole point — starting autosave before
  * restore finishes would overwrite a real draft with the store's blank
@@ -97,8 +137,17 @@ const NOOP_CONTROLLER: DocumentPersistenceController = { flush: () => {}, stop: 
 export async function startDocumentPersistence(
   deps: DocumentPersistenceDeps
 ): Promise<DocumentPersistenceController> {
-  const { resolveRepository, storage, store, debounceMs, scheduleTimeout, clearScheduledTimeout, onPersistentChange, isCancelled } =
-    deps
+  const {
+    resolveRepository,
+    storage,
+    store,
+    debounceMs,
+    scheduleTimeout,
+    clearScheduledTimeout,
+    onPersistentChange,
+    isCancelled,
+    assetBinding,
+  } = deps
 
   let stopped = false
   let timer: unknown = null
@@ -108,8 +157,68 @@ export async function startDocumentPersistence(
   // unconditionally, so e.g. a `visibilitychange` fired with no edits since
   // the last save still wrote to the repository.
   let dirty = false
+  // ADR 0015: `importDocument` resets `docRevision` to 0, which the autosave
+  // subscription would otherwise read as an edit and re-save content that
+  // was just loaded, unchanged.
+  let importing = false
+  // Bumped by every open/new request, so a slow `openAsset` load that a
+  // later request superseded never imports over it.
+  let openRequest = 0
 
   const bailedOut = () => stopped || (isCancelled?.() ?? false)
+
+  /** The document id autosave writes to: the open asset, or `null` for a new sprite not stored yet (lazy creation). */
+  const currentDocumentId = (): DocumentId | null =>
+    assetBinding ? assetBinding.assets.getState().openAssetId : LOCAL_DRAFT_DOCUMENT_ID
+
+  const setOpenAsset = (binding: DocumentAssetBinding, id: DocumentId | null) => {
+    binding.assets.getState().setOpenAssetId(id)
+    try {
+      if (id) binding.openAssetStorage.setItem(OPEN_SPRITE_ASSET_STORAGE_KEY, id)
+      else binding.openAssetStorage.removeItem(OPEN_SPRITE_ASSET_STORAGE_KEY)
+    } catch (error) {
+      console.error('Failed to remember the open sprite asset', error)
+    }
+  }
+
+  /**
+   * Resolves the asset this save writes to — creating "Untitled N" on the
+   * first save of a new sprite (ADR 0015 lazy creation) — and returns the
+   * Assets-preview refresh to run once the document is stored. A freshly
+   * created asset already holds that preview, so it has none.
+   */
+  const resolveSaveTarget = (
+    payload: DocumentPayload
+  ): { readonly id: DocumentId; readonly refreshPreview: (() => void) | null } => {
+    if (!assetBinding) return { id: LOCAL_DRAFT_DOCUMENT_ID, refreshPreview: null }
+    const preview = documentPreview(payload, assetBinding.currentFrameIndex(), assetBinding.encodePng)
+    const openId = currentDocumentId()
+    if (openId) {
+      return { id: openId, refreshPreview: () => assetBinding.assets.getState().updateDrawingContent(openId, preview) }
+    }
+    const created = createUntitledSprite(assetBinding.assets, preview)
+    setOpenAsset(assetBinding, created.id)
+    return { id: created.id, refreshPreview: null }
+  }
+
+  /** Loads `payload` into the core without the autosave subscription treating it as an edit. */
+  const importQuietly = (payload: DocumentPayload) => {
+    importing = true
+    try {
+      store.importDocument(payload)
+    } finally {
+      importing = false
+    }
+    if (timer !== null) {
+      clearScheduledTimeout(timer)
+      timer = null
+    }
+    dirty = false
+  }
+
+  const adoptRevision = (stored: StoredDocument) => {
+    sessionRevision = Math.max(sessionRevision, stored.revision)
+  }
 
   // Phase 2c fix: `save()` used to be fire-and-forget (`void repository
   // .save(...)`), so a rejected save (e.g. `QuotaExceededError`) became an
@@ -124,9 +233,11 @@ export async function startDocumentPersistence(
     sessionRevision += 1
     const revision = sessionRevision
     const payload = store.exportDocument()
+    const target = resolveSaveTarget(payload)
     repository
-      .save({ id: LOCAL_DRAFT_DOCUMENT_ID, revision, updatedAt: Date.now(), payload })
+      .save({ id: target.id, revision, updatedAt: Date.now(), payload })
       .then(() => {
+        target.refreshPreview?.()
         store.setState({ saveStatus: 'saved', lastSavedAt: Date.now(), saveError: null })
       })
       .catch((error: unknown) => {
@@ -195,8 +306,24 @@ export async function startDocumentPersistence(
       store.setState({ primaryColor: migration.colors.primaryColor, secondaryColor: migration.colors.secondaryColor })
     }
 
-    const stored = await repository.load(LOCAL_DRAFT_DOCUMENT_ID)
+    // ADR 0015: the old hidden draft becomes an Assets item (once), then the
+    // asset that was open before the reload is restored. A persisted id
+    // with no stored document starts blank with no open asset.
+    let restoreId: DocumentId | null = LOCAL_DRAFT_DOCUMENT_ID
+    if (assetBinding) {
+      const migratedId = await migrateDraftToAsset({
+        repository,
+        assets: assetBinding.assets,
+        storage: assetBinding.openAssetStorage,
+        encodePng: assetBinding.encodePng,
+      })
+      if (bailedOut()) return NOOP_CONTROLLER
+      restoreId = migratedId ?? assetBinding.openAssetStorage.getItem(OPEN_SPRITE_ASSET_STORAGE_KEY)
+    }
+
+    const stored = restoreId ? await repository.load(restoreId) : null
     if (bailedOut()) return NOOP_CONTROLLER
+    if (assetBinding) setOpenAsset(assetBinding, stored ? stored.id : null)
 
     // Phase 7f (CRITICAL #1 — "the flag is dead"): `core.slice.ts`'s `core`
     // is bootstrapped lazily, exactly once, the FIRST time anything touches
@@ -212,7 +339,7 @@ export async function startDocumentPersistence(
     if (bailedOut()) return NOOP_CONTROLLER
 
     if (stored) {
-      sessionRevision = Math.max(sessionRevision, stored.revision)
+      adoptRevision(stored)
       store.importDocument(stored.payload)
     }
 
@@ -227,12 +354,49 @@ export async function startDocumentPersistence(
   const unsubscribe = store.subscribe((state) => {
     if (state.docRevision !== prevDocRevision) {
       prevDocRevision = state.docRevision
-      scheduleSave()
+      if (!importing) scheduleSave()
     }
   })
 
+  const openAsset = async (id: DocumentId): Promise<boolean> => {
+    if (!assetBinding || !repository || stopped) return false
+    const request = ++openRequest
+    // Save the current asset BEFORE anything else: its pending edits must
+    // land under its own id, never be dropped or written to `id`.
+    flush()
+    try {
+      const stored = await repository.load(id)
+      let payload = stored?.payload ?? null
+      if (!payload) {
+        const asset = assetBinding.assets.getState().generations.find((entry) => entry.id === id)
+        if (!asset) return false
+        payload = documentFromPixels(await assetBinding.decodePng(asset.base64))
+      }
+      if (request !== openRequest || stopped) return false
+      if (stored) adoptRevision(stored)
+      // Edits made while loading still belong to the previous asset.
+      flush()
+      importQuietly(payload)
+      setOpenAsset(assetBinding, id)
+      return true
+    } catch (error) {
+      console.error('Failed to open sprite asset', error)
+      return false
+    }
+  }
+
+  const newSprite = () => {
+    if (!assetBinding || stopped) return
+    openRequest += 1
+    flush()
+    importQuietly(blankDocument(SPRITE_EDITOR_CANVAS.DEFAULT_WIDTH, SPRITE_EDITOR_CANVAS.DEFAULT_HEIGHT))
+    setOpenAsset(assetBinding, null)
+  }
+
   return {
     flush,
+    openAsset,
+    newSprite,
     stop: () => {
       unsubscribe()
       // Phase 2c fix: FLUSH a pending debounced save instead of dropping it

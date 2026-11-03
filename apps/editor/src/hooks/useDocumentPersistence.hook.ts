@@ -1,16 +1,41 @@
 import { useEffect, useState } from 'react'
 
 import { useSpriteEditorStore } from '@/stores'
+import { useAssetsStore } from '@/stores/assets.store'
 import { resolveDocumentRepository } from '@/services/resolve-document-repository.service'
 import { createInMemoryDocumentRepository } from '@/services/in-memory-document.repository.service'
 import {
   startDocumentPersistence,
+  type DocumentAssetBinding,
   type DocumentPersistenceController,
   type DocumentPersistenceStoreApi,
 } from '@/services/document-persistence.controller'
 import { registerDocumentPersistenceFlush } from '@/services/document-persistence-flush-bus.service'
+import { registerDocumentAssetCommands } from '@/services/document-asset-bus.service'
+import { pixelBufferToDataUri } from '@/lib/export-utils'
+import { base64ToNativePixels } from '@/lib/image-decode'
 import { DOCUMENT_AUTOSAVE_DEBOUNCE_MS } from '@/constants/persistence'
 import type { DocumentPayload } from '@/types/document'
+
+/**
+ * ADR 0015: the document follows the open sprite asset. Browser-only pieces
+ * (canvas PNG encode, image decode, localStorage) are wired here so the
+ * controller stays DOM-free.
+ */
+const createAssetBinding = (openAssetStorage: DocumentAssetBinding['openAssetStorage']): DocumentAssetBinding => ({
+  assets: useAssetsStore,
+  openAssetStorage,
+  currentFrameIndex: () => useSpriteEditorStore.getState().timeline.currentFrameIndex,
+  encodePng: pixelBufferToDataUri,
+  decodePng: base64ToNativePixels,
+})
+
+/** Safe mode never reads or writes the real open-asset id: its documents live only in memory. */
+const NOOP_OPEN_ASSET_STORAGE: DocumentAssetBinding['openAssetStorage'] = {
+  getItem: () => null,
+  setItem: () => {},
+  removeItem: () => {},
+}
 
 export interface UseDocumentPersistenceResult {
   /** `false` once IndexedDB failed to open and drafts are no longer being saved. */
@@ -74,6 +99,12 @@ export function useDocumentPersistence(): UseDocumentPersistenceResult {
       // flush (bypassing the debounce) right after a Wasm trap demotes to
       // TsPixelCore — see `document-persistence-flush-bus.service.ts`.
       registerDocumentPersistenceFlush(() => controller?.flush())
+      // ADR 0015: Assets tile / File > New sprite / deep links reach the
+      // controller through `document-asset-bus.service.ts`.
+      registerDocumentAssetCommands({
+        openAsset: (id) => controller?.openAsset(id) ?? Promise.resolve(false),
+        newSprite: () => controller?.newSprite(),
+      })
     }
 
     startDocumentPersistence({
@@ -97,6 +128,7 @@ export function useDocumentPersistence(): UseDocumentPersistenceResult {
       // import/subscribe), not just after the fact via `adopt`'s post-hoc
       // `stop()` — see `document-persistence.controller.ts`.
       isCancelled: () => cancelled,
+      assetBinding: createAssetBinding(window.localStorage),
     })
       .then(adopt)
       .catch((error: unknown) => {
@@ -118,6 +150,7 @@ export function useDocumentPersistence(): UseDocumentPersistenceResult {
           clearScheduledTimeout: (handle) => clearTimeout(handle as ReturnType<typeof setTimeout>),
           onPersistentChange: () => {},
           isCancelled: () => cancelled,
+          assetBinding: createAssetBinding(NOOP_OPEN_ASSET_STORAGE),
         }).then(adopt)
       })
 
@@ -125,6 +158,7 @@ export function useDocumentPersistence(): UseDocumentPersistenceResult {
       cancelled = true
       document.removeEventListener('visibilitychange', handleVisibilityChange)
       registerDocumentPersistenceFlush(null)
+      registerDocumentAssetCommands(null)
       controller?.stop()
     }
   }, [])
