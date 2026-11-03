@@ -172,6 +172,17 @@ export interface AssetLibraryItem {
   readonly isAnimated: boolean
 }
 
+/**
+ * Side effects of an Assets tile click (ADR 0015), injected so the flow is
+ * testable without the persistence controller or the canvas.
+ */
+export interface OpenLibraryItemDeps {
+  readonly openAsset: (id: string) => Promise<boolean>
+  readonly newSprite: () => void
+  readonly findAnimation: (id: string) => AIAnimation | undefined
+  readonly applyAnimation: (animation: AIAnimation) => Promise<void>
+}
+
 /** Game genres whose sprite rules the Create tab can add to a prompt. */
 export type GameTemplateId = 'platformer'
 

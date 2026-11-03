@@ -15,7 +15,9 @@ import {
 import { useAssetsStore } from '@/stores/assets.store'
 import { useSpriteEditorStore } from '@/stores'
 import { layersToBase64 } from '@/lib'
-import { DEFAULT_ASSET_TYPE, RESIZABLE_PANELS, SPRITE_DOCUMENT_DEFAULT_NAME } from '@/constants'
+import { nextUntitledName } from '@/lib/untitled-name'
+import { requestNewSprite } from '@/services/document-asset-bus.service'
+import { DEFAULT_ASSET_TYPE, RESIZABLE_PANELS } from '@/constants'
 import {
   FILE_MENU_DISMISS_KEY,
   FILE_MENU_ENTRY_KIND,
@@ -23,7 +25,7 @@ import {
   FILE_MENU_LABELS,
   SAVE_AS_ERRORS,
 } from '@/constants/file-menu'
-import type { AssetType, FileMenuActions, FileMenuEntry, SaveAsDeps, SaveAsDialogProps, SaveAsRequest } from '@/types'
+import type { AIGeneration, AssetType, FileMenuActions, FileMenuEntry, SaveAsDeps, SaveAsDialogProps, SaveAsRequest } from '@/types'
 
 /** File menu rows, in menubar order. Every action closes the menu after it runs. */
 export const buildFileMenuEntries = (actions: FileMenuActions): FileMenuEntry[] => {
@@ -32,6 +34,12 @@ export const buildFileMenuEntries = (actions: FileMenuActions): FileMenuEntry[] 
     actions.closeMenu()
   }
   return [
+    {
+      kind: FILE_MENU_ENTRY_KIND.ITEM,
+      id: FILE_MENU_ITEM_IDS.NEW_SPRITE,
+      label: FILE_MENU_LABELS.NEW_SPRITE,
+      onSelect: runAndClose(actions.newSprite),
+    },
     {
       kind: FILE_MENU_ENTRY_KIND.ITEM,
       id: FILE_MENU_ITEM_IDS.SAVE_AS,
@@ -65,6 +73,16 @@ export const isMenuDismissKey = (key: string): boolean => key === FILE_MENU_DISM
 
 export const isOutsideMenu = (menu: Pick<Node, 'contains'> | null, target: Node | null): boolean =>
   menu !== null && !menu.contains(target)
+
+/**
+ * ADR 0015: the top bar names the open asset. A new sprite is not stored until
+ * its first edit, so it shows the "Untitled N" it will be stored under.
+ */
+export const resolveDocumentName = (
+  openAssetId: string | null,
+  sprites: readonly Pick<AIGeneration, 'id' | 'prompt'>[],
+): string =>
+  sprites.find((sprite) => sprite.id === openAssetId)?.prompt ?? nextUntitledName(sprites.map((sprite) => sprite.prompt))
 
 /** First reason Save As can't confirm yet, or null when it's allowed. */
 export const validateSaveAsName = (name: string): string | null =>
@@ -107,6 +125,9 @@ export const useTopBar = () => {
 
   const importSpriteSheet = useImportSpriteSheet()
   const addDrawing = useAssetsStore((state) => state.addDrawing)
+  // Selects the name string, not `generations`: autosave refreshes the open
+  // asset's preview on every save, and the top bar must not re-render for it.
+  const documentName = useAssetsStore((state) => resolveDocumentName(state.openAssetId, state.generations))
 
   const [isFileMenuOpen, setIsFileMenuOpen] = useState(false)
   const fileMenuRef = useRef<HTMLDivElement>(null)
@@ -184,6 +205,7 @@ export const useTopBar = () => {
   const fileMenuEntries = useMemo(
     () =>
       buildFileMenuEntries({
+        newSprite: requestNewSprite,
         openSaveAs: handleOpenSaveAs,
         openImportSpriteSheet: openFilePicker,
         exportFrame: handleExportFrame,
@@ -226,7 +248,7 @@ export const useTopBar = () => {
   const handleResetLayout = useCallback(() => resetPanelSizes(), [resetPanelSizes])
 
   return {
-    documentName: SPRITE_DOCUMENT_DEFAULT_NAME,
+    documentName,
     frameCountLabel,
     canUndo,
     canRedo,

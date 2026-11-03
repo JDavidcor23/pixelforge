@@ -15,6 +15,7 @@ export type FileMenuEntry =
   | { readonly kind: typeof FILE_MENU_ENTRY_KIND.SEPARATOR; readonly id: string }
 
 export interface FileMenuActions {
+  readonly newSprite: () => void
   readonly openSaveAs: () => void
   readonly openImportSpriteSheet: () => void
   readonly exportFrame: () => void

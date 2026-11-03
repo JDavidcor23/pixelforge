@@ -3,6 +3,8 @@ import { useCallback, useMemo, useState } from 'react'
 import { buildAssetLibraryItems } from '@/lib/asset-library-items'
 import { composeHorizontalSheet } from '@/lib/compose-horizontal-sheet'
 import { downloadFromHref, downloadJson } from '@/lib/download-file'
+import { openLibraryItem } from '@/lib/open-library-item'
+import { requestNewSprite, requestOpenAsset } from '@/services/document-asset-bus.service'
 import { useApplyAsset } from '@/sprites/hooks/useApplyAsset.hook'
 import { useImportLibraryAssets } from '@/sprites/hooks/useImportLibraryAssets.hook'
 import { useRequestFocusPrompt, useSetInspectorTab } from '@/sprites/hooks/useSpriteEditorStore.hook'
@@ -24,7 +26,7 @@ export const useAssetsPanel = ({ search }: UseAssetsPanelParams) => {
   const removeAnimation = useAssetsStore((s) => s.removeAnimation)
   const renameItem = useAssetsStore((s) => s.renameItem)
   const setItemAssetType = useAssetsStore((s) => s.setItemAssetType)
-  const { applyGeneration, applyAnimation } = useApplyAsset()
+  const { applyAnimation } = useApplyAsset()
   const setInspectorTab = useSetInspectorTab()
   const requestFocusPrompt = useRequestFocusPrompt()
 
@@ -81,22 +83,18 @@ export const useAssetsPanel = ({ search }: UseAssetsPanelParams) => {
     async (item: AssetLibraryItem) => {
       try {
         setIsApplying(true)
-        // 'drawing' items live in the same `generations` slice as 'generation'
-        // ones (ADR 0010, Phase 1) — only 'animation' needs the other branch.
-        if (item.kind !== 'animation') {
-          const generation = generations.find((gen) => gen.id === item.id)
-          if (!generation) return
-          await applyGeneration({ base64: generation.base64, width: generation.width })
-        } else {
-          const animation = animations.find((anim) => anim.id === item.id)
-          if (!animation) return
-          await applyAnimation({ frames: animation.frames, frameDurationMs: animation.frameDurationMs })
-        }
+        await openLibraryItem(item, {
+          openAsset: requestOpenAsset,
+          newSprite: requestNewSprite,
+          findAnimation: (id) => animations.find((anim) => anim.id === id),
+          applyAnimation: (animation) =>
+            applyAnimation({ frames: animation.frames, frameDurationMs: animation.frameDurationMs }),
+        })
       } finally {
         setIsApplying(false)
       }
     },
-    [generations, animations, applyGeneration, applyAnimation],
+    [animations, applyAnimation],
   )
 
   const handleDownloadItem = useCallback(

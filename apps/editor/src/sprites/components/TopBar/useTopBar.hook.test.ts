@@ -1,10 +1,18 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import { buildFileMenuEntries, isMenuDismissKey, isOutsideMenu, runSaveAs, validateSaveAsName } from './useTopBar.hook'
+import {
+  buildFileMenuEntries,
+  isMenuDismissKey,
+  isOutsideMenu,
+  resolveDocumentName,
+  runSaveAs,
+  validateSaveAsName,
+} from './useTopBar.hook'
 import { FILE_MENU_ENTRY_KIND, FILE_MENU_LABELS, SAVE_AS_ERRORS } from '@/constants/file-menu'
 import type { FileMenuActions, SaveAsDeps } from '@/types'
 
 const makeActions = (): FileMenuActions => ({
+  newSprite: vi.fn(),
   openSaveAs: vi.fn(),
   openImportSpriteSheet: vi.fn(),
   exportFrame: vi.fn(),
@@ -19,9 +27,10 @@ const selectByLabel = (actions: FileMenuActions, label: string) => {
 }
 
 describe('buildFileMenuEntries', () => {
-  it('lists Save As, a separator, Import, a separator, then the two export items, in order', () => {
+  it('lists New sprite, Save As, a separator, Import, a separator, then the two export items, in order', () => {
     const entries = buildFileMenuEntries(makeActions())
     expect(entries.map((entry) => (entry.kind === FILE_MENU_ENTRY_KIND.ITEM ? entry.label : FILE_MENU_ENTRY_KIND.SEPARATOR))).toEqual([
+      FILE_MENU_LABELS.NEW_SPRITE,
       FILE_MENU_LABELS.SAVE_AS,
       FILE_MENU_ENTRY_KIND.SEPARATOR,
       FILE_MENU_LABELS.IMPORT_SPRITE_SHEET,
@@ -29,6 +38,13 @@ describe('buildFileMenuEntries', () => {
       FILE_MENU_LABELS.EXPORT_FRAME,
       FILE_MENU_LABELS.EXPORT_SPRITE_SHEET,
     ])
+  })
+
+  it('New sprite starts a blank sprite and closes the menu (ADR 0015)', () => {
+    const actions = makeActions()
+    selectByLabel(actions, FILE_MENU_LABELS.NEW_SPRITE)
+    expect(actions.newSprite).toHaveBeenCalledTimes(1)
+    expect(actions.closeMenu).toHaveBeenCalledTimes(1)
   })
 
   it('Save As opens the Save As dialog and closes the menu', () => {
@@ -109,5 +125,24 @@ describe('menu dismissal', () => {
     expect(isOutsideMenu(menu, outside)).toBe(true)
     expect(isOutsideMenu(menu, inside)).toBe(false)
     expect(isOutsideMenu(null, outside)).toBe(false)
+  })
+})
+
+describe('resolveDocumentName (ADR 0015: the top bar shows the open asset)', () => {
+  const sprites = [
+    { id: 'a', prompt: 'Hero' },
+    { id: 'b', prompt: 'Untitled 2' },
+  ]
+
+  it('shows the open asset name', () => {
+    expect(resolveDocumentName('a', sprites)).toBe('Hero')
+  })
+
+  it('shows the "Untitled N" a new, not-yet-stored sprite will get', () => {
+    expect(resolveDocumentName(null, sprites)).toBe('Untitled 3')
+  })
+
+  it('falls back to the next "Untitled N" when the open id is not in Assets', () => {
+    expect(resolveDocumentName('gone', [])).toBe('Untitled 1')
   })
 })

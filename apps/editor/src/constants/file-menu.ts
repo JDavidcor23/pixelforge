@@ -10,6 +10,7 @@ export const FILE_MENU_COPY = {
 } as const
 
 export const FILE_MENU_ITEM_IDS = {
+  NEW_SPRITE: 'new-sprite',
   SAVE_AS: 'save-as',
   SEPARATOR_SAVE_AS: 'separator-save-as',
   IMPORT_SPRITE_SHEET: 'import-sprite-sheet',
@@ -19,6 +20,7 @@ export const FILE_MENU_ITEM_IDS = {
 } as const
 
 export const FILE_MENU_LABELS = {
+  NEW_SPRITE: 'New sprite',
   SAVE_AS: 'Save As…',
   IMPORT_SPRITE_SHEET: 'Import sprite sheet…',
   EXPORT_FRAME: 'Export current frame',
