@@ -78,6 +78,7 @@ describe('migrateDraftToAsset (ADR 0015: the old hidden draft becomes an Assets 
     const repository: DocumentRepository = {
       load: (id) => inner.load(id),
       remove: vi.fn((id: string) => inner.remove(id)),
+      clear: () => inner.clear(),
       save: vi.fn(async () => {
         throw new Error('QuotaExceededError')
       }),
@@ -109,6 +110,7 @@ describe('migrateDraftToAsset (ADR 0015: the old hidden draft becomes an Assets 
     const repository: DocumentRepository = {
       load: (id) => inner.load(id),
       save: (doc) => inner.save(doc),
+      clear: () => inner.clear(),
       remove: async (id) => {
         if (failRemove) throw new Error('remove failed')
         await inner.remove(id)

@@ -7,9 +7,9 @@ import { useAssetsStore } from '@/stores/assets.store'
 import { useEditorUIStore } from '@/stores/ui.store'
 import { authService } from '@/services/auth.service'
 import { resolveDocumentRepository } from '@/services/resolve-document-repository.service'
+import { clearLocalSpriteData } from '@/services/clear-local-sprite-data.service'
 import { mapDeleteAccountError } from '@/lib/map-delete-account-error'
 import { isDeleteAccountConfirmed } from '@/lib/delete-account-confirm'
-import { LOCAL_DRAFT_DOCUMENT_ID } from '@/constants/persistence'
 import { EDITOR_ROUTES } from '@/constants/routes'
 
 // Same manual Tab trap as `useNewSoundPopover.hook.ts` — this dialog has more
@@ -119,12 +119,7 @@ export function useDeleteAccountDialog({ onClose }: UseDeleteAccountDialogProps)
     }
 
     if (clearLocalData) {
-      try {
-        const { repository } = await resolveDocumentRepository()
-        await repository.remove(LOCAL_DRAFT_DOCUMENT_ID)
-      } catch (error) {
-        console.error('Failed to clear the local draft after account deletion', error)
-      }
+      await clearLocalSpriteData({ resolveRepository: resolveDocumentRepository, storage: localStorage })
       clearLocalHistory()
     }
 

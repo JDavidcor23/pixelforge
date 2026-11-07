@@ -62,6 +62,7 @@ function makeFakeRepository(overrides: Partial<DocumentRepository> = {}): Docume
     load: vi.fn(async (_id: DocumentId) => null),
     save: vi.fn(async (_doc: StoredDocument) => {}),
     remove: vi.fn(async (_id: DocumentId) => {}),
+    clear: vi.fn(async () => {}),
     ...overrides,
   }
 }

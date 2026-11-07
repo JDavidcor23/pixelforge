@@ -102,6 +102,7 @@ describe('createUntitledSprite', () => {
         removeGeneration: vi.fn(),
         setOpenAssetId: vi.fn(),
       }),
+      subscribe: vi.fn(() => () => {}),
     }
 
     const result = createUntitledSprite(assets, { base64: 'png', width: 4, height: 5 })

@@ -20,5 +20,9 @@ export function createInMemoryDocumentRepository(): DocumentRepository {
     async remove(id: DocumentId): Promise<void> {
       store.delete(id)
     },
+
+    async clear(): Promise<void> {
+      store.clear()
+    },
   }
 }

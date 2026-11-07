@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 const loadMock = vi.fn()
 
 vi.mock('./indexeddb-document.repository.service', () => ({
-  createIndexedDbDocumentRepository: () => ({ load: loadMock, save: vi.fn(), remove: vi.fn() }),
+  createIndexedDbDocumentRepository: () => ({ load: loadMock, save: vi.fn(), remove: vi.fn(), clear: vi.fn() }),
 }))
 
 import { resolveDocumentRepository } from './resolve-document-repository.service'

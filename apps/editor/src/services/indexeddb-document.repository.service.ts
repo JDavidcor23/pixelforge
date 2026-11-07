@@ -52,5 +52,10 @@ export function createIndexedDbDocumentRepository(): DocumentRepository {
       const db = await dbPromise
       await db.delete(DOCUMENT_STORE_NAME, id)
     },
+
+    async clear(): Promise<void> {
+      const db = await dbPromise
+      await db.clear(DOCUMENT_STORE_NAME)
+    },
   }
 }

@@ -320,6 +320,7 @@ describe('startDocumentPersistence keyed by the open asset (ADR 0015)', () => {
     const repository: DocumentRepository = {
       load: async () => null,
       remove: async () => {},
+      clear: async () => {},
       save: async () => {
         throw new Error('QuotaExceededError')
       },
@@ -447,6 +448,147 @@ describe('startDocumentPersistence keyed by the open asset (ADR 0015)', () => {
       )
       expect(await controller.duplicateAsset({ name: 'copy', assetType: 'character' })).toBe(false)
       controller.stop()
+    })
+  })
+
+  describe('asset removed -> stored document removed (T4b)', () => {
+    const addAsset = async (repository: DocumentRepository, name: string) => {
+      const asset = useAssetsStore
+        .getState()
+        .addDrawing({ prompt: name, base64: 'data:image/png;base64,AA', width: 1, height: 1 })
+      await repository.save({ id: asset.id, revision: 1, updatedAt: 0, payload: payloadWithAlpha(9) })
+      return asset
+    }
+
+    it('removeGeneration removes that asset document and leaves the others', async () => {
+      const repository = createInMemoryDocumentRepository()
+      const store = makeFakeStore()
+      const controller = await startDocumentPersistence(makeDeps(repository, store.api, makeBinding(openAssetStorage)))
+      const gone = await addAsset(repository, 'gone')
+      const kept = await addAsset(repository, 'kept')
+
+      useAssetsStore.getState().removeGeneration(gone.id)
+      await vi.advanceTimersByTimeAsync(0)
+
+      expect(await repository.load(gone.id)).toBeNull()
+      expect(await repository.load(kept.id)).not.toBeNull()
+      controller.stop()
+    })
+
+    it('eviction (an id leaving generations) and clearLocalHistory remove the documents', async () => {
+      const repository = createInMemoryDocumentRepository()
+      const store = makeFakeStore()
+      const controller = await startDocumentPersistence(makeDeps(repository, store.api, makeBinding(openAssetStorage)))
+      const evicted = await addAsset(repository, 'evicted')
+      const survivor = await addAsset(repository, 'survivor')
+
+      useAssetsStore.setState({ generations: useAssetsStore.getState().generations.filter((g) => g.id !== evicted.id) })
+      await vi.advanceTimersByTimeAsync(0)
+      expect(await repository.load(evicted.id)).toBeNull()
+      expect(await repository.load(survivor.id)).not.toBeNull()
+
+      useAssetsStore.getState().clearLocalHistory()
+      await vi.advanceTimersByTimeAsync(0)
+      expect(await repository.load(survivor.id)).toBeNull()
+      controller.stop()
+    })
+
+    it('a content-only change (updateDrawingContent) removes nothing', async () => {
+      const repository = createInMemoryDocumentRepository()
+      const remove = vi.spyOn(repository, 'remove')
+      const store = makeFakeStore()
+      const controller = await startDocumentPersistence(makeDeps(repository, store.api, makeBinding(openAssetStorage)))
+      const asset = await addAsset(repository, 'a')
+
+      useAssetsStore.getState().updateDrawingContent(asset.id, { base64: 'data:image/png;base64,BB', width: 1, height: 1 })
+      await vi.advanceTimersByTimeAsync(0)
+
+      expect(remove).not.toHaveBeenCalled()
+      controller.stop()
+    })
+
+    it('a failing remove is logged and does not throw', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      const repository = createInMemoryDocumentRepository()
+      vi.spyOn(repository, 'remove').mockRejectedValue(new Error('idb blocked'))
+      const store = makeFakeStore()
+      const controller = await startDocumentPersistence(makeDeps(repository, store.api, makeBinding(openAssetStorage)))
+      const asset = await addAsset(repository, 'a')
+
+      useAssetsStore.getState().removeGeneration(asset.id)
+      await vi.advanceTimersByTimeAsync(0)
+
+      expect(errorSpy).toHaveBeenCalled()
+      errorSpy.mockRestore()
+      controller.stop()
+    })
+
+    it('the open asset removed: detaches it, keeps the canvas, and the next edit creates a new asset', async () => {
+      const repository = createInMemoryDocumentRepository()
+      const save = vi.spyOn(repository, 'save')
+      const store = makeFakeStore()
+      const controller = await startDocumentPersistence(makeDeps(repository, store.api, makeBinding(openAssetStorage)))
+      store.edit(255)
+      await vi.advanceTimersByTimeAsync(800)
+      const oldId = useAssetsStore.getState().openAssetId!
+
+      useAssetsStore.getState().removeGeneration(oldId)
+      await vi.advanceTimersByTimeAsync(0)
+
+      expect(useAssetsStore.getState().openAssetId).toBeNull()
+      expect(openAssetStorage.getItem(OPEN_SPRITE_ASSET_STORAGE_KEY)).toBeNull()
+      expect(store.api.exportDocument()).toEqual(payloadWithAlpha(255))
+      expect(await repository.load(oldId)).toBeNull()
+
+      save.mockClear()
+      store.edit(128)
+      await vi.advanceTimersByTimeAsync(800)
+
+      const newId = useAssetsStore.getState().openAssetId!
+      expect(newId).not.toBe(oldId)
+      expect(save).toHaveBeenCalledTimes(1)
+      expect(save.mock.calls[0][0].id).toBe(newId)
+      expect(await repository.load(oldId)).toBeNull()
+      controller.stop()
+    })
+
+    it('an autosave still in flight when the open asset is removed does not leave its document behind', async () => {
+      const inner = createInMemoryDocumentRepository()
+      let releaseSave: () => void = () => {}
+      const repository: DocumentRepository = {
+        ...inner,
+        save: (doc) =>
+          new Promise<void>((resolve) => {
+            releaseSave = () => void inner.save(doc).then(resolve)
+          }),
+      }
+      const store = makeFakeStore()
+      const controller = await startDocumentPersistence(makeDeps(repository, store.api, makeBinding(openAssetStorage)))
+      store.edit(255)
+      await vi.advanceTimersByTimeAsync(800)
+      const oldId = useAssetsStore.getState().openAssetId!
+
+      useAssetsStore.getState().removeGeneration(oldId)
+      await vi.advanceTimersByTimeAsync(0)
+      releaseSave()
+      await vi.advanceTimersByTimeAsync(0)
+
+      expect(await inner.load(oldId)).toBeNull()
+      controller.stop()
+    })
+
+    it('stop() unsubscribes from the assets store', async () => {
+      const repository = createInMemoryDocumentRepository()
+      const remove = vi.spyOn(repository, 'remove')
+      const store = makeFakeStore()
+      const controller = await startDocumentPersistence(makeDeps(repository, store.api, makeBinding(openAssetStorage)))
+      const asset = await addAsset(repository, 'a')
+      controller.stop()
+
+      useAssetsStore.getState().removeGeneration(asset.id)
+      await vi.advanceTimersByTimeAsync(0)
+
+      expect(remove).not.toHaveBeenCalled()
     })
   })
 })

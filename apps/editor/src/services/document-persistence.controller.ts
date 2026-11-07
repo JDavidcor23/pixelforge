@@ -173,6 +173,10 @@ export async function startDocumentPersistence(
   // later request superseded never imports over it.
   let openRequest = 0
 
+  // Autosaves still writing, per document id: a removal waits for them so the
+  // document cannot be re-created by a save that was already in flight.
+  const savesInFlight = new Map<DocumentId, Promise<void>>()
+
   const bailedOut = () => stopped || (isCancelled?.() ?? false)
 
   /** The document id autosave writes to: the open asset, or `null` for a new sprite not stored yet (lazy creation). */
@@ -242,8 +246,16 @@ export async function startDocumentPersistence(
     const revision = sessionRevision
     const payload = store.exportDocument()
     const target = resolveSaveTarget(payload)
-    repository
-      .save({ id: target.id, revision, updatedAt: Date.now(), payload })
+    const write = repository.save({ id: target.id, revision, updatedAt: Date.now(), payload })
+    const settled = write.then(
+      () => {},
+      () => {}
+    )
+    savesInFlight.set(target.id, settled)
+    void settled.then(() => {
+      if (savesInFlight.get(target.id) === settled) savesInFlight.delete(target.id)
+    })
+    write
       .then(() => {
         target.refreshPreview?.()
         store.setState({ saveStatus: 'saved', lastSavedAt: Date.now(), saveError: null })
@@ -366,6 +378,32 @@ export async function startDocumentPersistence(
     }
   })
 
+  /**
+   * An asset left the library (Assets delete, `ASSET_LIBRARY_LIMIT` eviction,
+   * clear, duplicate rollback): its stored document goes with it. When it was
+   * the open asset, the canvas stays as a new unsaved sprite; the next edit
+   * creates a fresh "Untitled N" instead of writing under the deleted id.
+   */
+  const handleAssetRemoved = (binding: DocumentAssetBinding, id: DocumentId) => {
+    if (binding.assets.getState().openAssetId === id) setOpenAsset(binding, null)
+    const pending = savesInFlight.get(id) ?? Promise.resolve()
+    void pending
+      .then(() => repository?.remove(id))
+      .catch((error: unknown) => {
+        console.error('Failed to remove the stored document of a deleted sprite asset', error)
+      })
+  }
+
+  const unsubscribeAssets = assetBinding
+    ? assetBinding.assets.subscribe((state, previous) => {
+        if (state.generations === previous.generations) return
+        const remaining = new Set(state.generations.map((entry) => entry.id))
+        for (const entry of previous.generations) {
+          if (!remaining.has(entry.id)) handleAssetRemoved(assetBinding, entry.id)
+        }
+      })
+    : null
+
   const openAsset = async (id: DocumentId): Promise<boolean> => {
     if (!assetBinding || !repository || stopped) return false
     const request = ++openRequest
@@ -439,6 +477,7 @@ export async function startDocumentPersistence(
     duplicateAsset,
     stop: () => {
       unsubscribe()
+      unsubscribeAssets?.()
       // Phase 2c fix: FLUSH a pending debounced save instead of dropping it
       // — silently losing the last `debounceMs` worth of edits on unmount
       // was the other half of the "remount loses last stroke" bug (the

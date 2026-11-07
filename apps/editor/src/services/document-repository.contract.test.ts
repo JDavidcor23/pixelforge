@@ -89,4 +89,15 @@ describe.each([
     await repository.remove(LOCAL_DRAFT_DOCUMENT_ID)
     expect(await repository.load(LOCAL_DRAFT_DOCUMENT_ID)).toBeNull()
   })
+
+  it('clear() removes every stored document (per-asset documents included)', async () => {
+    const ids = [LOCAL_DRAFT_DOCUMENT_ID, crypto.randomUUID(), crypto.randomUUID()]
+    for (const id of ids) await repository.save(makeDoc(id, 1))
+    await repository.clear()
+    for (const id of ids) expect(await repository.load(id)).toBeNull()
+  })
+
+  it('clear() on an empty repository resolves', async () => {
+    await expect(repository.clear()).resolves.toBeUndefined()
+  })
 })

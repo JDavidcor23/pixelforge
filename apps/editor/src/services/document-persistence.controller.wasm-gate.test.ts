@@ -73,6 +73,7 @@ function makeFakeRepository(stored: StoredDocument | null): DocumentRepository {
     load: vi.fn(async (_id: DocumentId) => stored),
     save: vi.fn(async (_doc: StoredDocument) => {}),
     remove: vi.fn(async (_id: DocumentId) => {}),
+    clear: vi.fn(async () => {}),
   }
 }
 

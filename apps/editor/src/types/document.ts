@@ -59,6 +59,8 @@ export interface DocumentRepository {
   load(id: DocumentId): Promise<StoredDocument | null>
   save(doc: StoredDocument): Promise<void>
   remove(id: DocumentId): Promise<void>
+  /** Removes every stored document (the draft and every per-asset document). */
+  clear(): Promise<void>
 }
 
 /** ADR 0015: the flattened PNG of a sprite document, as its Assets item stores it. */
@@ -87,4 +89,6 @@ export interface DocumentAssetsState {
 
 export interface DocumentAssetsApi {
   getState: () => DocumentAssetsState
+  /** Same signature as zustand's `subscribe`: the listener gets the next and the previous state. */
+  subscribe: (listener: (state: DocumentAssetsState, previous: DocumentAssetsState) => void) => () => void
 }
