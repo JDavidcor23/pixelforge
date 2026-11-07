@@ -13,7 +13,7 @@ design-agent → frontend-agent → cleancode-agent.
 | 1 — Empty screen + Phaser | Done | `3dafa87`, `1a67a94` |
 | 2 — Hand-made level | Done | `dd053fa`, `d0d68ef`, `odd/tasks/build-level.md` |
 | 3 — Sprite is an asset + deep link | Not started | |
-| 4 — Asset catalog | Not started, one decision open | |
+| 4 — Asset catalog | Not started, decided ([ADR 0016](adr/0016-asset-catalog-is-derived.md)) | |
 
 ## Phase 0 — Measure (half a day) — done
 
@@ -74,8 +74,11 @@ upgrade as an Assets item.
 
 ## Phase 4 — Asset catalog
 
-**Decide first**: is the catalog stored (so level and chat-turn tags survive
-a reload) or rebuilt from the two storages on every load?
+**Decided** (2026-11-07, [ADR 0016](adr/0016-asset-catalog-is-derived.md)): the
+catalog is rebuilt in memory from the two storages on every load, not stored.
+Level and chat-turn tags do not survive a reload until they have stable ids
+(upgrade path: a tag sidecar keyed by asset id). Sounds get an in-memory
+revision.
 
 - Zustand slice: entities `byId` + `allIds`; each entity has `id`,
   `revision`, `kind`, optional `levelId`, optional `chatTurnId`, and a
