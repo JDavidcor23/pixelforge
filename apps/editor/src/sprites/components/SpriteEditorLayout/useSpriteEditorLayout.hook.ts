@@ -15,7 +15,6 @@ import {
   useUIState,
 } from '../../hooks/useSpriteEditorStore.hook'
 import { useDocumentPersistence } from '@/hooks/useDocumentPersistence.hook'
-import { useAssetLibraryPersistence } from '@/hooks/useAssetLibraryPersistence.hook'
 import { useSpriteAssetDeepLink } from '@/hooks/useSpriteAssetDeepLink.hook'
 import { useAnimationJobRecovery } from '@/hooks/useAnimationJobRecovery.hook'
 import { useServerAnimationSync } from '@/hooks/useServerAnimationSync.hook'
@@ -34,7 +33,6 @@ export const useSpriteEditorLayout = () => {
   const toggleToolbar = useToggleToolbar()
   const docStatus = useDocStatus()
   const { isPersistent } = useDocumentPersistence()
-  useAssetLibraryPersistence()
   useSpriteAssetDeepLink()
   useAnimationJobRecovery()
   useServerAnimationSync()

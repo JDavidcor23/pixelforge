@@ -70,6 +70,8 @@ export interface AudioAsset {
   prompt?: string
   /** Normalized (0..1) amplitude peaks, WAVE_PEAK_COUNT long, for waveform drawing. */
   peaks?: number[]
+  /** `true` when the sound came from listing the signed-in user's bucket (dropped on sign-out or user change). */
+  fromBucketListing?: boolean
   /** In-memory edit counter bumped by `updateAsset` (sounds are not persisted). Absent means 0. */
   revision?: number
 }
