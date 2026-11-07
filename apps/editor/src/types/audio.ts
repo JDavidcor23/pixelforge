@@ -70,6 +70,8 @@ export interface AudioAsset {
   prompt?: string
   /** Normalized (0..1) amplitude peaks, WAVE_PEAK_COUNT long, for waveform drawing. */
   peaks?: number[]
+  /** In-memory edit counter bumped by `updateAsset` (sounds are not persisted). Absent means 0. */
+  revision?: number
 }
 
 // ── Synth Preset ─────────────────────────────────────────────────────────────

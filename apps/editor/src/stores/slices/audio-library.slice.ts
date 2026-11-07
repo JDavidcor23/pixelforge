@@ -4,6 +4,10 @@ import type { AudioAsset, GenerationRecord } from '@/types/audio'
 import type { AudioLibrarySlice, SoundsStore } from '@/stores/types/audio-slices'
 import { GENERATION_HISTORY_LIMIT } from '@/constants/audio'
 
+/** `true` when applying `updates` would change at least one field (shallow, `Object.is`). */
+const hasChange = (asset: AudioAsset, updates: Partial<AudioAsset>): boolean =>
+  (Object.keys(updates) as (keyof AudioAsset)[]).some((key) => !Object.is(asset[key], updates[key]))
+
 export const createAudioLibrarySlice: StateCreator<
   SoundsStore,
   [['zustand/persist', unknown]],
@@ -33,9 +37,15 @@ export const createAudioLibrarySlice: StateCreator<
   },
 
   updateAsset: (id: string, updates: Partial<AudioAsset>) =>
-    set((state) => ({
-      assets: state.assets.map((a) => (a.id === id ? { ...a, ...updates } : a)),
-    })),
+    set((state) => {
+      const target = state.assets.find((a) => a.id === id)
+      if (!target || !hasChange(target, updates)) return state
+      return {
+        assets: state.assets.map((a) =>
+          a.id === id ? { ...a, ...updates, revision: (a.revision ?? 0) + 1 } : a,
+        ),
+      }
+    }),
 
   setSelectedAsset: (id) => set({ selectedAssetId: id }),
 
