@@ -36,6 +36,8 @@ export interface AssetsState {
    * `ASSET_LIBRARY_LIMIT` never removes it, so autosave always has a target.
    */
   readonly openAssetId: string | null
+  /** `true` once `hydrate` has settled (success or failure). Deep links wait for it before resolving an asset id. */
+  readonly hydrated: boolean
   setOpenAssetId: (id: string | null) => void
   addGeneration: (generation: NewGeneration) => AIGeneration
   /**
@@ -169,11 +171,41 @@ export const useAssetsStore = create<AssetsState>((set, get) => {
     return next
   }
 
+  /** Loads the library from `repository` and merges it with what is already in memory. */
+  const loadFrom = async (repository: AssetLibraryRepository): Promise<void> => {
+    // Attach first: anything generated while loading goes straight to IndexedDB.
+    set({ repository })
+    const stored = await repository.loadAll()
+
+    // In-memory entries IndexedDB doesn't have yet: the legacy localStorage
+    // history on first run, plus anything added before `loadAll` resolved.
+    const { generations: current, animations: currentAnimations } = get()
+    const storedGenerationIds = new Set(stored.generations.map((g) => g.id))
+    const storedAnimationIds = new Set(stored.animations.map((a) => a.id))
+    await repository.putGenerations(current.filter((g) => !storedGenerationIds.has(g.id)))
+    await repository.putAnimations(currentAnimations.filter((a) => !storedAnimationIds.has(a.id)))
+
+    const { openAssetId } = get()
+    const generations = trimToLimit(mergeNewest(get().generations, stored.generations), openAssetId)
+    const animations = trimToLimit(mergeNewest(get().animations, stored.animations), openAssetId)
+    await repository.removeGenerations(generations.evicted)
+    await repository.removeAnimations(animations.evicted)
+
+    set({ generations: generations.kept, animations: animations.kept })
+
+    // Only drop the legacy copy once IndexedDB holds it.
+    if (typeof localStorage !== 'undefined') {
+      persistGenerationHistory(localStorage, [])
+      persistAnimationHistory(localStorage, [])
+    }
+  }
+
   return {
     generations: initialGenerations,
     animations: initialAnimations,
     repository: null,
     openAssetId: null,
+    hydrated: false,
 
     setOpenAssetId: (id) => set({ openAssetId: id }),
   
@@ -331,33 +363,14 @@ export const useAssetsStore = create<AssetsState>((set, get) => {
     },
   
     hydrate: async (repository) => {
-      // Attach first: anything generated while loading goes straight to IndexedDB.
-      set({ repository })
-      const stored = await repository.loadAll()
-  
-      // In-memory entries IndexedDB doesn't have yet: the legacy localStorage
-      // history on first run, plus anything added before `loadAll` resolved.
-      const { generations: current, animations: currentAnimations } = get()
-      const storedGenerationIds = new Set(stored.generations.map((g) => g.id))
-      const storedAnimationIds = new Set(stored.animations.map((a) => a.id))
-      await repository.putGenerations(current.filter((g) => !storedGenerationIds.has(g.id)))
-      await repository.putAnimations(currentAnimations.filter((a) => !storedAnimationIds.has(a.id)))
-  
-      const { openAssetId } = get()
-      const generations = trimToLimit(mergeNewest(get().generations, stored.generations), openAssetId)
-      const animations = trimToLimit(mergeNewest(get().animations, stored.animations), openAssetId)
-      await repository.removeGenerations(generations.evicted)
-      await repository.removeAnimations(animations.evicted)
-  
-      set({ generations: generations.kept, animations: animations.kept })
-  
-      // Only drop the legacy copy once IndexedDB holds it.
-      if (typeof localStorage !== 'undefined') {
-        persistGenerationHistory(localStorage, [])
-        persistAnimationHistory(localStorage, [])
+      try {
+        await loadFrom(repository)
+      } finally {
+        // Success or failure, deep links must stop waiting: they fall back to the in-memory library.
+        set({ hydrated: true })
       }
     },
-  
+
     clearLocalHistory: () => {
       const { repository } = get()
       set({ generations: [], animations: [] })

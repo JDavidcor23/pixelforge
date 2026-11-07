@@ -19,10 +19,23 @@ export interface DocumentAssetCommands {
 }
 
 let activeCommands: DocumentAssetCommands | null = null
+let readinessWaiters: Array<() => void> = []
 
 /** Called by `useDocumentPersistence.hook.ts` once its controller is adopted, and with `null` on cleanup/unmount. */
 export function registerDocumentAssetCommands(commands: DocumentAssetCommands | null): void {
   activeCommands = commands
+  if (!commands) return
+  const waiters = readinessWaiters
+  readinessWaiters = []
+  waiters.forEach((resolve) => resolve())
+}
+
+/** Resolves once a controller has registered (immediately if one already has). Deep links use it so they do not hit the bus too early. */
+export function waitForDocumentAssetCommands(): Promise<void> {
+  if (activeCommands) return Promise.resolve()
+  return new Promise((resolve) => {
+    readinessWaiters.push(resolve)
+  })
 }
 
 export function requestOpenAsset(id: string): Promise<boolean> {
@@ -40,4 +53,5 @@ export function requestNewSprite(): void {
 /** Test-only: forgets the registered commands between test cases. */
 export function resetDocumentAssetBusForTests(): void {
   activeCommands = null
+  readinessWaiters = []
 }

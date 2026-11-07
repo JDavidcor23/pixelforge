@@ -16,6 +16,7 @@ import {
 } from '../../hooks/useSpriteEditorStore.hook'
 import { useDocumentPersistence } from '@/hooks/useDocumentPersistence.hook'
 import { useAssetLibraryPersistence } from '@/hooks/useAssetLibraryPersistence.hook'
+import { useSpriteAssetDeepLink } from '@/hooks/useSpriteAssetDeepLink.hook'
 import { useAnimationJobRecovery } from '@/hooks/useAnimationJobRecovery.hook'
 import { useServerAnimationSync } from '@/hooks/useServerAnimationSync.hook'
 import { CANVAS_MIN_SIZE, RESIZABLE_PANELS, SPRITE_EDITOR_LAYOUT } from '@/constants'
@@ -34,6 +35,7 @@ export const useSpriteEditorLayout = () => {
   const docStatus = useDocStatus()
   const { isPersistent } = useDocumentPersistence()
   useAssetLibraryPersistence()
+  useSpriteAssetDeepLink()
   useAnimationJobRecovery()
   useServerAnimationSync()
 

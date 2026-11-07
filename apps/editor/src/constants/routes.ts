@@ -11,6 +11,9 @@ export const EDITOR_ROUTES = {
   RESET_PASSWORD: '/reset-password',
 } as const
 
+/** Query param carrying the asset id for `/sprites?asset=<id>` and `/sounds?asset=<id>` deep links. */
+export const ASSET_DEEP_LINK_PARAM = 'asset'
+
 export const EDITOR_NAV_ITEMS: readonly EditorNavItem[] = [
   { href: EDITOR_ROUTES.SPRITES, label: 'Sprites', icon: Brush },
   { href: EDITOR_ROUTES.SOUNDS, label: 'Sounds', icon: AudioLines },

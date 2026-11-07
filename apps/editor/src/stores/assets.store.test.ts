@@ -100,11 +100,25 @@ describe('useAssetsStore.hydrate (IndexedDB library)', () => {
       generations: [],
       animations: [],
       repository: null,
+      hydrated: false,
     })
   })
 
   afterEach(() => {
     vi.unstubAllGlobals()
+  })
+
+  it('flips hydrated to true once the repository is loaded', async () => {
+    expect(useAssetsStore.getState().hydrated).toBe(false)
+    await useAssetsStore.getState().hydrate(createInMemoryAssetLibraryRepository())
+    expect(useAssetsStore.getState().hydrated).toBe(true)
+  })
+
+  it('flips hydrated to true even when loading the repository fails, and still rejects', async () => {
+    const failing = createInMemoryAssetLibraryRepository()
+    failing.loadAll = () => Promise.reject(new Error('idb down'))
+    await expect(useAssetsStore.getState().hydrate(failing)).rejects.toThrow('idb down')
+    expect(useAssetsStore.getState().hydrated).toBe(true)
   })
 
   it('migrates the legacy localStorage history into the repository and drops the legacy keys', async () => {
