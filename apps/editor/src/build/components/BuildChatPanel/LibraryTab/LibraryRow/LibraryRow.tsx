@@ -1,17 +1,21 @@
+import { memo } from 'react'
 import { AudioLines, Image, Pencil } from 'lucide-react'
 
+import { useLibraryRow } from './useLibraryRow.hook'
 import { BUILD_SCREEN_COPY } from '@/constants/build-screen'
 import { FOCUS_RING } from '@/constants/focus-ring'
 import { MOTION } from '@/constants/motion'
-import type { LibraryListRow } from '@/build/types'
 
 const EDIT_BUTTON = `flex shrink-0 items-center gap-1 rounded px-2 py-1 text-2xs text-muted hover:bg-raised hover:text-accent ${MOTION.PRESS} ${FOCUS_RING.SURFACE}`
 
 interface LibraryRowProps {
-  row: LibraryListRow
+  id: string
 }
 
-export function LibraryRow({ row }: LibraryRowProps) {
+function LibraryRowView({ id }: LibraryRowProps) {
+  const { row, handleEdit } = useLibraryRow(id)
+  if (!row) return null
+
   const KindIcon = row.kind === 'sprite' ? Image : AudioLines
 
   return (
@@ -21,10 +25,12 @@ export function LibraryRow({ row }: LibraryRowProps) {
         {row.name}
       </span>
       <span className="shrink-0 text-2xs text-subtle">{row.kindLabel}</span>
-      <button type="button" onClick={row.edit} aria-label={row.editAriaLabel} className={EDIT_BUTTON}>
+      <button type="button" onClick={handleEdit} aria-label={row.editAriaLabel} className={EDIT_BUTTON}>
         <Pencil className="size-3" aria-hidden />
         {BUILD_SCREEN_COPY.LIBRARY_EDIT}
       </button>
     </li>
   )
 }
+
+export const LibraryRow = memo(LibraryRowView)

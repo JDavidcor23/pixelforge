@@ -1,61 +1,42 @@
 import { describe, expect, it } from 'vitest'
 
-import { buildLibraryRows } from './build-library-rows'
+import { toLibraryRow } from './build-library-rows'
 import { ASSET_DEEP_LINK_PARAM, EDITOR_ROUTES } from '@/constants/routes'
 import { BUILD_SCREEN_COPY } from '@/constants/build-screen'
-import type { AIGeneration } from '@/types'
-import type { AudioAsset } from '@/types/audio'
+import type { CatalogAssetKind, CatalogEntry } from '@/types/asset-catalog.types'
 
-const sprite = (id: string, prompt: string, kind?: AIGeneration['kind']): AIGeneration => ({
+const entry = (id: string, kind: CatalogAssetKind, name: string): CatalogEntry => ({
   id,
-  prompt,
-  base64: 'data:image/png;base64,AAAA',
-  timestamp: 1,
-  width: 16,
-  height: 16,
   kind,
-})
-
-const sound = (id: string, name: string): AudioAsset => ({
-  id,
   name,
-  tags: [],
-  duration: 1,
-  format: 'wav',
-  fileSize: 1,
-  associatedSpriteIds: [],
-  createdAt: '2026-01-01T00:00:00.000Z',
+  revision: 0,
+  levelId: undefined,
+  chatTurnId: undefined,
+  storage:
+    kind === 'sprite'
+      ? { type: 'sprite-library', assetId: id }
+      : { type: 'sound-source', supabaseUrl: undefined, localObjectUrl: undefined },
 })
 
-describe('buildLibraryRows', () => {
-  it('lists sprites first, then sounds, each in store order', () => {
-    const rows = buildLibraryRows([sprite('s1', 'Hero'), sprite('s2', 'Tree')], [sound('a1', 'Jump'), sound('a2', 'Coin')])
-    expect(rows.map((row) => [row.kind, row.id])).toEqual([
-      ['sprite', 's1'],
-      ['sprite', 's2'],
-      ['sound', 'a1'],
-      ['sound', 'a2'],
-    ])
-  })
-
+describe('toLibraryRow', () => {
   it('builds the deep-link href with the param constant and an encoded id', () => {
-    const [spriteRow, soundRow] = buildLibraryRows([sprite('a b/1', 'Hero')], [sound('x&y', 'Jump')])
-    expect(spriteRow.href).toBe(`${EDITOR_ROUTES.SPRITES}?${ASSET_DEEP_LINK_PARAM}=a%20b%2F1`)
-    expect(soundRow.href).toBe(`${EDITOR_ROUTES.SOUNDS}?${ASSET_DEEP_LINK_PARAM}=x%26y`)
+    expect(toLibraryRow(entry('a b/1', 'sprite', 'Hero')).href).toBe(
+      `${EDITOR_ROUTES.SPRITES}?${ASSET_DEEP_LINK_PARAM}=a%20b%2F1`,
+    )
+    expect(toLibraryRow(entry('x&y', 'sound', 'Jump')).href).toBe(
+      `${EDITOR_ROUTES.SOUNDS}?${ASSET_DEEP_LINK_PARAM}=x%26y`,
+    )
   })
 
-  it('uses the sprite prompt and the sound name, with a fallback for empty names', () => {
-    const rows = buildLibraryRows([sprite('s1', 'Hero'), sprite('s2', '  ')], [sound('a1', 'Jump'), sound('a2', '')])
-    expect(rows.map((row) => row.name)).toEqual([
-      'Hero',
-      BUILD_SCREEN_COPY.LIBRARY_UNNAMED,
-      'Jump',
-      BUILD_SCREEN_COPY.LIBRARY_UNNAMED,
-    ])
+  it('derives the kind label and edit aria label', () => {
+    const sprite = toLibraryRow(entry('s1', 'sprite', 'Hero'))
+    const sound = toLibraryRow(entry('a1', 'sound', 'Jump'))
+    expect(sprite.kindLabel).toBe(BUILD_SCREEN_COPY.LIBRARY_KIND_SPRITE)
+    expect(sound.kindLabel).toBe(BUILD_SCREEN_COPY.LIBRARY_KIND_SOUND)
+    expect(sprite.editAriaLabel).toBe(`${BUILD_SCREEN_COPY.LIBRARY_EDIT_ARIA_PREFIX} Hero`)
   })
 
-  it('includes drawings as sprites and returns nothing for empty stores', () => {
-    expect(buildLibraryRows([sprite('d1', 'Doodle', 'drawing')], []).map((row) => row.kind)).toEqual(['sprite'])
-    expect(buildLibraryRows([], [])).toEqual([])
+  it('keeps id, kind and name from the entry', () => {
+    expect(toLibraryRow(entry('s1', 'sprite', 'Hero'))).toMatchObject({ id: 's1', kind: 'sprite', name: 'Hero' })
   })
 })

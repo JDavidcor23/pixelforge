@@ -1,3 +1,6 @@
+import type { ChangeEvent } from 'react'
+import type { CatalogAssetKind } from '@/types/asset-catalog.types'
+
 /** A point in level pixels (origin top-left, y grows down). */
 export interface LevelPoint {
   x: number
@@ -115,7 +118,7 @@ export interface BuildPanelTabItem {
   label: string
 }
 
-/** Asset kinds the library can be filtered by (static in phase 1, no filtering yet). */
+/** Kind filters of the Biblioteca chip row; music and video match nothing until the catalog holds them. */
 export type LibraryFilter = 'all' | 'sprites' | 'audio' | 'music' | 'video'
 
 export interface LibraryFilterItem {
@@ -132,14 +135,22 @@ export interface MountedGame {
 /** One Biblioteca row: a sprite or sound the Edit button opens through its `?asset=` deep link. */
 export interface LibraryRow {
   id: string
-  kind: 'sprite' | 'sound'
+  kind: CatalogAssetKind
   name: string
   href: string
-}
-
-/** A `LibraryRow` plus the presentation fields and action the Biblioteca list renders. */
-export interface LibraryListRow extends LibraryRow {
   kindLabel: string
   editAriaLabel: string
-  edit: () => void
+}
+
+export interface LibraryTabState {
+  query: string
+  filter: LibraryFilter
+  visibleIds: string[]
+  handleQueryChange: (event: ChangeEvent<HTMLInputElement>) => void
+  selectFilter: (filter: LibraryFilter) => void
+}
+
+export interface LibraryRowState {
+  row: LibraryRow | null
+  handleEdit: () => void
 }

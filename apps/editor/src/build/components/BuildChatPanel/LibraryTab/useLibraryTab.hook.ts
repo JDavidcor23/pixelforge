@@ -1,30 +1,30 @@
-import { useCallback, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState } from 'react'
+import type { ChangeEvent } from 'react'
+import { useShallow } from 'zustand/react/shallow'
 
-import { buildLibraryRows } from '@/build/library/build-library-rows'
-import { useAssetsStore } from '@/stores/assets.store'
-import { useSoundsStore } from '@/stores/sounds.store'
-import { BUILD_SCREEN_COPY } from '@/constants/build-screen'
-import type { LibraryListRow } from '@/build/types'
+import { filterCatalogIds } from '@/lib/asset-catalog/filter-catalog-ids'
+import { useAssetCatalogStore } from '@/stores/asset-catalog.store'
+import { LIBRARY_ACTIVE_FILTER } from '@/constants/build-screen'
+import type { LibraryFilter, LibraryTabState } from '@/build/types'
 
-export function useLibraryTab() {
-  const navigate = useNavigate()
-  const generations = useAssetsStore((state) => state.generations)
-  const sounds = useSoundsStore((state) => state.assets)
+export function useLibraryTab(): LibraryTabState {
+  const [query, setQuery] = useState('')
+  const [filter, setFilter] = useState<LibraryFilter>(LIBRARY_ACTIVE_FILTER)
 
-  const open = useCallback((href: string) => navigate(href), [navigate])
-
-  const rows = useMemo<LibraryListRow[]>(
-    () =>
-      buildLibraryRows(generations, sounds).map((row) => ({
-        ...row,
-        kindLabel:
-          row.kind === 'sprite' ? BUILD_SCREEN_COPY.LIBRARY_KIND_SPRITE : BUILD_SCREEN_COPY.LIBRARY_KIND_SOUND,
-        editAriaLabel: `${BUILD_SCREEN_COPY.LIBRARY_EDIT_ARIA_PREFIX} ${row.name}`,
-        edit: () => open(row.href),
-      })),
-    [generations, sounds, open],
+  // The selector runs on every catalog change but returns a shallow-equal id
+  // list, so the list re-renders only when the visible ids change; each row
+  // reads its own entry by id.
+  const visibleIds = useAssetCatalogStore(
+    useShallow((catalog) => filterCatalogIds(catalog, query, filter)),
   )
 
-  return { rows, hasRows: rows.length > 0 }
+  const handleQueryChange = (event: ChangeEvent<HTMLInputElement>) => setQuery(event.target.value)
+
+  return {
+    query,
+    filter,
+    visibleIds,
+    handleQueryChange,
+    selectFilter: setFilter,
+  }
 }

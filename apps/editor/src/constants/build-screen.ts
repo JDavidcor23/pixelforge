@@ -27,7 +27,7 @@ export const LIBRARY_FILTER_ITEMS: readonly LibraryFilterItem[] = [
   { id: LIBRARY_FILTERS.VIDEO, label: 'Video' },
 ] as const
 
-/** Phase 1 has no filtering: the chip row is static with this one active. */
+/** The kind filter the Biblioteca tab starts on. */
 export const LIBRARY_ACTIVE_FILTER: LibraryFilter = LIBRARY_FILTERS.ALL
 
 export const BUILD_SCREEN_COPY = {

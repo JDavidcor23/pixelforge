@@ -1,33 +1,23 @@
 import { ASSET_DEEP_LINK_PARAM, EDITOR_ROUTES } from '@/constants/routes'
-import { toAssetName } from '@/lib/asset-catalog/asset-name'
+import { BUILD_SCREEN_COPY } from '@/constants/build-screen'
 import type { LibraryRow } from '@/build/types'
-import type { AIGeneration } from '@/types'
-import type { AudioAsset } from '@/types/audio'
+import type { CatalogEntry } from '@/types/asset-catalog.types'
 
 const toHref = (route: string, id: string): string =>
   `${route}?${ASSET_DEEP_LINK_PARAM}=${encodeURIComponent(id)}`
 
 /**
- * Biblioteca rows (ADR 0015, phase 3): every sprite asset the deep link can
- * open (generations and drawings; animations have no document), then every
- * sound, each in store order.
+ * One Biblioteca row derived from a catalog entry (ADR 0016): the entry the
+ * deep link can open (sprites and sounds), with its labels and Edit href.
  */
-export function buildLibraryRows(
-  generations: readonly AIGeneration[],
-  sounds: readonly AudioAsset[],
-): LibraryRow[] {
-  return [
-    ...generations.map((generation): LibraryRow => ({
-      id: generation.id,
-      kind: 'sprite',
-      name: toAssetName(generation.prompt),
-      href: toHref(EDITOR_ROUTES.SPRITES, generation.id),
-    })),
-    ...sounds.map((sound): LibraryRow => ({
-      id: sound.id,
-      kind: 'sound',
-      name: toAssetName(sound.name),
-      href: toHref(EDITOR_ROUTES.SOUNDS, sound.id),
-    })),
-  ]
+export function toLibraryRow(entry: CatalogEntry): LibraryRow {
+  const isSprite = entry.kind === 'sprite'
+  return {
+    id: entry.id,
+    kind: entry.kind,
+    name: entry.name,
+    href: toHref(isSprite ? EDITOR_ROUTES.SPRITES : EDITOR_ROUTES.SOUNDS, entry.id),
+    kindLabel: isSprite ? BUILD_SCREEN_COPY.LIBRARY_KIND_SPRITE : BUILD_SCREEN_COPY.LIBRARY_KIND_SOUND,
+    editAriaLabel: `${BUILD_SCREEN_COPY.LIBRARY_EDIT_ARIA_PREFIX} ${entry.name}`,
+  }
 }
