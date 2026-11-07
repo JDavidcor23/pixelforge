@@ -1,7 +1,8 @@
 import type { PixelBuffer } from '@/types'
 import type { DocumentAssetsApi, DocumentId, DocumentRepository } from '@/types/document'
 import { DRAFT_MIGRATION_ASSET_STORAGE_KEY, LOCAL_DRAFT_DOCUMENT_ID } from '@/constants/persistence'
-import { createUntitledSprite, documentHasContent, documentPreview } from '@/lib/document-preview'
+import { documentHasContent, documentPreview } from '@/lib/document-preview'
+import { nextUntitledName } from '@/lib/untitled-name'
 
 /** The first frame is the Assets preview of a migrated draft — the old draft kept no current-frame index. */
 const MIGRATED_PREVIEW_FRAME_INDEX = 0
@@ -28,10 +29,10 @@ const writeMarker = (storage: DraftMigrationDeps['storage'], assetId: DocumentId
  * - No draft: nothing to do.
  * - Empty draft (every pixel transparent): removed, no asset — blank
  *   "Untitled" items must not pile up.
- * - Draft with content: a new "Untitled N" drawing is added, the draft's
- *   document is saved under its id, and only AFTER that save resolves is the
- *   draft removed. A failed save removes the just-added asset again, keeps the
- *   draft and rethrows, so the next load retries and nothing is lost.
+ * - Draft with content: the draft's document is saved under a new id, and
+ *   only AFTER that save resolves is the "Untitled N" drawing added and the
+ *   draft removed. A failed save adds no asset, keeps the draft and rethrows,
+ *   so the next load retries and nothing is lost.
  * - A run interrupted between the save and the remove left a marker with the
  *   asset id: the retry only removes the draft and returns that same id.
  *
@@ -55,16 +56,20 @@ export async function migrateDraftToAsset(deps: DraftMigrationDeps): Promise<Doc
     return null
   }
 
-  const asset = createUntitledSprite(assets, documentPreview(draft.payload, MIGRATED_PREVIEW_FRAME_INDEX, encodePng))
-  try {
-    await repository.save({ id: asset.id, revision: draft.revision, updatedAt: Date.now(), payload: draft.payload })
-  } catch (error) {
-    assets.getState().removeGeneration(asset.id)
-    throw error
-  }
+  // The document is stored BEFORE the Assets item exists: a failed write then
+  // leaves Assets untouched, and nothing was evicted from a full library to
+  // make room for an asset that never got stored.
+  const assetId = crypto.randomUUID()
+  await repository.save({ id: assetId, revision: draft.revision, updatedAt: Date.now(), payload: draft.payload })
+  const { generations, addDrawing } = assets.getState()
+  addDrawing({
+    id: assetId,
+    prompt: nextUntitledName(generations.map((g) => g.prompt)),
+    ...documentPreview(draft.payload, MIGRATED_PREVIEW_FRAME_INDEX, encodePng),
+  })
 
-  writeMarker(storage, asset.id)
+  writeMarker(storage, assetId)
   await repository.remove(LOCAL_DRAFT_DOCUMENT_ID)
   storage.removeItem(DRAFT_MIGRATION_ASSET_STORAGE_KEY)
-  return asset.id
+  return assetId
 }

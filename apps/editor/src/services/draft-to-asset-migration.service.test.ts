@@ -91,6 +91,27 @@ describe('migrateDraftToAsset (ADR 0015: the old hidden draft becomes an Assets 
     expect(useAssetsStore.getState().generations).toHaveLength(0)
   })
 
+  it('adds the Assets item only after the migrated document is stored, so a full library evicts nothing for a write that may fail', async () => {
+    const inner = createInMemoryDocumentRepository()
+    await inner.save(draft(255))
+    let generationsDuringSave = -1
+    const repository: DocumentRepository = {
+      load: (id) => inner.load(id),
+      remove: (id) => inner.remove(id),
+      clear: () => inner.clear(),
+      save: async (doc) => {
+        generationsDuringSave = useAssetsStore.getState().generations.length
+        await inner.save(doc)
+      },
+    }
+
+    const assetId = await migrateDraftToAsset({ repository, assets: useAssetsStore, storage, encodePng })
+
+    expect(generationsDuringSave).toBe(0)
+    expect(useAssetsStore.getState().generations.map((g) => g.id)).toEqual([assetId])
+    expect((await inner.load(assetId!))?.payload).toEqual(payloadWithAlpha(255))
+  })
+
   it('does not run twice: a second run creates no second asset', async () => {
     const repository = createInMemoryDocumentRepository()
     await repository.save(draft(255))
