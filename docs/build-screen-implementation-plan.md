@@ -12,8 +12,8 @@ design-agent → frontend-agent → cleancode-agent.
 | 0 — Measure | Done | `037f2e4` (ADR 0014 budget table) |
 | 1 — Empty screen + Phaser | Done | `3dafa87`, `1a67a94` |
 | 2 — Hand-made level | Done | `dd053fa`, `d0d68ef`, `odd/tasks/build-level.md` |
-| 3 — Sprite is an asset + deep link | Not started | |
-| 4 — Asset catalog | Not started, decided ([ADR 0016](adr/0016-asset-catalog-is-derived.md)) | |
+| 3 — Sprite is an asset + deep link | Done | `ad72c44`, `odd/tasks/sprite-asset-deep-link.md` |
+| 4 — Asset catalog | Done (scope narrowed, see Phase 4) | `0d1f12c`..`78665ad`, `odd/tasks/asset-catalog.md` |
 
 ## Phase 0 — Measure (half a day) — done
 
@@ -91,8 +91,16 @@ revision.
 - Phaser subscribes per ID outside React; a revision bump swaps that
   texture or sound live.
 
-**Done when**: editing an asset updates its chip, its Biblioteca row and
-the running game, with no level restart and no re-render of other rows.
+**Scope narrowed** (2026-11-07, owner decision): the running game does not
+use any user asset yet (`LevelScene` draws rectangles) and chat chips need a
+chat-turn model that does not exist. Phase 4 ships the catalog and the
+per-ID subscription API (`subscribeToCatalogEntry`); making the game use an
+asset, and chips, are a later phase.
+
+**Done when**: editing a sprite or a sound bumps its catalog revision,
+re-renders only its Biblioteca row, and notifies only that ID's
+subscribers; `/build` opened directly lists stored sprites and the
+signed-in user's sounds; search and kind filter work.
 
 ## Out of scope
 
