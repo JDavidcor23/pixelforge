@@ -7,11 +7,15 @@
  * Both requests are safe no-ops while no controller is registered (before
  * the first restore finishes, or after unmount).
  */
+import type { DuplicateAssetRequest } from '@/types'
+
 export interface DocumentAssetCommands {
   /** Flushes the current asset, then opens `id`. Resolves `false` when `id` has no document and no PNG to build one from. */
   readonly openAsset: (id: string) => Promise<boolean>
   /** Flushes the current asset, then starts a blank, not-yet-stored sprite. */
   readonly newSprite: () => void
+  /** Flushes the open sprite, stores a copy under a new Assets item and opens the copy. Resolves `false` when nothing was duplicated. */
+  readonly duplicateAsset: (request: DuplicateAssetRequest) => Promise<boolean>
 }
 
 let activeCommands: DocumentAssetCommands | null = null
@@ -23,6 +27,10 @@ export function registerDocumentAssetCommands(commands: DocumentAssetCommands | 
 
 export function requestOpenAsset(id: string): Promise<boolean> {
   return activeCommands ? activeCommands.openAsset(id) : Promise.resolve(false)
+}
+
+export function requestDuplicateAsset(request: DuplicateAssetRequest): Promise<boolean> {
+  return activeCommands ? activeCommands.duplicateAsset(request) : Promise.resolve(false)
 }
 
 export function requestNewSprite(): void {

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useId, useRef } from 'react'
 import type { FormEvent, KeyboardEvent, MouseEvent } from 'react'
 
 import { DIALOG_FOCUS_TRAP_KEY, FILE_MENU_DISMISS_KEY } from '@/constants/file-menu'
-import type { UseSaveAsDialogParams, UseSaveAsDialogReturn } from '@/types'
+import type { UseDuplicateDialogParams, UseDuplicateDialogReturn } from '@/types'
 
 // Same manual Tab trap as `useImportSpriteSheetDialog.hook.ts` / `useDeleteAccountDialog.hook.ts`.
 const FOCUSABLE_SELECTOR = 'button:not([disabled]), input:not([disabled]), [href], [tabindex]:not([tabindex="-1"])'
@@ -12,8 +12,8 @@ const getFocusable = (root: HTMLElement): HTMLElement[] =>
     (element) => element.getClientRects().length > 0,
   )
 
-/** Modal mechanics only (focus, Escape, backdrop, submit); the Save As state lives in `useTopBar`. */
-export const useSaveAsDialog = ({ onCancel, onConfirm }: UseSaveAsDialogParams): UseSaveAsDialogReturn => {
+/** Modal mechanics only (focus, Escape, backdrop, submit); the Duplicate state lives in `useTopBar`. */
+export const useDuplicateDialog = ({ onCancel, onConfirm }: UseDuplicateDialogParams): UseDuplicateDialogReturn => {
   const dialogRef = useRef<HTMLDivElement>(null)
   const nameInputRef = useRef<HTMLInputElement>(null)
   const titleId = useId()

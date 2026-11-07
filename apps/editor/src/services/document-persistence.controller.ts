@@ -1,4 +1,4 @@
-import type { DocStatus, PixelBuffer, RgbaColor, SaveStatus } from '@/types'
+import type { DocStatus, DuplicateAssetRequest, PixelBuffer, RgbaColor, SaveStatus } from '@/types'
 import type { DocumentAssetsApi, DocumentId, DocumentPayload, DocumentRepository, StoredDocument } from '@/types/document'
 import { migrateLegacyDraft } from './legacy-draft-migration.service'
 import { migrateDraftToAsset } from './draft-to-asset-migration.service'
@@ -116,6 +116,13 @@ export interface DocumentPersistenceController {
   openAsset: (id: DocumentId) => Promise<boolean>
   /** ADR 0015: saves pending edits, then starts a blank default-size sprite with no open asset (stored on its first edit). */
   newSprite: () => void
+  /**
+   * ADR 0015 "Save As becomes duplicate": saves the open asset's pending edits,
+   * stores a full copy of the document as a NEW Assets item, then opens the
+   * copy. The original stays intact. Resolves `false` (nothing opened) when
+   * there is no asset binding or the copy could not be stored.
+   */
+  duplicateAsset: (request: DuplicateAssetRequest) => Promise<boolean>
 }
 
 const NOOP_CONTROLLER: DocumentPersistenceController = {
@@ -123,6 +130,7 @@ const NOOP_CONTROLLER: DocumentPersistenceController = {
   stop: () => {},
   openAsset: async () => false,
   newSprite: () => {},
+  duplicateAsset: async () => false,
 }
 
 /**
@@ -393,10 +401,42 @@ export async function startDocumentPersistence(
     setOpenAsset(assetBinding, null)
   }
 
+  const duplicateAsset = async (request: DuplicateAssetRequest): Promise<boolean> => {
+    if (!assetBinding || !repository || stopped) return false
+    // A slow `openAsset` still loading must not import over the copy.
+    openRequest += 1
+    // The original's pending edits land under its own id (lazily creating
+    // "Untitled N" for a new sprite) before the copy is taken.
+    flush()
+    const payload = store.exportDocument()
+    const preview = documentPreview(payload, assetBinding.currentFrameIndex(), assetBinding.encodePng)
+    // Created while the original is still open, so the eviction guard keeps
+    // the original; the copy is newest and always kept.
+    const copy = assetBinding.assets
+      .getState()
+      .addDrawing({ prompt: request.name.trim(), assetType: request.assetType, ...preview })
+    sessionRevision += 1
+    try {
+      await repository.save({ id: copy.id, revision: sessionRevision, updatedAt: Date.now(), payload })
+    } catch (error) {
+      console.error('Failed to duplicate sprite asset', error)
+      // No stored document: drop the copy so Assets keeps no half-made item.
+      assetBinding.assets.getState().removeGeneration(copy.id)
+      onPersistentChange(false)
+      store.setState({ saveStatus: 'error', saveError: error instanceof Error ? error.message : String(error) })
+      return false
+    }
+    if (stopped) return false
+    // The canvas already holds this exact content: switch the id without importing, so nothing counts as an edit.
+    setOpenAsset(assetBinding, copy.id)
+    return true
+  }
+
   return {
     flush,
     openAsset,
     newSprite,
+    duplicateAsset,
     stop: () => {
       unsubscribe()
       // Phase 2c fix: FLUSH a pending debounced save instead of dropping it

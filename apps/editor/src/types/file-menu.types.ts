@@ -1,7 +1,7 @@
 import type { ChangeEvent, FormEvent, KeyboardEvent, MouseEvent, RefObject } from 'react'
 
-import type { AIAnimation, AIGeneration, AssetType } from './ai-generation'
-import type { Layer, PixelBuffer } from './index'
+import type { AIAnimation, AssetType } from './ai-generation'
+import type { PixelBuffer } from './index'
 import type { FILE_MENU_ENTRY_KIND } from '@/constants/file-menu'
 
 /** One row of the top bar File menu: an action, or a visual divider between groups. */
@@ -16,7 +16,7 @@ export type FileMenuEntry =
 
 export interface FileMenuActions {
   readonly newSprite: () => void
-  readonly openSaveAs: () => void
+  readonly openDuplicate: () => void
   readonly openImportSpriteSheet: () => void
   readonly exportFrame: () => void
   readonly exportSpriteSheet: () => void
@@ -104,26 +104,26 @@ export interface UseImportSpriteSheetDialogReturn {
   readonly handleSubmit: (event: FormEvent<HTMLFormElement>) => void
 }
 
-/** File > Save As… dialog (ADR 0010, Phase 1). */
-export interface SaveAsDialogProps {
+/** File > Duplicate… dialog (ADR 0015). */
+export interface DuplicateDialogProps {
   readonly name: string
   readonly assetType: AssetType
   /** Validation reason; shown inline under the fields. */
   readonly errorMessage: string | null
-  readonly canSave: boolean
+  readonly canDuplicate: boolean
   readonly onNameChange: (event: ChangeEvent<HTMLInputElement>) => void
   readonly onAssetTypeChange: (assetType: AssetType) => void
   readonly onCancel: () => void
   readonly onConfirm: () => void
 }
 
-export interface UseSaveAsDialogParams {
+export interface UseDuplicateDialogParams {
   readonly onCancel: () => void
   readonly onConfirm: () => void
 }
 
 /** Same modal mechanics (focus trap, Escape, backdrop, submit) as `useImportSpriteSheetDialog`, kept as its own hook so the two dialogs stay independent. */
-export interface UseSaveAsDialogReturn {
+export interface UseDuplicateDialogReturn {
   readonly dialogRef: RefObject<HTMLDivElement | null>
   readonly nameInputRef: RefObject<HTMLInputElement | null>
   readonly titleId: string
@@ -133,17 +133,7 @@ export interface UseSaveAsDialogReturn {
   readonly handleSubmit: (event: FormEvent<HTMLFormElement>) => void
 }
 
-export interface SaveAsRequest {
+export interface DuplicateAssetRequest {
   readonly name: string
   readonly assetType: AssetType
-}
-
-/**
- * Side effects of a File > Save As… confirm, injected so the flow is testable
- * without a DOM (same shape/intent as `SpriteSheetImportDeps`).
- */
-export interface SaveAsDeps {
-  readonly getCanvasState: () => { readonly canvasWidth: number; readonly canvasHeight: number; readonly layers: Layer[] }
-  readonly exportCanvas: (width: number, height: number, layers: Layer[]) => string
-  readonly addDrawing: (drawing: Omit<AIGeneration, 'id' | 'timestamp' | 'kind'>) => AIGeneration
 }

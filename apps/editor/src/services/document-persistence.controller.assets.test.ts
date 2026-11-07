@@ -339,4 +339,114 @@ describe('startDocumentPersistence keyed by the open asset (ADR 0015)', () => {
     errorSpy.mockRestore()
     controller.stop()
   })
+
+  describe('duplicateAsset (ADR 0015: Save As becomes duplicate)', () => {
+    it('creates a typed drawing asset, stores the full document under the new id and opens the copy', async () => {
+      const repository = createInMemoryDocumentRepository()
+      const store = makeFakeStore()
+      const controller = await startDocumentPersistence(makeDeps(repository, store.api, makeBinding(openAssetStorage)))
+      store.edit(255)
+      await vi.advanceTimersByTimeAsync(800)
+      const originalId = useAssetsStore.getState().openAssetId!
+
+      expect(await controller.duplicateAsset({ name: '  Hero copy  ', assetType: 'character' })).toBe(true)
+
+      const copy = useAssetsStore.getState().generations.find((g) => g.id !== originalId)!
+      expect(copy.prompt).toBe('Hero copy')
+      expect(copy.kind).toBe('drawing')
+      expect(copy.assetType).toBe('character')
+      expect((await repository.load(copy.id))?.payload).toEqual(payloadWithAlpha(255))
+      expect(useAssetsStore.getState().openAssetId).toBe(copy.id)
+      expect(openAssetStorage.getItem(OPEN_SPRITE_ASSET_STORAGE_KEY)).toBe(copy.id)
+      controller.stop()
+    })
+
+    it("flushes the original's pending edit under the original id", async () => {
+      const repository = createInMemoryDocumentRepository()
+      const store = makeFakeStore()
+      const controller = await startDocumentPersistence(makeDeps(repository, store.api, makeBinding(openAssetStorage)))
+      store.edit(255)
+      await vi.advanceTimersByTimeAsync(800)
+      const originalId = useAssetsStore.getState().openAssetId!
+      store.edit(90) // pending
+
+      await controller.duplicateAsset({ name: 'copy', assetType: 'character' })
+
+      expect((await repository.load(originalId))?.payload).toEqual(payloadWithAlpha(90))
+      const copy = useAssetsStore.getState().generations.find((g) => g.id !== originalId)!
+      expect((await repository.load(copy.id))?.payload).toEqual(payloadWithAlpha(90))
+      controller.stop()
+    })
+
+    it('does not treat the duplicate as an edit; the next edit autosaves into the copy, not the original', async () => {
+      const repository = createInMemoryDocumentRepository()
+      const store = makeFakeStore()
+      const controller = await startDocumentPersistence(makeDeps(repository, store.api, makeBinding(openAssetStorage)))
+      store.edit(255)
+      await vi.advanceTimersByTimeAsync(800)
+      const originalId = useAssetsStore.getState().openAssetId!
+      await controller.duplicateAsset({ name: 'copy', assetType: 'character' })
+      const copyId = useAssetsStore.getState().openAssetId!
+      const { save } = spy(repository)
+
+      await vi.advanceTimersByTimeAsync(2000)
+      controller.flush()
+      expect(save).not.toHaveBeenCalled()
+
+      store.edit(10)
+      await vi.advanceTimersByTimeAsync(800)
+
+      expect(save).toHaveBeenCalledTimes(1)
+      expect(save.mock.calls[0][0].id).toBe(copyId)
+      expect((await repository.load(originalId))?.payload).toEqual(payloadWithAlpha(255))
+      expect((await repository.load(copyId))?.payload).toEqual(payloadWithAlpha(10))
+      controller.stop()
+    })
+
+    it('duplicating a new, edited-but-unstored sprite stores it as "Untitled N" and opens the copy', async () => {
+      const repository = createInMemoryDocumentRepository()
+      const store = makeFakeStore()
+      const controller = await startDocumentPersistence(makeDeps(repository, store.api, makeBinding(openAssetStorage)))
+      store.edit(77) // pending, no asset yet
+
+      expect(await controller.duplicateAsset({ name: 'Untitled 1 copy', assetType: 'character' })).toBe(true)
+
+      const { generations, openAssetId } = useAssetsStore.getState()
+      const original = generations.find((g) => g.prompt === 'Untitled 1')!
+      const copy = generations.find((g) => g.prompt === 'Untitled 1 copy')!
+      expect(openAssetId).toBe(copy.id)
+      expect((await repository.load(original.id))?.payload).toEqual(payloadWithAlpha(77))
+      expect((await repository.load(copy.id))?.payload).toEqual(payloadWithAlpha(77))
+      controller.stop()
+    })
+
+    it('a repository save failure resolves false and leaves the open asset unchanged', async () => {
+      const inner = createInMemoryDocumentRepository()
+      const store = makeFakeStore()
+      const controller = await startDocumentPersistence(makeDeps(inner, store.api, makeBinding(openAssetStorage)))
+      store.edit(255)
+      await vi.advanceTimersByTimeAsync(800)
+      const originalId = useAssetsStore.getState().openAssetId!
+      vi.spyOn(inner, 'save').mockRejectedValue(new Error('QuotaExceededError'))
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+      expect(await controller.duplicateAsset({ name: 'copy', assetType: 'character' })).toBe(false)
+
+      expect(useAssetsStore.getState().openAssetId).toBe(originalId)
+      expect(store.getSaveStatus()).toBe('error')
+      expect(useAssetsStore.getState().generations.map((asset) => asset.prompt)).not.toContain('copy')
+      errorSpy.mockRestore()
+      controller.stop()
+    })
+
+    it('is a no-op returning false without an asset binding', async () => {
+      const repository = createInMemoryDocumentRepository()
+      const store = makeFakeStore()
+      const controller = await startDocumentPersistence(
+        makeDeps(repository, store.api, makeBinding(openAssetStorage), { assetBinding: undefined }),
+      )
+      expect(await controller.duplicateAsset({ name: 'copy', assetType: 'character' })).toBe(false)
+      controller.stop()
+    })
+  })
 })

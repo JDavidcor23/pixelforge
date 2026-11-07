@@ -5,15 +5,15 @@ import {
   isMenuDismissKey,
   isOutsideMenu,
   resolveDocumentName,
-  runSaveAs,
-  validateSaveAsName,
+  duplicateDefaultName,
+  validateDuplicateName,
 } from './useTopBar.hook'
-import { FILE_MENU_ENTRY_KIND, FILE_MENU_LABELS, SAVE_AS_ERRORS } from '@/constants/file-menu'
-import type { FileMenuActions, SaveAsDeps } from '@/types'
+import { DUPLICATE_ERRORS, DUPLICATE_NAME_SUFFIX, FILE_MENU_ENTRY_KIND, FILE_MENU_LABELS } from '@/constants/file-menu'
+import type { FileMenuActions } from '@/types'
 
 const makeActions = (): FileMenuActions => ({
   newSprite: vi.fn(),
-  openSaveAs: vi.fn(),
+  openDuplicate: vi.fn(),
   openImportSpriteSheet: vi.fn(),
   exportFrame: vi.fn(),
   exportSpriteSheet: vi.fn(),
@@ -27,11 +27,11 @@ const selectByLabel = (actions: FileMenuActions, label: string) => {
 }
 
 describe('buildFileMenuEntries', () => {
-  it('lists New sprite, Save As, a separator, Import, a separator, then the two export items, in order', () => {
+  it('lists New sprite, Duplicate, a separator, Import, a separator, then the two export items, in order', () => {
     const entries = buildFileMenuEntries(makeActions())
     expect(entries.map((entry) => (entry.kind === FILE_MENU_ENTRY_KIND.ITEM ? entry.label : FILE_MENU_ENTRY_KIND.SEPARATOR))).toEqual([
       FILE_MENU_LABELS.NEW_SPRITE,
-      FILE_MENU_LABELS.SAVE_AS,
+      FILE_MENU_LABELS.DUPLICATE,
       FILE_MENU_ENTRY_KIND.SEPARATOR,
       FILE_MENU_LABELS.IMPORT_SPRITE_SHEET,
       FILE_MENU_ENTRY_KIND.SEPARATOR,
@@ -47,11 +47,15 @@ describe('buildFileMenuEntries', () => {
     expect(actions.closeMenu).toHaveBeenCalledTimes(1)
   })
 
-  it('Save As opens the Save As dialog and closes the menu', () => {
+  it('Duplicate… opens the duplicate dialog and closes the menu', () => {
     const actions = makeActions()
-    selectByLabel(actions, FILE_MENU_LABELS.SAVE_AS)
-    expect(actions.openSaveAs).toHaveBeenCalledTimes(1)
+    selectByLabel(actions, FILE_MENU_LABELS.DUPLICATE)
+    expect(actions.openDuplicate).toHaveBeenCalledTimes(1)
     expect(actions.closeMenu).toHaveBeenCalledTimes(1)
+  })
+
+  it('labels the entry "Duplicate…"', () => {
+    expect(FILE_MENU_LABELS.DUPLICATE).toBe('Duplicate…')
   })
 
   it('Export current frame calls the existing frame export and closes the menu', () => {
@@ -78,37 +82,21 @@ describe('buildFileMenuEntries', () => {
   })
 })
 
-describe('validateSaveAsName (File > Save As…, ADR 0010 Phase 1)', () => {
+describe('validateDuplicateName', () => {
   it('rejects a blank or whitespace-only name', () => {
-    expect(validateSaveAsName('')).toBe(SAVE_AS_ERRORS.NAME_REQUIRED)
-    expect(validateSaveAsName('   ')).toBe(SAVE_AS_ERRORS.NAME_REQUIRED)
+    expect(validateDuplicateName('')).toBe(DUPLICATE_ERRORS.NAME_REQUIRED)
+    expect(validateDuplicateName('   ')).toBe(DUPLICATE_ERRORS.NAME_REQUIRED)
   })
 
   it('allows a real name', () => {
-    expect(validateSaveAsName('my hero')).toBeNull()
+    expect(validateDuplicateName('my hero')).toBeNull()
   })
 })
 
-describe('runSaveAs (File > Save As…, ADR 0010 Phase 1)', () => {
-  const makeDeps = (): SaveAsDeps => ({
-    getCanvasState: vi.fn(() => ({ canvasWidth: 32, canvasHeight: 32, layers: [] })),
-    exportCanvas: vi.fn(() => 'data:image/png;base64,exported'),
-    addDrawing: vi.fn((drawing) => ({ ...drawing, id: 'drawing-1', timestamp: 1, kind: 'drawing' })),
-  })
-
-  it('exports the current canvas and adds it to Assets as a named, typed drawing', () => {
-    const deps = makeDeps()
-    runSaveAs({ name: '  my hero  ', assetType: 'character' }, deps)
-
-    expect(deps.getCanvasState).toHaveBeenCalledTimes(1)
-    expect(deps.exportCanvas).toHaveBeenCalledWith(32, 32, [])
-    expect(deps.addDrawing).toHaveBeenCalledWith({
-      prompt: 'my hero',
-      base64: 'data:image/png;base64,exported',
-      width: 32,
-      height: 32,
-      assetType: 'character',
-    })
+describe('duplicateDefaultName', () => {
+  it('pre-fills "<document name> copy"', () => {
+    expect(DUPLICATE_NAME_SUFFIX).toBe(' copy')
+    expect(duplicateDefaultName('Hero')).toBe('Hero copy')
   })
 })
 

@@ -104,6 +104,7 @@ export function useDocumentPersistence(): UseDocumentPersistenceResult {
       registerDocumentAssetCommands({
         openAsset: (id) => controller?.openAsset(id) ?? Promise.resolve(false),
         newSprite: () => controller?.newSprite(),
+        duplicateAsset: (request) => controller?.duplicateAsset(request) ?? Promise.resolve(false),
       })
     }
 

@@ -11,8 +11,8 @@ export const FILE_MENU_COPY = {
 
 export const FILE_MENU_ITEM_IDS = {
   NEW_SPRITE: 'new-sprite',
-  SAVE_AS: 'save-as',
-  SEPARATOR_SAVE_AS: 'separator-save-as',
+  DUPLICATE: 'duplicate',
+  SEPARATOR_DUPLICATE: 'separator-duplicate',
   IMPORT_SPRITE_SHEET: 'import-sprite-sheet',
   SEPARATOR_EXPORT: 'separator-export',
   EXPORT_FRAME: 'export-frame',
@@ -21,7 +21,7 @@ export const FILE_MENU_ITEM_IDS = {
 
 export const FILE_MENU_LABELS = {
   NEW_SPRITE: 'New sprite',
-  SAVE_AS: 'Save As…',
+  DUPLICATE: 'Duplicate…',
   IMPORT_SPRITE_SHEET: 'Import sprite sheet…',
   EXPORT_FRAME: 'Export current frame',
   EXPORT_SPRITE_SHEET: 'Export sprite sheet',
@@ -74,21 +74,24 @@ export const IMPORT_SPRITE_SHEET_FIELD_IDS = {
 /** Strips the last extension: "hero-run.png" -> "hero-run". */
 export const FILE_EXTENSION_PATTERN = /\.[^./\\]+$/
 
-/** File > Save As… dialog (ADR 0010, Phase 1) — snapshots the canvas into Assets under a name and type. */
-export const SAVE_AS_COPY = {
-  TITLE: 'Save As',
-  DESCRIPTION: 'Saves the current canvas to Assets under a name and type.',
+/** File > Duplicate… dialog (ADR 0015) — copies the open sprite into a new Assets item and opens the copy. */
+export const DUPLICATE_COPY = {
+  TITLE: 'Duplicate',
+  DESCRIPTION: 'Copies the open sprite, with its layers and frames, into a new Assets item and opens the copy.',
   NAME_LABEL: 'Name',
   TYPE_LABEL: 'Type',
   CANCEL_BUTTON: 'Cancel',
-  CONFIRM_BUTTON: 'Save',
+  CONFIRM_BUTTON: 'Duplicate',
 } as const
 
-export const SAVE_AS_ERRORS = {
+export const DUPLICATE_ERRORS = {
   NAME_REQUIRED: 'Enter a name for this asset.',
 } as const
 
 /** Name input id, so the `<label htmlFor>` matches its control. */
-export const SAVE_AS_FIELD_IDS = {
-  NAME: 'save-as-name',
+export const DUPLICATE_FIELD_IDS = {
+  NAME: 'duplicate-name',
 } as const
+
+/** Appended to the open document name to pre-fill the duplicate dialog: "Hero" -> "Hero copy". */
+export const DUPLICATE_NAME_SUFFIX = ' copy'

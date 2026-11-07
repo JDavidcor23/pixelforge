@@ -13,19 +13,18 @@ import {
   useUndo,
 } from '@/sprites/hooks/useSpriteEditorStore.hook'
 import { useAssetsStore } from '@/stores/assets.store'
-import { useSpriteEditorStore } from '@/stores'
-import { layersToBase64 } from '@/lib'
 import { nextUntitledName } from '@/lib/untitled-name'
-import { requestNewSprite } from '@/services/document-asset-bus.service'
+import { requestDuplicateAsset, requestNewSprite } from '@/services/document-asset-bus.service'
 import { DEFAULT_ASSET_TYPE, RESIZABLE_PANELS } from '@/constants'
 import {
   FILE_MENU_DISMISS_KEY,
   FILE_MENU_ENTRY_KIND,
   FILE_MENU_ITEM_IDS,
   FILE_MENU_LABELS,
-  SAVE_AS_ERRORS,
+  DUPLICATE_ERRORS,
+  DUPLICATE_NAME_SUFFIX,
 } from '@/constants/file-menu'
-import type { AIGeneration, AssetType, FileMenuActions, FileMenuEntry, SaveAsDeps, SaveAsDialogProps, SaveAsRequest } from '@/types'
+import type { AIGeneration, AssetType, DuplicateDialogProps, FileMenuActions, FileMenuEntry } from '@/types'
 
 /** File menu rows, in menubar order. Every action closes the menu after it runs. */
 export const buildFileMenuEntries = (actions: FileMenuActions): FileMenuEntry[] => {
@@ -42,11 +41,11 @@ export const buildFileMenuEntries = (actions: FileMenuActions): FileMenuEntry[] 
     },
     {
       kind: FILE_MENU_ENTRY_KIND.ITEM,
-      id: FILE_MENU_ITEM_IDS.SAVE_AS,
-      label: FILE_MENU_LABELS.SAVE_AS,
-      onSelect: runAndClose(actions.openSaveAs),
+      id: FILE_MENU_ITEM_IDS.DUPLICATE,
+      label: FILE_MENU_LABELS.DUPLICATE,
+      onSelect: runAndClose(actions.openDuplicate),
     },
-    { kind: FILE_MENU_ENTRY_KIND.SEPARATOR, id: FILE_MENU_ITEM_IDS.SEPARATOR_SAVE_AS },
+    { kind: FILE_MENU_ENTRY_KIND.SEPARATOR, id: FILE_MENU_ITEM_IDS.SEPARATOR_DUPLICATE },
     {
       kind: FILE_MENU_ENTRY_KIND.ITEM,
       id: FILE_MENU_ITEM_IDS.IMPORT_SPRITE_SHEET,
@@ -84,27 +83,12 @@ export const resolveDocumentName = (
 ): string =>
   sprites.find((sprite) => sprite.id === openAssetId)?.prompt ?? nextUntitledName(sprites.map((sprite) => sprite.prompt))
 
-/** First reason Save As can't confirm yet, or null when it's allowed. */
-export const validateSaveAsName = (name: string): string | null =>
-  name.trim() === '' ? SAVE_AS_ERRORS.NAME_REQUIRED : null
+/** First reason Duplicate can't confirm yet, or null when it's allowed. */
+export const validateDuplicateName = (name: string): string | null =>
+  name.trim() === '' ? DUPLICATE_ERRORS.NAME_REQUIRED : null
 
-/**
- * File > Save As… (ADR 0010, Phase 1): snapshots whatever's on the canvas
- * right now and adds it to Assets as a new `kind: 'drawing'` item. Does NOT
- * touch the hidden autosave draft (S3) — `getCanvasState` is a one-off read,
- * never a subscription.
- */
-export const runSaveAs = (request: SaveAsRequest, deps: SaveAsDeps): void => {
-  const { canvasWidth, canvasHeight, layers } = deps.getCanvasState()
-  const base64 = deps.exportCanvas(canvasWidth, canvasHeight, layers)
-  deps.addDrawing({
-    prompt: request.name.trim(),
-    base64,
-    width: canvasWidth,
-    height: canvasHeight,
-    assetType: request.assetType,
-  })
-}
+/** ADR 0015: the duplicate dialog pre-fills "<open document name> copy". */
+export const duplicateDefaultName = (documentName: string): string => `${documentName}${DUPLICATE_NAME_SUFFIX}`
 
 /**
  * TopBar shell logic — document name, frame count, undo/redo, layout reset
@@ -124,7 +108,6 @@ export const useTopBar = () => {
   const { handleExportFrame, handleExportSpriteSheet } = useExport()
 
   const importSpriteSheet = useImportSpriteSheet()
-  const addDrawing = useAssetsStore((state) => state.addDrawing)
   // Selects the name string, not `generations`: autosave refreshes the open
   // asset's preview on every save, and the top bar must not re-render for it.
   const documentName = useAssetsStore((state) => resolveDocumentName(state.openAssetId, state.generations))
@@ -133,60 +116,57 @@ export const useTopBar = () => {
   const fileMenuRef = useRef<HTMLDivElement>(null)
   const fileTriggerRef = useRef<HTMLButtonElement>(null)
 
-  // File > Save As… (ADR 0010, Phase 1). Modal mechanics live in
-  // `SaveAsDialog/useSaveAsDialog.hook.ts`; this is just the open/name/type state.
-  const [isSaveAsOpen, setIsSaveAsOpen] = useState(false)
-  const [saveAsName, setSaveAsName] = useState('')
-  const [saveAsAssetType, setSaveAsAssetType] = useState<AssetType>(DEFAULT_ASSET_TYPE)
+  // File > Duplicate… (ADR 0015). Modal mechanics live in
+  // `DuplicateDialog/useDuplicateDialog.hook.ts`; this is just the open/name/type state.
+  const [isDuplicateOpen, setIsDuplicateOpen] = useState(false)
+  const [duplicateName, setDuplicateName] = useState('')
+  const [duplicateAssetType, setDuplicateAssetType] = useState<AssetType>(DEFAULT_ASSET_TYPE)
 
-  const handleOpenSaveAs = useCallback(() => {
-    setSaveAsName('')
-    setSaveAsAssetType(DEFAULT_ASSET_TYPE)
-    setIsSaveAsOpen(true)
-  }, [])
-  const handleCancelSaveAs = useCallback(() => setIsSaveAsOpen(false), [])
-  const handleSaveAsNameChange = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => setSaveAsName(event.target.value),
+  const handleOpenDuplicate = useCallback(() => {
+    setDuplicateName(duplicateDefaultName(documentName))
+    setDuplicateAssetType(DEFAULT_ASSET_TYPE)
+    setIsDuplicateOpen(true)
+  }, [documentName])
+  const handleCancelDuplicate = useCallback(() => setIsDuplicateOpen(false), [])
+  const handleDuplicateNameChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => setDuplicateName(event.target.value),
     [],
   )
-  const handleSaveAsAssetTypeChange = useCallback((assetType: AssetType) => setSaveAsAssetType(assetType), [])
+  const handleDuplicateAssetTypeChange = useCallback((assetType: AssetType) => setDuplicateAssetType(assetType), [])
 
-  const saveAsErrorMessage = validateSaveAsName(saveAsName)
-  const canSaveAs = saveAsErrorMessage === null
+  const duplicateErrorMessage = validateDuplicateName(duplicateName)
+  const canDuplicate = duplicateErrorMessage === null
 
-  const handleConfirmSaveAs = useCallback(() => {
-    if (!canSaveAs) return
-    runSaveAs(
-      { name: saveAsName, assetType: saveAsAssetType },
-      { getCanvasState: () => useSpriteEditorStore.getState(), exportCanvas: layersToBase64, addDrawing },
-    )
-    setIsSaveAsOpen(false)
-  }, [canSaveAs, saveAsName, saveAsAssetType, addDrawing])
+  const handleConfirmDuplicate = useCallback(() => {
+    if (!canDuplicate) return
+    void requestDuplicateAsset({ name: duplicateName, assetType: duplicateAssetType })
+    setIsDuplicateOpen(false)
+  }, [canDuplicate, duplicateName, duplicateAssetType])
 
-  const saveAsDialogProps = useMemo<SaveAsDialogProps | null>(
+  const duplicateDialogProps = useMemo<DuplicateDialogProps | null>(
     () =>
-      isSaveAsOpen
+      isDuplicateOpen
         ? {
-            name: saveAsName,
-            assetType: saveAsAssetType,
-            errorMessage: saveAsErrorMessage,
-            canSave: canSaveAs,
-            onNameChange: handleSaveAsNameChange,
-            onAssetTypeChange: handleSaveAsAssetTypeChange,
-            onCancel: handleCancelSaveAs,
-            onConfirm: handleConfirmSaveAs,
+            name: duplicateName,
+            assetType: duplicateAssetType,
+            errorMessage: duplicateErrorMessage,
+            canDuplicate,
+            onNameChange: handleDuplicateNameChange,
+            onAssetTypeChange: handleDuplicateAssetTypeChange,
+            onCancel: handleCancelDuplicate,
+            onConfirm: handleConfirmDuplicate,
           }
         : null,
     [
-      isSaveAsOpen,
-      saveAsName,
-      saveAsAssetType,
-      saveAsErrorMessage,
-      canSaveAs,
-      handleSaveAsNameChange,
-      handleSaveAsAssetTypeChange,
-      handleCancelSaveAs,
-      handleConfirmSaveAs,
+      isDuplicateOpen,
+      duplicateName,
+      duplicateAssetType,
+      duplicateErrorMessage,
+      canDuplicate,
+      handleDuplicateNameChange,
+      handleDuplicateAssetTypeChange,
+      handleCancelDuplicate,
+      handleConfirmDuplicate,
     ],
   )
 
@@ -206,13 +186,13 @@ export const useTopBar = () => {
     () =>
       buildFileMenuEntries({
         newSprite: requestNewSprite,
-        openSaveAs: handleOpenSaveAs,
+        openDuplicate: handleOpenDuplicate,
         openImportSpriteSheet: openFilePicker,
         exportFrame: handleExportFrame,
         exportSpriteSheet: handleExportSpriteSheet,
         closeMenu: () => closeFileMenu(),
       }),
-    [handleOpenSaveAs, openFilePicker, handleExportFrame, handleExportSpriteSheet, closeFileMenu],
+    [handleOpenDuplicate, openFilePicker, handleExportFrame, handleExportSpriteSheet, closeFileMenu],
   )
 
   useEffect(() => {
@@ -261,7 +241,7 @@ export const useTopBar = () => {
     fileTriggerRef,
     toggleFileMenu,
     fileMenuEntries,
-    saveAsDialogProps,
+    duplicateDialogProps,
     importFileInputRef: importSpriteSheet.fileInputRef,
     handleImportFileSelected: importSpriteSheet.handleFileSelected,
     importDialogProps: importSpriteSheet.dialogProps,
