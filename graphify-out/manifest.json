@@ -60,10 +60,10 @@
     "semantic_hash": ""
   },
   "apps/editor/src/components/EditorLayout/useEditorLayout.hook.ts": {
-    "mtime": 1794064585.7371285,
-    "seen": 1794072539.9745305,
-    "ast_hash": "7fd198cc330cdc03df27aef65d7ed771",
-    "semantic_hash": "7fd198cc330cdc03df27aef65d7ed771"
+    "mtime": 1794084647.9063056,
+    "seen": 1794085434.062249,
+    "ast_hash": "8cbe65078b3d6907d6e109d40914ea72",
+    "semantic_hash": ""
   },
   "apps/editor/src/components/SettingsPanel/ApiKeyField/ApiKeyField.tsx": {
     "mtime": 1794064585.7385807,
@@ -1638,10 +1638,10 @@
     "semantic_hash": "03f937289069c292b46968c66135f2ba"
   },
   "apps/editor/src/stores/slices/audio-library.slice.ts": {
-    "mtime": 1794064586.1158166,
-    "seen": 1794072539.9754555,
-    "ast_hash": "8ae37349f72b42861be26f265d6fcced",
-    "semantic_hash": "8ae37349f72b42861be26f265d6fcced"
+    "mtime": 1794082145.1872487,
+    "seen": 1794085434.196225,
+    "ast_hash": "39543d5f41b45c3052bf703dc5e80b32",
+    "semantic_hash": ""
   },
   "apps/editor/src/stores/slices/audio-playback.slice.ts": {
     "mtime": 1794064586.1158166,
@@ -1800,10 +1800,10 @@
     "semantic_hash": ""
   },
   "apps/editor/src/types/audio.ts": {
-    "mtime": 1794064586.1448154,
-    "seen": 1794072539.9755056,
-    "ast_hash": "a7f7ef7c27cb14ea6f74781884a275db",
-    "semantic_hash": "a7f7ef7c27cb14ea6f74781884a275db"
+    "mtime": 1794084734.381079,
+    "seen": 1794085434.206217,
+    "ast_hash": "56d96ddbde5c44813308b0e6037c20fe",
+    "semantic_hash": ""
   },
   "apps/editor/src/types/document.ts": {
     "mtime": 1794076546.3676019,
@@ -2448,9 +2448,9 @@
     "semantic_hash": "fa8e04ea5dce57653fd197177232e10c"
   },
   "docs/learning-log/README.md": {
-    "mtime": 1794064586.260304,
-    "seen": 1794072539.9757473,
-    "ast_hash": "17a2218ab29e3a6679a7da9d878e78bf",
+    "mtime": 1794081181.092352,
+    "seen": 1794085434.2480311,
+    "ast_hash": "5f3760a4bd62c778ebf601743eef419b",
     "semantic_hash": ""
   },
   "openspec/changes/migrate-to-rust-core/baseline-bench.md": {
@@ -2718,9 +2718,9 @@
     "semantic_hash": "a4bdc540c8e926405e564805fdf6a9e4"
   },
   "apps/editor/src/sprites/components/SpriteEditorLayout/useSpriteEditorLayout.hook.ts": {
-    "mtime": 1794073578.4940784,
-    "seen": 1794073690.495073,
-    "ast_hash": "f741d0eaffbb55bc6a75e5ab73e537ae",
+    "mtime": 1794084647.9063056,
+    "seen": 1794085434.1580775,
+    "ast_hash": "63d54ad478f24f5fdf9487a602377d8a",
     "semantic_hash": ""
   },
   "apps/editor/src/lib/canvas-blank.ts": {
@@ -3738,9 +3738,9 @@
     "semantic_hash": ""
   },
   "docs/build-screen-implementation-plan.md": {
-    "mtime": 1794064586.2467346,
-    "seen": 1794072539.9757335,
-    "ast_hash": "caf8dedf22d792e730552c21a749418d",
+    "mtime": 1794085280.8735518,
+    "seen": 1794085434.245782,
+    "ast_hash": "55ee0fc89b4b839971dd17e679bba472",
     "semantic_hash": ""
   },
   "docs/learning-log/2026-10-28-build-screen-architecture.md": {
@@ -3768,9 +3768,9 @@
     "semantic_hash": ""
   },
   "apps/editor/src/constants/build-screen.ts": {
-    "mtime": 1794074526.2150817,
-    "seen": 1794074701.7810378,
-    "ast_hash": "31f8a3566e253e1bb3910fb42477fdfb",
+    "mtime": 1794085072.4664977,
+    "seen": 1794085434.0662606,
+    "ast_hash": "312156f9f5ed1d8cdf5b000bf0cfb41f",
     "semantic_hash": ""
   },
   "apps/editor/public/levels/level-1.json": {
@@ -3816,9 +3816,9 @@
     "semantic_hash": ""
   },
   "odd/tasks/sprite-asset-deep-link.md": {
-    "mtime": 1794076830.7175972,
-    "seen": 1794076845.0844114,
-    "ast_hash": "68b199ab475d1469f876dc8818ab6bce",
+    "mtime": 1794078645.324591,
+    "seen": 1794085434.2500062,
+    "ast_hash": "0cca419c4578a47542122c198c90025e",
     "semantic_hash": ""
   },
   "apps/editor/src/lib/document-preview.test.ts": {
@@ -3852,15 +3852,15 @@
     "semantic_hash": ""
   },
   "apps/editor/src/services/draft-to-asset-migration.service.test.ts": {
-    "mtime": 1794073020.321735,
-    "seen": 1794073133.6086183,
-    "ast_hash": "ffed97f79e461b294d3083e9318c1f1a",
+    "mtime": 1794079281.1293676,
+    "seen": 1794085434.1167428,
+    "ast_hash": "6983e1379861251c06f14ec83c8a0b74",
     "semantic_hash": ""
   },
   "apps/editor/src/services/draft-to-asset-migration.service.ts": {
-    "mtime": 1794069971.583691,
-    "seen": 1794072539.9750369,
-    "ast_hash": "2852042d135fdcb083d982d844d44e45",
+    "mtime": 1794079300.117796,
+    "seen": 1794085434.1167483,
+    "ast_hash": "1b6b7a20f7d21b2af09b3d8815c37dac",
     "semantic_hash": ""
   },
   "apps/editor/src/lib/open-library-item.test.ts": {
@@ -3945,6 +3945,144 @@
     "mtime": 1794074526.346012,
     "seen": 1794074701.7807946,
     "ast_hash": "84635c3bfb4c7a0edeb662dc89916528",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/hooks/useSoundLibraryHydration.hook.ts": {
+    "mtime": 1794084734.5213633,
+    "seen": 1794085434.0725508,
+    "ast_hash": "31ad1d2f4cd24560758f3dc1692e109f",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/lib/asset-catalog/asset-name.ts": {
+    "mtime": 1794082005.2132583,
+    "seen": 1794085434.0761225,
+    "ast_hash": "5056cf2df3f43537205f927ecc53eaec",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/lib/asset-catalog/catalog-subscription.test.ts": {
+    "mtime": 1794085190.4982972,
+    "seen": 1794085434.0761266,
+    "ast_hash": "2474bd8276fec533dc35e24a2efbe907",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/lib/asset-catalog/catalog-subscription.ts": {
+    "mtime": 1794085202.4317825,
+    "seen": 1794085434.0761294,
+    "ast_hash": "34d076a4cfad4b17db005eb58b15219e",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/lib/asset-catalog/derive-asset-catalog.test.ts": {
+    "mtime": 1794081846.1023355,
+    "seen": 1794085434.0761316,
+    "ast_hash": "45d76c00f2c69a2b18ad442a11d90c55",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/lib/asset-catalog/derive-asset-catalog.ts": {
+    "mtime": 1794082151.5013595,
+    "seen": 1794085434.0761335,
+    "ast_hash": "f68c6d73fcc3dc054a5f07e4301088f9",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/lib/asset-catalog/filter-catalog-ids.test.ts": {
+    "mtime": 1794084857.435123,
+    "seen": 1794085434.076136,
+    "ast_hash": "1a8c309e5d8a21fadef04fdcb405f776",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/lib/asset-catalog/filter-catalog-ids.ts": {
+    "mtime": 1794084918.0074005,
+    "seen": 1794085434.0761414,
+    "ast_hash": "112c8ef7e571fb9ffa5bdbc2100d09f3",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/sounds/features/library/services/drop-listed-sounds.test.ts": {
+    "mtime": 1794084708.8543608,
+    "seen": 1794085434.1338727,
+    "ast_hash": "333df3830495f4a0406fe6c244ded147",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/sounds/features/library/services/drop-listed-sounds.ts": {
+    "mtime": 1794084734.4289138,
+    "seen": 1794085434.133877,
+    "ast_hash": "664cd78ba78542265f37ea8a6f19c292",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/sounds/features/library/services/hydrate-listed-sounds.service.test.ts": {
+    "mtime": 1794084709.0531847,
+    "seen": 1794085434.13388,
+    "ast_hash": "e16953da94cd556899642bc56f03160b",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/sounds/features/library/services/hydrate-listed-sounds.service.ts": {
+    "mtime": 1794084734.468421,
+    "seen": 1794085434.133882,
+    "ast_hash": "96e34aeed124f77576d5df34743a2c4c",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/sounds/features/library/services/merge-listed-sounds.test.ts": {
+    "mtime": 1794084619.455123,
+    "seen": 1794085434.133885,
+    "ast_hash": "acffb29ef519ba28d51f3c1c86bbbc51",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/sounds/features/library/services/merge-listed-sounds.ts": {
+    "mtime": 1794084647.6680229,
+    "seen": 1794085434.1338873,
+    "ast_hash": "f5a6eff8b7bfc2ed695e9d591d7ccc4e",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/stores/asset-catalog.store.test.ts": {
+    "mtime": 1794081846.147127,
+    "seen": 1794085434.192951,
+    "ast_hash": "0790e7b6d6e78c4bce44925e6a5b304a",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/stores/asset-catalog.store.ts": {
+    "mtime": 1794082005.3237638,
+    "seen": 1794085434.192959,
+    "ast_hash": "27df56ee8242425df2a5491ea424892b",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/stores/slices/audio-library.slice.test.ts": {
+    "mtime": 1794081979.8848834,
+    "seen": 1794085434.1962178,
+    "ast_hash": "4d967dfcae69630ff0152d10afc09023",
+    "semantic_hash": ""
+  },
+  "apps/editor/src/types/asset-catalog.types.ts": {
+    "mtime": 1794082005.175763,
+    "seen": 1794085434.2062092,
+    "ast_hash": "1d76f48b4c17aa014b123ea58cd8da91",
+    "semantic_hash": ""
+  },
+  "docs/adr/0016-asset-catalog-is-derived.md": {
+    "mtime": 1794081176.5647533,
+    "seen": 1794085434.242906,
+    "ast_hash": "a79b7961452c6e98581a53e97ec93de6",
+    "semantic_hash": ""
+  },
+  "docs/learning-log/2026-11-07-derived-asset-catalog.md": {
+    "mtime": 1794081178.0453024,
+    "seen": 1794085434.2480245,
+    "ast_hash": "421b2478553918a98ab9705501a1d519",
+    "semantic_hash": ""
+  },
+  "odd/handoffs/2026-11-07-after-sprite-asset-deep-link.md": {
+    "mtime": 1794078659.3186054,
+    "seen": 1794085434.2488346,
+    "ast_hash": "c766b789a573da76088fc8ec6be3e750",
+    "semantic_hash": ""
+  },
+  "odd/handoffs/2026-11-07-build-screen-phase-4.md": {
+    "mtime": 1794079849.8680108,
+    "seen": 1794085434.248839,
+    "ast_hash": "3406264c48ea24cc3800195a7fd7ccee",
+    "semantic_hash": ""
+  },
+  "odd/tasks/asset-catalog.md": {
+    "mtime": 1794085247.2797542,
+    "seen": 1794085434.2494318,
+    "ast_hash": "c4ddbece592d4e704402180c1db82a0c",
     "semantic_hash": ""
   },
   "package-lock.json": {

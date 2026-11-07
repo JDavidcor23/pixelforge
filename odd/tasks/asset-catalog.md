@@ -29,7 +29,8 @@ One normalized catalog (`byId` + `allIds`; `id`, `revision`, `kind`, optional `l
 - [x] T2 — S4 `/build` hydration: sprite assets + signed-in sounds from Supabase, deduped — delegated (writer trigger: 2 hooks + 3 services + tests) — RED 2 suites missing modules; follow-up RED 1 suite + 2 tests (user switch) → GREEN; tsc ok (parent re-ran); suite 892/892 — commit below
 - [x] T3 — S5 Biblioteca by id + search + kind filter — delegated, project pipeline (no new visuals, so the design step is the existing placeholders) → frontend-agent → cleancode-agent — RED 2 files / 3 tests (missing module, `toLibraryRow`) → GREEN; suite 898/898, tsc ok (parent re-ran) — commit below
 - [x] T4 — S6 per-id subscription for Phaser: `subscribeToCatalogEntry(id, listener)` + `getCatalogEntry(id)` in `lib/asset-catalog/catalog-subscription.ts`, no fire on subscribe, reference comparison — delegated (context) — RED module missing → GREEN 7 tests; suite 905/905, tsc ok — commit below
-- [ ] T5 — correct the plan's phase 4 "Done when", verify the done-when list, close
+- [x] T5 — correct the plan's phase 4 "Done when" (and mark phase 3 done) — inline — f81e488. Done-when evidence: revision bump + per-id subscribers + filter covered by tests (905/905, tsc ok); row isolation is by construction (memo + per-id selector + structural sharing), with no React render test (no jsdom); `/build` hydration has no browser check (hooks untested, covered by service tests + typecheck). Stray empty `lib/asset-catalog/.tmp` from T1 removed — de6e4f6.
+- [ ] Native review of `ad72c44..HEAD`: assess = medium, `slice_budget_reached` (~1342 lines). Preflight STATUS asked for an intended-untracked selection; every payload was refused (`must be exact ...selection/v1 JSON`). Waiting on the owner's decision.
 
 ## Log
 
