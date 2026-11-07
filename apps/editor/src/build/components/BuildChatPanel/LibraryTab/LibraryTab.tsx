@@ -1,6 +1,8 @@
 import { LayoutGrid, Search } from 'lucide-react'
 
 import { BuildEmptyState } from '../../BuildEmptyState/BuildEmptyState'
+import { LibraryRow } from './LibraryRow/LibraryRow'
+import { useLibraryTab } from './useLibraryTab.hook'
 import {
   BUILD_SCREEN_COPY,
   LIBRARY_ACTIVE_FILTER,
@@ -11,8 +13,10 @@ const CHIP = 'flex items-center rounded-full px-2.5 py-1 text-2xs'
 const CHIP_ACTIVE = `${CHIP} bg-accent text-on-accent`
 const CHIP_INACTIVE = `${CHIP} bg-hover text-muted`
 
-/** Phase 1: layout only — search and filter chips are static until the library is wired. */
+/** Search and filter chips stay static (phase 4 wires the catalog); the list reads the sprite and sound stores. */
 export function LibraryTab() {
+  const { rows, hasRows } = useLibraryTab()
+
   return (
     <div role="tabpanel" className="flex min-h-0 flex-1 flex-col">
       <div className="p-3">
@@ -39,11 +43,22 @@ export function LibraryTab() {
         ))}
       </ul>
 
-      <BuildEmptyState
-        icon={LayoutGrid}
-        title={BUILD_SCREEN_COPY.LIBRARY_EMPTY_TITLE}
-        hint={BUILD_SCREEN_COPY.LIBRARY_EMPTY_HINT}
-      />
+      {hasRows ? (
+        <ul
+          aria-label={BUILD_SCREEN_COPY.LIBRARY_LIST_LABEL}
+          className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-3 pb-3"
+        >
+          {rows.map((row) => (
+            <LibraryRow key={`${row.kind}-${row.id}`} row={row} />
+          ))}
+        </ul>
+      ) : (
+        <BuildEmptyState
+          icon={LayoutGrid}
+          title={BUILD_SCREEN_COPY.LIBRARY_EMPTY_TITLE}
+          hint={BUILD_SCREEN_COPY.LIBRARY_EMPTY_HINT}
+        />
+      )}
     </div>
   )
 }

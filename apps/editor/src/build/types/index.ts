@@ -128,3 +128,18 @@ export interface MountedGame {
   destroy(): void
   onceDestroyed(callback: () => void): void
 }
+
+/** One Biblioteca row: a sprite or sound the Edit button opens through its `?asset=` deep link. */
+export interface LibraryRow {
+  id: string
+  kind: 'sprite' | 'sound'
+  name: string
+  href: string
+}
+
+/** A `LibraryRow` plus the presentation fields and action the Biblioteca list renders. */
+export interface LibraryListRow extends LibraryRow {
+  kindLabel: string
+  editAriaLabel: string
+  edit: () => void
+}

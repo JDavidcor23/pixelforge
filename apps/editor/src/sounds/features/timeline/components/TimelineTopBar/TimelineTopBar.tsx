@@ -1,5 +1,6 @@
 import { Download, Loader2, Pencil, Redo2, Undo2 } from 'lucide-react'
 
+import { BackToBuildButton } from '@/components/BackToBuildButton/BackToBuildButton'
 import { useTimelineTopBar } from './useTimelineTopBar.hook'
 import { DISABLED_STATE, FOCUS_RING } from '@/constants/focus-ring'
 import { MOTION } from '@/constants/motion'
@@ -34,6 +35,8 @@ export function TimelineTopBar() {
   return (
     <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-line px-6">
       <div className="flex min-w-0 items-center gap-3">
+        <BackToBuildButton focusRing={FOCUS_RING.BASE} />
+        <div className="h-4 w-px shrink-0 bg-line-strong" />
         {isRenaming ? (
           <input
             type="text"

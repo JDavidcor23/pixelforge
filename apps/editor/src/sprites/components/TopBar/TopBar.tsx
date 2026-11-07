@@ -1,5 +1,6 @@
 import { ChevronDown, FileImage, PanelsTopLeft, Redo2, Undo2 } from 'lucide-react'
 
+import { BackToBuildButton } from '@/components/BackToBuildButton/BackToBuildButton'
 import { useTopBar } from './useTopBar.hook'
 import { CanvasSizePopover } from './CanvasSizePopover/CanvasSizePopover'
 import { SaveIndicator } from './SaveIndicator/SaveIndicator'
@@ -48,6 +49,8 @@ export const TopBar = () => {
 
   return (
     <header className="flex h-11 shrink-0 items-center gap-2.5 border-b border-line bg-surface px-4">
+      <BackToBuildButton focusRing={FOCUS_RING.SURFACE} />
+      <div className="h-4 w-px shrink-0 bg-line-strong" />
       <span className="font-mono text-2xs font-bold tracking-widest text-accent">PIXELFORGE</span>
 
       <div className="relative" ref={fileMenuRef}>

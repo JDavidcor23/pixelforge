@@ -1,5 +1,6 @@
 import { ArrowLeft, AudioLines } from 'lucide-react'
 
+import { BackToBuildButton } from '@/components/BackToBuildButton/BackToBuildButton'
 import { SoundDetail } from '@/sounds/features/detail'
 import { DeleteSoundDialog, LibrarySidebar } from '@/sounds/features/library'
 import { TimelineEditor } from '@/sounds/features/timeline'
@@ -32,7 +33,7 @@ export function SoundEditorLayout() {
         <TimelineEditor />
       ) : (
         <div className="flex min-w-0 flex-1 flex-col">
-          <div className="shrink-0 px-6 pt-4">
+          <div className="flex shrink-0 items-center gap-2 px-6 pt-4">
             <button
               type="button"
               onClick={handleBackToTimeline}
@@ -41,6 +42,7 @@ export function SoundEditorLayout() {
               <ArrowLeft className="size-3.5" aria-hidden />
               Back to timeline
             </button>
+            <BackToBuildButton focusRing={FOCUS_RING.BASE} />
           </div>
           <SoundDetail />
         </div>
