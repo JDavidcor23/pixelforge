@@ -120,9 +120,9 @@
     "semantic_hash": "58df57805fcd819442320c7754699642"
   },
   "apps/editor/src/constants/persistence.ts": {
-    "mtime": 1794069971.5705836,
-    "seen": 1794072539.9745843,
-    "ast_hash": "8d6dcc7155de9e13ba127798f0d3f71b",
+    "mtime": 1794076687.412516,
+    "seen": 1794076844.9725008,
+    "ast_hash": "274e64349a162f53836670e65479219f",
     "semantic_hash": ""
   },
   "apps/editor/src/constants/routes.ts": {
@@ -162,9 +162,9 @@
     "semantic_hash": "f41140c93c80f8d8ee5a840fa61f5f2c"
   },
   "apps/editor/src/hooks/useDocumentPersistence.hook.ts": {
-    "mtime": 1794070570.1427348,
-    "seen": 1794072539.9746199,
-    "ast_hash": "525bf78bc44d9f051e3cedcb2711bccd",
+    "mtime": 1794076752.2899258,
+    "seen": 1794076844.9746296,
+    "ast_hash": "0c12aefa446a7099974a5bcd1280b623",
     "semantic_hash": ""
   },
   "apps/editor/src/lib/animation-history.test.ts": {
@@ -660,9 +660,9 @@
     "semantic_hash": ""
   },
   "apps/editor/src/services/document-persistence.controller.ts": {
-    "mtime": 1794073093.230114,
-    "seen": 1794073133.6081736,
-    "ast_hash": "81aced9bc86a95fe14306d06e315d442",
+    "mtime": 1794076692.957061,
+    "seen": 1794076844.9999924,
+    "ast_hash": "e195fca3cd9997ff22660fd81adf8320",
     "semantic_hash": ""
   },
   "apps/editor/src/services/document-persistence.controller.wasm-gate.test.ts": {
@@ -1806,9 +1806,9 @@
     "semantic_hash": "a7f7ef7c27cb14ea6f74781884a275db"
   },
   "apps/editor/src/types/document.ts": {
-    "mtime": 1794072983.2979734,
-    "seen": 1794073133.6685944,
-    "ast_hash": "e4fc3de98b84191423d7fb46bffa48ee",
+    "mtime": 1794076546.3676019,
+    "seen": 1794076845.0529563,
+    "ast_hash": "5ca572310680d943f8f18ac7cb6b3a44",
     "semantic_hash": ""
   },
   "apps/editor/src/types/index.ts": {
@@ -2700,9 +2700,9 @@
     "semantic_hash": "a1cc528325e34153578d2d785ffb33a0"
   },
   "apps/editor/src/stores/assets.store.ts": {
-    "mtime": 1794073559.0502481,
-    "seen": 1794073690.516868,
-    "ast_hash": "aad44d758d18182e8471677cd0468438",
+    "mtime": 1794076546.3665955,
+    "seen": 1794076845.0443096,
+    "ast_hash": "4e3d8965de1dd76e554f57f12dc071a5",
     "semantic_hash": ""
   },
   "apps/editor/src/sprites/components/ResizeHandle/ResizeHandle.tsx": {
@@ -3066,9 +3066,9 @@
     "semantic_hash": "be72873fd6879d57c08f3444439061e5"
   },
   "apps/editor/src/auth/components/DeleteAccountDialog/useDeleteAccountDialog.hook.ts": {
-    "mtime": 1794072983.4807649,
-    "seen": 1794073133.5738528,
-    "ast_hash": "e0bb1b071e875b0a0a074731cd6b57cc",
+    "mtime": 1794076752.2899258,
+    "seen": 1794076844.9671104,
+    "ast_hash": "8eded8b1d07271ae562d6433da7e8c6b",
     "semantic_hash": ""
   },
   "apps/editor/src/components/EditorLayout/AccountDeletedNotice/AccountDeletedNotice.tsx": {
@@ -3126,9 +3126,9 @@
     "semantic_hash": "c59f0ef5bc89d42a301e6cb7098f97e2"
   },
   "apps/editor/src/stores/assets.store.test.ts": {
-    "mtime": 1794073521.0246093,
-    "seen": 1794073690.5168645,
-    "ast_hash": "c3d868ed041b3ecc59cb8a3f4b93ee3c",
+    "mtime": 1794076533.885574,
+    "seen": 1794076845.0443056,
+    "ast_hash": "38179ae09153110bed91076b2f0a614d",
     "semantic_hash": ""
   },
   "apps/editor/src/types/account-deletion.types.ts": {
@@ -3816,9 +3816,9 @@
     "semantic_hash": ""
   },
   "odd/tasks/sprite-asset-deep-link.md": {
-    "mtime": 1794074687.345365,
-    "seen": 1794074701.881616,
-    "ast_hash": "bd674816d7fc86e128dd91e5207d3d27",
+    "mtime": 1794076830.7175972,
+    "seen": 1794076845.0844114,
+    "ast_hash": "68b199ab475d1469f876dc8818ab6bce",
     "semantic_hash": ""
   },
   "apps/editor/src/lib/document-preview.test.ts": {
@@ -3834,21 +3834,21 @@
     "semantic_hash": ""
   },
   "apps/editor/src/services/document-asset-bus.service.test.ts": {
-    "mtime": 1794073600.2522235,
-    "seen": 1794073690.4668267,
-    "ast_hash": "b3ffcdf6077f1b2514720c25300216e1",
+    "mtime": 1794076738.658706,
+    "seen": 1794076844.9996696,
+    "ast_hash": "9702724ab0e9d750d9a3a5d4e8d74880",
     "semantic_hash": ""
   },
   "apps/editor/src/services/document-asset-bus.service.ts": {
-    "mtime": 1794073578.2542384,
-    "seen": 1794073690.4668312,
-    "ast_hash": "5f6ddb559dc3d20a215c9dcda7bfba86",
+    "mtime": 1794076752.2886026,
+    "seen": 1794076844.9996717,
+    "ast_hash": "643554d074edb7c7b51cc2b2193acb14",
     "semantic_hash": ""
   },
   "apps/editor/src/services/document-persistence.controller.assets.test.ts": {
-    "mtime": 1794073020.307024,
-    "seen": 1794073133.6081681,
-    "ast_hash": "57c93e2bb1cb4392c3de787bb750a450",
+    "mtime": 1794076711.5095057,
+    "seen": 1794076844.9998343,
+    "ast_hash": "8a03f1a544fce77c5c498047d0436525",
     "semantic_hash": ""
   },
   "apps/editor/src/services/draft-to-asset-migration.service.test.ts": {
@@ -3888,15 +3888,15 @@
     "semantic_hash": ""
   },
   "apps/editor/src/services/clear-local-sprite-data.service.test.ts": {
-    "mtime": 1794072950.705752,
-    "seen": 1794073133.6075468,
-    "ast_hash": "1d7ad5116d7b5a16476c132fb1eab013",
+    "mtime": 1794076738.6600552,
+    "seen": 1794076844.9996626,
+    "ast_hash": "28ba93b1cc45376da624101278bc5499",
     "semantic_hash": ""
   },
   "apps/editor/src/services/clear-local-sprite-data.service.ts": {
-    "mtime": 1794072983.3384721,
-    "seen": 1794073133.6075501,
-    "ast_hash": "73220881ca2b984c0a5a8ea12c891d79",
+    "mtime": 1794076752.2886026,
+    "seen": 1794076844.9996667,
+    "ast_hash": "9db34015e468e3ce0a2ab0c9d4c024f3",
     "semantic_hash": ""
   },
   "apps/editor/src/hooks/useBackToBuild.hook.test.ts": {
