@@ -4,6 +4,8 @@ import { DRAFT_MIGRATION_ASSET_STORAGE_KEY, OPEN_SPRITE_ASSET_STORAGE_KEY } from
 export interface ClearLocalSpriteDataDeps {
   readonly resolveRepository: () => Promise<ResolvedDocumentRepository>
   readonly storage: Pick<Storage, 'removeItem'>
+  /** Cancels the editor's pending/in-flight autosave first, so it cannot re-create a document after the wipe. */
+  readonly discardPendingSaves?: () => Promise<void>
 }
 
 /**
@@ -12,7 +14,16 @@ export interface ClearLocalSpriteDataDeps {
  * point at them. Each step is isolated — a failure is logged and never blocks
  * the rest of the account-deletion flow.
  */
-export async function clearLocalSpriteData({ resolveRepository, storage }: ClearLocalSpriteDataDeps): Promise<void> {
+export async function clearLocalSpriteData({
+  resolveRepository,
+  storage,
+  discardPendingSaves,
+}: ClearLocalSpriteDataDeps): Promise<void> {
+  try {
+    await discardPendingSaves?.()
+  } catch (error) {
+    console.error('Failed to cancel the pending autosave before the local wipe', error)
+  }
   try {
     const { repository } = await resolveRepository()
     await repository.clear()

@@ -1,10 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import type { DocumentPayload, DocumentRepository, StoredDocument } from '@/types/document'
 import type { DocStatus, PixelBuffer, SaveStatus } from '@/types'
-import { LOCAL_DRAFT_DOCUMENT_ID, OPEN_SPRITE_ASSET_STORAGE_KEY } from '@/constants/persistence'
+import { ASSET_LIBRARY_LIMIT, LOCAL_DRAFT_DOCUMENT_ID, OPEN_SPRITE_ASSET_STORAGE_KEY } from '@/constants/persistence'
 import { SPRITE_EDITOR_CANVAS } from '@/constants'
 import { useAssetsStore } from '@/stores/assets.store'
 import { createInMemoryDocumentRepository } from './in-memory-document.repository.service'
+import { createInMemoryAssetLibraryRepository } from './in-memory-asset-library.repository.service'
 import {
   startDocumentPersistence,
   type DocumentAssetBinding,
@@ -124,7 +125,7 @@ describe('startDocumentPersistence keyed by the open asset (ADR 0015)', () => {
     vi.useFakeTimers()
     vi.stubGlobal('localStorage', memoryStorage())
     openAssetStorage = memoryStorage()
-    useAssetsStore.setState({ generations: [], animations: [], repository: null, openAssetId: null })
+    useAssetsStore.setState({ generations: [], animations: [], repository: null, openAssetId: null, hydrated: true })
   })
 
   afterEach(() => {
@@ -564,9 +565,11 @@ describe('startDocumentPersistence keyed by the open asset (ADR 0015)', () => {
       }
       const store = makeFakeStore()
       const controller = await startDocumentPersistence(makeDeps(repository, store.api, makeBinding(openAssetStorage)))
+      // An existing open asset: a first save has no Assets item until its write settles.
+      const oldId = (await addAsset(inner, 'open')).id
+      useAssetsStore.getState().setOpenAssetId(oldId)
       store.edit(255)
       await vi.advanceTimersByTimeAsync(800)
-      const oldId = useAssetsStore.getState().openAssetId!
 
       useAssetsStore.getState().removeGeneration(oldId)
       await vi.advanceTimersByTimeAsync(0)
@@ -589,6 +592,238 @@ describe('startDocumentPersistence keyed by the open asset (ADR 0015)', () => {
       await vi.advanceTimersByTimeAsync(0)
 
       expect(remove).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('review follow-ups (T7b)', () => {
+    const PNG = 'data:image/png;base64,AA'
+    const aiAsset = () => useAssetsStore.getState().addGeneration({ prompt: 'ai sprite', base64: PNG, width: 1, height: 1 })
+
+    /** A full library on a repository-backed store, so eviction is active. */
+    const fillLibrary = () => {
+      const generations = Array.from({ length: ASSET_LIBRARY_LIMIT }, (_, i) => ({
+        id: `g${i}`,
+        prompt: `asset ${i}`,
+        base64: PNG,
+        width: 1,
+        height: 1,
+        timestamp: i + 1,
+      }))
+      useAssetsStore.setState({ generations: [...generations].reverse(), repository: createInMemoryAssetLibraryRepository() })
+      return generations
+    }
+    const libraryIds = () => useAssetsStore.getState().generations.map((g) => g.id)
+
+    describe('F1: restore of an opened-but-never-edited asset', () => {
+      it('opens it from its PNG and keeps it as the open asset, still unstored', async () => {
+        const asset = aiAsset()
+        openAssetStorage.setItem(OPEN_SPRITE_ASSET_STORAGE_KEY, asset.id)
+        const repository = createInMemoryDocumentRepository()
+        const { save } = spy(repository)
+        const store = makeFakeStore()
+        const binding = makeBinding(openAssetStorage)
+
+        const controller = await startDocumentPersistence(makeDeps(repository, store.api, binding))
+
+        expect(binding.decodePng).toHaveBeenCalledWith(asset.base64)
+        expect(useAssetsStore.getState().openAssetId).toBe(asset.id)
+        expect(openAssetStorage.getItem(OPEN_SPRITE_ASSET_STORAGE_KEY)).toBe(asset.id)
+        expect([...store.api.exportDocument().frames[0].layers[0].data]).toEqual([7, 7, 7, 255])
+        await vi.advanceTimersByTimeAsync(2000)
+        expect(save).not.toHaveBeenCalled()
+        controller.stop()
+      })
+
+      it('waits for the assets library to hydrate before deciding the id is gone', async () => {
+        const asset = aiAsset()
+        useAssetsStore.setState({ generations: [], hydrated: false })
+        openAssetStorage.setItem(OPEN_SPRITE_ASSET_STORAGE_KEY, asset.id)
+        const store = makeFakeStore()
+
+        const starting = startDocumentPersistence(
+          makeDeps(createInMemoryDocumentRepository(), store.api, makeBinding(openAssetStorage)),
+        )
+        await vi.advanceTimersByTimeAsync(10)
+        useAssetsStore.setState({ generations: [asset], hydrated: true })
+        const controller = await starting
+
+        expect(useAssetsStore.getState().openAssetId).toBe(asset.id)
+        controller.stop()
+      })
+
+      it('stops waiting for a library that never hydrates and starts blank', async () => {
+        useAssetsStore.setState({ hydrated: false })
+        openAssetStorage.setItem(OPEN_SPRITE_ASSET_STORAGE_KEY, 'never')
+        const store = makeFakeStore()
+
+        const starting = startDocumentPersistence(
+          makeDeps(createInMemoryDocumentRepository(), store.api, makeBinding(openAssetStorage)),
+        )
+        await vi.advanceTimersByTimeAsync(60_000)
+        const controller = await starting
+
+        expect(useAssetsStore.getState().openAssetId).toBeNull()
+        controller.stop()
+      })
+    })
+
+    describe('F2: a failed write never costs another asset', () => {
+      it('a failed duplicate at the library limit keeps every asset and its document', async () => {
+        const repository = createInMemoryDocumentRepository()
+        const store = makeFakeStore()
+        const controller = await startDocumentPersistence(makeDeps(repository, store.api, makeBinding(openAssetStorage)))
+        fillLibrary()
+        await repository.save({ id: 'g0', revision: 1, updatedAt: 0, payload: payloadWithAlpha(9) })
+        useAssetsStore.getState().setOpenAssetId('g100')
+        vi.spyOn(repository, 'save').mockRejectedValue(new Error('QuotaExceededError'))
+        const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+        expect(await controller.duplicateAsset({ name: 'copy', assetType: 'character' })).toBe(false)
+        await vi.advanceTimersByTimeAsync(0)
+
+        expect(libraryIds()).toHaveLength(ASSET_LIBRARY_LIMIT)
+        expect(libraryIds()).toContain('g0')
+        expect(await repository.load('g0')).not.toBeNull()
+        errorSpy.mockRestore()
+        controller.stop()
+      })
+
+      it('a successful duplicate at the limit evicts the oldest asset and its document', async () => {
+        const repository = createInMemoryDocumentRepository()
+        const store = makeFakeStore()
+        const controller = await startDocumentPersistence(makeDeps(repository, store.api, makeBinding(openAssetStorage)))
+        fillLibrary()
+        await repository.save({ id: 'g0', revision: 1, updatedAt: 0, payload: payloadWithAlpha(9) })
+        useAssetsStore.getState().setOpenAssetId('g100')
+
+        expect(await controller.duplicateAsset({ name: 'copy', assetType: 'character' })).toBe(true)
+        await vi.advanceTimersByTimeAsync(0)
+
+        expect(libraryIds()).toHaveLength(ASSET_LIBRARY_LIMIT)
+        expect(libraryIds()).not.toContain('g0')
+        expect(libraryIds()).toContain('g100')
+        expect(await repository.load('g0')).toBeNull()
+        controller.stop()
+      })
+
+      it('a failed first save at the limit keeps every asset and leaves no open asset', async () => {
+        const repository = createInMemoryDocumentRepository()
+        const store = makeFakeStore()
+        const controller = await startDocumentPersistence(makeDeps(repository, store.api, makeBinding(openAssetStorage)))
+        fillLibrary()
+        await repository.save({ id: 'g0', revision: 1, updatedAt: 0, payload: payloadWithAlpha(9) })
+        vi.spyOn(repository, 'save').mockRejectedValue(new Error('QuotaExceededError'))
+        const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+        store.edit(255)
+        await vi.advanceTimersByTimeAsync(800)
+
+        expect(libraryIds()).toHaveLength(ASSET_LIBRARY_LIMIT)
+        expect(libraryIds()).toContain('g0')
+        expect(await repository.load('g0')).not.toBeNull()
+        expect(useAssetsStore.getState().openAssetId).toBeNull()
+        errorSpy.mockRestore()
+        controller.stop()
+      })
+
+      it('a successful first save at the limit adds "Untitled N" and evicts the oldest asset', async () => {
+        const repository = createInMemoryDocumentRepository()
+        const store = makeFakeStore()
+        const controller = await startDocumentPersistence(makeDeps(repository, store.api, makeBinding(openAssetStorage)))
+        fillLibrary()
+        await repository.save({ id: 'g0', revision: 1, updatedAt: 0, payload: payloadWithAlpha(9) })
+
+        store.edit(255)
+        await vi.advanceTimersByTimeAsync(800)
+
+        const openId = useAssetsStore.getState().openAssetId!
+        expect(libraryIds()).toHaveLength(ASSET_LIBRARY_LIMIT)
+        expect(libraryIds()).toContain(openId)
+        expect(libraryIds()).not.toContain('g0')
+        expect(await repository.load(openId)).not.toBeNull()
+        expect(await repository.load('g0')).toBeNull()
+        controller.stop()
+      })
+
+      it('two saves before the first write settles create ONE asset', async () => {
+        const inner = createInMemoryDocumentRepository()
+        let releaseFirst: () => void = () => {}
+        const realSave = inner.save.bind(inner)
+        vi.spyOn(inner, 'save').mockImplementationOnce(
+          (doc) => new Promise<void>((resolve) => { releaseFirst = () => resolve(realSave(doc)) }),
+        )
+        const store = makeFakeStore()
+        const controller = await startDocumentPersistence(makeDeps(inner, store.api, makeBinding(openAssetStorage)))
+
+        store.edit(100)
+        await vi.advanceTimersByTimeAsync(800)
+        store.edit(200)
+        await vi.advanceTimersByTimeAsync(800)
+        releaseFirst()
+        await vi.advanceTimersByTimeAsync(0)
+
+        expect(useAssetsStore.getState().generations).toHaveLength(1)
+        expect(useAssetsStore.getState().generations[0].id).toBe(useAssetsStore.getState().openAssetId)
+        controller.stop()
+      })
+    })
+
+    describe('F4: a wipe cancels pending and in-flight autosave', () => {
+      it('drops the pending debounced save, also on stop()', async () => {
+        const repository = createInMemoryDocumentRepository()
+        const { save } = spy(repository)
+        const store = makeFakeStore()
+        const controller = await startDocumentPersistence(makeDeps(repository, store.api, makeBinding(openAssetStorage)))
+        store.edit(255)
+
+        await controller.discardPendingSaves()
+        await vi.advanceTimersByTimeAsync(2000)
+        controller.stop()
+
+        expect(save).not.toHaveBeenCalled()
+        expect(useAssetsStore.getState().generations).toHaveLength(0)
+        expect(useAssetsStore.getState().openAssetId).toBeNull()
+      })
+
+      it('waits for an in-flight save and ignores its result, so nothing is recreated after the wipe', async () => {
+        const inner = createInMemoryDocumentRepository()
+        let releaseSave: () => void = () => {}
+        const realSave = inner.save.bind(inner)
+        vi.spyOn(inner, 'save').mockImplementationOnce(
+          (doc) => new Promise<void>((resolve) => { releaseSave = () => resolve(realSave(doc)) }),
+        )
+        const store = makeFakeStore()
+        const controller = await startDocumentPersistence(makeDeps(inner, store.api, makeBinding(openAssetStorage)))
+        store.edit(255)
+        await vi.advanceTimersByTimeAsync(800)
+
+        let settled = false
+        const discarding = controller.discardPendingSaves().then(() => { settled = true })
+        await vi.advanceTimersByTimeAsync(0)
+        expect(settled).toBe(false)
+
+        releaseSave()
+        await discarding
+        await inner.clear()
+        await vi.advanceTimersByTimeAsync(0)
+
+        expect(useAssetsStore.getState().generations).toHaveLength(0)
+        expect(useAssetsStore.getState().openAssetId).toBeNull()
+        controller.stop()
+      })
+
+      it('edits made after the wipe autosave normally', async () => {
+        const repository = createInMemoryDocumentRepository()
+        const store = makeFakeStore()
+        const controller = await startDocumentPersistence(makeDeps(repository, store.api, makeBinding(openAssetStorage)))
+        await controller.discardPendingSaves()
+
+        store.edit(50)
+        await vi.advanceTimersByTimeAsync(800)
+
+        expect(useAssetsStore.getState().generations).toHaveLength(1)
+        controller.stop()
+      })
     })
   })
 })

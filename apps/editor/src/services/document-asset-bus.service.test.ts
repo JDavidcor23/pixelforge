@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import {
   registerDocumentAssetCommands,
+  requestDiscardPendingSaves,
   requestDuplicateAsset,
   requestNewSprite,
   requestOpenAsset,
@@ -17,13 +18,28 @@ describe('document asset bus', () => {
     expect(await requestOpenAsset('a1')).toBe(false)
     expect(await requestDuplicateAsset({ name: 'x', assetType: 'character' })).toBe(false)
     expect(() => requestNewSprite()).not.toThrow()
+    await expect(requestDiscardPendingSaves()).resolves.toBeUndefined()
+  })
+
+  it('forwards a discard request to the registered controller and waits for it', async () => {
+    let release: () => void = () => {}
+    const discardPendingSaves = vi.fn(() => new Promise<void>((resolve) => { release = resolve }))
+    registerDocumentAssetCommands({ openAsset: vi.fn(async () => true), newSprite: vi.fn(), duplicateAsset: vi.fn(async () => true), discardPendingSaves })
+    let done = false
+    const pending = requestDiscardPendingSaves().then(() => { done = true })
+    await Promise.resolve()
+    expect(discardPendingSaves).toHaveBeenCalledTimes(1)
+    expect(done).toBe(false)
+    release()
+    await pending
+    expect(done).toBe(true)
   })
 
   it('forwards open/new to the registered controller commands until unregistered', async () => {
     const openAsset = vi.fn(async () => true)
     const newSprite = vi.fn()
     const duplicateAsset = vi.fn(async () => true)
-    registerDocumentAssetCommands({ openAsset, newSprite, duplicateAsset })
+    registerDocumentAssetCommands({ openAsset, newSprite, duplicateAsset, discardPendingSaves: vi.fn(async () => {}) })
 
     expect(await requestOpenAsset('a1')).toBe(true)
     requestNewSprite()
@@ -43,7 +59,12 @@ describe('document asset bus readiness', () => {
     resetDocumentAssetBusForTests()
   })
 
-  const commands = () => ({ openAsset: vi.fn(async () => true), newSprite: vi.fn(), duplicateAsset: vi.fn(async () => true) })
+  const commands = () => ({
+    openAsset: vi.fn(async () => true),
+    newSprite: vi.fn(),
+    duplicateAsset: vi.fn(async () => true),
+    discardPendingSaves: vi.fn(async () => {}),
+  })
 
   it('resolves immediately when commands are already registered', async () => {
     registerDocumentAssetCommands(commands())

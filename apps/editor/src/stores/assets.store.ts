@@ -1,12 +1,13 @@
 import { create } from 'zustand'
 
 import { ANIMATION_HISTORY_STORAGE_KEY, GENERATION_HISTORY_STORAGE_KEY } from '@/constants'
-import { ASSET_LIBRARY_LIMIT } from '@/constants/persistence'
+import { ASSET_LIBRARY_LIMIT, OPEN_SPRITE_ASSET_STORAGE_KEY } from '@/constants/persistence'
 import { parseAnimationHistory, persistAnimationHistory } from '@/lib/animation-history'
 import { parseGenerationHistory, persistGenerationHistory } from '@/lib/generation-history'
 import type { AIAnimation, AIGeneration, AssetLibraryRepository, AssetType } from '@/types'
 
-type NewGeneration = Omit<AIGeneration, 'id' | 'timestamp'>
+/** `id` is optional: a caller that stores the sprite document first reserves the id so a failed write never costs an evicted asset. */
+type NewGeneration = Omit<AIGeneration, 'id' | 'timestamp'> & { readonly id?: string }
 
 /** The new pixels an autosave writes into an existing sprite asset (ADR 0015). */
 type SpriteContent = Pick<AIGeneration, 'base64' | 'width' | 'height'>
@@ -90,6 +91,15 @@ const readStorage = (key: string): string | null => {
   return localStorage.getItem(key)
 }
 
+/** The open asset id the editor persisted — hydrate can run before the controller restore sets `openAssetId`. */
+const readPersistedOpenAssetId = (): string | null => {
+  try {
+    return readStorage(OPEN_SPRITE_ASSET_STORAGE_KEY)
+  } catch {
+    return null
+  }
+}
+
 /** Union by id (first occurrence wins), newest first. */
 const mergeNewest = <T extends LibraryEntry>(...lists: readonly (readonly T[])[]): T[] => {
   const byId = new Map<string, T>()
@@ -145,7 +155,7 @@ export const useAssetsStore = create<AssetsState>((set, get) => {
     const next: AIGeneration = {
       ...generation,
       base64: toPngDataUri(generation.base64),
-      id: crypto.randomUUID(),
+      id: generation.id ?? crypto.randomUUID(),
       timestamp: Date.now(),
     }
 
@@ -185,7 +195,8 @@ export const useAssetsStore = create<AssetsState>((set, get) => {
     await repository.putGenerations(current.filter((g) => !storedGenerationIds.has(g.id)))
     await repository.putAnimations(currentAnimations.filter((a) => !storedAnimationIds.has(a.id)))
 
-    const { openAssetId } = get()
+    // Eviction must not take the open asset, even when the controller has not restored it yet.
+    const openAssetId = get().openAssetId ?? readPersistedOpenAssetId()
     const generations = trimToLimit(mergeNewest(get().generations, stored.generations), openAssetId)
     const animations = trimToLimit(mergeNewest(get().animations, stored.animations), openAssetId)
     await repository.removeGenerations(generations.evicted)

@@ -36,6 +36,34 @@ describe('clearLocalSpriteData', () => {
     expect(storage.has(DRAFT_MIGRATION_ASSET_STORAGE_KEY)).toBe(false)
   })
 
+  it('discards pending and in-flight autosaves BEFORE clearing the repository', async () => {
+    const order: string[] = []
+    const repository = fakeRepository({ clear: vi.fn(async () => { order.push('clear') }) })
+    const discardPendingSaves = vi.fn(async () => { order.push('discard') })
+
+    await clearLocalSpriteData({
+      resolveRepository: async () => ({ repository, isPersistent: true }),
+      storage: fakeStorage({}),
+      discardPendingSaves,
+    })
+
+    expect(order).toEqual(['discard', 'clear'])
+  })
+
+  it('a failing discard is logged and the wipe still runs', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const repository = fakeRepository()
+
+    await clearLocalSpriteData({
+      resolveRepository: async () => ({ repository, isPersistent: true }),
+      storage: fakeStorage({}),
+      discardPendingSaves: async () => { throw new Error('boom') },
+    })
+
+    expect(errorSpy).toHaveBeenCalled()
+    expect(repository.clear).toHaveBeenCalledTimes(1)
+  })
+
   it('a failing repository does not stop the localStorage keys from being removed', async () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
     const repository = fakeRepository({ clear: async () => { throw new Error('idb blocked') } })

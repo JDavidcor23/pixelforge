@@ -65,3 +65,10 @@ export const ASSET_GENERATIONS_STORE = 'generations' as const
 export const ASSET_ANIMATIONS_STORE = 'animations' as const
 /** Per kind (generations and animations each). */
 export const ASSET_LIBRARY_LIMIT = 200
+
+/**
+ * How long the document restore waits for the Assets library to hydrate when the
+ * persisted open asset id is not in it yet. Bounded so a library that never loads
+ * (IndexedDB blocked, hook not mounted) cannot hold the editor on "Restoring...".
+ */
+export const ASSET_HYDRATE_WAIT_MS = 5000

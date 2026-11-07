@@ -8,6 +8,7 @@ import { useEditorUIStore } from '@/stores/ui.store'
 import { authService } from '@/services/auth.service'
 import { resolveDocumentRepository } from '@/services/resolve-document-repository.service'
 import { clearLocalSpriteData } from '@/services/clear-local-sprite-data.service'
+import { requestDiscardPendingSaves } from '@/services/document-asset-bus.service'
 import { mapDeleteAccountError } from '@/lib/map-delete-account-error'
 import { isDeleteAccountConfirmed } from '@/lib/delete-account-confirm'
 import { EDITOR_ROUTES } from '@/constants/routes'
@@ -119,7 +120,11 @@ export function useDeleteAccountDialog({ onClose }: UseDeleteAccountDialogProps)
     }
 
     if (clearLocalData) {
-      await clearLocalSpriteData({ resolveRepository: resolveDocumentRepository, storage: localStorage })
+      await clearLocalSpriteData({
+        resolveRepository: resolveDocumentRepository,
+        storage: localStorage,
+        discardPendingSaves: requestDiscardPendingSaves,
+      })
       clearLocalHistory()
     }
 

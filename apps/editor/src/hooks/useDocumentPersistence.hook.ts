@@ -105,6 +105,7 @@ export function useDocumentPersistence(): UseDocumentPersistenceResult {
         openAsset: (id) => controller?.openAsset(id) ?? Promise.resolve(false),
         newSprite: () => controller?.newSprite(),
         duplicateAsset: (request) => controller?.duplicateAsset(request) ?? Promise.resolve(false),
+        discardPendingSaves: () => controller?.discardPendingSaves() ?? Promise.resolve(),
       })
     }
 

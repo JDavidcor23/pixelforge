@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { useAssetsStore } from './assets.store'
 import { ANIMATION_HISTORY_STORAGE_KEY, GENERATION_HISTORY_STORAGE_KEY } from '@/constants'
-import { ASSET_LIBRARY_LIMIT } from '@/constants/persistence'
+import { ASSET_LIBRARY_LIMIT, OPEN_SPRITE_ASSET_STORAGE_KEY } from '@/constants/persistence'
 import { createInMemoryAssetLibraryRepository } from '@/services/in-memory-asset-library.repository.service'
 import type { AIAnimation, AIGeneration } from '@/types'
 
@@ -511,6 +511,18 @@ describe('useAssetsStore eviction never removes the open asset (ADR 0015)', () =
     const ids = useAssetsStore.getState().generations.map((g) => g.id)
     expect(ids).toContain('g0')
     expect(ids).not.toContain('g1')
+    expect((await repository.loadAll()).generations.map((g) => g.id)).toContain('g0')
+  })
+
+  it('keeps the persisted open asset when hydrate runs before the controller restored the open id', async () => {
+    const repository = createInMemoryAssetLibraryRepository()
+    await repository.putGenerations(fullLibrary())
+    storage.setItem(OPEN_SPRITE_ASSET_STORAGE_KEY, 'g0')
+    expect(useAssetsStore.getState().openAssetId).toBeNull()
+
+    await useAssetsStore.getState().hydrate(repository)
+
+    expect(useAssetsStore.getState().generations.map((g) => g.id)).toContain('g0')
     expect((await repository.loadAll()).generations.map((g) => g.id)).toContain('g0')
   })
 

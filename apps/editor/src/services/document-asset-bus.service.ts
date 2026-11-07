@@ -16,6 +16,8 @@ export interface DocumentAssetCommands {
   readonly newSprite: () => void
   /** Flushes the open sprite, stores a copy under a new Assets item and opens the copy. Resolves `false` when nothing was duplicated. */
   readonly duplicateAsset: (request: DuplicateAssetRequest) => Promise<boolean>
+  /** Drops the pending autosave and ignores in-flight ones; resolves once they settled. Called before a local-data wipe. */
+  readonly discardPendingSaves: () => Promise<void>
 }
 
 let activeCommands: DocumentAssetCommands | null = null
@@ -44,6 +46,11 @@ export function requestOpenAsset(id: string): Promise<boolean> {
 
 export function requestDuplicateAsset(request: DuplicateAssetRequest): Promise<boolean> {
   return activeCommands ? activeCommands.duplicateAsset(request) : Promise.resolve(false)
+}
+
+/** Account deletion's local wipe: nothing the editor still has pending may be written after it. Resolves immediately without a controller. */
+export function requestDiscardPendingSaves(): Promise<void> {
+  return activeCommands ? activeCommands.discardPendingSaves() : Promise.resolve()
 }
 
 export function requestNewSprite(): void {

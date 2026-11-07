@@ -2,9 +2,10 @@ import type { DocStatus, DuplicateAssetRequest, PixelBuffer, RgbaColor, SaveStat
 import type { DocumentAssetsApi, DocumentId, DocumentPayload, DocumentRepository, StoredDocument } from '@/types/document'
 import { migrateLegacyDraft } from './legacy-draft-migration.service'
 import { migrateDraftToAsset } from './draft-to-asset-migration.service'
-import { LOCAL_DRAFT_DOCUMENT_ID, OPEN_SPRITE_ASSET_STORAGE_KEY } from '@/constants/persistence'
+import { ASSET_HYDRATE_WAIT_MS, LOCAL_DRAFT_DOCUMENT_ID, OPEN_SPRITE_ASSET_STORAGE_KEY } from '@/constants/persistence'
 import { SPRITE_EDITOR_CANVAS } from '@/constants'
-import { blankDocument, createUntitledSprite, documentFromPixels, documentPreview } from '@/lib/document-preview'
+import { blankDocument, documentFromPixels, documentPreview } from '@/lib/document-preview'
+import { nextUntitledName } from '@/lib/untitled-name'
 import { resolveCoreImpl } from '@/lib/core/core-config'
 import { waitForWasmModule } from '@/lib/core/wasm-pixel-core-resolver'
 
@@ -123,6 +124,13 @@ export interface DocumentPersistenceController {
    * there is no asset binding or the copy could not be stored.
    */
   duplicateAsset: (request: DuplicateAssetRequest) => Promise<boolean>
+  /**
+   * A local-data wipe (account deletion): drops the pending debounced save,
+   * ignores the result of any save still in flight, and resolves once those
+   * writes settled, so the caller can clear the repository without a stale
+   * save resurrecting a document or an "Untitled N" afterwards.
+   */
+  discardPendingSaves: () => Promise<void>
 }
 
 const NOOP_CONTROLLER: DocumentPersistenceController = {
@@ -131,6 +139,7 @@ const NOOP_CONTROLLER: DocumentPersistenceController = {
   openAsset: async () => false,
   newSprite: () => {},
   duplicateAsset: async () => false,
+  discardPendingSaves: async () => {},
 }
 
 /**
@@ -176,6 +185,13 @@ export async function startDocumentPersistence(
   // Autosaves still writing, per document id: a removal waits for them so the
   // document cannot be re-created by a save that was already in flight.
   const savesInFlight = new Map<DocumentId, Promise<void>>()
+  // Bumped by `discardPendingSaves`; a save that started under an older epoch
+  // must not touch the library or the save status when it settles.
+  let discardEpoch = 0
+  // First-save sprites whose document is still being written: the Assets item
+  // is added only after the write succeeds, so a failed write never costs an
+  // asset evicted to make room. Maps the reserved id to its name.
+  const pendingCreations = new Map<DocumentId, string>()
 
   const bailedOut = () => stopped || (isCancelled?.() ?? false)
 
@@ -193,24 +209,49 @@ export async function startDocumentPersistence(
     }
   }
 
+  const isInLibrary = (binding: DocumentAssetBinding, id: DocumentId) =>
+    binding.assets.getState().generations.some((entry) => entry.id === id)
+
   /**
-   * Resolves the asset this save writes to — creating "Untitled N" on the
-   * first save of a new sprite (ADR 0015 lazy creation) — and returns the
-   * Assets-preview refresh to run once the document is stored. A freshly
-   * created asset already holds that preview, so it has none.
+   * Resolves the asset this save writes to and returns what to run once the
+   * document is stored (`refreshPreview`) or failed to store (`rollback`).
+   * A new sprite (ADR 0015 lazy creation) reserves the id of "Untitled N" and
+   * makes it the open asset, but its Assets item is only added after the write
+   * succeeds.
    */
   const resolveSaveTarget = (
     payload: DocumentPayload
-  ): { readonly id: DocumentId; readonly refreshPreview: (() => void) | null } => {
-    if (!assetBinding) return { id: LOCAL_DRAFT_DOCUMENT_ID, refreshPreview: null }
-    const preview = documentPreview(payload, assetBinding.currentFrameIndex(), assetBinding.encodePng)
-    const openId = currentDocumentId()
-    if (openId) {
-      return { id: openId, refreshPreview: () => assetBinding.assets.getState().updateDrawingContent(openId, preview) }
+  ): { readonly id: DocumentId; readonly refreshPreview: (() => void) | null; readonly rollback: (() => void) | null } => {
+    if (!assetBinding) return { id: LOCAL_DRAFT_DOCUMENT_ID, refreshPreview: null, rollback: null }
+    const binding = assetBinding
+    const preview = documentPreview(payload, binding.currentFrameIndex(), binding.encodePng)
+    let id = currentDocumentId()
+    let rollback: (() => void) | null = null
+    if (!id) {
+      const reservedId = crypto.randomUUID()
+      id = reservedId
+      pendingCreations.set(reservedId, nextUntitledName(binding.assets.getState().generations.map((g) => g.prompt)))
+      setOpenAsset(binding, reservedId)
+      rollback = () => {
+        pendingCreations.delete(reservedId)
+        if (binding.assets.getState().openAssetId === reservedId && !isInLibrary(binding, reservedId)) {
+          setOpenAsset(binding, null)
+        }
+      }
     }
-    const created = createUntitledSprite(assetBinding.assets, preview)
-    setOpenAsset(assetBinding, created.id)
-    return { id: created.id, refreshPreview: null }
+    const targetId = id
+    const refreshPreview = () => {
+      const state = binding.assets.getState()
+      if (state.generations.some((entry) => entry.id === targetId)) {
+        state.updateDrawingContent(targetId, preview)
+        return
+      }
+      const name = pendingCreations.get(targetId)
+      if (name === undefined) return
+      pendingCreations.delete(targetId)
+      state.addDrawing({ id: targetId, prompt: name, ...preview })
+    }
+    return { id: targetId, refreshPreview, rollback }
   }
 
   /** Loads `payload` into the core without the autosave subscription treating it as an edit. */
@@ -246,6 +287,7 @@ export async function startDocumentPersistence(
     const revision = sessionRevision
     const payload = store.exportDocument()
     const target = resolveSaveTarget(payload)
+    const epoch = discardEpoch
     const write = repository.save({ id: target.id, revision, updatedAt: Date.now(), payload })
     const settled = write.then(
       () => {},
@@ -257,10 +299,13 @@ export async function startDocumentPersistence(
     })
     write
       .then(() => {
+        if (epoch !== discardEpoch) return
         target.refreshPreview?.()
         store.setState({ saveStatus: 'saved', lastSavedAt: Date.now(), saveError: null })
       })
       .catch((error: unknown) => {
+        if (epoch !== discardEpoch) return
+        target.rollback?.()
         console.error('Failed to save document draft', error)
         onPersistentChange(false)
         store.setState({ saveStatus: 'error', saveError: error instanceof Error ? error.message : String(error) })
@@ -287,6 +332,38 @@ export async function startDocumentPersistence(
       timer = null
       save()
     }, debounceMs)
+  }
+
+  /** Resolves once the Assets library hydrated, or after `ASSET_HYDRATE_WAIT_MS`, whichever comes first. */
+  const waitForLibrary = (binding: DocumentAssetBinding): Promise<void> =>
+    new Promise((resolve) => {
+      if (binding.assets.getState().hydrated !== false) {
+        resolve()
+        return
+      }
+      let handle: unknown = null
+      const done = () => {
+        unsubscribeHydrate()
+        clearScheduledTimeout(handle)
+        resolve()
+      }
+      const unsubscribeHydrate = binding.assets.subscribe((state) => {
+        if (state.hydrated !== false) done()
+      })
+      handle = scheduleTimeout(done, ASSET_HYDRATE_WAIT_MS)
+    })
+
+  /** A document built from the library asset's PNG, or `null` when the library does not have `id` (or its PNG cannot be decoded). */
+  const documentFromLibraryAsset = async (binding: DocumentAssetBinding, id: DocumentId): Promise<DocumentPayload | null> => {
+    if (!isInLibrary(binding, id)) await waitForLibrary(binding)
+    const asset = binding.assets.getState().generations.find((entry) => entry.id === id)
+    if (!asset) return null
+    try {
+      return documentFromPixels(await binding.decodePng(asset.base64))
+    } catch (error) {
+      console.error('Failed to restore the open sprite asset from its PNG', error)
+      return null
+    }
   }
 
   const resolved = await resolveRepository()
@@ -327,8 +404,10 @@ export async function startDocumentPersistence(
     }
 
     // ADR 0015: the old hidden draft becomes an Assets item (once), then the
-    // asset that was open before the reload is restored. A persisted id
-    // with no stored document starts blank with no open asset.
+    // asset that was open before the reload is restored. A persisted id with
+    // no stored document is opened from its PNG when the library still has it
+    // (an asset opened but never edited); otherwise it starts blank with no
+    // open asset.
     let restoreId: DocumentId | null = LOCAL_DRAFT_DOCUMENT_ID
     if (assetBinding) {
       const migratedId = await migrateDraftToAsset({
@@ -343,7 +422,17 @@ export async function startDocumentPersistence(
 
     const stored = restoreId ? await repository.load(restoreId) : null
     if (bailedOut()) return NOOP_CONTROLLER
-    if (assetBinding) setOpenAsset(assetBinding, stored ? stored.id : null)
+    let restoredPayload: DocumentPayload | null = stored ? stored.payload : null
+    let restoredOpenId: DocumentId | null = stored ? stored.id : null
+    if (!stored && restoreId && assetBinding) {
+      const fromPng = await documentFromLibraryAsset(assetBinding, restoreId)
+      if (bailedOut()) return NOOP_CONTROLLER
+      if (fromPng) {
+        restoredPayload = fromPng
+        restoredOpenId = restoreId
+      }
+    }
+    if (assetBinding) setOpenAsset(assetBinding, restoredOpenId)
 
     // Phase 7f (CRITICAL #1 — "the flag is dead"): `core.slice.ts`'s `core`
     // is bootstrapped lazily, exactly once, the FIRST time anything touches
@@ -358,10 +447,8 @@ export async function startDocumentPersistence(
     if (resolveCoreImpl() === 'wasm') await waitForWasmModule()
     if (bailedOut()) return NOOP_CONTROLLER
 
-    if (stored) {
-      adoptRevision(stored)
-      store.importDocument(stored.payload)
-    }
+    if (stored) adoptRevision(stored)
+    if (restoredPayload) store.importDocument(restoredPayload)
 
     // Restore (or the decision there's nothing to restore) is done — only
     // now is it safe to start autosave.
@@ -448,30 +535,50 @@ export async function startDocumentPersistence(
     flush()
     const payload = store.exportDocument()
     const preview = documentPreview(payload, assetBinding.currentFrameIndex(), assetBinding.encodePng)
-    // Created while the original is still open, so the eviction guard keeps
-    // the original; the copy is newest and always kept.
-    const copy = assetBinding.assets
-      .getState()
-      .addDrawing({ prompt: request.name.trim(), assetType: request.assetType, ...preview })
+    // The document is stored BEFORE the Assets item exists: a failed write then
+    // leaves Assets untouched, and nothing was evicted to make room for a copy
+    // that never got stored.
+    const copyId = crypto.randomUUID()
     sessionRevision += 1
     try {
-      await repository.save({ id: copy.id, revision: sessionRevision, updatedAt: Date.now(), payload })
+      await repository.save({ id: copyId, revision: sessionRevision, updatedAt: Date.now(), payload })
     } catch (error) {
       console.error('Failed to duplicate sprite asset', error)
-      // No stored document: drop the copy so Assets keeps no half-made item.
-      assetBinding.assets.getState().removeGeneration(copy.id)
       onPersistentChange(false)
       store.setState({ saveStatus: 'error', saveError: error instanceof Error ? error.message : String(error) })
       return false
     }
+    // Added while the original is still open, so the eviction guard keeps the
+    // original; the copy is newest and always kept.
+    assetBinding.assets
+      .getState()
+      .addDrawing({ id: copyId, prompt: request.name.trim(), assetType: request.assetType, ...preview })
     if (stopped) return false
     // The canvas already holds this exact content: switch the id without importing, so nothing counts as an edit.
-    setOpenAsset(assetBinding, copy.id)
+    setOpenAsset(assetBinding, copyId)
     return true
+  }
+
+  const discardPendingSaves = async (): Promise<void> => {
+    discardEpoch += 1
+    if (timer !== null) {
+      clearScheduledTimeout(timer)
+      timer = null
+    }
+    dirty = false
+    await Promise.all([...savesInFlight.values()])
+    pendingCreations.clear()
+    if (assetBinding) {
+      const openId = assetBinding.assets.getState().openAssetId
+      // A sprite whose first save was dropped has no Assets item to open.
+      if (openId && !isInLibrary(assetBinding, openId)) setOpenAsset(assetBinding, null)
+    }
+    store.setState({ saveStatus: 'idle' })
   }
 
   return {
     flush,
+    discardPendingSaves,
     openAsset,
     newSprite,
     duplicateAsset,

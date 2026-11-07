@@ -71,7 +71,7 @@ export interface SpritePreview {
 }
 
 /** A new editor-made sprite asset, as `useAssetsStore.addDrawing` takes it. */
-export type NewSpriteDrawing = Omit<AIGeneration, 'id' | 'timestamp' | 'kind'>
+export type NewSpriteDrawing = Omit<AIGeneration, 'id' | 'timestamp' | 'kind'> & { readonly id?: string }
 
 /**
  * The slice of `useAssetsStore` the document layer needs (ADR 0015). The
@@ -81,6 +81,8 @@ export type NewSpriteDrawing = Omit<AIGeneration, 'id' | 'timestamp' | 'kind'>
 export interface DocumentAssetsState {
   readonly generations: readonly AIGeneration[]
   readonly openAssetId: string | null
+  /** `true` once the library finished loading from IndexedDB; absent means there is nothing to wait for. */
+  readonly hydrated?: boolean
   addDrawing: (drawing: NewSpriteDrawing) => AIGeneration
   updateDrawingContent: (id: string, content: SpritePreview) => void
   removeGeneration: (id: string) => void
