@@ -93,6 +93,13 @@ export interface AIGeneration {
    * `useAssetsStore.addGeneration` call today, round-trips with no `kind`).
    */
   readonly kind?: 'generation' | 'drawing'
+  /**
+   * ADR 0015: bumped by every autosave that writes new content into this
+   * asset. Absent means 0 — every entry persisted before this field existed.
+   */
+  readonly revision?: number
+  /** ADR 0015: when the content last changed. Absent until the first content update. */
+  readonly updatedAt?: number
 }
 
 /**
@@ -163,6 +170,17 @@ export interface AssetLibraryItem {
   /** Back-compat default applied here (not in storage) — untyped history counts as `'character'`. */
   readonly assetType: AssetType
   readonly isAnimated: boolean
+}
+
+/**
+ * Side effects of an Assets tile click (ADR 0015), injected so the flow is
+ * testable without the persistence controller or the canvas.
+ */
+export interface OpenLibraryItemDeps {
+  readonly openAsset: (id: string) => Promise<boolean>
+  readonly newSprite: () => void
+  readonly findAnimation: (id: string) => AIAnimation | undefined
+  readonly applyAnimation: (animation: AIAnimation) => Promise<void>
 }
 
 /** Game genres whose sprite rules the Create tab can add to a prompt. */

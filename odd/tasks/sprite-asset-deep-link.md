@@ -1,0 +1,36 @@
+Build screen phase 3 of `docs/build-screen-implementation-plan.md` (ADR 0015: every sprite is an asset from creation, plus deep links from `/build`).
+Branch `feat/sprite-asset-deep-link` (from `feat/build-level`, which is not in master yet). Delivery: ask-on-risk. Test runner: vitest (`pnpm --filter @pixelforge/editor test`).
+
+## Specs
+
+- S1: "A new sprite is an Assets item named "Untitled N", stored on its first edit. Autosave writes to the open asset and bumps its revision. No hidden draft." ADR 0015: "Untitled N" is the "next free number"; "Lazy creation: an untouched new sprite is not stored until its first edit".
+- S2: "Migrate the existing draft once into an Assets item if it has content." ADR 0015: "Same pixels, now an Assets item" ("Untitled 1").
+- S3: "Save As becomes "duplicate"." ADR 0015: "a new asset copied from the open one."
+- S4: "Biblioteca "Edit" → `/sprites?asset=<id>` or `/sounds?asset=<id>`. Sprite Studio and Sound Editor open the asset from the URL; Back returns to `/build`."
+- S5 (done when): "opening another asset never loses work; reload on `/sprites?asset=<id>` keeps the same asset; an old draft survives the upgrade as an Assets item."
+- S6 (owner decision L2): a sprite asset stores the full document (layers and frames) in IndexedDB under the asset id, plus a flattened PNG for the grid and the game.
+- S7 (owner decision L3): the `/build` Biblioteca gets a minimal list of sprites and sounds (name + Edit) that reads the current stores; phase 4 switches it to the catalog. UI goes through design-agent → frontend-agent → cleancode-agent.
+- S8 (ADR 0015 open item): eviction by `ASSET_LIBRARY_LIMIT` must never evict the open asset.
+
+## Tasks
+
+- [x] T1 — S1, S6, S8 asset content model: optional `revision`/`updatedAt` on `AIGeneration`, `updateDrawingContent`, `nextUntitledName`, `openAssetId` eviction guard — inline — Risk: item 1 (persisted format) — RED 8 failing + missing module → GREEN 37/37; tsc ok; suite 781/781 — 97f62c5 (graph 3d1e5df)
+- [x] T2 — S1, S2, S5, S6 persistence controller keyed by the open asset id: autosave writes document + PNG preview + revision, lazy creation, open/new asset flush first, open asset survives reload, one-time `local-draft` → "Untitled 1" migration (T3 merged here: without it T2 would orphan the draft) — delegated (context backstop) — Risk: item 1 (existing stored data) — RED 3 files missing modules + 8/11 controller tests → GREEN; tsc ok; suite 807/807 (parent re-ran) — commit below
+- [x] T3 — S1, S5 UI wiring: Assets tile click opens the asset, File > New sprite, top bar shows the open asset name — inline — Risk: none — RED missing `open-library-item` + 5 failing → GREEN 18/18; tsc ok; suite 815/815 — commit below
+- [ ] T4 — S3 Save As → Duplicate — inline
+- [ ] T4b — follow-ups from T2: "delete what's saved in this browser" (`useDeleteAccountDialog.hook.ts`) must also remove per-asset documents; deleting an asset must remove its stored document — inline — Risk: item 1
+- [ ] T5 — S4, S5 `/sprites?asset=<id>` and `/sounds?asset=<id>` (wait for hydrate, unknown id), Back to `/build` — inline
+- [ ] T6 — S4, S7 Biblioteca minimal list + Edit — delegated: design-agent → frontend-agent → cleancode-agent (project pipeline)
+- [ ] T7 — S5 browser check of the done-when list + independent verifier (items 1) — delegated
+
+## Log
+
+- L1 (2026-11-03): "Sí, arranca con la Fase 3 con ODD en la rama nueva feat/sprite-asset-deep-link."
+- L2 (2026-11-03, owner decision): asset content = "Documento + vista PNG (Recommended)".
+- L3 (2026-11-03, owner decision): Biblioteca = "Lista mínima + Edit (Recommended)".
+- L4: map (explorer): draft is `local-draft` in IDB db `pixelforge` store `drafts` (`StoredDocument {id, revision, updatedAt, payload}`); sprite assets live in db `pixelforge-assets` (`generations`, `animations`) with no `revision`/`updatedAt` and no content-update op; Save As (`useTopBar.hook.ts` `runSaveAs`) exports one frame to PNG via `addDrawing`; no `useSearchParams` in the app; Biblioteca is a static placeholder; no Back button in either editor; sound selection is in memory only. ADR 0015 lists the Sound Editor model as "not planned now"; S4 only needs `/sounds?asset=<id>` to select that sound.
+- L5 (T1): per-asset document storage needs no new store: `DocumentRepository` is already keyed by `DocumentId`, so T2 saves the document under the asset id in the existing `drafts` store (no DB version bump). Eviction keeps the open asset and it counts toward the limit (the next oldest goes instead). Pre-existing defect fixed on the way: the localStorage fallback parser dropped `kind`, so a drawing came back as a generation; it now keeps `kind`, `revision`, `updatedAt`.
+- L6 (T1 review): native review started (lineage review-e5be06fb3262d192) but every reviewer capture failed with `lens_context_inspection_failed`, twice, after refreshing STATUS. Owner (2026-11-03): "lo puedes reportar, pero ya no lo veo necesario... quiero programar" → continued without reporting; T1 covered by its own tests.
+- L7 (T2 design, assumptions from ADR 0015 "Opening another asset (from the Assets grid or from `/sprites?asset=<id>`) switches the ID; nothing is overwritten"): Assets tile click = open (today it overwrites the canvas); Create/Animate "Use on canvas" keeps applying onto the open asset; "New sprite" is a File menu entry, blank and lazy. T2 and the migration ship together.
+- L8 (T2, writer report): controller takes an optional `assetBinding` (without it the old fixed `local-draft` id remains, so the remount/judgment-day tests still hold); editor always passes it. Open id persisted under `OPEN_SPRITE_ASSET_STORAGE_KEY`; migration marker `DRAFT_MIGRATION_ASSET_STORAGE_KEY` makes an interrupted migration idempotent; order is save → marker → remove draft (parent spot-checked `draft-to-asset-migration.service.ts:57-69`). UI bridge: `document-asset-bus.service.ts` (`requestOpenAsset`, `requestNewSprite`). New sprite uses `SPRITE_EDITOR_CANVAS.DEFAULT_WIDTH/HEIGHT`. Known gap: the assets store hydrates in a separate hook with no "loaded" signal, so a migration or first save before hydrate could reuse an "Untitled N" number (unlikely); T5 deep link must wait for hydrate anyway.
+- L9 (T3, assumption): an animation tile has no sprite document, so a click starts a new sprite and applies the animation there (stored as "Untitled N" on that edit) instead of painting over the open asset. Top bar shows the open asset name, or the "Untitled N" a new unsaved sprite will get; it selects the name string so autosave preview refreshes don't re-render it. `SPRITE_DOCUMENT_DEFAULT_NAME` removed (no other users). A failed `openAsset` is silent for now (T5 handles unknown ids for the deep link).

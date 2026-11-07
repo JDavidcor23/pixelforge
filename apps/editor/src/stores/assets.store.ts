@@ -8,6 +8,9 @@ import type { AIAnimation, AIGeneration, AssetLibraryRepository, AssetType } fro
 
 type NewGeneration = Omit<AIGeneration, 'id' | 'timestamp'>
 
+/** The new pixels an autosave writes into an existing sprite asset (ADR 0015). */
+type SpriteContent = Pick<AIGeneration, 'base64' | 'width' | 'height'>
+
 /** Every origin an `AssetLibraryItem` can have — mirrors `AssetLibraryItem['kind']` without importing that view-model type into the persistence layer. */
 type AssetItemKind = 'generation' | 'drawing' | 'animation'
 
@@ -28,6 +31,12 @@ export interface AssetsState {
   readonly animations: AIAnimation[]
   /** `null` until `hydrate` succeeds — writes go to localStorage meanwhile. */
   readonly repository: AssetLibraryRepository | null
+  /**
+   * ADR 0015: the asset Sprite Studio has open. Eviction by
+   * `ASSET_LIBRARY_LIMIT` never removes it, so autosave always has a target.
+   */
+  readonly openAssetId: string | null
+  setOpenAssetId: (id: string | null) => void
   addGeneration: (generation: NewGeneration) => AIGeneration
   /**
    * `File > Save As…` (ADR 0010, Phase 1) — persists a canvas snapshot through
@@ -38,6 +47,13 @@ export interface AssetsState {
    */
   addDrawing: (drawing: Omit<NewGeneration, 'kind'>) => AIGeneration
   addAnimation: (animation: AIAnimation) => void
+  /**
+   * ADR 0015: autosave writes the open sprite's flattened PNG into its
+   * existing Assets item and bumps `revision`. Name, kind, folder and list
+   * position (`timestamp`) stay as they are. No-op if `id` isn't a
+   * generation/drawing entry.
+   */
+  updateDrawingContent: (id: string, content: SpriteContent) => void
   /**
    * Rename an existing Assets item (ADR 0010, Phase 2 — `AssetTile`'s rename pencil).
    * Updates `AIGeneration.prompt` (`'generation'`/`'drawing'`) or `AIAnimation.label`
@@ -79,8 +95,29 @@ const mergeNewest = <T extends LibraryEntry>(...lists: readonly (readonly T[])[]
   return [...byId.values()].sort((a, b) => b.timestamp - a.timestamp)
 }
 
-const evictedIds = <T extends LibraryEntry>(entries: readonly T[]): string[] =>
-  entries.slice(ASSET_LIBRARY_LIMIT).map((entry) => entry.id)
+/**
+ * Splits a newest-first list at `ASSET_LIBRARY_LIMIT`. `protectedId` (the open
+ * asset) is always kept and counts toward the limit, so the oldest other
+ * entry goes in its place.
+ */
+const trimToLimit = <T extends LibraryEntry>(
+  entries: readonly T[],
+  protectedId: string | null,
+): { readonly kept: T[]; readonly evicted: string[] } => {
+  const keep = new Set<string>()
+  if (protectedId !== null && entries.some((entry) => entry.id === protectedId)) keep.add(protectedId)
+  for (const entry of entries) {
+    if (keep.size >= ASSET_LIBRARY_LIMIT) break
+    keep.add(entry.id)
+  }
+  return {
+    kept: entries.filter((entry) => keep.has(entry.id)),
+    evicted: entries.filter((entry) => !keep.has(entry.id)).map((entry) => entry.id),
+  }
+}
+
+const toPngDataUri = (base64: string): string =>
+  base64.startsWith('data:') ? base64 : `data:image/png;base64,${base64}`
 
 /** Finds `id` in `list` and returns the patched entry plus the full list with it replaced, or `null` if missing. */
 const updateEntry = <T extends LibraryEntry>(
@@ -103,25 +140,22 @@ const initialAnimations = parseAnimationHistory(readStorage(ANIMATION_HISTORY_ST
 export const useAssetsStore = create<AssetsState>((set, get) => {
   /** Shared by `addGeneration` and `addDrawing` — same slice, same object store, only `kind` differs. */
   const addGenerationEntry = (generation: NewGeneration, errorLabel: string): AIGeneration => {
-    const sanitizedBase64 = generation.base64.startsWith('data:')
-      ? generation.base64
-      : `data:image/png;base64,${generation.base64}`
-
     const next: AIGeneration = {
       ...generation,
-      base64: sanitizedBase64,
+      base64: toPngDataUri(generation.base64),
       id: crypto.randomUUID(),
       timestamp: Date.now(),
     }
 
     const all = [next, ...get().generations]
-    const { repository } = get()
+    const { repository, openAssetId } = get()
 
     if (repository) {
-      set({ generations: all.slice(0, ASSET_LIBRARY_LIMIT) })
+      const { kept, evicted } = trimToLimit(all, openAssetId)
+      set({ generations: kept })
       repository
         .putGenerations([next])
-        .then(() => repository.removeGenerations(evictedIds(all)))
+        .then(() => repository.removeGenerations(evicted))
         .catch(reportWriteError(errorLabel))
       return next
     }
@@ -139,6 +173,9 @@ export const useAssetsStore = create<AssetsState>((set, get) => {
     generations: initialGenerations,
     animations: initialAnimations,
     repository: null,
+    openAssetId: null,
+
+    setOpenAssetId: (id) => set({ openAssetId: id }),
   
     addGeneration: (generation) => addGenerationEntry(generation, 'generation'),
   
@@ -146,13 +183,14 @@ export const useAssetsStore = create<AssetsState>((set, get) => {
   
     addAnimation: (animation) => {
       const all = [animation, ...get().animations]
-      const { repository } = get()
+      const { repository, openAssetId } = get()
   
       if (repository) {
-        set({ animations: all.slice(0, ASSET_LIBRARY_LIMIT) })
+        const { kept, evicted } = trimToLimit(all, openAssetId)
+        set({ animations: kept })
         repository
           .putAnimations([animation])
-          .then(() => repository.removeAnimations(evictedIds(all)))
+          .then(() => repository.removeAnimations(evicted))
           .catch(reportWriteError('animation'))
         return
       }
@@ -165,6 +203,30 @@ export const useAssetsStore = create<AssetsState>((set, get) => {
       }
     },
   
+    updateDrawingContent: (id, content) => {
+      const { repository, generations } = get()
+      const target = generations.find((entry) => entry.id === id)
+      if (!target) return
+      const result = updateEntry(generations, id, {
+        base64: toPngDataUri(content.base64),
+        width: content.width,
+        height: content.height,
+        revision: (target.revision ?? 0) + 1,
+        updatedAt: Date.now(),
+      })
+      if (!result) return
+      set({ generations: result.next })
+      if (repository) {
+        repository.putGenerations([result.updated]).catch(reportWriteError('sprite content'))
+        return
+      }
+      try {
+        persistGenerationHistory(localStorage, result.next)
+      } catch (e) {
+        console.error('Failed to persist generation history', e)
+      }
+    },
+
     renameItem: (id, kind, label) => {
       const trimmed = label.trim()
       if (!trimmed) return
@@ -281,15 +343,13 @@ export const useAssetsStore = create<AssetsState>((set, get) => {
       await repository.putGenerations(current.filter((g) => !storedGenerationIds.has(g.id)))
       await repository.putAnimations(currentAnimations.filter((a) => !storedAnimationIds.has(a.id)))
   
-      const generations = mergeNewest(get().generations, stored.generations)
-      const animations = mergeNewest(get().animations, stored.animations)
-      await repository.removeGenerations(evictedIds(generations))
-      await repository.removeAnimations(evictedIds(animations))
+      const { openAssetId } = get()
+      const generations = trimToLimit(mergeNewest(get().generations, stored.generations), openAssetId)
+      const animations = trimToLimit(mergeNewest(get().animations, stored.animations), openAssetId)
+      await repository.removeGenerations(generations.evicted)
+      await repository.removeAnimations(animations.evicted)
   
-      set({
-        generations: generations.slice(0, ASSET_LIBRARY_LIMIT),
-        animations: animations.slice(0, ASSET_LIBRARY_LIMIT),
-      })
+      set({ generations: generations.kept, animations: animations.kept })
   
       // Only drop the legacy copy once IndexedDB holds it.
       if (typeof localStorage !== 'undefined') {

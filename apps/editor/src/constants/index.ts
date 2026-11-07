@@ -240,8 +240,9 @@ export const CANVAS_MIN_SIZE = { WIDTH: 320, HEIGHT: 200 } as const
 export const PANEL_RESIZE_STEP = 16
 export const PANEL_RESIZE_STEP_LARGE = 64
 
-/** Shown in the top bar until the document carries a real project name. */
-export const SPRITE_DOCUMENT_DEFAULT_NAME = 'Untitled sprite'
+
+/** ADR 0015: a sprite created in the editor is named "Untitled N" (next free number). */
+export const UNTITLED_ASSET_NAME_PREFIX = 'Untitled'
 
 export const INSPECTOR_TABS: readonly { readonly id: InspectorTabId; readonly label: string; readonly iconName: string }[] = [
   { id: 'properties', label: 'Properties', iconName: 'SlidersHorizontal' },
